@@ -1,0 +1,48 @@
+/* Header — widgets/Header */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: var(--header-height);
+  padding: 0 var(--sp-6);
+  background: var(--clr-surface);
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+.menuBtn:hover {
+  background: var(--clr-bg);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .menuBtn {
+    display: inline-flex;
+  }
+  .header {
+    padding: 0 var(--sp-4);
+  }
+}

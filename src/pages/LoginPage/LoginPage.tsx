@@ -1,0 +1,108 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { useForm } from 'react-hook-form';
+import { ClipboardList, Factory } from 'lucide-react';
+import { loginSuccess } from '../../features/auth/model/authSlice';
+import { mockLogin } from '../../features/auth/api/mockAuthApi';
+import { Button } from '../../shared/ui/Button/Button';
+import { Input } from '../../shared/ui/Input/Input';
+import type { LoginPayload } from '../../features/auth/model/types';
+import styles from './LoginPage.module.css';
+
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginPayload>({
+    defaultValues: { username: '', password: '' },
+  });
+
+  const onSubmit = async (data: LoginPayload) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await mockLogin(data);
+      dispatch(loginSuccess({ user: res.user, token: res.access }));
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.page}>
+      {/* Left — Branding Panel */}
+      <div className={styles.brandPanel}>
+        <div className={styles.brandContent}>
+          <div className={styles.brandIcon}>
+            <Factory size={48} strokeWidth={1.4} />
+          </div>
+          <h2 className={styles.brandTitle}>Xuân Hòa</h2>
+          <p className={styles.brandTagline}>Hệ Thống Quản Lý Sản Xuất</p>
+          <div className={styles.brandDivider} />
+          <p className={styles.brandDesc}>
+            Quản lý kho bãi, định mức sản phẩm và lệnh sản xuất tập trung trên một nền tảng duy nhất.
+          </p>
+        </div>
+        {/* Decorative geometric shapes */}
+        <div className={styles.deco1} aria-hidden="true" />
+        <div className={styles.deco2} aria-hidden="true" />
+        <div className={styles.deco3} aria-hidden="true" />
+      </div>
+
+      {/* Right — Login Form */}
+      <div className={styles.formPanel}>
+        <div className={styles.formContainer}>
+          <div className={styles.formHeader}>
+            <div className={styles.logoMobile}>
+              <ClipboardList size={28} />
+              <span>Xuân Hòa ERP</span>
+            </div>
+            <h1 className={styles.formTitle}>Đăng nhập</h1>
+            <p className={styles.formSubtitle}>Nhập thông tin tài khoản để truy cập hệ thống</p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className={styles.form} noValidate>
+            {error && (
+              <div className={styles.formError} role="alert">
+                {error}
+              </div>
+            )}
+
+            <Input
+              label="Tên đăng nhập"
+              placeholder="admin"
+              autoComplete="username"
+              required
+              error={errors.username?.message}
+              {...register('username', { required: 'Vui lòng nhập tên đăng nhập' })}
+            />
+
+            <Input
+              label="Mật khẩu"
+              type="password"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              required
+              error={errors.password?.message}
+              {...register('password', { required: 'Vui lòng nhập mật khẩu' })}
+            />
+
+            <Button type="submit" variant="primary" size="lg" loading={loading}>
+              Đăng nhập
+            </Button>
+
+            <p className={styles.hint}>
+              Demo: <code>admin / admin123</code> hoặc <code>staff / staff123</code>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
