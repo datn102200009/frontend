@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { ChevronDown, Search, Check } from 'lucide-react';
 import clsx from 'clsx';
 import './Select.scss';
@@ -36,6 +36,8 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
+    const labelId = useId();
+    const listboxId = useId();
 
     const selectedOption = options.find((opt) => opt.value === value);
 
@@ -72,18 +74,44 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
       setSearchTerm('');
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (disabled) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleOpen();
+      } else if (e.key === 'Escape') {
+        if (isOpen) {
+          e.preventDefault();
+          setIsOpen(false);
+        }
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (!isOpen) {
+          e.preventDefault();
+          setIsOpen(true);
+        }
+      }
+    };
+
     return (
       <div className={clsx('select-container', { disabled })} ref={containerRef}>
         {/* Hidden input for react-hook-form ref */}
-        <input type="hidden" ref={ref} value={value} />
+        <input type="hidden" ref={ref} value={value} readOnly />
         {label && (
-          <label className="select-label" onClick={toggleOpen}>
+          <div className="select-label" id={labelId} onClick={toggleOpen}>
             {label} {required && <span className="required">*</span>}
-          </label>
+          </div>
         )}
         <div
           className={clsx('select-trigger', { error: !!error, open: isOpen })}
           onClick={toggleOpen}
+          tabIndex={disabled ? -1 : 0}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-controls={isOpen ? listboxId : undefined}
+          aria-labelledby={label ? labelId : undefined}
+          aria-disabled={disabled}
+          onKeyDown={handleKeyDown}
         >
           <span className={clsx('select-value', { placeholder: !selectedOption })}>
             {selectedOption ? selectedOption.label : placeholder}
@@ -105,7 +133,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
                 autoFocus
               />
             </div>
-            <ul className="select-options">
+            <ul className="select-options" role="listbox" id={listboxId} aria-labelledby={label ? labelId : undefined}>
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((opt) => (
                   <li
@@ -114,13 +142,15 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
                       selected: opt.value === value,
                     })}
                     onClick={() => handleSelect(opt.value)}
+                    role="option"
+                    aria-selected={opt.value === value}
                   >
                     {opt.label}
                     {opt.value === value && <Check size={16} className="check-icon" />}
                   </li>
                 ))
               ) : (
-                <li className="select-option empty">Không tìm thấy kết quả</li>
+                <li className="select-option empty" role="option" aria-selected="false">Không tìm thấy kết quả</li>
               )}
             </ul>
           </div>

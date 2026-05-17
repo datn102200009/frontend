@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   LayoutDashboard,
@@ -42,7 +42,6 @@ const NAV_SECTIONS = [
 export function Sidebar({ open, onClose }: SidebarProps) {
   const user = useSelector((s: RootState) => s.auth.user);
   const dispatch = useDispatch();
-  const location = useLocation();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -86,8 +85,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={() =>
-                    clsx(styles.navItem, location.pathname.startsWith(item.to) && styles.active)
+                  className={({ isActive }) =>
+                    clsx(styles.navItem, isActive && styles.active)
                   }
                   onClick={onClose}
                 >
