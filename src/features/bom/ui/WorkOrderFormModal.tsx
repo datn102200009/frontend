@@ -203,6 +203,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
           <Input
             label="Số lượng yêu cầu"
             type="number"
+            step="0.01"
             required
             disabled={isCreating}
             error={errors.quantity?.message}
