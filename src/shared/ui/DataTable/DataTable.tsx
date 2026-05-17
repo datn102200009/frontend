@@ -20,6 +20,7 @@ interface DataTableProps<TData> {
   loading?: boolean;
   emptyMessage?: string;
   emptyDescription?: string;
+  onSearch?: (value: string) => void;
 }
 
 export function DataTable<TData>({
@@ -30,6 +31,7 @@ export function DataTable<TData>({
   loading = false,
   emptyMessage = 'Không có dữ liệu',
   emptyDescription = 'Chưa có bản ghi nào được tạo.',
+  onSearch,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -61,7 +63,10 @@ export function DataTable<TData>({
             className={styles.searchInput}
             placeholder={searchPlaceholder}
             value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e) => {
+              setGlobalFilter(e.target.value);
+              onSearch?.(e.target.value);
+            }}
             aria-label={searchPlaceholder}
           />
         </div>

@@ -10,7 +10,6 @@ export interface BOM {
   id: string;
   product_code: string;
   product_name: string;
-  version: string;
   items: BOMItem[];
   notes: string;
   created_at: string;
@@ -24,7 +23,6 @@ export interface WorkOrder {
   code: string;
   product_name: string;
   bom_id: string;
-  bom_version: string;
   quantity_required: number;
   quantity_completed: number;
   status: WorkOrderStatus;

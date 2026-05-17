@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useGetManufacturingBomListQuery, useDeleteManufacturingBomByBomIdDeleteMutation } from '../../manufacturing/api/manufacturingApi';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2, Eye, Plus } from 'lucide-react';
 import { DataTable } from '../../../shared/ui/DataTable/DataTable';
@@ -7,54 +8,60 @@ import { Badge } from '../../../shared/ui/Badge/Badge';
 import { Modal } from '../../../shared/ui/Modal/Modal';
 import { BomFormModal } from './BomFormModal';
 import { useToast } from '../../../shared/ui/Toast/Toast';
-import type { BOM } from '../model/types';
-import { MOCK_BOMS } from '../model/mockData';
+import { type Bom } from '../../manufacturing/api/manufacturingApi';
+import { formatDateTime } from '../../../shared/lib/formatDate';
 import styles from './BomList.module.css';
 
 export function BomList() {
-  const [boms, setBoms] = useState<BOM[]>(MOCK_BOMS);
-  const [editingBom, setEditingBom] = useState<BOM | null>(null);
-  const [deletingBom, setDeletingBom] = useState<BOM | null>(null);
+  const { data: bomsData, isLoading, refetch } = useGetManufacturingBomListQuery({});
+  const boms = (bomsData as any)?.results || (Array.isArray(bomsData) ? bomsData : []);
+  const [deleteBom, { isLoading: isDeleting }] = useDeleteManufacturingBomByBomIdDeleteMutation();
+  const [editingBom, setEditingBom] = useState<Bom | null>(null);
+  const [deletingBom, setDeletingBom] = useState<Bom | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const { toast } = useToast();
 
-  const handleDelete = (bom: BOM) => {
+  const handleDelete = (bom: Bom) => {
     setDeletingBom(bom);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deletingBom) return;
-    setBoms((prev) => prev.filter((b) => b.id !== deletingBom.id));
-    toast('success', `Đã xóa định mức ${deletingBom.product_code}`);
-    setDeletingBom(null);
+    try {
+      await deleteBom({ bomId: deletingBom.id! }).unwrap();
+      toast('success', `Đã xóa định mức ${deletingBom.name}`);
+      setDeletingBom(null);
+      refetch();
+    } catch (error) {
+      toast('error', 'Có lỗi xảy ra khi xóa định mức');
+    }
   };
 
-  const handleSave = (data: BOM) => {
-    if (editingBom) {
-      setBoms((prev) => prev.map((b) => (b.id === data.id ? data : b)));
-      toast('success', 'Cập nhật định mức thành công');
-    } else {
-      setBoms((prev) => [...prev, { ...data, id: `bom-${Date.now()}`, created_at: new Date().toISOString().slice(0, 10) }]);
-      toast('success', 'Thêm định mức thành công');
-    }
+  const handleSave = () => {
     setEditingBom(null);
     setShowCreate(false);
+    refetch();
   };
 
-  const columns = useMemo<ColumnDef<BOM, unknown>[]>(
+  const columns = useMemo<ColumnDef<Bom, unknown>[]>(
     () => [
-      { accessorKey: 'product_code', header: 'Mã SP', size: 120 },
-      { accessorKey: 'product_name', header: 'Tên Sản Phẩm' },
-      { accessorKey: 'version', header: 'Phiên Bản', size: 100 },
+      { accessorKey: 'item_code', header: 'Mã SP', size: 120 },
+      { accessorKey: 'name', header: 'Tên Định Mức' },
+      { accessorKey: 'item_name', header: 'Tên Sản Phẩm' },
       {
-        accessorKey: 'items',
+        accessorKey: 'items_count',
         header: 'Linh Kiện',
         cell: ({ row }) => (
-          <Badge variant="info">{row.original.items.length} mục</Badge>
+          <Badge variant="info">{(row.original as any).items_count || 0} mục</Badge>
         ),
         enableSorting: false,
       },
-      { accessorKey: 'created_at', header: 'Ngày Tạo', size: 120 },
+      {
+        accessorKey: 'created_at',
+        header: 'Ngày Tạo',
+        size: 140,
+        cell: ({ row }) => formatDateTime((row.original as any).created_at),
+      },
       {
         id: 'actions',
         header: 'Thao Tác',
@@ -91,12 +98,12 @@ export function BomList() {
           Thêm BOM
         </Button>
       </div>
-      <DataTable columns={columns} data={boms} searchPlaceholder="Tìm theo mã hoặc tên sản phẩm..." />
+      <DataTable columns={columns} data={boms} searchPlaceholder="Tìm theo mã hoặc tên sản phẩm..." loading={isLoading} />
 
       {(showCreate || editingBom) && (
         <BomFormModal
           open
-          bom={editingBom}
+          bomId={editingBom?.id || null}
           onClose={() => { setShowCreate(false); setEditingBom(null); }}
           onSave={handleSave}
         />
@@ -111,12 +118,12 @@ export function BomList() {
           footer={
             <>
               <Button variant="ghost" onClick={() => setDeletingBom(null)}>Hủy</Button>
-              <Button variant="danger" onClick={confirmDelete}>Xóa định mức</Button>
+              <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>Xóa định mức</Button>
             </>
           }
         >
           <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
-            Bạn có chắc chắn muốn xóa định mức <strong>"{deletingBom.product_name}"</strong> không? Hành động này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa định mức <strong>"{deletingBom.name}"</strong> không? Hành động này không thể hoàn tác.
           </p>
         </Modal>
       )}

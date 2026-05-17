@@ -4,7 +4,8 @@ import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { ClipboardList, Factory } from 'lucide-react';
 import { loginSuccess } from '../../features/auth/model/authSlice';
-import { mockLogin } from '../../features/auth/api/mockAuthApi';
+import { usePostAccountsAuthLoginMutation } from '../../features/accounts/api/accountsApi';
+import { useToast } from '../../shared/ui/Toast/Toast';
 import { Button } from '../../shared/ui/Button/Button';
 import { Input } from '../../shared/ui/Input/Input';
 import type { LoginPayload } from '../../features/auth/model/types';
@@ -14,7 +15,8 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [login, { isLoading }] = usePostAccountsAuthLoginMutation();
+  const { toast } = useToast();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginPayload>({
     defaultValues: { username: '', password: '' },
@@ -22,15 +24,19 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginPayload) => {
     setError('');
-    setLoading(true);
     try {
-      const res = await mockLogin(data);
-      dispatch(loginSuccess({ user: res.user, token: res.access }));
+      const res = await login({ body: data }).unwrap();
+      const user = {
+        id: res.user_id || '',
+        username: res.username || '',
+        full_name: res.username || '',
+        role: (res.role || 'staff') as 'admin' | 'manager' | 'staff'
+      };
+      dispatch(loginSuccess({ user, token: res.access || '', refresh: res.refresh }));
+      toast('success', 'Đăng nhập thành công');
       navigate('/dashboard', { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi.');
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      setError(err?.data?.error || err?.data?.detail || 'Sai tài khoản hoặc mật khẩu.');
     }
   };
 
@@ -93,7 +99,7 @@ export default function LoginPage() {
               {...register('password', { required: 'Vui lòng nhập mật khẩu' })}
             />
 
-            <Button type="submit" variant="primary" size="lg" loading={loading}>
+            <Button type="submit" variant="primary" size="lg" loading={isLoading}>
               Đăng nhập
             </Button>
 
