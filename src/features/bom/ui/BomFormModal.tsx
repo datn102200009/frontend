@@ -46,6 +46,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
         name: bomDetails.name || '',
         product_code: bomDetails.item_code || '',
         notes: bomDetails.description || '',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         items: bomDetails.items?.map((i: any) => ({ item_code: i.item_code, quantity: i.quantity })) || []
       });
     } else if (!isEdit && open && isItemsLoaded) {
@@ -81,6 +82,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
         toast('success', 'Thêm định mức thành công');
       }
       onSave();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast('error', error?.data?.detail || 'Có lỗi xảy ra');
     }

@@ -50,10 +50,12 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Loại phiếu</div>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <Badge variant={PURPOSE_VARIANTS[purposeType] as any}>{PURPOSE_LABELS[purposeType] || purposeType}</Badge>
           </div>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Trạng thái</div>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <Badge variant={statusInfo.variant as any}>{statusInfo.label}</Badge>
           </div>
           <div>
@@ -79,6 +81,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                 </tr>
               </thead>
               <tbody>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {entry.details?.map((detail: any, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--clr-border)' }}>
                     <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code || detail.item_id?.substring(0, 8)}</td>

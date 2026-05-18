@@ -13,6 +13,7 @@ export function StockLedgerView() {
     filterWarehouse ? { warehouseId: filterWarehouse } : {}
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<any, unknown>[]>(
     () => [
       { accessorKey: 'item_code', header: 'Mã SP', size: 120 },

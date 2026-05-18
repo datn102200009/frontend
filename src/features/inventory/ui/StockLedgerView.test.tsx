@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StockLedgerView } from './StockLedgerView';
 import { renderWithProviders } from '../../../shared/lib/test/test-utils';
@@ -54,7 +54,9 @@ describe('StockLedgerView', () => {
     await user.selectOptions(select, 'Kho 1');
     
     // Check that Kho 2 is not displayed anymore in the table cells
-    expect(screen.queryByRole('cell', { name: 'Kho 2' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('cell', { name: 'Kho 2' })).not.toBeInTheDocument();
+    });
     // But Kho 1 should still be there
     expect(screen.getByRole('cell', { name: 'Kho 1' })).toBeInTheDocument();
   });

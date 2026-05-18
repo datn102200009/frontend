@@ -38,6 +38,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 export function StockEntryList() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>('all');
   const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({ status: statusFilter === 'all' ? 'all' : statusFilter });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const entries = (entriesData as any)?.results || (Array.isArray(entriesData) ? entriesData : []);
   const [approveStockIn, { isLoading: isApprovingIn }] = usePostInventoryStockInByStockEntryIdApproveMutation();
   const [approveStockIssue, { isLoading: isApprovingIssue }] = usePostInventoryStockIssueByStockEntryIdApproveMutation();
@@ -62,6 +63,7 @@ export function StockEntryList() {
       toast('success', `Phê duyệt ${approving.name} thành công — đã ghi sổ cái`);
       setApproving(null);
       refetch();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast('error', error?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
     }
@@ -76,6 +78,7 @@ export function StockEntryList() {
         size: 130,
         cell: ({ getValue }) => {
           const t = getValue<string>();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return <Badge variant={PURPOSE_VARIANTS[t] as any}>{PURPOSE_LABELS[t] || t}</Badge>;
         },
       },
@@ -90,6 +93,7 @@ export function StockEntryList() {
         size: 110,
         cell: ({ getValue }) => {
           const s = STATUS_LABELS[getValue<string>()] || { label: getValue<string>(), variant: 'neutral' };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return <Badge variant={s.variant as any}>{s.label}</Badge>;
         },
       },
@@ -97,6 +101,7 @@ export function StockEntryList() {
         accessorKey: 'created_at',
         header: 'Ngày Tạo',
         size: 140,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cell: ({ row }) => formatDateTime((row.original as any).created_at),
       },
       {

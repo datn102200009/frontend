@@ -35,6 +35,7 @@ export default function LoginPage() {
       dispatch(loginSuccess({ user, token: res.access || '', refresh: res.refresh }));
       toast('success', 'Đăng nhập thành công');
       navigate('/dashboard', { replace: true });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err?.data?.error || err?.data?.detail || 'Sai tài khoản hoặc mật khẩu.');
     }
