@@ -1,111 +1,250 @@
+/* ═══════════════════════════════════════════════════════════════
+   Xuân Hòa ERP — Design System Foundation
+   Style: Industrial Precision — Minimalist, Data-centric, Enterprise
+   Palette: Teal/Cyan (kế thừa old_frontend)
+   Typography: DM Sans (headings) + Noto Sans (body/Vietnamese)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. Design Tokens ── */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Brand */
+  --clr-primary-900: #033a48;
+  --clr-primary-800: #044a5a;
+  --clr-primary:     #055568;
+  --clr-primary-600: #0a6e85;
+  --clr-primary-500: #0d8aa6;
+  --clr-primary-400: #2090ac;
+  --clr-primary-300: #0d9488;
+  --clr-primary-200: #5eead4;
+  --clr-primary-100: #ccfbf1;
+  --clr-primary-50:  #f0fdfa;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --clr-secondary:     #33cab1;
+  --clr-secondary-600: #25a590;
+  --clr-secondary-400: #5ed8c4;
+  --clr-secondary-200: #6cfffe;
+  --clr-secondary-100: #d1faf5;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  --clr-accent: #263b95;
+
+  /* Semantic */
+  --clr-success:     #16a34a;
+  --clr-success-bg:  #dcfce7;
+  --clr-warning:     #d97706;
+  --clr-warning-bg:  #fef3c7;
+  --clr-error:       #dc2626;
+  --clr-error-bg:    #fee2e2;
+  --clr-info:        #2563eb;
+  --clr-info-bg:     #dbeafe;
+
+  /* Surfaces */
+  --clr-bg:          #f0f4f8;
+  --clr-surface:     #ffffff;
+  --clr-surface-alt: #f7fafc;
+  --clr-border:      #e2e8f0;
+  --clr-border-focus:#94a3b8;
+
+  /* Text */
+  --clr-text:        #111827;
+  --clr-text-secondary: #475569;
+  --clr-text-muted:  #94a3b8;
+  --clr-text-inverse:#ffffff;
+
+  /* Typography */
+  --font-heading: 'DM Sans', system-ui, sans-serif;
+  --font-body:    'Noto Sans', system-ui, sans-serif;
+  --font-mono:    'DM Mono', ui-monospace, Consolas, monospace;
+
+  --fs-xs:   0.75rem;   /* 12px */
+  --fs-sm:   0.8125rem; /* 13px */
+  --fs-base: 0.875rem;  /* 14px — ERP density */
+  --fs-md:   1rem;      /* 16px */
+  --fs-lg:   1.125rem;  /* 18px */
+  --fs-xl:   1.25rem;   /* 20px */
+  --fs-2xl:  1.5rem;    /* 24px */
+  --fs-3xl:  1.875rem;  /* 30px */
+
+  --lh-tight:  1.25;
+  --lh-normal: 1.5;
+  --lh-relaxed:1.625;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+
+  /* Spacing (4px base) */
+  --sp-1:  0.25rem;
+  --sp-2:  0.5rem;
+  --sp-3:  0.75rem;
+  --sp-4:  1rem;
+  --sp-5:  1.25rem;
+  --sp-6:  1.5rem;
+  --sp-8:  2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+
+  /* Radii */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-full:9999px;
+
+  /* Shadows */
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --shadow-lg:  0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl:  0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+
+  /* Z-index scale */
+  --z-base:    0;
+  --z-dropdown:10;
+  --z-sticky:  20;
+  --z-overlay: 40;
+  --z-modal:   100;
+  --z-toast:   1000;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+
+  /* Layout */
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+/* ── 2. Reset & Base ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  color: var(--clr-text);
+  background-color: var(--clr-bg);
+  min-height: 100dvh;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+#root {
+  min-height: 100dvh;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  color: var(--clr-text);
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: var(--fs-3xl); }
+h2 { font-size: var(--fs-2xl); }
+h3 { font-size: var(--fs-xl);  }
+h4 { font-size: var(--fs-lg);  }
+
+p { line-height: var(--lh-relaxed); }
+
+a {
+  color: var(--clr-primary-500);
+  text-decoration: none;
+  transition: color var(--duration-fast) ease;
+}
+a:hover { color: var(--clr-primary); }
+
+img { max-width: 100%; display: block; }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+/* ── 3. Utility Classes ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── 4. Focus Styles (a11y) ── */
+:focus-visible {
+  outline: 2px solid var(--clr-primary-400);
+  outline-offset: 2px;
+}
+
+/* ── 5. Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--clr-border);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--clr-text-muted); }
+
+/* ── 6. Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

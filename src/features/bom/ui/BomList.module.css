@@ -1,0 +1,54 @@
+/* BomList */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+.actionBtn:hover {
+  background: var(--clr-primary-50);
+  color: var(--clr-primary);
+}
+
+.deleteBtn:hover {
+  background: var(--clr-error-bg);
+  color: var(--clr-error);
+}

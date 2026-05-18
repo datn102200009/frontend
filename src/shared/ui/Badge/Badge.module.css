@@ -1,0 +1,39 @@
+/* Badge — shared/ui/Badge */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  font-family: var(--font-heading);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.6;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.success {
+  background: var(--clr-success-bg);
+  color: var(--clr-success);
+}
+
+.warning {
+  background: var(--clr-warning-bg);
+  color: var(--clr-warning);
+}
+
+.error {
+  background: var(--clr-error-bg);
+  color: var(--clr-error);
+}
+
+.info {
+  background: var(--clr-info-bg);
+  color: var(--clr-info);
+}
+
+.neutral {
+  background: var(--clr-bg);
+  color: var(--clr-text-secondary);
+}

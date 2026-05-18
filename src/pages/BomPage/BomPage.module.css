@@ -1,0 +1,48 @@
+/* BomPage */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  animation: fadeIn var(--duration-base) var(--ease-out);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  border-bottom: 2px solid var(--clr-border);
+}
+
+.tab {
+  padding: var(--sp-3) var(--sp-5);
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text-muted);
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  transition: color var(--duration-fast) ease;
+}
+.tab:hover {
+  color: var(--clr-text);
+}
+
+.tab.active {
+  color: var(--clr-primary);
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--clr-primary);
+  border-radius: 1px 1px 0 0;
+}
+
+.content {
+  animation: slideUp 0.3s var(--ease-out);
+}

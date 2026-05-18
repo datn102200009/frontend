@@ -25,4 +25,12 @@ dist-ssr
 
 # Agent related
 .agent/*
-.github/*
+
+# Code generation configs
+.codegen/
+
+# Environment variables
+.env
+.env.production
+.env.local
+.env.*.local

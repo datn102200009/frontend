@@ -1,0 +1,29 @@
+/* MainLayout — widgets/Layout */
+
+.layout {
+  display: flex;
+  min-height: 100dvh;
+}
+
+.main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.content {
+  flex: 1;
+  padding: var(--sp-6);
+  animation: fadeIn var(--duration-base) var(--ease-out);
+}
+
+@media (max-width: 768px) {
+  .main {
+    margin-left: 0;
+  }
+  .content {
+    padding: var(--sp-4);
+  }
+}
