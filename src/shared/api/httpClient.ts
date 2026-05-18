@@ -1,9 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  console.warn("⚠️ VITE_API_BASE_URL is not defined in your .env file! Falling back to http://localhost:8000/api/v1");
+}
 
 export const httpClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || 'http://localhost:8000/api/v1',
   timeout: 15_000,
   headers: { 'Content-Type': 'application/json' },
 });
