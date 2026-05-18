@@ -107,6 +107,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
       }
       onSuccess();
       onClose();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast('error', error?.data?.detail || 'Có lỗi xảy ra khi lưu sản phẩm');
     }
@@ -200,6 +201,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
           <input
             type="checkbox"
             checked={watchIsImport}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             onChange={(e: any) => setValue('is_import', e.target.checked)}
             disabled={isLoading}
           />

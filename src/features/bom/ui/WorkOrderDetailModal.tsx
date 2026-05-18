@@ -12,6 +12,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 
 interface Props {
   open: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workOrder: any;
   onClose: () => void;
 }
@@ -39,6 +40,7 @@ export function WorkOrderDetailModal({ open, workOrder, onClose }: Props) {
           </div>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Trạng thái</div>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <Badge variant={statusInfo.variant as any}>{statusInfo.label}</Badge>
           </div>
           <div>

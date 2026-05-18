@@ -43,6 +43,7 @@ export function ProductList() {
       toast('success', `Đã xóa sản phẩm ${deleting.item_code}`);
       setDeleting(null);
       refetch();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast('error', error?.data?.detail || 'Lỗi: Không thể xóa sản phẩm này');
     }

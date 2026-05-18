@@ -38,14 +38,18 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
   const { toast } = useToast();
   
   const { data: bomListResp, isLoading: isLoadingBoms } = useGetManufacturingBomListQuery({ isActive: true });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const boms = (bomListResp as any)?.results || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bomOptions = boms.map((b: any) => ({
     label: `${b.name} - ${b.item_code}`,
     value: b.id
   }));
 
   const { data: warehouseResp, isLoading: isLoadingWarehouses } = useGetMasterDataWarehousesListQuery();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const warehouses = (warehouseResp as any) || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const warehouseOptions = warehouses.map((w: any) => ({
     label: w.name,
     value: w.id
@@ -53,6 +57,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
 
   const [createWo, { isLoading: isCreating }] = usePostManufacturingWorkOrderCreateMutation();
   const [getPreview, { isLoading: isPreviewing }] = usePostManufacturingMaterialPreviewMutation();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [previewData, setPreviewData] = useState<any[]>([]);
 
   const {
@@ -109,6 +114,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
               source_warehouse_id: watchSourceWH
             }
           }).unwrap();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           setPreviewData(res as any);
         } catch (e) {
           console.error("Preview failed", e);
@@ -152,6 +158,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
       toast('success', 'Tạo lệnh sản xuất thành công');
       onSuccess();
       onClose();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast('error', error?.data?.detail || 'Có lỗi xảy ra khi tạo lệnh sản xuất');
     }

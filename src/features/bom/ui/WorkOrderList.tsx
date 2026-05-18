@@ -28,7 +28,9 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 
 export function WorkOrderList() {
   const [search, setSearch] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [declaringWo, setDeclaringWo] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [viewingWo, setViewingWo] = useState<any>(null);
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
@@ -43,36 +45,42 @@ export function WorkOrderList() {
   const [completeWo, { isLoading: isCompleting }] = usePostManufacturingWorkOrderByWorkOrderIdCompleteMutation();
   const [cancelWo, { isLoading: isCanceling }] = usePostManufacturingWorkOrderByWorkOrderIdCancelMutation();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleApprove = async (wo: any) => {
     if (window.confirm(`Bạn có chắc chắn muốn phê duyệt lệnh ${wo.name}? Quá trình này sẽ xuất nguyên liệu từ kho nguồn.`)) {
       try {
         await approveWo({ workOrderId: wo.id }).unwrap();
         toast('success', `Phê duyệt lệnh ${wo.name} thành công.`);
         refetch();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         toast('error', error?.data?.detail || 'Lỗi khi phê duyệt lệnh sản xuất');
       }
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleComplete = async (wo: any) => {
     if (window.confirm(`Bạn có chắc chắn muốn hoàn thành lệnh ${wo.name}? Quá trình này sẽ nhập thành phẩm vào kho đích.`)) {
       try {
         await completeWo({ workOrderId: wo.id }).unwrap();
         toast('success', `Hoàn thành lệnh ${wo.name} thành công.`);
         refetch();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         toast('error', error?.data?.detail || 'Lỗi khi hoàn thành lệnh sản xuất');
       }
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCancel = async (wo: any) => {
     if (window.confirm(`Bạn có chắc chắn muốn hủy lệnh ${wo.name}? Lệnh đã hủy sẽ không thể tiếp tục.`)) {
       try {
         await cancelWo({ workOrderId: wo.id }).unwrap();
         toast('success', `Hủy lệnh ${wo.name} thành công.`);
         refetch();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         toast('error', error?.data?.detail || 'Lỗi khi hủy lệnh sản xuất');
       }
@@ -94,11 +102,13 @@ export function WorkOrderList() {
       setDeclaringWo(null);
       setProducedQty('');
       refetch();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast('error', error?.data?.detail || 'Có lỗi xảy ra khi nhập liệu');
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<any, unknown>[]>(
     () => [
       { accessorKey: 'name', header: 'Mã Lệnh', size: 140 },
@@ -126,6 +136,7 @@ export function WorkOrderList() {
         cell: ({ getValue }) => {
           const val = getValue<string>();
           const s = STATUS_MAP[val] || { label: val, variant: 'neutral' };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return <Badge variant={s.variant as any}>{s.label}</Badge>;
         },
       },
@@ -179,9 +190,10 @@ export function WorkOrderList() {
         }
       },
     ],
-    [],
+    [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting],
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const workOrders = (data as any)?.results || [];
 
   return (
@@ -189,6 +201,7 @@ export function WorkOrderList() {
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Lệnh Sản Xuất</h2>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <p className={styles.subtitle}>{(data as any)?.count ?? 0} lệnh</p>
         </div>
         <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>

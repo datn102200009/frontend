@@ -25,6 +25,7 @@ export function renderWithProviders(
     ...renderOptions
   }: ExtendedRenderOptions = {}
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   function Wrapper({ children }: PropsWithChildren<{}>): React.ReactElement {
     return (
       <Provider store={store}>

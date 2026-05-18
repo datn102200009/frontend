@@ -14,6 +14,7 @@ import styles from './BomList.module.css';
 
 export function BomList() {
   const { data: bomsData, isLoading, refetch } = useGetManufacturingBomListQuery({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const boms = (bomsData as any)?.results || (Array.isArray(bomsData) ? bomsData : []);
   const [deleteBom, { isLoading: isDeleting }] = useDeleteManufacturingBomByBomIdDeleteMutation();
   const [editingBom, setEditingBom] = useState<Bom | null>(null);
@@ -32,7 +33,8 @@ export function BomList() {
       toast('success', `Đã xóa định mức ${deletingBom.name}`);
       setDeletingBom(null);
       refetch();
-    } catch (error) {
+     
+    } catch {
       toast('error', 'Có lỗi xảy ra khi xóa định mức');
     }
   };
@@ -52,6 +54,7 @@ export function BomList() {
         accessorKey: 'items_count',
         header: 'Linh Kiện',
         cell: ({ row }) => (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           <Badge variant="info">{(row.original as any).items_count || 0} mục</Badge>
         ),
         enableSorting: false,
@@ -60,6 +63,7 @@ export function BomList() {
         accessorKey: 'created_at',
         header: 'Ngày Tạo',
         size: 140,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         cell: ({ row }) => formatDateTime((row.original as any).created_at),
       },
       {

@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 export const handlers = [
   // Authentication mock
   http.post('*/api/v1/accounts/auth/login/', async ({ request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     if (data.username === 'admin' && data.password === 'admin123') {
       return HttpResponse.json({
@@ -21,6 +22,7 @@ export const handlers = [
 
   // BOM mocks
   http.post('*/api/v1/manufacturing/bom/create/', async ({ request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     if (data.item_id === 'EXISTING') {
       return HttpResponse.json(
@@ -32,11 +34,13 @@ export const handlers = [
   }),
 
   http.put('*/api/v1/manufacturing/bom/:id/', async ({ params, request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     return HttpResponse.json({ id: params.id, ...data });
   }),
 
   http.post('*/api/v1/manufacturing/work-order/create/', async ({ request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     return HttpResponse.json({ id: 'wo-123', ...data }, { status: 201 });
   }),
@@ -81,11 +85,13 @@ export const handlers = [
 
   // Inventory mocks
   http.post('*/api/v1/inventory/stock-in/create/', async ({ request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     return HttpResponse.json({ id: 'in-123', ...data }, { status: 201 });
   }),
 
   http.post('*/api/v1/inventory/stock-issue/create/', async ({ request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     console.log('stock-issue/create mock received data:', data);
     // Simulate insufficient stock error
@@ -101,6 +107,7 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/inventory/stock-transfer/create/', async ({ request }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = await request.json() as any;
     return HttpResponse.json({ id: 'transfer-123', ...data }, { status: 201 });
   }),

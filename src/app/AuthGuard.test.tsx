@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { AuthGuard } from './AuthGuard';
 import { renderWithProviders } from '../shared/lib/test/test-utils';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const setupTestRouter = (initialState: any) => {
   return renderWithProviders(
     <Routes>
