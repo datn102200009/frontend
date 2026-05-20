@@ -11,6 +11,7 @@ import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/mas
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, CheckCircle, Eye } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
@@ -172,20 +173,24 @@ export function StockEntryList() {
       },
       {
         id: 'actions',
-        header: '',
-        size: 150,
+        header: 'Thao Tác',
+        size: 100,
         enableSorting: false,
         cell: ({ row }) => (
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <Button variant="ghost" size="sm" icon={<Eye size={14} />} onClick={() => setViewingEntry(row.original)}>
-              Chi tiết
-            </Button>
-            {row.original.status === 'draft' ? (
-              <Button variant="secondary" size="sm" icon={<CheckCircle size={14} />} onClick={() => handleApprove(row.original)}>
-                Duyệt
-              </Button>
-            ) : null}
-          </div>
+          <TableActions>
+            <ActionButton
+              icon={<Eye size={18} />}
+              title="Chi tiết"
+              onClick={() => setViewingEntry(row.original)}
+            />
+            {row.original.status === 'draft' && (
+              <ActionButton
+                icon={<CheckCircle size={18} />}
+                title="Duyệt"
+                onClick={() => handleApprove(row.original)}
+              />
+            )}
+          </TableActions>
         )
       },
     ],

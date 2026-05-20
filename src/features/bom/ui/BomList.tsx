@@ -3,6 +3,7 @@ import { useGetManufacturingBomListQuery, useDeleteManufacturingBomByBomIdDelete
 import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2, Eye, Plus } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
@@ -69,22 +70,16 @@ export function BomList() {
       {
         id: 'actions',
         header: 'Thao Tác',
-        size: 140,
+        size: 120,
         enableSorting: false,
         cell: ({ row }) => (
-          <div className={styles.actions}>
-            <button type="button" className={styles.actionBtn} title="Xem chi tiết" aria-label="Xem chi tiết">
-              <Eye size={15} />
-            </button>
-            <button type="button" className={styles.actionBtn} title="Chỉnh sửa" aria-label="Chỉnh sửa"
-              onClick={() => setEditingBom(row.original)}>
-              <Pencil size={15} />
-            </button>
-            <button type="button" className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Xóa" aria-label="Xóa"
-              onClick={() => handleDelete(row.original)}>
-              <Trash2 size={15} />
-            </button>
-          </div>
+          <TableActions>
+            <ActionButton icon={<Eye size={18} />} title="Xem chi tiết" />
+            <ActionButton icon={<Pencil size={18} />} title="Chỉnh sửa"
+              onClick={() => setEditingBom(row.original)} />
+            <ActionButton icon={<Trash2 size={18} />} title="Xóa" variant="danger"
+              onClick={() => handleDelete(row.original)} />
+          </TableActions>
         ),
       },
     ],

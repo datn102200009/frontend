@@ -26,3 +26,8 @@
   background: var(--clr-error-bg);
   color: var(--clr-error);
 }
+
+.actionBtn svg {
+  width: 18px;
+  height: 18px;
+}

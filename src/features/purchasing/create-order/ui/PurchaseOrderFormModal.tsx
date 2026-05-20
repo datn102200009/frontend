@@ -204,12 +204,12 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                 Đóng
               </Button>
               {isDraft && (
-                <Button onClick={handleSubmit(onSubmit)} loading={isCreating || isUpdating} disabled={isWorking}>
+                <Button variant={orderId ? "outline" : "primary"} onClick={handleSubmit(onSubmit)} loading={isCreating || isUpdating} disabled={isWorking}>
                   {orderId ? 'Cập Nhật' : 'Tạo Đơn Hàng'}
                 </Button>
               )}
               {orderId && isDraft && (
-                <Button variant="outline" onClick={handleConfirm} loading={isApproving} disabled={isWorking} icon={<CheckCircle size={16} />}>
+                <Button variant="primary" onClick={handleConfirm} loading={isApproving} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt Đơn
                 </Button>
               )}

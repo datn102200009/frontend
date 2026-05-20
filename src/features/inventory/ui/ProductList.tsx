@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
@@ -77,36 +78,23 @@ export function ProductList() {
       },
       {
         id: 'actions',
-        header: '',
+        header: 'Thao Tác',
         size: 100,
         enableSorting: false,
         cell: ({ row }) => (
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              type="button"
+          <TableActions>
+            <ActionButton
+              icon={<Pencil size={18} />}
+              title="Chỉnh sửa"
               onClick={() => setEditing(row.original)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 32, height: 32, border: 'none', borderRadius: 4, background: 'transparent',
-                color: 'var(--clr-text-muted)', cursor: 'pointer',
-              }}
-              aria-label="Sửa"
-            >
-              <Pencil size={15} />
-            </button>
-            <button
-              type="button"
+            />
+            <ActionButton
+              icon={<Trash2 size={18} />}
+              title="Xóa"
+              variant="danger"
               onClick={() => handleDelete(row.original)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 32, height: 32, border: 'none', borderRadius: 4, background: 'transparent',
-                color: 'var(--clr-text-muted)', cursor: 'pointer',
-              }}
-              aria-label="Xóa"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
+            />
+          </TableActions>
         ),
       },
     ],

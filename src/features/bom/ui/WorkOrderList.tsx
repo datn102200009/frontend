@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye } from 'lucide-react';
+import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
@@ -158,44 +159,58 @@ export function WorkOrderList() {
       },
       {
         id: 'actions',
-        header: '',
-        size: 250,
+        header: 'Thao Tác',
+        size: 160,
         enableSorting: false,
         cell: ({ row }) => {
           const status = row.original.status;
           return (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button variant="ghost" size="sm" icon={<Eye size={14} />} onClick={() => setViewingWo(row.original)}>
-                Chi tiết
-              </Button>
+            <TableActions>
+              <ActionButton
+                icon={<Eye size={18} />}
+                title="Chi tiết"
+                onClick={() => setViewingWo(row.original)}
+              />
               {status === 'pending_approval' && (
                 <>
-                  <Button variant="outline" size="sm" icon={<PlayCircle size={14} />} onClick={() => handleApprove(row.original)} disabled={isApproving}>
-                    Phê duyệt
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleCancel(row.original)} disabled={isCanceling}>
-                    Hủy
-                  </Button>
+                  <ActionButton
+                    icon={<PlayCircle size={18} />}
+                    title="Phê duyệt"
+                    onClick={() => handleApprove(row.original)}
+                    disabled={isApproving}
+                  />
+                  <ActionButton
+                    icon={<XCircle size={18} />}
+                    title="Hủy"
+                    variant="danger"
+                    onClick={() => handleCancel(row.original)}
+                    disabled={isCanceling}
+                  />
                 </>
               )}
               {status === 'in_progress' && (
                 <>
                   {(row.original.produced_qty || 0) < row.original.quantity && (
-                    <Button variant="outline" size="sm" icon={<ArrowRightCircle size={14} />} onClick={() => {
-                      setDeclaringWo(row.original);
-                      setProducedQty('');
-                    }}>
-                      Nhập liệu
-                    </Button>
+                    <ActionButton
+                      icon={<ArrowRightCircle size={18} />}
+                      title="Nhập liệu"
+                      onClick={() => {
+                        setDeclaringWo(row.original);
+                        setProducedQty('');
+                      }}
+                    />
                   )}
                   {(row.original.produced_qty || 0) >= row.original.quantity && (
-                    <Button variant="primary" size="sm" icon={<CheckCircle size={14} />} onClick={() => handleComplete(row.original)} disabled={isCompleting}>
-                      Hoàn thành
-                    </Button>
+                    <ActionButton
+                      icon={<CheckCircle size={18} />}
+                      title="Hoàn thành"
+                      onClick={() => handleComplete(row.original)}
+                      disabled={isCompleting}
+                    />
                   )}
                 </>
               )}
-            </div>
+            </TableActions>
           );
         }
       },
