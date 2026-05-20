@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react';
-import { useGetManufacturingBomListQuery, useDeleteManufacturingBomByBomIdDeleteMutation } from '../../manufacturing/api/manufacturingApi';
+import { useGetManufacturingBomListQuery, useDeleteManufacturingBomByBomIdDeleteMutation } from '@features/manufacturing/api/manufacturingApi';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2, Eye, Plus } from 'lucide-react';
-import { DataTable } from '../../../shared/ui/DataTable/DataTable';
-import { Button } from '../../../shared/ui/Button/Button';
-import { Badge } from '../../../shared/ui/Badge/Badge';
-import { Modal } from '../../../shared/ui/Modal/Modal';
+import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { Button } from '@shared/ui/Button/Button';
+import { Badge } from '@shared/ui/Badge/Badge';
+import { Modal } from '@shared/ui/Modal/Modal';
 import { BomFormModal } from './BomFormModal';
-import { useToast } from '../../../shared/ui/Toast/Toast';
-import { type Bom } from '../../manufacturing/api/manufacturingApi';
-import { formatDateTime } from '../../../shared/lib/formatDate';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { type Bom } from '@features/manufacturing/api/manufacturingApi';
+import { formatDateTime } from '@shared/lib/formatDate';
 import styles from './BomList.module.css';
 
 export function BomList() {

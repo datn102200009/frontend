@@ -1,0 +1,27 @@
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--clr-text-main);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltipContainer:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}

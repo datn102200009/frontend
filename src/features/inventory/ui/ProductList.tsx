@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { DataTable } from '../../../shared/ui/DataTable/DataTable';
-import { Button } from '../../../shared/ui/Button/Button';
-import { Badge } from '../../../shared/ui/Badge/Badge';
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { useToast } from '../../../shared/ui/Toast/Toast';
+import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { Button } from '@shared/ui/Button/Button';
+import { Badge } from '@shared/ui/Badge/Badge';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { useToast } from '@shared/ui/Toast/Toast';
 import { ProductFormModal } from './ProductFormModal';
 import {
   useGetMasterDataItemsListQuery,

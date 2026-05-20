@@ -1,7 +1,7 @@
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { Button } from '../../../shared/ui/Button/Button';
-import { Badge } from '../../../shared/ui/Badge/Badge';
-import { formatDateShort } from '../../../shared/lib/formatDate';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { Button } from '@shared/ui/Button/Button';
+import { Badge } from '@shared/ui/Badge/Badge';
+import { formatDateShort } from '@shared/lib/formatDate';
 
 const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' | 'error' }> = {
   pending_approval: { label: 'Chờ duyệt', variant: 'neutral' },

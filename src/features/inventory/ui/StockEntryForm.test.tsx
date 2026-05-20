@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StockEntryForm } from './StockEntryForm';
-import { renderWithProviders } from '../../../shared/lib/test/test-utils';
+import { renderWithProviders } from '@shared/lib/test/test-utils';
 
 describe('StockEntryForm', () => {
   const defaultProps = {

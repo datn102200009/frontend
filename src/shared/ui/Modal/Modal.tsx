@@ -13,18 +13,7 @@ export interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, size = 'md', footer }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (open) {
-      dialog.showModal();
-    } else {
-      dialog.close();
-    }
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,7 +36,7 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
   if (!open) return null;
 
   return (
-    <dialog ref={dialogRef} className={styles.dialog} onClick={handleBackdropClick}>
+    <div role="dialog" aria-modal="true" className={styles.dialog} onClick={handleBackdropClick}>
       <div ref={contentRef} className={clsx(styles.content, styles[size])}>
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>
@@ -58,6 +47,6 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
         <div className={styles.body}>{children}</div>
         {footer && <div className={styles.footer}>{footer}</div>}
       </div>
-    </dialog>
+    </div>
   );
 }
