@@ -75,6 +75,7 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({ onView, onEdit }) 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <DataTable
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any}
         data={suppliers}
         loading={isLoading}

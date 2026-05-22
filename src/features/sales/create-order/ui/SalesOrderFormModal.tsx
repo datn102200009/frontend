@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { 
   usePostSalesOrdersMutation, 
@@ -10,7 +10,6 @@ import {
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetCrmCustomersQuery } from '@entities/crm/api/crmApi';
 import type { SalesOrderInput } from '@entities/sales/model/types';
-import { MOCK_IDS } from '@shared/api/mockData';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
@@ -56,10 +55,16 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     name: 'lines'
   });
 
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (orderId && orderData && !hasInitialized) {
+    if (!open) {
+      hasInitialized.current = false;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (orderId && orderData && !hasInitialized.current) {
       reset({
         customer_id: orderData.customer,
         lines: (orderData.lines || []).map(l => ({
@@ -68,15 +73,15 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
           unit_price: l.unit_price,
         }))
       });
-      setHasInitialized(true);
-    } else if (!orderId && customersData !== undefined && itemsData !== undefined && !hasInitialized) {
+      hasInitialized.current = true;
+    } else if (!orderId && customersData !== undefined && itemsData !== undefined && !hasInitialized.current) {
       reset({
         customer_id: customersData?.[0]?.id || '',
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 15000000 }],
       });
-      setHasInitialized(true);
+      hasInitialized.current = true;
     }
-  }, [orderId, orderData, reset, itemsData, customersData, hasInitialized]);
+  }, [orderId, orderData, reset, itemsData, customersData]);
 
   const getSelectableItems = (currentFieldItemId?: string) => {
     const list = [...(itemsData?.results || [])];
@@ -255,7 +260,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                 {!isReadOnly && (
                   <Button variant="outline" size="sm" icon={<Plus size={14} />}
                     onClick={() => {
-                      const firstItemId = itemsData?.results?.[0]?.id || MOCK_IDS.ITEM_1;
+                      const firstItemId = itemsData?.results?.[0]?.id || '';
                       append({ item_id: firstItemId, quantity: 1, unit_price: 0 });
                     }}
                     disabled={isWorking}>

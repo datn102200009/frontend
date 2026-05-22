@@ -5,10 +5,15 @@ import { Input } from '@shared/ui/Input/Input';
 import { FormSelect as Select } from '@shared/ui/Select/FormSelect';
 import { usePostFinanceCashFlowsMutation } from '@entities/finance/api/financeApi';
 import type { CashFlowInput } from '@entities/finance/model/types';
-import { MOCK_IDS } from '@shared/api/mockData';
+import { useGetPurchasingOrdersQuery, useGetPurchasingInvoicesQuery } from '@entities/purchasing/api/purchasingApi';
+import { useGetSalesOrdersQuery, useGetSalesInvoicesQuery } from '@entities/sales/api/salesApi';
 
 export const CreateCashFlowForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {
   const [createCashFlow, { isLoading }] = usePostFinanceCashFlowsMutation();
+  const { data: purchaseOrders } = useGetPurchasingOrdersQuery();
+  const { data: purchaseInvoices } = useGetPurchasingInvoicesQuery();
+  const { data: salesOrders } = useGetSalesOrdersQuery();
+  const { data: salesInvoices } = useGetSalesInvoicesQuery();
   
   const { register, handleSubmit, watch, formState: { errors } } = useForm<CashFlowInput>({
     defaultValues: {
@@ -79,12 +84,24 @@ export const CreateCashFlowForm: React.FC<{ onSuccess?: () => void }> = ({ onSuc
               <Select 
                 label="Purchase Order (for deposit)" 
                 {...register('purchase_order_id')}
-                options={[{ value: '', label: 'None' }, { value: MOCK_IDS.PO_1, label: `PO: ${MOCK_IDS.PO_1.slice(0,8)}` }]}
+                options={[
+                  { value: '', label: 'None' },
+                  ...(purchaseOrders?.map(po => ({
+                    value: po.id || '',
+                    label: `PO: ${po.id?.slice(0, 8).toUpperCase()} (${po.vendor_name || 'N/A'})`
+                  })) || [])
+                ]}
               />
               <Select 
                 label="Purchase Invoice (for payment)" 
                 {...register('purchase_invoice_id')}
-                options={[{ value: '', label: 'None' }, { value: MOCK_IDS.PI_1, label: `PI: ${MOCK_IDS.PI_1.slice(0,8)}` }]}
+                options={[
+                  { value: '', label: 'None' },
+                  ...(purchaseInvoices?.map(pi => ({
+                    value: pi.id || '',
+                    label: `PI: ${pi.id?.slice(0, 8).toUpperCase()} (${pi.vendor_name || 'N/A'})`
+                  })) || [])
+                ]}
               />
             </>
           ) : (
@@ -92,12 +109,24 @@ export const CreateCashFlowForm: React.FC<{ onSuccess?: () => void }> = ({ onSuc
               <Select 
                 label="Sales Order (for deposit)" 
                 {...register('sales_order_id')}
-                options={[{ value: '', label: 'None' }, { value: MOCK_IDS.SO_1, label: `SO: ${MOCK_IDS.SO_1.slice(0,8)}` }]}
+                options={[
+                  { value: '', label: 'None' },
+                  ...(salesOrders?.map(so => ({
+                    value: so.id || '',
+                    label: `SO: ${so.id?.slice(0, 8).toUpperCase()} (${so.customer_name || 'N/A'})`
+                  })) || [])
+                ]}
               />
               <Select 
                 label="Sales Invoice (for payment)" 
                 {...register('sales_invoice_id')}
-                options={[{ value: '', label: 'None' }, { value: MOCK_IDS.SI_1, label: `SI: ${MOCK_IDS.SI_1.slice(0,8)}` }]}
+                options={[
+                  { value: '', label: 'None' },
+                  ...(salesInvoices?.map(si => ({
+                    value: si.id || '',
+                    label: `SI: ${si.id?.slice(0, 8).toUpperCase()} (${si.customer_name || 'N/A'})`
+                  })) || [])
+                ]}
               />
             </>
           )}

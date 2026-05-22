@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { 
   useGetInventoryStockEntryListQuery, 
   usePostInventoryStockInByStockEntryIdApproveMutation, 
@@ -19,7 +19,7 @@ import { useToast } from '@shared/ui/Toast/Toast';
 import { StockEntryForm } from './StockEntryForm';
 import { StockEntryDetailModal } from './StockEntryDetailModal';
 import { formatDateTime } from '@shared/lib/formatDate';
-import type { StockEntry } from '@features/inventory/api/inventoryApi';
+import type { StockEntry, StockEntryDetail, StockBalance } from '@features/inventory/api/inventoryApi';
 
 
 const PURPOSE_LABELS: Record<string, string> = {
@@ -58,6 +58,7 @@ export function StockEntryList() {
   const [approveStockIssue, { isLoading: isApprovingIssue }] = usePostInventoryStockIssueByStockEntryIdApproveMutation();
   const [approveStockTransfer, { isLoading: isApprovingTransfer }] = usePostInventoryStockTransferByStockEntryIdApproveMutation();
   const [approving, setApproving] = useState<StockEntry | null>(null);
+  const [prevApprovingId, setPrevApprovingId] = useState<string | null>(null);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
   const [viewingEntry, setViewingEntry] = useState<StockEntry | null>(null);
   const [showCreate, setShowCreate] = useState<'stock_in' | 'stock_issue' | 'internal_transfer' | null>(null);
@@ -65,22 +66,22 @@ export function StockEntryList() {
   
   const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer || isUpdating;
 
-  useEffect(() => {
-    if (approving) {
-      let defaultWh = '';
-      if (approving.details && approving.details.length > 0) {
-        const firstDetail = approving.details[0];
-        if (approving.purpose === 'receipt') {
-          defaultWh = firstDetail.target_warehouse_id || '';
-        } else if (approving.purpose === 'issue') {
-          defaultWh = firstDetail.source_warehouse_id || '';
-        }
+  if (approving && approving.id !== prevApprovingId) {
+    setPrevApprovingId(approving.id || null);
+    let defaultWh = '';
+    if (approving.details && approving.details.length > 0) {
+      const firstDetail = approving.details[0];
+      if (approving.purpose === 'receipt') {
+        defaultWh = firstDetail.target_warehouse_id || '';
+      } else if (approving.purpose === 'issue') {
+        defaultWh = firstDetail.source_warehouse_id || '';
       }
-      setSelectedWarehouseId(defaultWh);
-    } else {
-      setSelectedWarehouseId('');
     }
-  }, [approving]);
+    setSelectedWarehouseId(defaultWh);
+  } else if (!approving && prevApprovingId !== null) {
+    setPrevApprovingId(null);
+    setSelectedWarehouseId('');
+  }
 
   const handleApprove = (entry: StockEntry) => {
     setApproving(entry);
@@ -200,9 +201,9 @@ export function StockEntryList() {
   const hasSufficientStock = useMemo(() => {
     if (approving?.purpose !== 'issue') return true;
     if (!selectedWarehouseId) return false;
-    return (approving.details || []).every((detail: any) => {
+    return (approving.details || []).every((detail: StockEntryDetail) => {
       const balance = (stockBalances || []).find(
-        (b: any) => b.warehouse_id === selectedWarehouseId && b.item_id === detail.item_id
+        (b: StockBalance) => b.warehouse_id === selectedWarehouseId && b.item_id === detail.item_id
       )?.total_quantity || 0;
       return balance >= (detail.quantity || 0);
     });
@@ -288,7 +289,7 @@ export function StockEntryList() {
                   disabled={isApproving}
                 >
                   <option value="">-- Chọn kho --</option>
-                  {(warehouses || []).map((wh: any) => (
+                  {(warehouses || []).map((wh: { id?: string; name?: string }) => (
                     <option key={wh.id} value={wh.id}>{wh.name}</option>
                   ))}
                 </select>
@@ -312,9 +313,9 @@ export function StockEntryList() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(approving.details || []).map((detail: any, idx: number) => {
+                        {(approving.details || []).map((detail: StockEntryDetail, idx: number) => {
                           const balance = (stockBalances || []).find(
-                            (b: any) => b.warehouse_id === selectedWarehouseId && b.item_id === detail.item_id
+                            (b: StockBalance) => b.warehouse_id === selectedWarehouseId && b.item_id === detail.item_id
                           )?.total_quantity || 0;
                           const isSufficient = balance >= (detail.quantity || 0);
                           return (
@@ -327,7 +328,7 @@ export function StockEntryList() {
                                   color: isSufficient ? 'var(--clr-success)' : 'var(--clr-error)',
                                   fontWeight: 600
                                 }}>
-                                  {isSufficient ? 'Đủ hàng' : `Thiếu ${detail.quantity - balance}`}
+                                  {isSufficient ? 'Đủ hàng' : `Thiếu ${(detail.quantity || 0) - balance}`}
                                 </span>
                               </td>
                             </tr>
