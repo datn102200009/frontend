@@ -10,7 +10,6 @@ import {
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetCrmCustomersQuery } from '@entities/crm/api/crmApi';
 import type { SalesOrderInput } from '@entities/sales/model/types';
-import { MOCK_IDS } from '@shared/api/mockData';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
@@ -255,7 +254,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                 {!isReadOnly && (
                   <Button variant="outline" size="sm" icon={<Plus size={14} />}
                     onClick={() => {
-                      const firstItemId = itemsData?.results?.[0]?.id || MOCK_IDS.ITEM_1;
+                      const firstItemId = itemsData?.results?.[0]?.id || '';
                       append({ item_id: firstItemId, quantity: 1, unit_price: 0 });
                     }}
                     disabled={isWorking}>

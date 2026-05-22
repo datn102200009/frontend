@@ -2,7 +2,6 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PurchaseOrderFormModal } from './PurchaseOrderFormModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
-import { MOCK_IDS } from '@shared/api/mockData';
 
 describe('PurchaseOrderFormModal', () => {
   const defaultProps = {
@@ -74,7 +73,7 @@ describe('PurchaseOrderFormModal', () => {
     
     // Select vendor
     const vendorSelect = screen.getByRole('combobox', { name: /^Nhà Cung Cấp/i });
-    await user.selectOptions(vendorSelect, MOCK_IDS.VENDOR_1);
+    await user.selectOptions(vendorSelect, '33333333-3333-3333-3333-333333333333');
     
     const quantityInput = screen.getAllByRole('spinbutton')[0]; // First number input is quantity
     await user.clear(quantityInput);

@@ -5,7 +5,8 @@ import { Input } from '@shared/ui/Input/Input';
 import { FormSelect as Select } from '@shared/ui/Select/FormSelect';
 import { usePutPurchasingOrdersByPkMutation } from '@entities/purchasing/api/purchasingApi';
 import type { PurchaseOrder, PurchaseOrderInput } from '@entities/purchasing/model/types';
-import { MOCK_IDS } from '@shared/api/mockData';
+import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
+import { useGetProcurementSuppliersQuery } from '@entities/procurement/api/procurementApi';
 
 interface UpdatePOFormProps {
   order: PurchaseOrder;
@@ -14,6 +15,8 @@ interface UpdatePOFormProps {
 
 export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, onSuccess }) => {
   const [updateOrder, { isLoading }] = usePutPurchasingOrdersByPkMutation();
+  const { data: itemsData } = useGetMasterDataItemsListQuery({ status: 'active', limit: 100 });
+  const { data: suppliersData } = useGetProcurementSuppliersQuery();
   
   const { register, control, handleSubmit, formState: { errors } } = useForm<PurchaseOrderInput>({
     defaultValues: {
@@ -48,9 +51,10 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
             label="Vendor" 
             {...register('vendor_id', { required: 'Vendor is required' })}
             error={errors.vendor_id?.message}
-            options={[
-              { value: MOCK_IDS.VENDOR_1, label: 'Tech Component Supplier' },
-            ]}
+            options={suppliersData?.map(s => ({
+              value: s.id || '',
+              label: s.supplier_name || s.name || ''
+            })) || []}
           />
           <Select 
             label="Status" 
@@ -68,7 +72,7 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
       <div className="bg-slate-50 p-6 rounded-xl border border-slate-200/60">
         <div className="flex justify-between items-center mb-4">
           <h4 className="text-base font-semibold text-slate-800">Order Lines</h4>
-          <Button type="button" variant="outline" size="sm" onClick={() => append({ item_id: MOCK_IDS.ITEM_2, quantity: 1, unit_price: 0 })}>
+          <Button type="button" variant="outline" size="sm" onClick={() => append({ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 0 })}>
             + Add Item
           </Button>
         </div>
@@ -80,10 +84,10 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
                 <Select 
                   label="Item" 
                   {...register(`lines.${index}.item_id` as const, { required: 'Item is required' })}
-                  options={[
-                    { value: MOCK_IDS.ITEM_1, label: 'STM32 Microcontroller' },
-                    { value: MOCK_IDS.ITEM_2, label: '16x2 LCD Display' },
-                  ]}
+                  options={itemsData?.results?.map(item => ({
+                    value: item.id || '',
+                    label: `${item.item_name || ''} (${item.item_code || ''})`
+                  })) || []}
                 />
               </div>
               <div className="w-32">
