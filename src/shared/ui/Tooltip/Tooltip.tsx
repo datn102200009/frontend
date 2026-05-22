@@ -1,5 +1,5 @@
 import React, { useState, useRef, type ReactNode } from 'react';
-import ReactDOM from 'react-dom';
+import { createPortal } from 'react-dom';
 import styles from './Tooltip.module.css';
 
 interface TooltipProps {
@@ -40,7 +40,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children }) => {
     >
       {children}
       {visible &&
-        ReactDOM.createPortal(
+        createPortal(
           <div
             className={styles.tooltipPortal}
             style={{

@@ -12,7 +12,7 @@ import {
   usePostInventoryStockTransferByStockEntryIdApproveMutation,
   useGetInventoryStockLedgerBalanceQuery
 } from '@features/inventory/api/inventoryApi';
-import type { StockEntry } from '@features/inventory/api/inventoryApi';
+import type { StockEntry, StockEntryDetail } from '@features/inventory/api/inventoryApi';
 
 const PURPOSE_LABELS: Record<string, string> = {
   receipt: 'Nhập kho',
@@ -50,7 +50,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
   const [approveStockIssue, { isLoading: isApprovingIssue }] = usePostInventoryStockIssueByStockEntryIdApproveMutation();
   const [approveStockTransfer, { isLoading: isApprovingTransfer }] = usePostInventoryStockTransferByStockEntryIdApproveMutation();
   
-  const [localDetails, setLocalDetails] = useState<any[]>([]);
+  const [localDetails, setLocalDetails] = useState<StockEntryDetail[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
       const payload = {
         remarks: entry.remarks,
         details: localDetails.map(detail => ({
-          detail_id: detail.id,
+          detail_id: detail.id!,
           source_warehouse_id: detail.source_warehouse_id,
           target_warehouse_id: detail.target_warehouse_id,
           quantity: detail.quantity
@@ -136,7 +136,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
         const payload = {
           remarks: entry.remarks,
           details: localDetails.map(detail => ({
-            detail_id: detail.id,
+            detail_id: detail.id!,
             source_warehouse_id: detail.source_warehouse_id,
             target_warehouse_id: detail.target_warehouse_id,
             quantity: detail.quantity

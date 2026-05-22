@@ -89,7 +89,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     <Modal 
       open={open} 
       onClose={onClose} 
-      title={defaultValues?.payment_type === 'receive' ? 'Ghi Nhận Thu Tiền' : 'Ghi Nhận Chi Tiền'}
+      title={paymentType === 'receive' ? 'Ghi Nhận Thu Tiền' : 'Ghi Nhận Chi Tiền'}
       size="md"
       footer={
         <>
@@ -107,7 +107,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
               defaultValues?.purchase_order_id ? 'purchase_order_id' :
               defaultValues?.sales_invoice_id ? 'sales_invoice_id' :
               defaultValues?.purchase_invoice_id ? 'purchase_invoice_id' :
-              defaultValues?.payment_type === 'receive' ? 'sales_invoice_id' : 'purchase_invoice_id'
+              paymentType === 'receive' ? 'sales_invoice_id' : 'purchase_invoice_id'
             , { required: 'Bắt buộc' })} disabled={isWorking || isDirect}>
               {defaultValues?.sales_order_id ? (
                 <option value={defaultValues.sales_order_id}>{defaultValues.sales_order_id.slice(0,8).toUpperCase()} (Đặt Cọc Bán)</option>
@@ -117,7 +117,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
                 <option value={defaultValues.sales_invoice_id}>{defaultValues.sales_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Bán)</option>
               ) : defaultValues?.purchase_invoice_id ? (
                 <option value={defaultValues.purchase_invoice_id}>{defaultValues.purchase_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Mua)</option>
-              ) : defaultValues?.payment_type === 'receive' ? (
+              ) : paymentType === 'receive' ? (
                 salesInvoices?.map(inv => inv.id ? (
                   <option key={inv.id} value={inv.id}>
                     {inv.id.slice(0,8).toUpperCase()} - {inv.customer_name || 'N/A'} ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.total_amount || 0)})
