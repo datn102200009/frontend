@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
@@ -50,31 +50,31 @@ export function WorkOrderList() {
   const [cancelWo, { isLoading: isCanceling }] = usePostManufacturingWorkOrderByWorkOrderIdCancelMutation();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleApprove = (wo: any) => {
+  const handleApprove = useCallback((wo: any) => {
     setConfirmState({
       action: 'approve',
       wo,
       message: `Bạn có chắc chắn muốn phê duyệt lệnh ${wo.name}? Quá trình này sẽ xuất nguyên liệu từ kho nguồn.`
     });
-  };
+  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleComplete = (wo: any) => {
+  const handleComplete = useCallback((wo: any) => {
     setConfirmState({
       action: 'complete',
       wo,
       message: `Bạn có chắc chắn muốn hoàn thành lệnh ${wo.name}? Quá trình này sẽ nhập thành phẩm vào kho đích.`
     });
-  };
+  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCancel = (wo: any) => {
+  const handleCancel = useCallback((wo: any) => {
     setConfirmState({
       action: 'cancel',
       wo,
       message: `Bạn có chắc chắn muốn hủy lệnh ${wo.name}? Lệnh đã hủy sẽ không thể tiếp tục.`
     });
-  };
+  }, []);
 
   const handleConfirmAction = async () => {
     if (!confirmState) return;
