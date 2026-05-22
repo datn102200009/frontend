@@ -157,15 +157,15 @@ export const handlers = [
 
   // Purchasing & Sales transaction mocks
   http.post('*/api/v1/purchasing/orders/', async ({ request }) => {
-    const data = await request.json();
-    return HttpResponse.json({ id: 'new-po-123', ...data as any }, { status: 201 });
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: 'new-po-123', ...data }, { status: 201 });
   }),
   http.post('*/api/v1/purchasing/orders/:id/receive/', () => {
     return HttpResponse.json({ id: 'rec-123' }, { status: 200 });
   }),
   http.post('*/api/v1/sales/orders/', async ({ request }) => {
-    const data = await request.json();
-    return HttpResponse.json({ id: 'new-so-123', ...data as any }, { status: 201 });
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: 'new-so-123', ...data }, { status: 201 });
   }),
   http.post('*/api/v1/sales/orders/:id/deliver/', () => {
     return HttpResponse.json({ id: 'del-123' }, { status: 200 });
@@ -185,7 +185,7 @@ export const handlers = [
 
   // Finance mocks
   http.post('*/api/v1/finance/cash-flows/', async ({ request }) => {
-    const data = await request.json();
-    return HttpResponse.json({ id: 'new-cf-123', ...data as any }, { status: 201 });
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: 'new-cf-123', ...data }, { status: 201 });
   }),
 ];

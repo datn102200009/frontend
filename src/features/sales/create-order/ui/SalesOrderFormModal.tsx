@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { 
   usePostSalesOrdersMutation, 
@@ -55,10 +55,16 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     name: 'lines'
   });
 
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (orderId && orderData && !hasInitialized) {
+    if (!open) {
+      hasInitialized.current = false;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (orderId && orderData && !hasInitialized.current) {
       reset({
         customer_id: orderData.customer,
         lines: (orderData.lines || []).map(l => ({
@@ -67,15 +73,15 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
           unit_price: l.unit_price,
         }))
       });
-      setHasInitialized(true);
-    } else if (!orderId && customersData !== undefined && itemsData !== undefined && !hasInitialized) {
+      hasInitialized.current = true;
+    } else if (!orderId && customersData !== undefined && itemsData !== undefined && !hasInitialized.current) {
       reset({
         customer_id: customersData?.[0]?.id || '',
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 15000000 }],
       });
-      setHasInitialized(true);
+      hasInitialized.current = true;
     }
-  }, [orderId, orderData, reset, itemsData, customersData, hasInitialized]);
+  }, [orderId, orderData, reset, itemsData, customersData]);
 
   const getSelectableItems = (currentFieldItemId?: string) => {
     const list = [...(itemsData?.results || [])];

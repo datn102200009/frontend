@@ -9,10 +9,9 @@ import { Eye, Printer } from 'lucide-react';
 
 interface SalesOrderTableProps {
   onView?: (id: string) => void;
-  onEdit?: (order: SalesOrder) => void;
 }
 
-export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView, onEdit }) => {
+export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
   const { data: orders = [], isLoading } = useGetSalesOrdersQuery();
 
   const columns = useMemo(() => {
@@ -70,11 +69,12 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView, onEdit
         ),
       }),
     ];
-  }, [onView, onEdit]);
+  }, [onView]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <DataTable 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any} 
         data={orders} 
         loading={isLoading}

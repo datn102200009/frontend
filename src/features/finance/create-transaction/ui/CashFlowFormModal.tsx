@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { usePostFinanceCashFlowsMutation } from '@entities/finance/api/financeApi';
 import { useGetSalesInvoicesQuery } from '@entities/sales/api/salesApi';
@@ -24,7 +24,13 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
   const { data: salesInvoices, isLoading: isLoadingSales } = useGetSalesInvoicesQuery(undefined, { skip: paymentType !== 'receive' || isDirect });
   const { data: purchaseInvoices, isLoading: isLoadingPurchasing } = useGetPurchasingInvoicesQuery(undefined, { skip: paymentType !== 'pay' || isDirect });
 
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitialized = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      hasInitialized.current = false;
+    }
+  }, [open]);
 
   const { register, handleSubmit, reset } = useForm<CashFlowInput>({
     defaultValues: {
@@ -43,7 +49,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
   useEffect(() => {
     if (isDirect) return;
 
-    if (!hasInitialized) {
+    if (!hasInitialized.current) {
       if (paymentType === 'receive' && salesInvoices && salesInvoices.length > 0) {
         reset({
           payment_type: 'receive',
@@ -56,7 +62,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           category: defaultValues?.category || 'bank_transfer',
           remarks: defaultValues?.remarks || ''
         });
-        setHasInitialized(true);
+        hasInitialized.current = true;
       } else if (paymentType === 'pay' && purchaseInvoices && purchaseInvoices.length > 0) {
         reset({
           payment_type: 'pay',
@@ -69,10 +75,10 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           category: defaultValues?.category || 'bank_transfer',
           remarks: defaultValues?.remarks || ''
         });
-        setHasInitialized(true);
+        hasInitialized.current = true;
       }
     }
-  }, [salesInvoices, purchaseInvoices, paymentType, reset, defaultValues, hasInitialized, isDirect]);
+  }, [salesInvoices, purchaseInvoices, paymentType, reset, defaultValues, isDirect]);
 
   const onSubmit = async (data: CashFlowInput) => {
     try {

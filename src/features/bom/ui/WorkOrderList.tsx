@@ -36,6 +36,7 @@ export function WorkOrderList() {
   const [viewingWo, setViewingWo] = useState<any>(null);
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: any, message: string } | null>(null);
   const { toast } = useToast();
 

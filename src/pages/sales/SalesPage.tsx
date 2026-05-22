@@ -54,7 +54,6 @@ export const SalesPage = () => {
           <div style={{ marginTop: '8px' }}>
             {activeTab === 'orders' ? (
               <SalesOrderTable 
-                onEdit={(order) => setEditOrderId(order.id)}
                 onView={(id) => setEditOrderId(id)}
               />
             ) : (

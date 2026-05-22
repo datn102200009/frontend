@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { 
   usePostPurchasingOrdersMutation, 
@@ -55,10 +55,16 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     name: 'lines'
   });
 
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (orderId && orderData && !hasInitialized) {
+    if (!open) {
+      hasInitialized.current = false;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (orderId && orderData && !hasInitialized.current) {
       reset({
         vendor_id: orderData.vendor,
         lines: (orderData.lines || []).map(l => ({
@@ -67,15 +73,15 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
           unit_price: l.unit_price,
         }))
       });
-      setHasInitialized(true);
-    } else if (!orderId && suppliersData !== undefined && itemsData !== undefined && !hasInitialized) {
+      hasInitialized.current = true;
+    } else if (!orderId && suppliersData !== undefined && itemsData !== undefined && !hasInitialized.current) {
       reset({
         vendor_id: suppliersData?.[0]?.id || '',
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 2000000 }],
       });
-      setHasInitialized(true);
+      hasInitialized.current = true;
     }
-  }, [orderId, orderData, reset, itemsData, suppliersData, hasInitialized]);
+  }, [orderId, orderData, reset, itemsData, suppliersData]);
 
   const getSelectableItems = (currentFieldItemId?: string) => {
     const list = [...(itemsData?.results || [])];

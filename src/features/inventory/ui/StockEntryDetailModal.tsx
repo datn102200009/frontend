@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -12,7 +12,7 @@ import {
   usePostInventoryStockTransferByStockEntryIdApproveMutation,
   useGetInventoryStockLedgerBalanceQuery
 } from '@features/inventory/api/inventoryApi';
-import type { StockEntry, StockEntryDetail } from '@features/inventory/api/inventoryApi';
+import type { StockEntry, StockEntryDetail, StockBalance } from '@features/inventory/api/inventoryApi';
 
 const PURPOSE_LABELS: Record<string, string> = {
   receipt: 'Nhập kho',
@@ -22,12 +22,12 @@ const PURPOSE_LABELS: Record<string, string> = {
   adjustment: 'Điều chỉnh',
 };
 
-const PURPOSE_VARIANTS: Record<string, 'success' | 'warning' | 'info' | 'default'> = {
+const PURPOSE_VARIANTS: Record<string, 'success' | 'warning' | 'info' | 'neutral'> = {
   receipt: 'success',
   issue: 'warning',
   transfer: 'info',
   manufacture: 'info',
-  adjustment: 'default',
+  adjustment: 'neutral',
 };
 
 const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'success' | 'warning' }> = {
@@ -51,13 +51,13 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
   const [approveStockTransfer, { isLoading: isApprovingTransfer }] = usePostInventoryStockTransferByStockEntryIdApproveMutation();
   
   const [localDetails, setLocalDetails] = useState<StockEntryDetail[]>([]);
+  const [prevEntryId, setPrevEntryId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (entry) {
-      setLocalDetails(entry.details || []);
-    }
-  }, [entry]);
+  if (entry && entry.id !== prevEntryId) {
+    setPrevEntryId(entry.id || null);
+    setLocalDetails(entry.details || []);
+  }
 
   if (!entry) return null;
 
@@ -95,8 +95,9 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
         stockEntryUpdateInput: payload
       }).unwrap();
       toast('success', 'Cập nhật kho hàng thành công');
-    } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi cập nhật kho hàng');
+    } catch (error) {
+      const err = error as { data?: { detail?: string } };
+      toast('error', err?.data?.detail || 'Có lỗi xảy ra khi cập nhật kho hàng');
     }
   };
 
@@ -117,7 +118,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
 
       if (purposeType === 'issue' || purposeType === 'transfer') {
         const balance = (stockBalances || []).find(
-          (b: any) => b.warehouse_id === detail.source_warehouse_id && b.item_id === detail.item_id
+          (b: StockBalance) => b.warehouse_id === detail.source_warehouse_id && b.item_id === detail.item_id
         )?.total_quantity || 0;
         if (balance < (detail.quantity || 0)) {
           toast('error', `Không đủ tồn kho để xuất cho mặt hàng "${detail.item_name || detail.item_code}" (Yêu cầu: ${detail.quantity}, Hiện có: ${balance})`);
@@ -158,8 +159,9 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
 
       toast('success', `Phê duyệt ${entry.name} thành công`);
       onClose();
-    } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
+    } catch (error) {
+      const err = error as { data?: { detail?: string } };
+      toast('error', err?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
     }
   };
 
@@ -189,13 +191,13 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Loại phiếu</div>
-            <Badge variant={PURPOSE_VARIANTS[purposeType] as any}>
+            <Badge variant={PURPOSE_VARIANTS[purposeType] || 'default'}>
               {purposeType === 'issue' && entry.sales_order_id ? 'Xuất kho' : (PURPOSE_LABELS[purposeType] || purposeType)}
             </Badge>
           </div>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Trạng thái</div>
-            <Badge variant={statusInfo.variant as any}>{statusInfo.label}</Badge>
+            <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
           </div>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Ngày tạo</div>
@@ -220,7 +222,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {localDetails.map((detail: any, idx) => (
+                {localDetails.map((detail: StockEntryDetail, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--clr-border)' }}>
                     <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code || detail.item_id?.substring(0, 8)}</td>
                     <td style={{ padding: '8px 12px', textAlign: 'right' }}>{detail.quantity} {detail.uom_name || ''}</td>
@@ -241,7 +243,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                           {(() => {
                             if (!detail.source_warehouse_id) return null;
                             const balance = (stockBalances || []).find(
-                              (b: any) => b.warehouse_id === detail.source_warehouse_id && b.item_id === detail.item_id
+                              (b: StockBalance) => b.warehouse_id === detail.source_warehouse_id && b.item_id === detail.item_id
                             )?.total_quantity || 0;
                             const isSufficient = balance >= (detail.quantity || 0);
                             return (
@@ -251,7 +253,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                                 color: isSufficient ? 'var(--clr-success)' : 'var(--clr-error)',
                                 fontWeight: 600
                               }}>
-                                Tồn: {balance} ({isSufficient ? 'Đủ' : `Thiếu ${detail.quantity - balance}`})
+                                Tồn: {balance} ({isSufficient ? 'Đủ' : `Thiếu ${(detail.quantity || 0) - balance}`})
                               </div>
                             );
                           })()}
