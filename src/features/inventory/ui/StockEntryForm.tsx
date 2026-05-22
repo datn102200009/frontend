@@ -1,11 +1,11 @@
 import { useForm, useFieldArray } from 'react-hook-form';
 import { Trash2 } from 'lucide-react';
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { Input } from '../../../shared/ui/Input/Input';
-import { Button } from '../../../shared/ui/Button/Button';
-import { useToast } from '../../../shared/ui/Toast/Toast';
-import { usePostInventoryStockInCreateMutation, usePostInventoryStockIssueCreateMutation, usePostInventoryStockTransferCreateMutation, useGetInventoryStockLedgerBalanceQuery } from '../api/inventoryApi';
-import { useGetMasterDataItemsListQuery, useGetMasterDataWarehousesListQuery } from '../api/masterDataApi';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { Input } from '@shared/ui/Input/Input';
+import { Button } from '@shared/ui/Button/Button';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { usePostInventoryStockInCreateMutation, usePostInventoryStockIssueCreateMutation, usePostInventoryStockTransferCreateMutation, useGetInventoryStockLedgerBalanceQuery } from '@features/inventory/api/inventoryApi';
+import { useGetMasterDataItemsListQuery, useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 
 
 interface StockEntryFormData {

@@ -1,4 +1,4 @@
-import type { LoginPayload, LoginResponse } from '../model/types';
+import type { LoginPayload, LoginResponse } from '@features/auth/model/types';
 
 /**
  * Mock login API — will be replaced with real httpClient.post('/auth/login/')

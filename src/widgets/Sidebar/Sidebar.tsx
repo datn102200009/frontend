@@ -5,11 +5,17 @@ import {
   Boxes,
   Warehouse,
   ClipboardList,
+  ShoppingCart,
+  ShoppingBag,
+  CircleDollarSign,
   LogOut,
   X,
+  Users,
+  Truck,
 } from 'lucide-react';
-import type { RootState } from '../../app/store';
-import { logout } from '../../features/auth/model/authSlice';
+import type { RootState } from '@app/store';
+import { logout } from '@features/auth/model/authSlice';
+import { Tooltip } from '@shared/ui/Tooltip/Tooltip';
 import styles from './Sidebar.module.css';
 import clsx from 'clsx';
 
@@ -28,13 +34,33 @@ const NAV_SECTIONS = [
   {
     label: 'Sản Xuất',
     items: [
-      { to: '/bom', icon: <Boxes size={20} />, label: 'Quản Lý BOM' },
+      { to: '/bom', icon: <Boxes size={20} />, label: 'BOM' },
     ],
   },
   {
     label: 'Kho Bãi',
     items: [
-      { to: '/inventory', icon: <Warehouse size={20} />, label: 'Quản Lý Kho' },
+      { to: '/inventory', icon: <Warehouse size={20} />, label: 'Kho' },
+    ],
+  },
+  {
+    label: 'Thương Mại',
+    items: [
+      { to: '/purchasing', icon: <ShoppingCart size={20} />, label: 'Mua Hàng' },
+      { to: '/sales', icon: <ShoppingBag size={20} />, label: 'Bán Hàng' },
+    ],
+  },
+  {
+    label: 'Đối Tác',
+    items: [
+      { to: '/customers', icon: <Users size={20} />, label: 'Khách Hàng' },
+      { to: '/suppliers', icon: <Truck size={20} />, label: 'Nhà Cung Cấp' },
+    ],
+  },
+  {
+    label: 'Tài Chính',
+    items: [
+      { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền' },
     ],
   },
 ];
@@ -105,9 +131,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <span className={styles.userName}>{user?.full_name}</span>
             <span className={styles.userRole}>{roleLabel}</span>
           </div>
-          <button type="button" className={styles.logoutBtn} onClick={handleLogout} aria-label="Đăng xuất">
-            <LogOut size={18} />
-          </button>
+          <Tooltip content="Đăng xuất">
+            <button type="button" className={styles.logoutBtn} onClick={handleLogout} aria-label="Đăng xuất">
+              <LogOut size={18} />
+            </button>
+          </Tooltip>
         </div>
       </aside>
     </>

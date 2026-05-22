@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye } from 'lucide-react';
-import { DataTable } from '../../../shared/ui/DataTable/DataTable';
-import { Button } from '../../../shared/ui/Button/Button';
-import { Badge } from '../../../shared/ui/Badge/Badge';
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { Input } from '../../../shared/ui/Input/Input';
+import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
+import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
+import { Button } from '@shared/ui/Button/Button';
+import { Badge } from '@shared/ui/Badge/Badge';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { Input } from '@shared/ui/Input/Input';
 import { WorkOrderFormModal } from './WorkOrderFormModal';
 import { WorkOrderDetailModal } from './WorkOrderDetailModal';
-import { useToast } from '../../../shared/ui/Toast/Toast';
-import { formatDateShort } from '../../../shared/lib/formatDate';
+import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { formatDateShort } from '@shared/lib/formatDate';
 import {
   useGetManufacturingWorkOrderListQuery,
   usePostManufacturingWorkOrderByWorkOrderIdApproveMutation,
@@ -34,6 +36,7 @@ export function WorkOrderList() {
   const [viewingWo, setViewingWo] = useState<any>(null);
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: any, message: string } | null>(null);
   const { toast } = useToast();
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
@@ -46,44 +49,52 @@ export function WorkOrderList() {
   const [cancelWo, { isLoading: isCanceling }] = usePostManufacturingWorkOrderByWorkOrderIdCancelMutation();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleApprove = async (wo: any) => {
-    if (window.confirm(`Bạn có chắc chắn muốn phê duyệt lệnh ${wo.name}? Quá trình này sẽ xuất nguyên liệu từ kho nguồn.`)) {
-      try {
+  const handleApprove = (wo: any) => {
+    setConfirmState({
+      action: 'approve',
+      wo,
+      message: `Bạn có chắc chắn muốn phê duyệt lệnh ${wo.name}? Quá trình này sẽ xuất nguyên liệu từ kho nguồn.`
+    });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleComplete = (wo: any) => {
+    setConfirmState({
+      action: 'complete',
+      wo,
+      message: `Bạn có chắc chắn muốn hoàn thành lệnh ${wo.name}? Quá trình này sẽ nhập thành phẩm vào kho đích.`
+    });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCancel = (wo: any) => {
+    setConfirmState({
+      action: 'cancel',
+      wo,
+      message: `Bạn có chắc chắn muốn hủy lệnh ${wo.name}? Lệnh đã hủy sẽ không thể tiếp tục.`
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmState) return;
+    const { action, wo } = confirmState;
+    try {
+      if (action === 'approve') {
         await approveWo({ workOrderId: wo.id }).unwrap();
         toast('success', `Phê duyệt lệnh ${wo.name} thành công.`);
-        refetch();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        toast('error', error?.data?.detail || 'Lỗi khi phê duyệt lệnh sản xuất');
-      }
-    }
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleComplete = async (wo: any) => {
-    if (window.confirm(`Bạn có chắc chắn muốn hoàn thành lệnh ${wo.name}? Quá trình này sẽ nhập thành phẩm vào kho đích.`)) {
-      try {
+      } else if (action === 'complete') {
         await completeWo({ workOrderId: wo.id }).unwrap();
         toast('success', `Hoàn thành lệnh ${wo.name} thành công.`);
-        refetch();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        toast('error', error?.data?.detail || 'Lỗi khi hoàn thành lệnh sản xuất');
-      }
-    }
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCancel = async (wo: any) => {
-    if (window.confirm(`Bạn có chắc chắn muốn hủy lệnh ${wo.name}? Lệnh đã hủy sẽ không thể tiếp tục.`)) {
-      try {
+      } else if (action === 'cancel') {
         await cancelWo({ workOrderId: wo.id }).unwrap();
         toast('success', `Hủy lệnh ${wo.name} thành công.`);
-        refetch();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        toast('error', error?.data?.detail || 'Lỗi khi hủy lệnh sản xuất');
       }
+      refetch();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast('error', error?.data?.detail || 'Lỗi khi thực hiện thao tác');
+    } finally {
+      setConfirmState(null);
     }
   };
 
@@ -148,44 +159,58 @@ export function WorkOrderList() {
       },
       {
         id: 'actions',
-        header: '',
-        size: 250,
+        header: 'Thao Tác',
+        size: 160,
         enableSorting: false,
         cell: ({ row }) => {
           const status = row.original.status;
           return (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button variant="ghost" size="sm" icon={<Eye size={14} />} onClick={() => setViewingWo(row.original)}>
-                Chi tiết
-              </Button>
+            <TableActions>
+              <ActionButton
+                icon={<Eye size={18} />}
+                title="Chi tiết"
+                onClick={() => setViewingWo(row.original)}
+              />
               {status === 'pending_approval' && (
                 <>
-                  <Button variant="outline" size="sm" icon={<PlayCircle size={14} />} onClick={() => handleApprove(row.original)} disabled={isApproving}>
-                    Phê duyệt
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleCancel(row.original)} disabled={isCanceling}>
-                    Hủy
-                  </Button>
+                  <ActionButton
+                    icon={<PlayCircle size={18} />}
+                    title="Phê duyệt"
+                    onClick={() => handleApprove(row.original)}
+                    disabled={isApproving}
+                  />
+                  <ActionButton
+                    icon={<XCircle size={18} />}
+                    title="Hủy"
+                    variant="danger"
+                    onClick={() => handleCancel(row.original)}
+                    disabled={isCanceling}
+                  />
                 </>
               )}
               {status === 'in_progress' && (
                 <>
                   {(row.original.produced_qty || 0) < row.original.quantity && (
-                    <Button variant="outline" size="sm" icon={<ArrowRightCircle size={14} />} onClick={() => {
-                      setDeclaringWo(row.original);
-                      setProducedQty('');
-                    }}>
-                      Nhập liệu
-                    </Button>
+                    <ActionButton
+                      icon={<ArrowRightCircle size={18} />}
+                      title="Nhập liệu"
+                      onClick={() => {
+                        setDeclaringWo(row.original);
+                        setProducedQty('');
+                      }}
+                    />
                   )}
                   {(row.original.produced_qty || 0) >= row.original.quantity && (
-                    <Button variant="primary" size="sm" icon={<CheckCircle size={14} />} onClick={() => handleComplete(row.original)} disabled={isCompleting}>
-                      Hoàn thành
-                    </Button>
+                    <ActionButton
+                      icon={<CheckCircle size={18} />}
+                      title="Hoàn thành"
+                      onClick={() => handleComplete(row.original)}
+                      disabled={isCompleting}
+                    />
                   )}
                 </>
               )}
-            </div>
+            </TableActions>
           );
         }
       },
@@ -254,7 +279,7 @@ export function WorkOrderList() {
               label="Số lượng sản xuất đợt này"
               type="number"
               value={producedQty}
-              onChange={(e) => setProducedQty(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProducedQty(e.target.value)}
               min={1}
               max={Math.max(0, declaringWo.quantity - (declaringWo.produced_qty || 0))}
               disabled={isDeclaring}
@@ -269,6 +294,17 @@ export function WorkOrderList() {
           open
           workOrder={viewingWo}
           onClose={() => setViewingWo(null)}
+        />
+      )}
+
+      {confirmState && (
+        <ConfirmModal
+          open={!!confirmState}
+          title="Xác nhận"
+          message={confirmState.message}
+          onConfirm={handleConfirmAction}
+          onCancel={() => setConfirmState(null)}
+          isLoading={isApproving || isCompleting || isCanceling}
         />
       )}
     </div>

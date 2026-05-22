@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BomFormModal } from './BomFormModal';
-import { renderWithProviders } from '../../../shared/lib/test/test-utils';
+import { renderWithProviders } from '@shared/lib/test/test-utils';
 
 describe('BomFormModal', () => {
   const defaultProps = {

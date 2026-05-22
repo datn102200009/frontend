@@ -8,6 +8,11 @@ const LoginPage = lazy(() => import('../pages/LoginPage/LoginPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage/DashboardPage'));
 const BomPage = lazy(() => import('../pages/BomPage/BomPage'));
 const InventoryPage = lazy(() => import('../pages/InventoryPage/InventoryPage'));
+const PurchasingPage = lazy(() => import('../pages/purchasing/PurchasingPage'));
+const SalesPage = lazy(() => import('../pages/sales/SalesPage'));
+const FinancePage = lazy(() => import('../pages/finance/FinancePage'));
+const CustomersPage = lazy(() => import('../pages/crm/CustomersPage'));
+const SuppliersPage = lazy(() => import('../pages/procurement/SuppliersPage'));
 
 function PageLoader() {
   return (
@@ -60,6 +65,46 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <InventoryPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'purchasing',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PurchasingPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'sales',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SalesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'finance',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <FinancePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'customers',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <CustomersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'suppliers',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SuppliersPage />
           </Suspense>
         ),
       },

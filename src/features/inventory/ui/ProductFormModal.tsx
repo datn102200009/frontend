@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { Input } from '../../../shared/ui/Input/Input';
-import { Button } from '../../../shared/ui/Button/Button';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { Input } from '@shared/ui/Input/Input';
+import { Button } from '@shared/ui/Button/Button';
 import {
   usePostMasterDataItemsCreateMutation,
   usePutMasterDataItemsByItemCodeUpdateMutation,
@@ -13,7 +13,7 @@ import {
   type ItemCreateInput,
   type ItemUpdateInput,
 } from '../api/masterDataApi';
-import { useToast } from '../../../shared/ui/Toast/Toast';
+import { useToast } from '@shared/ui/Toast/Toast';
 
 const productSchema = z.object({
   item_code: z.string().min(1, 'Bắt buộc nhập mã sản phẩm'),

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ProductList } from '../../features/inventory/ui/ProductList';
-import { StockEntryList } from '../../features/inventory/ui/StockEntryList';
-import { StockLedgerView } from '../../features/inventory/ui/StockLedgerView';
-import styles from '../BomPage/BomPage.module.css';
+import { ProductList } from '@features/inventory/ui/ProductList';
+import { StockEntryList } from '@features/inventory/ui/StockEntryList';
+import { StockLedgerView } from '@features/inventory/ui/StockLedgerView';
+import styles from '@pages/BomPage/BomPage.module.css';
 import clsx from 'clsx';
 
 type Tab = 'products' | 'entries' | 'ledger';

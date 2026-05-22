@@ -1,9 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { WorkOrderList } from './WorkOrderList';
-import { renderWithProviders } from '../../../shared/lib/test/test-utils';
+import { renderWithProviders } from '@shared/lib/test/test-utils';
 import { http, HttpResponse } from 'msw';
-import { server } from '../../../shared/lib/test/server';
+import { server } from '@shared/lib/test/server';
 
 const mockWorkOrders = [
   {
@@ -70,7 +70,8 @@ describe('WorkOrderList', () => {
     const approveButton = screen.getByRole('button', { name: /phê duyệt/i });
     await user.click(approveButton);
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('WO-PENDING'));
+    const confirmButton = screen.getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/phê duyệt lệnh wo-pending thành công/i)).toBeInTheDocument();
@@ -116,7 +117,8 @@ describe('WorkOrderList', () => {
     const completeButton = within(completeRow!).getByRole('button', { name: /hoàn thành/i });
     await user.click(completeButton);
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('WO-PROGRESS-COMPLETE'));
+    const confirmButton = screen.getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/hoàn thành lệnh wo-progress-complete thành công/i)).toBeInTheDocument();
@@ -132,7 +134,8 @@ describe('WorkOrderList', () => {
     const cancelButton = screen.getByRole('button', { name: /hủy/i });
     await user.click(cancelButton);
 
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('WO-PENDING'));
+    const confirmButton = screen.getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmButton);
 
     await waitFor(() => {
       expect(screen.getByText(/hủy lệnh wo-pending thành công/i)).toBeInTheDocument();

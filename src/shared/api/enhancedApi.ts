@@ -1,6 +1,11 @@
-import { masterDataApi } from '../../features/inventory/api/masterDataApi';
-import { manufacturingApi } from '../../features/manufacturing/api/manufacturingApi';
-import { inventoryApi } from '../../features/inventory/api/inventoryApi';
+import { masterDataApi } from '@features/inventory/api/masterDataApi';
+import { manufacturingApi } from '@features/manufacturing/api/manufacturingApi';
+import { inventoryApi } from '@features/inventory/api/inventoryApi';
+import { purchasingApi } from '../../entities/purchasing/api/purchasingApi';
+import { salesApi } from '../../entities/sales/api/salesApi';
+import { financeApi } from '../../entities/finance/api/financeApi';
+import { crmApi } from '../../entities/crm/api/crmApi';
+import { procurementApi } from '../../entities/procurement/api/procurementApi';
 
 // ==========================================
 // Caching Strategy for Master Data
@@ -22,17 +27,40 @@ masterDataApi.enhanceEndpoints({
 
 // ==========================================
 // Caching Strategy for Transactional Data
-// Work Orders and Stock Ledgers change often.
-// keepUnusedDataFor: 0 ensures cache is cleared as soon as components unmount,
-// so returning to the page will always fetch fresh data.
+// Setup automatic tag-based cache invalidation
 // ==========================================
+
 manufacturingApi.enhanceEndpoints({
   endpoints: {
     getManufacturingWorkOrderList: {
-      keepUnusedDataFor: 0,
+      providesTags: ['WorkOrders'],
     },
     getManufacturingBomList: {
-      keepUnusedDataFor: 0,
+      providesTags: ['Boms'],
+    },
+    postManufacturingWorkOrderCreate: {
+      invalidatesTags: ['WorkOrders'],
+    },
+    postManufacturingWorkOrderByWorkOrderIdApprove: {
+      invalidatesTags: ['WorkOrders', 'Inventory'],
+    },
+    postManufacturingWorkOrderByWorkOrderIdDeclare: {
+      invalidatesTags: ['WorkOrders', 'Inventory'],
+    },
+    postManufacturingWorkOrderByWorkOrderIdComplete: {
+      invalidatesTags: ['WorkOrders', 'Inventory'],
+    },
+    postManufacturingWorkOrderByWorkOrderIdCancel: {
+      invalidatesTags: ['WorkOrders', 'Inventory'],
+    },
+    postManufacturingBomCreate: {
+      invalidatesTags: ['Boms'],
+    },
+    putManufacturingBomByBomIdUpdate: {
+      invalidatesTags: ['Boms'],
+    },
+    deleteManufacturingBomByBomIdDelete: {
+      invalidatesTags: ['Boms'],
     },
   },
 });
@@ -40,10 +68,149 @@ manufacturingApi.enhanceEndpoints({
 inventoryApi.enhanceEndpoints({
   endpoints: {
     getInventoryStockEntryList: {
-      keepUnusedDataFor: 0,
+      providesTags: ['Inventory'],
     },
     getInventoryStockLedgerBalance: {
-      keepUnusedDataFor: 0,
+      providesTags: ['Inventory'],
+    },
+    postInventoryStockInCreate: {
+      invalidatesTags: ['Inventory'],
+    },
+    postInventoryStockInByStockEntryIdApprove: {
+      invalidatesTags: ['Inventory', 'PurchaseOrders', 'Invoices'],
+    },
+    postInventoryStockIssueCreate: {
+      invalidatesTags: ['Inventory'],
+    },
+    postInventoryStockIssueByStockEntryIdApprove: {
+      invalidatesTags: ['Inventory', 'SalesOrders', 'Invoices'],
+    },
+    postInventoryStockTransferCreate: {
+      invalidatesTags: ['Inventory'],
+    },
+    postInventoryStockTransferByStockEntryIdApprove: {
+      invalidatesTags: ['Inventory'],
+    },
+    postInventoryStockEntryByStockEntryIdUpdate: {
+      invalidatesTags: ['Inventory', 'PurchaseOrders', 'SalesOrders'],
+    },
+  },
+});
+
+purchasingApi.enhanceEndpoints({
+  endpoints: {
+    getPurchasingOrders: {
+      providesTags: ['PurchaseOrders'],
+    },
+    getPurchasingInvoices: {
+      providesTags: ['Invoices'],
+    },
+    getPurchasingOrdersByPk: {
+      providesTags: ['PurchaseOrders'],
+    },
+    getPurchasingInvoicesByPk: {
+      providesTags: ['Invoices'],
+    },
+    postPurchasingOrders: {
+      invalidatesTags: ['PurchaseOrders'],
+    },
+    putPurchasingOrdersByPk: {
+      invalidatesTags: ['PurchaseOrders'],
+    },
+    deletePurchasingOrdersByPk: {
+      invalidatesTags: ['PurchaseOrders'],
+    },
+    postPurchasingOrdersByPkReceive: {
+      invalidatesTags: ['PurchaseOrders', 'Invoices', 'Inventory'],
+    },
+    postPurchasingOrdersByPkApprove: {
+      invalidatesTags: ['PurchaseOrders', 'Inventory', 'Invoices'],
+    },
+  },
+});
+
+salesApi.enhanceEndpoints({
+  endpoints: {
+    getSalesOrders: {
+      providesTags: ['SalesOrders'],
+    },
+    getSalesInvoices: {
+      providesTags: ['Invoices'],
+    },
+    getSalesOrdersByPk: {
+      providesTags: ['SalesOrders'],
+    },
+    getSalesInvoicesByPk: {
+      providesTags: ['Invoices'],
+    },
+    postSalesOrders: {
+      invalidatesTags: ['SalesOrders'],
+    },
+    putSalesOrdersByPk: {
+      invalidatesTags: ['SalesOrders'],
+    },
+    deleteSalesOrdersByPk: {
+      invalidatesTags: ['SalesOrders'],
+    },
+    postSalesOrdersByPkDeliver: {
+      invalidatesTags: ['SalesOrders', 'Invoices', 'Inventory'],
+    },
+    postSalesOrdersByPkApprove: {
+      invalidatesTags: ['SalesOrders', 'Inventory', 'Invoices'],
+    },
+  },
+});
+
+financeApi.enhanceEndpoints({
+  endpoints: {
+    getFinanceCashFlows: {
+      providesTags: ['CashFlows'],
+    },
+    getFinanceCashFlowsByPk: {
+      providesTags: ['CashFlows'],
+    },
+    postFinanceCashFlows: {
+      invalidatesTags: ['CashFlows', 'Invoices', 'PurchaseOrders', 'SalesOrders'],
+    },
+  },
+});
+
+crmApi.enhanceEndpoints({
+  endpoints: {
+    getCrmCustomers: {
+      providesTags: ['Customers'],
+    },
+    getCrmCustomersByCustomerId: {
+      providesTags: ['Customers'],
+    },
+    postCrmCustomers: {
+      invalidatesTags: ['Customers'],
+    },
+    putCrmCustomersByCustomerId: {
+      invalidatesTags: ['Customers'],
+    },
+    deleteCrmCustomersByCustomerId: {
+      invalidatesTags: ['Customers'],
+    },
+  },
+});
+
+procurementApi.enhanceEndpoints({
+  endpoints: {
+    getProcurementSuppliers: {
+      providesTags: ['Suppliers'],
+    },
+    getProcurementSuppliersBySupplierId: {
+      providesTags: ['Suppliers'],
+    },
+    postProcurementSuppliers: {
+      invalidatesTags: ['Suppliers'],
+    },
+    putProcurementSuppliersBySupplierId: {
+      invalidatesTags: ['Suppliers'],
+    },
+    deleteProcurementSuppliersBySupplierId: {
+      invalidatesTags: ['Suppliers'],
     },
   },
 });

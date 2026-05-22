@@ -3,9 +3,9 @@ import { render } from '@testing-library/react';
 import type { RenderOptions } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { setupStore } from '../../../app/store';
-import type { AppStore, RootState } from '../../../app/store';
-import { ToastProvider } from '../../ui/Toast/Toast';
+import { setupStore } from '@app/store';
+import type { AppStore, RootState } from '@app/store';
+import { ToastProvider } from '@shared/ui/Toast/Toast';
 
 // This type interface extends the default options for render from RTL, as well
 // as allows the user to specify other things such as initialState, store.

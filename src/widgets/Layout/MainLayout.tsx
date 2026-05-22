@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Sidebar } from '../Sidebar/Sidebar';
-import { Header } from '../Header/Header';
+import { Sidebar } from '@widgets/Sidebar/Sidebar';
+import { Header } from '@widgets/Header/Header';
 import styles from './MainLayout.module.css';
 
 const TITLES: Record<string, string> = {
