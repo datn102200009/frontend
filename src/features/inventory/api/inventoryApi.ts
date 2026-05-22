@@ -83,6 +83,16 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    postInventoryStockEntryByStockEntryIdUpdate: build.mutation<
+      PostInventoryStockEntryByStockEntryIdUpdateApiResponse,
+      PostInventoryStockEntryByStockEntryIdUpdateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/inventory/stock-entry/${queryArg.stockEntryId}/update/`,
+        method: 'POST',
+        body: queryArg.stockEntryUpdateInput,
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -125,6 +135,12 @@ export type GetInventoryStockEntryListApiArg = {
   limit?: number
   offset?: number
 }
+export type PostInventoryStockEntryByStockEntryIdUpdateApiResponse =
+  /** status 200 Cập nhật thành công. Trả về thông tin phiếu kho sau khi cập nhật. */ StockEntry
+export type PostInventoryStockEntryByStockEntryIdUpdateApiArg = {
+  stockEntryId: string
+  stockEntryUpdateInput: StockEntryUpdateInput
+}
 export type StockEntryDetail = {
   id?: string
   item_id?: string
@@ -145,6 +161,8 @@ export type StockEntry = {
   posting_date_formatted?: string
   remarks?: string | null
   status?: 'draft' | 'submitted' | 'posted'
+  purchase_order_id?: string | null
+  sales_order_id?: string | null
   details?: StockEntryDetail[]
   created_at?: string
   created_at_formatted?: string
@@ -195,6 +213,15 @@ export type StockEntryListResponse = {
   previous?: string | null
   results?: StockEntry[]
 }
+export type StockEntryUpdateInput = {
+  remarks?: string | null
+  details?: {
+    detail_id: string
+    source_warehouse_id?: string | null
+    target_warehouse_id?: string | null
+    quantity?: number
+  }[]
+}
 export const {
   usePostInventoryStockInCreateMutation,
   usePostInventoryStockInByStockEntryIdApproveMutation,
@@ -204,4 +231,5 @@ export const {
   usePostInventoryStockTransferByStockEntryIdApproveMutation,
   useGetInventoryStockLedgerBalanceQuery,
   useGetInventoryStockEntryListQuery,
+  usePostInventoryStockEntryByStockEntryIdUpdateMutation,
 } = injectedRtkApi

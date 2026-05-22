@@ -2,17 +2,17 @@ import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { Input } from '../../../shared/ui/Input/Input';
-import { Button } from '../../../shared/ui/Button/Button';
-import { useToast } from '../../../shared/ui/Toast/Toast';
-import { SearchableSelect } from '../../../shared/ui/Select/SearchableSelect';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { Input } from '@shared/ui/Input/Input';
+import { Button } from '@shared/ui/Button/Button';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
 import {
   useGetManufacturingBomListQuery,
   usePostManufacturingWorkOrderCreateMutation,
   usePostManufacturingMaterialPreviewMutation,
 } from '../../manufacturing/api/manufacturingApi';
-import { useGetMasterDataWarehousesListQuery } from '../../inventory/api/masterDataApi';
+import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 
 const woSchema = z.object({
   name: z.string().min(1, 'Bắt buộc nhập tên/mã lệnh'),
@@ -59,6 +59,9 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
   const [getPreview, { isLoading: isPreviewing }] = usePostManufacturingMaterialPreviewMutation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [previewData, setPreviewData] = useState<any[]>([]);
+
+
+
 
   const {
     register,
@@ -337,3 +340,4 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
     </Modal>
   );
 }
+ 

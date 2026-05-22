@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BomList } from '../../features/bom/ui/BomList';
-import { WorkOrderList } from '../../features/bom/ui/WorkOrderList';
+import { BomList } from '@features/bom/ui/BomList';
+import { WorkOrderList } from '@features/bom/ui/WorkOrderList';
 import styles from './BomPage.module.css';
 import clsx from 'clsx';
 

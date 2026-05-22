@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { ClipboardList, Factory } from 'lucide-react';
-import { loginSuccess } from '../../features/auth/model/authSlice';
-import { usePostAccountsAuthLoginMutation } from '../../features/accounts/api/accountsApi';
-import { useToast } from '../../shared/ui/Toast/Toast';
-import { Button } from '../../shared/ui/Button/Button';
-import { Input } from '../../shared/ui/Input/Input';
-import type { LoginPayload } from '../../features/auth/model/types';
+import { loginSuccess } from '@features/auth/model/authSlice';
+import { usePostAccountsAuthLoginMutation } from '@features/accounts/api/accountsApi';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { Button } from '@shared/ui/Button/Button';
+import { Input } from '@shared/ui/Input/Input';
+import type { LoginPayload } from '@features/auth/model/types';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
@@ -103,10 +103,6 @@ export default function LoginPage() {
             <Button type="submit" variant="primary" size="lg" loading={isLoading}>
               Đăng nhập
             </Button>
-
-            <p className={styles.hint}>
-              Demo: <code>admin / admin123</code> hoặc <code>staff / staff123</code>
-            </p>
           </form>
         </div>
       </div>

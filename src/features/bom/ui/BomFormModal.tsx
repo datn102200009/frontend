@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { usePostManufacturingBomCreateMutation, usePutManufacturingBomByBomIdUpdateMutation, useGetManufacturingBomByBomIdQuery } from '../../manufacturing/api/manufacturingApi';
-import { useGetMasterDataItemsListQuery } from '../../inventory/api/masterDataApi';
-import { useToast } from '../../../shared/ui/Toast/Toast';
+import { usePostManufacturingBomCreateMutation, usePutManufacturingBomByBomIdUpdateMutation, useGetManufacturingBomByBomIdQuery } from '@features/manufacturing/api/manufacturingApi';
+import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
+import { useToast } from '@shared/ui/Toast/Toast';
 import { Plus, Trash2 } from 'lucide-react';
-import { Modal } from '../../../shared/ui/Modal/Modal';
-import { Input } from '../../../shared/ui/Input/Input';
-import { Button } from '../../../shared/ui/Button/Button';
+import { Modal } from '@shared/ui/Modal/Modal';
+import { Input } from '@shared/ui/Input/Input';
+import { Button } from '@shared/ui/Button/Button';
 import styles from './BomFormModal.module.css';
 
 interface BomFormData {

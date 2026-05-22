@@ -1,0 +1,33 @@
+.actions {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+.actionBtn:hover {
+  background: var(--clr-primary-50);
+  color: var(--clr-primary);
+}
+
+.deleteBtn:hover {
+  background: var(--clr-error-bg);
+  color: var(--clr-error);
+}
+
+.actionBtn svg {
+  width: 18px;
+  height: 18px;
+}

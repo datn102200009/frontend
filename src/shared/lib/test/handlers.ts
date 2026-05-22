@@ -131,7 +131,8 @@ export const handlers = [
   }),
   http.get('*/api/v1/master-data/warehouses/list/', () => {
     return HttpResponse.json([
-      { id: 'KHO_01', code: 'KHO_01', name: 'Kho 1' }
+      { id: 'KHO_01', code: 'KHO_01', name: 'Kho 1' },
+      { id: '55555555-5555-5555-5555-555555555555', code: 'KHO_02', name: 'Kho 2' }
     ]);
   }),
   http.get('*/api/v1/manufacturing/bom/list/', () => {
@@ -140,5 +141,51 @@ export const handlers = [
         { id: '1', name: 'BOM-01', item_id: 'SP001', item_code: 'SP001' }
       ]
     });
+  }),
+
+  // CRM & Procurement mocks
+  http.get('*/api/v1/crm/customers/', () => {
+    return HttpResponse.json([
+      { id: '44444444-4444-4444-4444-444444444444', name: 'CUS-001', customer_name: 'Công ty Cổ phần Alpha' }
+    ]);
+  }),
+  http.get('*/api/v1/procurement/suppliers/', () => {
+    return HttpResponse.json([
+      { id: '33333333-3333-3333-3333-333333333333', name: 'SUP-001', supplier_name: 'Nhà cung cấp Tech Component' }
+    ]);
+  }),
+
+  // Purchasing & Sales transaction mocks
+  http.post('*/api/v1/purchasing/orders/', async ({ request }) => {
+    const data = await request.json();
+    return HttpResponse.json({ id: 'new-po-123', ...data as any }, { status: 201 });
+  }),
+  http.post('*/api/v1/purchasing/orders/:id/receive/', () => {
+    return HttpResponse.json({ id: 'rec-123' }, { status: 200 });
+  }),
+  http.post('*/api/v1/sales/orders/', async ({ request }) => {
+    const data = await request.json();
+    return HttpResponse.json({ id: 'new-so-123', ...data as any }, { status: 201 });
+  }),
+  http.post('*/api/v1/sales/orders/:id/deliver/', () => {
+    return HttpResponse.json({ id: 'del-123' }, { status: 200 });
+  }),
+
+  // Sales & Purchasing Invoices mocks
+  http.get('*/api/v1/sales/invoices/', () => {
+    return HttpResponse.json([
+      { id: '66666666-6666-6666-6666-666666666666', order: '99999999-9999-9999-9999-999999999999', customer: '44444444-4444-4444-4444-444444444444', customer_name: 'Alpha', total_amount: 5000000, paid_amount: 0, status: 'unpaid', created_at: '2026-05-20', updated_at: '2026-05-20', lines: [] }
+    ]);
+  }),
+  http.get('*/api/v1/purchasing/invoices/', () => {
+    return HttpResponse.json([
+      { id: '77777777-7777-7777-7777-777777777777', order: '88888888-8888-8888-8888-888888888888', vendor: '33333333-3333-3333-3333-333333333333', vendor_name: 'Tech Component', total_amount: 10000000, paid_amount: 0, status: 'unpaid', created_at: '2026-05-20', updated_at: '2026-05-20', lines: [] }
+    ]);
+  }),
+
+  // Finance mocks
+  http.post('*/api/v1/finance/cash-flows/', async ({ request }) => {
+    const data = await request.json();
+    return HttpResponse.json({ id: 'new-cf-123', ...data as any }, { status: 201 });
   }),
 ];

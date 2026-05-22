@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StockLedgerView } from './StockLedgerView';
-import { renderWithProviders } from '../../../shared/lib/test/test-utils';
+import { renderWithProviders } from '@shared/lib/test/test-utils';
 import { http, HttpResponse } from 'msw';
-import { server } from '../../../shared/lib/test/server';
+import { server } from '@shared/lib/test/server';
 
 const mockBalances = [
   { item_code: 'TO-D25', item_name: 'Thép ống', warehouse_name: 'Kho 1', total_quantity: 100, uom: 'cái' },

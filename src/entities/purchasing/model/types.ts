@@ -1,0 +1,50 @@
+import type {
+  PurchaseOrder as GenPurchaseOrder,
+  PurchaseOrderLine as GenPurchaseOrderLine,
+  PurchaseOrderInput as GenPurchaseOrderInput,
+  PurchaseOrderLineInput as GenPurchaseOrderLineInput,
+  PurchaseInvoice as GenPurchaseInvoice,
+  PurchaseInvoiceLine as GenPurchaseInvoiceLine,
+} from '../api/purchasingApi';
+
+export type PurchaseOrderLine = GenPurchaseOrderLine & {
+  id: string;
+  item: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+};
+
+export type PurchaseOrder = GenPurchaseOrder & {
+  id: string;
+  vendor: string;
+  status: 'draft' | 'pending' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled';
+  total_amount: number;
+  advance_paid_amount: number;
+  created_at: string;
+  updated_at: string;
+  lines: PurchaseOrderLine[];
+};
+
+export type PurchaseOrderLineInput = GenPurchaseOrderLineInput;
+export type PurchaseOrderInput = GenPurchaseOrderInput;
+
+export type PurchaseInvoiceLine = GenPurchaseInvoiceLine & {
+  id: string;
+  item: string;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+};
+
+export type PurchaseInvoice = GenPurchaseInvoice & {
+  id: string;
+  order: string;
+  vendor: string;
+  status: 'unpaid' | 'partial' | 'paid' | 'cancelled';
+  total_amount: number;
+  paid_amount: number;
+  created_at: string;
+  updated_at: string;
+  lines: PurchaseInvoiceLine[];
+};

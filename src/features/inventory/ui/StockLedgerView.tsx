@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '../../../shared/ui/DataTable/DataTable';
-import { Badge } from '../../../shared/ui/Badge/Badge';
-import { useGetInventoryStockLedgerBalanceQuery } from '../api/inventoryApi';
-import { useGetMasterDataWarehousesListQuery } from '../api/masterDataApi';
+import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { Badge } from '@shared/ui/Badge/Badge';
+import { useGetInventoryStockLedgerBalanceQuery } from '@features/inventory/api/inventoryApi';
+import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 
 export function StockLedgerView() {
   const [filterWarehouse, setFilterWarehouse] = useState('');

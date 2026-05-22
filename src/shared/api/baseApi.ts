@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { logout } from '../../features/auth/model/authSlice';
+import { logout } from '@features/auth/model/authSlice';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: 'http://localhost:8000/api/v1',
@@ -31,5 +31,16 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
+  tagTypes: [
+    'Customers',
+    'Suppliers',
+    'PurchaseOrders',
+    'SalesOrders',
+    'Invoices',
+    'CashFlows',
+    'WorkOrders',
+    'Boms',
+    'Inventory',
+  ],
   endpoints: () => ({}),
 });
