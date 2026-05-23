@@ -240,7 +240,7 @@ hrmApi.enhanceEndpoints({
       invalidatesTags: ['Employees'],
     },
     postHrmContractsByIdTerminate: {
-      invalidatesTags: ['Employees'],
+      invalidatesTags: ['Employees', 'SalarySlips', 'CashFlows'],
     },
     getHrmAttendances: {
       providesTags: ['Attendances'],
