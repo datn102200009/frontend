@@ -1,0 +1,59 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--clr-text-secondary);
+}
+
+.required {
+  color: var(--clr-danger);
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--clr-primary-400);
+  box-shadow: 0 0 0 3px var(--clr-primary-50);
+}
+
+.input:disabled {
+  background: var(--clr-surface-muted);
+  color: var(--clr-text-muted);
+  cursor: not-allowed;
+}
+
+.errorText {
+  color: var(--clr-error);
+  font-size: var(--fs-xs);
+  margin-top: 2px;
+}
+
+.errorSection {
+  background-color: var(--clr-error-bg);
+  border: 1px solid var(--clr-error);
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  color: var(--clr-error);
+  font-size: var(--fs-sm);
+}
