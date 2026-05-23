@@ -31,15 +31,19 @@ export const InitializeSalarySlipModal: React.FC<InitializeSalarySlipModalProps>
   };
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = useForm<FormValues>({
     defaultValues: {
       salary_period: getDefaultPeriod(),
     },
   });
+
+  const salaryPeriod = watch('salary_period');
+  const [yearStr, monthStr] = (salaryPeriod || getDefaultPeriod()).split('-');
 
   useEffect(() => {
     if (open) {
@@ -90,16 +94,49 @@ export const InitializeSalarySlipModal: React.FC<InitializeSalarySlipModalProps>
         )}
 
         <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="salary_period">
+          <label className={styles.label}>
             Chọn kỳ lương (Tháng/Năm) <span className={styles.required}>*</span>
           </label>
-          <input
-            id="salary_period"
-            type="month"
-            className={styles.input}
-            {...register('salary_period', { required: 'Kỳ lương là bắt buộc' })}
-            disabled={isLoading}
-          />
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <select
+              value={monthStr}
+              onChange={(e) => {
+                setValue('salary_period', `${yearStr}-${e.target.value}`, { shouldValidate: true });
+              }}
+              className={styles.input}
+              disabled={isLoading}
+              style={{ flex: 1 }}
+              aria-label="Chọn tháng"
+            >
+              {Array.from({ length: 12 }, (_, i) => {
+                const m = String(i + 1).padStart(2, '0');
+                return (
+                  <option key={m} value={m}>
+                    Tháng {i + 1}
+                  </option>
+                );
+              })}
+            </select>
+            <select
+              value={yearStr}
+              onChange={(e) => {
+                setValue('salary_period', `${e.target.value}-${monthStr}`, { shouldValidate: true });
+              }}
+              className={styles.input}
+              disabled={isLoading}
+              style={{ flex: 1 }}
+              aria-label="Chọn năm"
+            >
+              {Array.from({ length: 10 }, (_, i) => {
+                const y = String(2020 + i);
+                return (
+                  <option key={y} value={y}>
+                    Năm {y}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
           {errors.salary_period && (
             <span className={styles.errorText}>{errors.salary_period.message}</span>
           )}

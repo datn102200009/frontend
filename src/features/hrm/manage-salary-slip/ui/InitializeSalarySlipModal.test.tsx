@@ -17,16 +17,17 @@ describe('InitializeSalarySlipModal', () => {
   it('renders initialization form correctly', () => {
     renderWithProviders(<InitializeSalarySlipModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: 'Khởi Tạo Phiếu Lương Hàng Loạt' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Chọn kỳ lương/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Chọn tháng/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Chọn năm/i)).toBeInTheDocument();
   });
 
   it('submits salary period successfully', async () => {
     renderWithProviders(<InitializeSalarySlipModal {...defaultProps} />);
     const user = userEvent.setup();
 
-    const periodInput = screen.getByLabelText(/Chọn kỳ lương/i);
-    await user.clear(periodInput);
-    await user.type(periodInput, '2026-06');
+    // Select month and year
+    await user.selectOptions(screen.getByLabelText(/Chọn tháng/i), '06');
+    await user.selectOptions(screen.getByLabelText(/Chọn năm/i), '2026');
 
     await user.click(screen.getByRole('button', { name: 'Khởi tạo' }));
 

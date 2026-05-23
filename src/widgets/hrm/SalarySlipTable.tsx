@@ -113,13 +113,51 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
           <div className="hrmFilterGroup">
             <span className="hrmFilterLabel">Kỳ lương:</span>
-            <input
-              type="month"
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              className="hrmMonthInput"
-              aria-label="Chọn kỳ lương cần xem"
-            />
+            <div className="hrmSelectWrapper">
+              <select
+                value={selectedPeriod.split('-')[1]}
+                onChange={(e) => {
+                  const [y, _] = selectedPeriod.split('-');
+                  setSelectedPeriod(`${y}-${e.target.value}`);
+                }}
+                className="hrmSelectInput"
+                style={{ minWidth: '90px', paddingRight: '24px' }}
+                aria-label="Chọn tháng kỳ lương"
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const m = String(i + 1).padStart(2, '0');
+                  return (
+                    <option key={m} value={m}>
+                      Tháng {i + 1}
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown size={14} className="hrmSelectIcon" />
+            </div>
+
+            <div className="hrmSelectWrapper">
+              <select
+                value={selectedPeriod.split('-')[0]}
+                onChange={(e) => {
+                  const [_, m] = selectedPeriod.split('-');
+                  setSelectedPeriod(`${e.target.value}-${m}`);
+                }}
+                className="hrmSelectInput"
+                style={{ minWidth: '95px', paddingRight: '24px' }}
+                aria-label="Chọn năm kỳ lương"
+              >
+                {Array.from({ length: 10 }, (_, i) => {
+                  const y = String(2020 + i);
+                  return (
+                    <option key={y} value={y}>
+                      Năm {y}
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown size={14} className="hrmSelectIcon" />
+            </div>
           </div>
 
           <div className="hrmFilterGroup">

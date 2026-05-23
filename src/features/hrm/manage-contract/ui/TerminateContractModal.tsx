@@ -18,6 +18,10 @@ interface FormValues {
   termination_date: string;
   reason: string;
   file_url?: string;
+  is_lawful: boolean;
+  unused_leave_days: number;
+  standard_working_days: number;
+  unnotified_days: number;
 }
 
 export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
@@ -35,13 +39,20 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<FormValues>({
     defaultValues: {
       termination_date: new Date().toISOString().split('T')[0],
       reason: '',
       file_url: '',
+      is_lawful: true,
+      unused_leave_days: 0,
+      standard_working_days: 26,
+      unnotified_days: 0,
     },
   });
+
+  const isLawful = watch('is_lawful');
 
   useEffect(() => {
     if (open) {
@@ -49,6 +60,10 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
         termination_date: new Date().toISOString().split('T')[0],
         reason: '',
         file_url: '',
+        is_lawful: true,
+        unused_leave_days: 0,
+        standard_working_days: 26,
+        unnotified_days: 0,
       });
       setApiError(null);
     }
@@ -65,6 +80,10 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
           termination_date: values.termination_date,
           reason: values.reason,
           file_url: values.file_url || undefined,
+          is_lawful: values.is_lawful,
+          unused_leave_days: Number(values.unused_leave_days),
+          standard_working_days: Number(values.standard_working_days),
+          unnotified_days: values.is_lawful ? 0 : Number(values.unnotified_days),
         },
       }).unwrap();
       onSuccess();
@@ -78,7 +97,7 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={`Chấm Dứt Hợp Đồng - ${employee.full_name}`}
+      title={`Quyết Toán & Chấm Dứt Hợp Đồng - ${employee.full_name}`}
       size="sm"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -98,21 +117,53 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
           </div>
         )}
 
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="termination_date">
-            Ngày chấm dứt <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="termination_date"
-            type="date"
-            className={styles.input}
-            {...register('termination_date', { required: 'Ngày chấm dứt là bắt buộc' })}
-            disabled={isLoading}
-          />
-          {errors.termination_date && (
-            <span className={styles.errorText}>{errors.termination_date.message}</span>
-          )}
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="termination_date">
+              Ngày chấm dứt <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="termination_date"
+              type="date"
+              className={styles.input}
+              {...register('termination_date', { required: 'Ngày chấm dứt là bắt buộc' })}
+              disabled={isLoading}
+            />
+            {errors.termination_date && (
+              <span className={styles.errorText}>{errors.termination_date.message}</span>
+            )}
+          </div>
+
+          <div className={styles.formGroup} style={{ justifyContent: 'center' }}>
+            <div className={styles.checkboxGroup}>
+              <input
+                id="is_lawful"
+                type="checkbox"
+                className={styles.checkboxInput}
+                {...register('is_lawful')}
+                disabled={isLoading}
+              />
+              <label className={styles.checkboxLabel} htmlFor="is_lawful">
+                Nghỉ việc hợp pháp (Đúng luật)
+              </label>
+            </div>
+          </div>
         </div>
+
+        {!isLawful && (
+          <div className={styles.alertWarning}>
+            <span className={styles.alertWarningStrong}>⚠️ CẢNH BÁO NGHỈ NGANG (TRÁI LUẬT):</span>
+            <span>
+              NLĐ đơn phương chấm dứt hợp đồng trái luật sẽ bị cấn trừ:
+              <br />
+              - Bồi thường cho công ty nửa tháng lương cơ bản theo hợp đồng.
+              <br />
+              - Bồi thường tiền lương tương ứng cho những ngày không báo trước.
+              <br />
+              - Không được nhận trợ cấp thôi việc.
+            </span>
+          </div>
+        )}
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="reason">
@@ -121,12 +172,70 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
           <input
             id="reason"
             type="text"
-            placeholder="VD: Vi phạm kỷ luật, Thôi việc tự nguyện..."
+            placeholder="VD: Đơn xin thôi việc được duyệt, Vi phạm kỷ luật..."
             className={styles.input}
             {...register('reason', { required: 'Lý do chấm dứt là bắt buộc' })}
             disabled={isLoading}
           />
           {errors.reason && <span className={styles.errorText}>{errors.reason.message}</span>}
+        </div>
+
+        <div className={styles.formRow}>
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="unused_leave_days">
+              Số ngày phép chưa nghỉ
+            </label>
+            <input
+              id="unused_leave_days"
+              type="number"
+              step="0.5"
+              min="0"
+              className={styles.input}
+              {...register('unused_leave_days', { valueAsNumber: true })}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="standard_working_days">
+              Ngày công chuẩn của tháng
+            </label>
+            <input
+              id="standard_working_days"
+              type="number"
+              min="1"
+              className={styles.input}
+              {...register('standard_working_days', { valueAsNumber: true })}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+
+        <div className={styles.formRow}>
+          <div className={styles.formGroup} style={{ flex: 1 }}>
+            <span className={styles.label} style={{ marginBottom: '8px', display: 'block' }}>
+              Cách tính lương ngày công
+            </span>
+            <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)', display: 'block', padding: '8px 0' }}>
+              Cách 1: Theo ngày công chuẩn cố định
+            </span>
+          </div>
+
+          {!isLawful && (
+            <div className={styles.formGroup} style={{ flex: 1 }}>
+              <label className={styles.label} htmlFor="unnotified_days">
+                Số ngày không báo trước
+              </label>
+              <input
+                id="unnotified_days"
+                type="number"
+                min="0"
+                className={styles.input}
+                {...register('unnotified_days', { valueAsNumber: true })}
+                disabled={isLoading}
+              />
+            </div>
+          )}
         </div>
 
         <div className={styles.formGroup}>

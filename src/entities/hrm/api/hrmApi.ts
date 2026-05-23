@@ -235,6 +235,14 @@ export type PostHrmContractsByIdTerminateApiArg = {
     termination_date: string
     reason: string
     file_url?: string
+    /** Nghỉ việc đúng luật (true) hoặc trái luật/nghỉ ngang (false) */
+    is_lawful?: boolean
+    /** Số ngày phép năm chưa nghỉ cần thanh toán */
+    unused_leave_days?: number
+    /** Số ngày công chuẩn của tháng quyết toán */
+    standard_working_days?: number
+    /** Số ngày vi phạm thời hạn báo trước (nếu nghỉ trái luật) */
+    unnotified_days?: number
   }
 }
 export type GetHrmAttendancesApiResponse = /** status 200 Thành công */ Attendance[]
