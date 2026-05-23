@@ -248,3 +248,91 @@ code, pre {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── 7. Hrm Filter Toolbar Styles ── */
+.hrmFilterToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--sp-4);
+}
+
+.hrmFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.hrmFilterLabel {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text-secondary);
+}
+
+.hrmSelectWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hrmSelectInput {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text-secondary);
+  background-color: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-8) var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  min-width: 150px;
+}
+
+.hrmSelectInput:focus {
+  outline: none;
+  border-color: var(--clr-primary-400);
+  box-shadow: 0 0 0 3px rgba(5, 85, 104, 0.1);
+}
+
+.hrmSelectInput:hover {
+  border-color: var(--clr-border-focus);
+}
+
+.hrmSelectIcon {
+  position: absolute;
+  right: 10px;
+  color: var(--clr-text-muted);
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hrmDateInput, .hrmMonthInput {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text-secondary);
+  background-color: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.hrmDateInput:focus, .hrmMonthInput:focus {
+  outline: none;
+  border-color: var(--clr-primary-400);
+  box-shadow: 0 0 0 3px rgba(5, 85, 104, 0.1);
+}
+
+.hrmDateInput:hover, .hrmMonthInput:hover {
+  border-color: var(--clr-border-focus);
+}

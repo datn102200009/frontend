@@ -68,16 +68,16 @@ export const AttendanceTable: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div>
       {/* Date filter toolbar */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">Ngày chấm công:</span>
+      <div className="hrmFilterToolbar">
+        <div className="hrmFilterGroup">
+          <span className="hrmFilterLabel">Ngày chấm công:</span>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-400"
+            className="hrmDateInput"
             aria-label="Chọn ngày xem chấm công"
           />
         </div>
@@ -88,7 +88,7 @@ export const AttendanceTable: React.FC = () => {
         data={attendances}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm bản ghi chấm công theo mã hoặc tên..."
-        emptyMessage="Không tìm thấy dữ liệu chấm công cho ngày này"
+        emptyMessage="Không tìm thấy bản ghi chấm công nào"
       />
     </div>
   );

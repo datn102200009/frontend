@@ -5,7 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmLeaveRequestsQuery } from '@entities/hrm/api/hrmApi';
 import type { LeaveRequest } from '@entities/hrm/model/types';
-import { Eye } from 'lucide-react';
+import { Eye, ChevronDown } from 'lucide-react';
 
 interface LeaveRequestTableProps {
   onViewDetails?: (leaveRequest: LeaveRequest) => void;
@@ -104,22 +104,25 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
   }, [onViewDetails]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div>
       {/* Status filter toolbar */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">Trạng thái:</span>
-          <select
-            value={statusFilter}
-            onChange={(e: any) => setStatusFilter(e.target.value)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-400"
-            aria-label="Lọc trạng thái đơn nghỉ phép"
-          >
-            <option value="pending">Chờ phê duyệt</option>
-            <option value="approved">Đã phê duyệt</option>
-            <option value="rejected">Đã từ chối</option>
-            <option value="all">Tất cả đơn phép</option>
-          </select>
+      <div className="hrmFilterToolbar">
+        <div className="hrmFilterGroup">
+          <span className="hrmFilterLabel">Trạng thái:</span>
+          <div className="hrmSelectWrapper">
+            <select
+              value={statusFilter}
+              onChange={(e: any) => setStatusFilter(e.target.value)}
+              className="hrmSelectInput"
+              aria-label="Lọc trạng thái đơn nghỉ phép"
+            >
+              <option value="pending">Chờ phê duyệt</option>
+              <option value="approved">Đã phê duyệt</option>
+              <option value="rejected">Đã từ chối</option>
+              <option value="all">Tất cả đơn phép</option>
+            </select>
+            <ChevronDown size={14} className="hrmSelectIcon" />
+          </div>
         </div>
       </div>
 

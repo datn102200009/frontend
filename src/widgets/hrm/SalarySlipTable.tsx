@@ -5,7 +5,8 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
 import type { SalarySlip } from '@entities/hrm/model/types';
-import { Eye } from 'lucide-react';
+import { Eye, ChevronDown } from 'lucide-react';
+import { SalarySlipDetailsModal } from '@features/hrm/manage-salary-slip/ui/SalarySlipDetailsModal';
 
 interface SalarySlipTableProps {
   onViewDetails?: (salarySlip: SalarySlip) => void;
@@ -18,8 +19,9 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
     return `${d.getFullYear()}-${mm}`;
   });
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'paid'>('all');
+  const [selectedSlipId, setSelectedSlipId] = useState<string | null>(null);
 
-  const { data: salarySlips = [], isLoading } = useGetHrmSalarySlipsQuery({
+  const { data: salarySlips = [], isLoading, refetch } = useGetHrmSalarySlipsQuery({
     salaryPeriod: selectedPeriod || undefined,
   });
 
@@ -27,6 +29,10 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
     if (statusFilter === 'all') return salarySlips;
     return salarySlips.filter((slip) => slip.status === statusFilter);
   }, [salarySlips, statusFilter]);
+
+  const selectedSlip = useMemo(() => {
+    return filteredSlips.find((s) => s.id === selectedSlipId);
+  }, [filteredSlips, selectedSlipId]);
 
   const formatVND = (value: any) => {
     if (value === undefined || value === null) return '0 đ';
@@ -88,7 +94,10 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
               <ActionButton
                 icon={<Eye size={15} />}
                 title={slip.status === 'draft' ? 'Xem & Tính lương' : 'Xem phiếu lương'}
-                onClick={() => onViewDetails?.(slip)}
+                onClick={() => {
+                  setSelectedSlipId(slip.id || null);
+                  onViewDetails?.(slip as SalarySlip);
+                }}
               />
             </TableActions>
           );
@@ -98,32 +107,37 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
   }, [onViewDetails]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div>
       {/* Filters toolbar */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">Kỳ lương:</span>
-          <input
-            type="month"
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-400"
-            aria-label="Chọn kỳ lương cần xem"
-          />
-        </div>
+      <div className="hrmFilterToolbar">
+        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+          <div className="hrmFilterGroup">
+            <span className="hrmFilterLabel">Kỳ lương:</span>
+            <input
+              type="month"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="hrmMonthInput"
+              aria-label="Chọn kỳ lương cần xem"
+            />
+          </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">Trạng thái:</span>
-          <select
-            value={statusFilter}
-            onChange={(e: any) => setStatusFilter(e.target.value)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-400"
-            aria-label="Lọc trạng thái phiếu lương"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="draft">Bản nháp</option>
-            <option value="paid">Đã thanh toán</option>
-          </select>
+          <div className="hrmFilterGroup">
+            <span className="hrmFilterLabel">Trạng thái:</span>
+            <div className="hrmSelectWrapper">
+              <select
+                value={statusFilter}
+                onChange={(e: any) => setStatusFilter(e.target.value)}
+                className="hrmSelectInput"
+                aria-label="Lọc trạng thái phiếu lương"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="draft">Bản nháp</option>
+                <option value="paid">Đã thanh toán</option>
+              </select>
+              <ChevronDown size={14} className="hrmSelectIcon" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -134,6 +148,19 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
         searchPlaceholder="Tìm kiếm phiếu lương theo mã hoặc tên..."
         emptyMessage="Không tìm thấy phiếu lương nào cho kỳ này"
       />
+
+      {selectedSlip && (
+        <SalarySlipDetailsModal
+          open={!!selectedSlipId}
+          onClose={() => setSelectedSlipId(null)}
+          onSuccess={() => {
+            refetch();
+            setSelectedSlipId(null);
+          }}
+          onCalculateSuccess={refetch}
+          salarySlip={selectedSlip as SalarySlip}
+        />
+      )}
     </div>
   );
 };

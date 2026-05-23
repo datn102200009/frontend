@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   usePostHrmSalarySlipsByIdCalculateMutation,
   usePostHrmSalarySlipsByIdConfirmMutation,
@@ -12,6 +12,7 @@ interface SalarySlipDetailsModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onCalculateSuccess?: () => void;
   salarySlip: SalarySlip;
 }
 
@@ -19,6 +20,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
   open,
   onClose,
   onSuccess,
+  onCalculateSuccess,
   salarySlip,
 }) => {
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
@@ -28,20 +30,24 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleCalculate = async () => {
-    setApiError(null);
-    if (!salarySlip.id) return;
-    try {
-      await calculateSalary({
+  // Auto calculate when modal opens or standard days change
+  useEffect(() => {
+    if (open && salarySlip.id && salarySlip.status === 'draft' && standardDays >= 1 && standardDays <= 31) {
+      setApiError(null);
+      calculateSalary({
         id: salarySlip.id,
         body: { standard_days: standardDays },
-      }).unwrap();
-      onSuccess();
-    } catch (err: any) {
-      console.error('Failed to calculate salary slip', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
+      })
+        .unwrap()
+        .then(() => {
+          onCalculateSuccess?.();
+        })
+        .catch((err: any) => {
+          console.error('Failed to auto calculate salary slip', err);
+          setApiError(err?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
+        });
     }
-  };
+  }, [open, salarySlip.id, salarySlip.status, standardDays, calculateSalary, onCalculateSuccess]);
 
   const handleConfirmPayment = async () => {
     setApiError(null);
@@ -103,39 +109,31 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
           <span className={getStatusClass(salarySlip.status)}>{getStatusLabel(salarySlip.status)}</span>
         </div>
 
-        <div className={styles.grid}>
+        <div className={styles.grid} style={{ opacity: isCalculating ? 0.6 : 1, transition: 'opacity var(--duration-fast) ease' }}>
           {/* Lương & Thu nhập */}
           <div className={styles.section}>
             <h4 className={styles.sectionTitle}>Các Khoản Thu Nhập</h4>
             <div className={styles.row}>
-              <span>Lương cơ bản:</span>
-              <strong>{formatVND((salarySlip as any).salary_base)}</strong>
-            </div>
-            <div className={styles.row}>
-              <span>Ngày công đi làm:</span>
-              <span>{(salarySlip as any).work_days ?? 0} ngày</span>
-            </div>
-            <div className={styles.row}>
-              <span>Lương thực nhận theo công:</span>
-              <strong>{formatVND((salarySlip as any).actual_work_salary)}</strong>
-            </div>
-            <div className={styles.row}>
-              <span>Số giờ OT:</span>
-              <span>{(salarySlip as any).ot_hours ?? 0} giờ</span>
+              <span>Lương theo ngày công:</span>
+              <strong>{formatVND(salarySlip.base_salary)}</strong>
             </div>
             <div className={styles.row}>
               <span>Lương tăng ca (OT):</span>
-              <strong>{formatVND((salarySlip as any).ot_salary)}</strong>
+              <strong>{formatVND(salarySlip.overtime_amount)}</strong>
             </div>
             <div className={styles.row}>
               <span>Phụ cấp cố định:</span>
-              <strong>{formatVND((salarySlip as any).allowance)}</strong>
+              <strong>{formatVND(salarySlip.allowance_amount)}</strong>
             </div>
             <div className={styles.row}>
               <span>Khen thưởng/Thưởng thêm:</span>
               <strong style={{ color: 'var(--clr-success)' }}>
-                {formatVND((salarySlip as any).bonus)}
+                {formatVND(salarySlip.reward_amount_total)}
               </strong>
+            </div>
+            <div className={styles.row} style={{ borderTop: '1px dashed var(--clr-border)', paddingTop: '8px', marginTop: '8px' }}>
+              <span>Tổng thu nhập (Gross):</span>
+              <strong>{formatVND(salarySlip.gross_pay)}</strong>
             </div>
           </div>
 
@@ -146,20 +144,24 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
               <div className={styles.row}>
                 <span>Phạt kỷ luật/Khấu trừ:</span>
                 <strong style={{ color: 'var(--clr-error)' }}>
-                  {formatVND((salarySlip as any).deduction)}
+                  {formatVND(salarySlip.discipline_deduction_total)}
                 </strong>
               </div>
               <div className={styles.row}>
-                <span>Phí công đoàn (1%):</span>
+                <span>Phí công đoàn (2%):</span>
                 <strong style={{ color: 'var(--clr-error)' }}>
-                  {formatVND((salarySlip as any).union_fee)}
+                  {formatVND(salarySlip.union_fee_2pct)}
                 </strong>
+              </div>
+              <div className={styles.row} style={{ borderTop: '1px dashed var(--clr-border)', paddingTop: '8px', marginTop: '8px' }}>
+                <span>Tổng khấu trừ:</span>
+                <strong style={{ color: 'var(--clr-error)' }}>{formatVND(salarySlip.deductions)}</strong>
               </div>
             </div>
 
             <div className={styles.totalRow}>
-              <span>Thực Nhận:</span>
-              <span>{formatVND((salarySlip as any).net_salary)}</span>
+              <span>Thực Nhận (Net):</span>
+              <span>{formatVND(salarySlip.net_pay)}</span>
             </div>
           </div>
         </div>
@@ -167,10 +169,10 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
         {salarySlip.status === 'draft' && (
           <div className={styles.actionRow}>
             {/* Form tính toán */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', borderBottom: '1px solid var(--clr-border)', paddingBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', borderBottom: '1px solid var(--clr-border)', paddingBottom: '16px', width: '100%' }}>
               <div className={styles.formGroup} style={{ flex: 1 }}>
                 <label className={styles.label} htmlFor="standard_days">
-                  Số ngày công tiêu chuẩn tháng:
+                  Số ngày công tiêu chuẩn tháng: {isCalculating && <span style={{ color: 'var(--clr-primary)', fontSize: 'var(--fs-xs)', marginLeft: '8px', fontWeight: 'normal' }}>(Đang tính toán lại...)</span>}
                 </label>
                 <input
                   id="standard_days"
@@ -183,14 +185,6 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
                   disabled={isCalculating || isConfirming}
                 />
               </div>
-              <Button
-                variant="ghost"
-                onClick={handleCalculate}
-                loading={isCalculating}
-                disabled={isConfirming}
-              >
-                Tính Toán Lương
-              </Button>
             </div>
 
             {/* Form thanh toán */}

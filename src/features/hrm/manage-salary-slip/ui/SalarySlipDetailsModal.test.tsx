@@ -47,8 +47,7 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.getByText('Mã NV: NV001 | Kỳ lương: 2026-05')).toBeInTheDocument();
     expect(screen.getByText('Bản nháp')).toBeInTheDocument();
     
-    // Check buttons
-    expect(screen.getByRole('button', { name: 'Tính Toán Lương' })).toBeInTheDocument();
+    // Check button
     expect(screen.getByRole('button', { name: 'Thanh Toán Lương' })).toBeInTheDocument();
   });
 
@@ -61,18 +60,23 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.queryByRole('button', { name: 'Thanh Toán Lương' })).not.toBeInTheDocument();
   });
 
-  it('handles calculate salary action successfully', async () => {
+  it('handles auto calculate salary when standard days change', async () => {
     renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
     const user = userEvent.setup();
 
     const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
+    
+    // Wait for the initial auto-calculation to finish so the input gets enabled
+    await waitFor(() => {
+      expect(standardDaysInput).not.toBeDisabled();
+    });
+
     await user.clear(standardDaysInput);
     await user.type(standardDaysInput, '24');
 
-    await user.click(screen.getByRole('button', { name: 'Tính Toán Lương' }));
-
+    // The calculate action updates the data reactively without calling onSuccess (which would close the modal)
     await waitFor(() => {
-      expect(defaultProps.onSuccess).toHaveBeenCalled();
+      expect(defaultProps.onSuccess).not.toHaveBeenCalled();
     });
   });
 

@@ -20,12 +20,11 @@ import { LeaveRequestFormModal } from '@features/hrm/manage-leave-request/ui/Lea
 import { LeaveRequestDetailsModal } from '@features/hrm/manage-leave-request/ui/LeaveRequestDetailsModal';
 import { BatchAttendanceModal } from '@features/hrm/batch-attendance/ui/BatchAttendanceModal';
 import { InitializeSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/InitializeSalarySlipModal';
-import { SalarySlipDetailsModal } from '@features/hrm/manage-salary-slip/ui/SalarySlipDetailsModal';
 import { RewardFormModal } from '@features/hrm/manage-salary-slip/ui/RewardFormModal';
 import { DisciplineFormModal } from '@features/hrm/manage-salary-slip/ui/DisciplineFormModal';
 
 // Types
-import type { Employee, LeaveRequest, SalarySlip } from '@entities/hrm/model/types';
+import type { Employee, LeaveRequest } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
 type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary';
@@ -48,7 +47,6 @@ const HrmPage: React.FC = () => {
   const [isLeaveRequestFormOpen, setIsLeaveRequestFormOpen] = useState(false);
   const [selectedLeaveRequestForDetails, setSelectedLeaveRequestForDetails] = useState<LeaveRequest | null>(null);
   const [isInitializeSalarySlipOpen, setIsInitializeSalarySlipOpen] = useState(false);
-  const [selectedSalarySlipForDetails, setSelectedSalarySlipForDetails] = useState<SalarySlip | null>(null);
 
   // Actions
   const handleTerminateContractTrigger = (emp: Employee, contractId: string) => {
@@ -165,7 +163,7 @@ const HrmPage: React.FC = () => {
                   Khởi Tạo Kỳ Lương
                 </Button>
               </div>
-              <SalarySlipTable onViewDetails={(slip) => setSelectedSalarySlipForDetails(slip)} />
+              <SalarySlipTable />
             </>
           )}
         </div>
@@ -279,15 +277,6 @@ const HrmPage: React.FC = () => {
           open={isInitializeSalarySlipOpen}
           onClose={() => setIsInitializeSalarySlipOpen(false)}
           onSuccess={() => setIsInitializeSalarySlipOpen(false)}
-        />
-      )}
-
-      {selectedSalarySlipForDetails && (
-        <SalarySlipDetailsModal
-          open={!!selectedSalarySlipForDetails}
-          onClose={() => setSelectedSalarySlipForDetails(null)}
-          onSuccess={() => setSelectedSalarySlipForDetails(null)}
-          salarySlip={selectedSalarySlipForDetails}
         />
       )}
     </div>

@@ -5,7 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
-import { Eye, Edit, DollarSign, FileText, Gift, AlertTriangle } from 'lucide-react';
+import { Eye, Edit, DollarSign, FileText, Gift, AlertTriangle, ChevronDown } from 'lucide-react';
 
 interface EmployeeTableProps {
   onView?: (employee: Employee) => void;
@@ -131,21 +131,24 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   }, [onView, onEdit, onUpdateSalary, onCreateContract, onReward, onDiscipline]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div>
       {/* Custom status toolbar */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-500">Trạng thái:</span>
-          <select
-            value={statusFilter}
-            onChange={(e: any) => setStatusFilter(e.target.value)}
-            className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-400"
-            aria-label="Lọc trạng thái nhân viên"
-          >
-            <option value="active">Đang hoạt động</option>
-            <option value="inactive">Đã nghỉ việc</option>
-            <option value="all">Tất cả nhân sự</option>
-          </select>
+      <div className="hrmFilterToolbar">
+        <div className="hrmFilterGroup">
+          <span className="hrmFilterLabel">Trạng thái:</span>
+          <div className="hrmSelectWrapper">
+            <select
+              value={statusFilter}
+              onChange={(e: any) => setStatusFilter(e.target.value)}
+              className="hrmSelectInput"
+              aria-label="Lọc trạng thái nhân viên"
+            >
+              <option value="active">Đang hoạt động</option>
+              <option value="inactive">Đã nghỉ việc</option>
+              <option value="all">Tất cả nhân sự</option>
+            </select>
+            <ChevronDown size={14} className="hrmSelectIcon" />
+          </div>
         </div>
       </div>
 
