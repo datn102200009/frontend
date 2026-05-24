@@ -74,15 +74,32 @@ export const UpdateSalaryTitleModal: React.FC<UpdateSalaryTitleModalProps> = ({
         reason: values.reason || undefined,
       };
 
-      if (values.change_type === 'salary_change' || values.change_type === 'other') {
+      if (values.change_type === 'salary_change') {
         payload.new_salary_base = Number(values.new_salary_base);
+      } else if (values.change_type === 'other') {
+        const val = values.new_salary_base;
+        if (typeof val === 'number' && !isNaN(val)) {
+          payload.new_salary_base = val;
+        }
       }
-      if (values.change_type === 'title_change' || values.change_type === 'other') {
+
+
+      if (values.change_type === 'title_change') {
         payload.new_title = values.new_title;
+      } else if (values.change_type === 'other') {
+        if (values.new_title && values.new_title.trim() !== '') {
+          payload.new_title = values.new_title;
+        }
       }
-      if (values.change_type === 'department_transfer' || values.change_type === 'other') {
+
+      if (values.change_type === 'department_transfer') {
         payload.new_department = values.new_department;
+      } else if (values.change_type === 'other') {
+        if (values.new_department && values.new_department.trim() !== '') {
+          payload.new_department = values.new_department;
+        }
       }
+
 
       await updateSalaryTitle({
         id: employee.id,

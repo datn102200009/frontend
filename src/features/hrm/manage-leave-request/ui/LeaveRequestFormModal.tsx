@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { usePostHrmLeaveRequestsCreateMutation } from '@entities/hrm/api/hrmApi';
+import { usePostHrmLeaveRequestsCreateMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
+
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './LeaveRequestFormModal.module.css';
@@ -10,16 +11,18 @@ interface LeaveRequestFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  employee: Employee;
+  employee?: Employee;
 }
 
 interface FormValues {
+  employee_id?: string;
   leave_type: 'annual' | 'sick' | 'unpaid' | 'maternity' | 'personal' | 'other';
   start_date: string;
   end_date: string;
   days: number;
   reason: string;
 }
+
 
 export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   open,
@@ -28,6 +31,10 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   employee,
 }) => {
   const [createLeaveRequest, { isLoading }] = usePostHrmLeaveRequestsCreateMutation();
+  const { data: employeeResponse, isLoading: isLoadingEmployees } = useGetHrmEmployeesQuery({
+    limit: 100,
+  }, { skip: !!employee });
+
   const [apiError, setApiError] = useState<string | null>(null);
 
   const {
@@ -39,6 +46,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     watch,
   } = useForm<FormValues>({
     defaultValues: {
+      employee_id: employee?.id || '',
       leave_type: 'annual',
       start_date: new Date().toISOString().split('T')[0],
       end_date: new Date().toISOString().split('T')[0],
@@ -46,6 +54,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
       reason: '',
     },
   });
+
 
   const startDate = watch('start_date');
   const endDate = watch('end_date');
@@ -66,8 +75,9 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   }, [startDate, endDate, setValue]);
 
   useEffect(() => {
-    if (open && employee) {
+    if (open) {
       reset({
+        employee_id: employee?.id || '',
         leave_type: 'annual',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date().toISOString().split('T')[0],
@@ -78,9 +88,14 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     }
   }, [open, employee, reset]);
 
+
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
-    if (!employee.id) return;
+    const targetEmployeeId = employee?.id || values.employee_id;
+    if (!targetEmployeeId) {
+      setApiError('Vui lòng chọn nhân viên.');
+      return;
+    }
 
     if (new Date(values.end_date) < new Date(values.start_date)) {
       setApiError('Ngày kết thúc không được nhỏ hơn ngày bắt đầu.');
@@ -94,13 +109,14 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
 
     try {
       const body = {
-        employee_id: employee.id,
+        employee_id: targetEmployeeId,
         leave_type: values.leave_type,
         start_date: values.start_date,
         end_date: values.end_date,
         days: Number(values.days),
         reason: values.reason,
       };
+
 
       await createLeaveRequest({ body }).unwrap();
       onSuccess();
@@ -110,12 +126,18 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     }
   };
 
+  const activeEmployees = React.useMemo(() => {
+    if (!employeeResponse?.results) return [];
+    return employeeResponse.results.filter((emp) => emp.employment_status === 'active');
+  }, [employeeResponse]);
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={`Tạo Đơn Xin Nghỉ Phép - ${employee.full_name}`}
+      title={employee ? `Tạo Đơn Xin Nghỉ Phép - ${employee.full_name}` : 'Tạo Đơn Xin Nghỉ Phép'}
       size="md"
+
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
           <Button variant="ghost" onClick={onClose} disabled={isLoading}>
@@ -134,7 +156,30 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
           </div>
         )}
 
+        {!employee && (
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="employee_id">
+              Chọn nhân viên <span className={styles.required}>*</span>
+            </label>
+            <select
+              id="employee_id"
+              className={styles.select}
+              {...register('employee_id', { required: 'Vui lòng chọn nhân viên' })}
+              disabled={isLoading || isLoadingEmployees}
+            >
+              <option value="">-- Chọn nhân viên --</option>
+              {activeEmployees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.full_name} ({emp.employee_id})
+                </option>
+              ))}
+            </select>
+            {errors.employee_id && <span className={styles.errorText}>{errors.employee_id.message}</span>}
+          </div>
+        )}
+
         <div className={styles.formGroup}>
+
           <label className={styles.label} htmlFor="leave_type">
             Loại nghỉ phép <span className={styles.required}>*</span>
           </label>

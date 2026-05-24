@@ -78,4 +78,16 @@ describe('LeaveRequestFormModal', () => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
   });
+
+  it('renders employee dropdown select when employee prop is not provided', async () => {
+    const propsWithoutEmployee = {
+      open: true,
+      onClose: vi.fn(),
+      onSuccess: vi.fn(),
+    };
+    renderWithProviders(<LeaveRequestFormModal {...propsWithoutEmployee} />);
+    expect(screen.getByRole('heading', { name: 'Tạo Đơn Xin Nghỉ Phép' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Chọn nhân viên/i)).toBeInTheDocument();
+  });
 });
+

@@ -118,9 +118,10 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
               <select
                 value={selectedPeriod.split('-')[1]}
                 onChange={(e) => {
-                  const [y, _] = selectedPeriod.split('-');
+                  const [y] = selectedPeriod.split('-');
                   onChangePeriod(`${y}-${e.target.value}`);
                 }}
+
                 className="hrmSelectInput"
                 style={{ minWidth: '90px', paddingRight: '24px' }}
                 aria-label="Chọn tháng kỳ lương"
@@ -141,9 +142,10 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
               <select
                 value={selectedPeriod.split('-')[0]}
                 onChange={(e) => {
-                  const [_, m] = selectedPeriod.split('-');
+                  const [, m] = selectedPeriod.split('-');
                   onChangePeriod(`${e.target.value}-${m}`);
                 }}
+
                 className="hrmSelectInput"
                 style={{ minWidth: '95px', paddingRight: '24px' }}
                 aria-label="Chọn năm kỳ lương"

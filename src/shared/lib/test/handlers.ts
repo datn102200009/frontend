@@ -20,6 +20,16 @@ export const handlers = [
     );
   }),
 
+
+  // Roles mock
+  http.get('*/api/v1/accounts/roles/', () => {
+    return HttpResponse.json([
+      { id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Quản trị viên (Admin)', description: 'Quản trị viên hệ thống với toàn quyền truy cập.' },
+      { id: 'c73a6473-8b74-4b53-a5c9-95ad3e1bcf4d', name: 'Nhân viên (Employee)', description: 'Standard employee role' },
+    ]);
+  }),
+
+
   // BOM mocks
   http.post('*/api/v1/manufacturing/bom/create/', async ({ request }) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

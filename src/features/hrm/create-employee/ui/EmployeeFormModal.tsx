@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { usePostHrmEmployeesCreateMutation } from '@entities/hrm/api/hrmApi';
+import { useGetAccountsRolesQuery } from '@features/accounts/api/accountsApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { UserCheck } from 'lucide-react';
 import styles from './EmployeeFormModal.module.css';
+
 
 interface EmployeeFormModalProps {
   open: boolean;
@@ -32,14 +34,12 @@ interface EmployeeFormValues {
   role_id?: string;
 }
 
-// Mock Role IDs representing Admin and Employee from the specification/seed
-const MOCK_ROLES = [
-  { id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Quản trị viên (Admin)' },
-  { id: 'c73a6473-8b74-4b53-a5c9-95ad3e1bcf4d', name: 'Nhân viên (Employee)' },
-];
+
+
 
 export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onClose, onSuccess }) => {
   const [createEmployee, { isLoading }] = usePostHrmEmployeesCreateMutation();
+  const { data: roles = [], isLoading: isLoadingRoles } = useGetAccountsRolesQuery();
   const [showUserFields, setShowUserFields] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -49,6 +49,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<EmployeeFormValues>({
     defaultValues: {
       employee_id: '',
@@ -64,9 +65,19 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
       address: '',
       join_date: new Date().toISOString().split('T')[0],
       create_user: false,
-      role_id: MOCK_ROLES[1].id, // Default to Employee role
+      role_id: '',
     },
   });
+
+  // Set default role_id once roles are loaded
+  useEffect(() => {
+    if (roles.length > 0) {
+      const employeeRole = roles.find(r => r.name === 'Employee' || r.name?.toLowerCase().includes('nhân viên'));
+      const defaultRoleId = employeeRole?.id || roles[0].id;
+      setValue('role_id', defaultRoleId);
+    }
+  }, [roles, setValue]);
+
 
   const watchCreateUser = watch('create_user');
 
@@ -373,14 +384,15 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                 {...register('role_id', {
                   required: watchCreateUser ? 'Vai trò là bắt buộc' : false,
                 })}
-                disabled={isLoading}
+                disabled={isLoading || isLoadingRoles}
               >
-                {MOCK_ROLES.map((role) => (
+                {roles.map((role) => (
                   <option key={role.id} value={role.id}>
-                    {role.name}
+                    {role.name === 'Admin' ? 'Quản trị viên (Admin)' : role.name === 'Employee' ? 'Nhân viên (Employee)' : role.name}
                   </option>
                 ))}
               </select>
+
             </div>
           </div>
         )}

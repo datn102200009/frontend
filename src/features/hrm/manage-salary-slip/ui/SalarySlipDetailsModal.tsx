@@ -29,11 +29,23 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
   const [standardDays, setStandardDays] = useState<number>(26);
   const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
-  // Auto calculate when modal opens or standard days change
+  // Reset initial load flag when modal opens
   useEffect(() => {
-    if (open && salarySlip.id && salarySlip.status === 'draft' && standardDays >= 1 && standardDays <= 31) {
-      setApiError(null);
+    if (open) {
+      setIsInitialLoad(true);
+    }
+  }, [open]);
+
+  // Auto calculate when modal opens or standard days change (debounced)
+  useEffect(() => {
+    if (!open || !salarySlip.id || salarySlip.status !== 'draft') return;
+    if (standardDays < 1 || standardDays > 31) return;
+
+    setApiError(null);
+
+    const executeCalculation = () => {
       calculateSalary({
         id: salarySlip.id,
         body: { standard_days: standardDays },
@@ -46,8 +58,19 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
           console.error('Failed to auto calculate salary slip', err);
           setApiError(err?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
         });
+    };
+
+    if (isInitialLoad) {
+      executeCalculation();
+      setIsInitialLoad(false);
+      return;
     }
-  }, [open, salarySlip.id, salarySlip.status, standardDays, calculateSalary, onCalculateSuccess]);
+
+    const timer = setTimeout(executeCalculation, 500);
+
+    return () => clearTimeout(timer);
+  }, [open, salarySlip.id, salarySlip.status, standardDays, calculateSalary, onCalculateSuccess, isInitialLoad]);
+
 
   const handleConfirmPayment = async () => {
     setApiError(null);

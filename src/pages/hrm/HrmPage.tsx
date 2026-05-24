@@ -294,8 +294,6 @@ const HrmPage: React.FC = () => {
           open={isLeaveRequestFormOpen}
           onClose={() => setIsLeaveRequestFormOpen(false)}
           onSuccess={() => setIsLeaveRequestFormOpen(false)}
-          // Set standard mock employee or choose first active employee if needed
-          employee={{ id: 'emp-1', full_name: 'Nguyễn Văn An', employee_id: 'NV001', employment_status: 'active' }}
         />
       )}
 
