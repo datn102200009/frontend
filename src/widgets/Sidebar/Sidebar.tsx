@@ -12,6 +12,7 @@ import {
   X,
   Users,
   Truck,
+  Contact,
 } from 'lucide-react';
 import type { RootState } from '@app/store';
 import { logout } from '@features/auth/model/authSlice';
@@ -61,6 +62,12 @@ const NAV_SECTIONS = [
     label: 'Tài Chính',
     items: [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền' },
+    ],
+  },
+  {
+    label: 'Nhân Sự',
+    items: [
+      { to: '/hrm', icon: <Contact size={20} />, label: 'Quản Lý HR' },
     ],
   },
 ];

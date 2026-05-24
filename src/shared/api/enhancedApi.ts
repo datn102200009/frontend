@@ -6,6 +6,7 @@ import { salesApi } from '../../entities/sales/api/salesApi';
 import { financeApi } from '../../entities/finance/api/financeApi';
 import { crmApi } from '../../entities/crm/api/crmApi';
 import { procurementApi } from '../../entities/procurement/api/procurementApi';
+import { hrmApi } from '../../entities/hrm/api/hrmApi';
 
 // ==========================================
 // Caching Strategy for Master Data
@@ -214,3 +215,66 @@ procurementApi.enhanceEndpoints({
     },
   },
 });
+
+// ==========================================
+// Caching Strategy for HRM Data
+// ==========================================
+hrmApi.enhanceEndpoints({
+  endpoints: {
+    getHrmEmployees: {
+      providesTags: ['Employees'],
+    },
+    getHrmEmployeesById: {
+      providesTags: (_result, _error, arg) => [{ type: 'Employees' as const, id: arg.id }],
+    },
+    postHrmEmployeesCreate: {
+      invalidatesTags: ['Employees'],
+    },
+    patchHrmEmployeesByIdUpdate: {
+      invalidatesTags: (_result, _error, arg) => ['Employees', { type: 'Employees' as const, id: arg.id }],
+    },
+    postHrmEmployeesByIdUpdateSalaryTitle: {
+      invalidatesTags: (_result, _error, arg) => ['Employees', { type: 'Employees' as const, id: arg.id }],
+    },
+    postHrmContracts: {
+      invalidatesTags: ['Employees'],
+    },
+    postHrmContractsByIdTerminate: {
+      invalidatesTags: ['Employees', 'SalarySlips', 'CashFlows'],
+    },
+    getHrmAttendances: {
+      providesTags: ['Attendances'],
+    },
+    postHrmAttendancesBatch: {
+      invalidatesTags: ['Attendances', 'SalarySlips'],
+    },
+    getHrmLeaveRequests: {
+      providesTags: ['LeaveRequests'],
+    },
+    postHrmLeaveRequestsCreate: {
+      invalidatesTags: ['LeaveRequests'],
+    },
+    postHrmLeaveRequestsByIdApprove: {
+      invalidatesTags: ['LeaveRequests', 'Attendances'],
+    },
+    getHrmSalarySlips: {
+      providesTags: ['SalarySlips'],
+    },
+    postHrmSalarySlipsInitialize: {
+      invalidatesTags: ['SalarySlips'],
+    },
+    postHrmSalarySlipsByIdCalculate: {
+      invalidatesTags: ['SalarySlips'],
+    },
+    postHrmSalarySlipsByIdConfirm: {
+      invalidatesTags: ['SalarySlips', 'CashFlows'],
+    },
+    postHrmRewards: {
+      invalidatesTags: ['Employees', 'SalarySlips'],
+    },
+    postHrmDisciplines: {
+      invalidatesTags: ['Employees', 'SalarySlips'],
+    },
+  },
+});
+
