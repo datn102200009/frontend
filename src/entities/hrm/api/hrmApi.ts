@@ -484,6 +484,16 @@ export type SalarySlip = {
   payment_method?: ('cash' | 'bank_transfer') | null
   status?: 'draft' | 'paid'
   remarks?: string | null
+  breakdown?: {
+    incomes?: {
+      name?: string
+      amount?: number
+    }[]
+    deductions?: {
+      name?: string
+      amount?: number
+    }[]
+  } | null
   created_at?: string
   updated_at?: string
 }

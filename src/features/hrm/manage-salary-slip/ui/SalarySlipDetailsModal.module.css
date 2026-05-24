@@ -136,6 +136,21 @@
   font-size: var(--fs-sm);
 }
 
+.remarksSection {
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+  background-color: var(--clr-surface-alt);
+  margin-top: var(--sp-2);
+}
+
+.remarksContent {
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
 @media (max-width: 640px) {
   .grid {
     grid-template-columns: 1fr;

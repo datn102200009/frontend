@@ -78,6 +78,18 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
     return status === 'paid' ? `${styles.badge} ${styles.paid}` : `${styles.badge} ${styles.draft}`;
   };
 
+  const breakdownIncomes = salarySlip.breakdown?.incomes || [
+    { name: 'Lương theo ngày công', amount: parseFloat(salarySlip.base_salary || '0') },
+    { name: 'Lương tăng ca (OT)', amount: parseFloat(salarySlip.overtime_amount || '0') },
+    { name: 'Phụ cấp cố định', amount: parseFloat(salarySlip.allowance_amount || '0') },
+    { name: 'Khen thưởng/Thưởng thêm', amount: parseFloat(salarySlip.reward_amount_total || '0') },
+  ];
+
+  const breakdownDeductions = salarySlip.breakdown?.deductions || [
+    { name: 'Phạt kỷ luật/Khấu trừ', amount: parseFloat(salarySlip.discipline_deduction_total || '0') },
+    { name: 'Phí công đoàn (2%)', amount: parseFloat(salarySlip.union_fee_2pct || '0') },
+  ];
+
   return (
     <Modal
       open={open}
@@ -113,24 +125,14 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
           {/* Lương & Thu nhập */}
           <div className={styles.section}>
             <h4 className={styles.sectionTitle}>Các Khoản Thu Nhập</h4>
-            <div className={styles.row}>
-              <span>Lương theo ngày công:</span>
-              <strong>{formatVND(salarySlip.base_salary)}</strong>
-            </div>
-            <div className={styles.row}>
-              <span>Lương tăng ca (OT):</span>
-              <strong>{formatVND(salarySlip.overtime_amount)}</strong>
-            </div>
-            <div className={styles.row}>
-              <span>Phụ cấp cố định:</span>
-              <strong>{formatVND(salarySlip.allowance_amount)}</strong>
-            </div>
-            <div className={styles.row}>
-              <span>Khen thưởng/Thưởng thêm:</span>
-              <strong style={{ color: 'var(--clr-success)' }}>
-                {formatVND(salarySlip.reward_amount_total)}
-              </strong>
-            </div>
+            {breakdownIncomes.map((item, idx) => (
+              <div className={styles.row} key={idx}>
+                <span>{item.name}:</span>
+                <strong style={item.name?.includes('Khen thưởng') || item.name?.includes('Thưởng') ? { color: 'var(--clr-success)' } : undefined}>
+                  {formatVND(item.amount)}
+                </strong>
+              </div>
+            ))}
             <div className={styles.row} style={{ borderTop: '1px dashed var(--clr-border)', paddingTop: '8px', marginTop: '8px' }}>
               <span>Tổng thu nhập (Gross):</span>
               <strong>{formatVND(salarySlip.gross_pay)}</strong>
@@ -141,18 +143,14 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
           <div className={styles.section} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <h4 className={styles.sectionTitle}>Khấu Trừ & Nghĩa Vụ</h4>
-              <div className={styles.row}>
-                <span>Phạt kỷ luật/Khấu trừ:</span>
-                <strong style={{ color: 'var(--clr-error)' }}>
-                  {formatVND(salarySlip.discipline_deduction_total)}
-                </strong>
-              </div>
-              <div className={styles.row}>
-                <span>Phí công đoàn (2%):</span>
-                <strong style={{ color: 'var(--clr-error)' }}>
-                  {formatVND(salarySlip.union_fee_2pct)}
-                </strong>
-              </div>
+              {breakdownDeductions.map((item, idx) => (
+                <div className={styles.row} key={idx}>
+                  <span>{item.name}:</span>
+                  <strong style={{ color: 'var(--clr-error)' }}>
+                    {formatVND(item.amount)}
+                  </strong>
+                </div>
+              ))}
               <div className={styles.row} style={{ borderTop: '1px dashed var(--clr-border)', paddingTop: '8px', marginTop: '8px' }}>
                 <span>Tổng khấu trừ:</span>
                 <strong style={{ color: 'var(--clr-error)' }}>{formatVND(salarySlip.deductions)}</strong>
@@ -165,6 +163,15 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
             </div>
           </div>
         </div>
+
+        {salarySlip.remarks && (
+          <div className={styles.remarksSection}>
+            <h4 className={styles.sectionTitle}>Ghi chú / Giải trình chi tiết</h4>
+            <div className={styles.remarksContent}>
+              {salarySlip.remarks}
+            </div>
+          </div>
+        )}
 
         {salarySlip.status === 'draft' && (
           <div className={styles.actionRow}>
