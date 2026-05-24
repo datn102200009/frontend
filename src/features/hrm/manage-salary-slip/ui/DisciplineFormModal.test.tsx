@@ -23,7 +23,7 @@ describe('DisciplineFormModal', () => {
     vi.clearAllMocks();
   });
 
-  it('renders discipline form correctly', () => {
+  it('renders discipline form correctly with employee', () => {
     renderWithProviders(<DisciplineFormModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: /Ghi Nhận Kỷ Luật - Nguyễn Văn An/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Ngày xảy ra sự việc/i)).toBeInTheDocument();
@@ -31,6 +31,17 @@ describe('DisciplineFormModal', () => {
     expect(screen.getByLabelText(/Hình thức kỷ luật/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Số tiền khấu trừ/i)).not.toBeInTheDocument(); // Hidden by default (warning)
     expect(screen.getByLabelText(/Nội dung vi phạm/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Nhân viên/i)).not.toBeInTheDocument();
+  });
+
+  it('renders employee selection dropdown when employee is not provided', () => {
+    const propsWithoutEmployee = {
+      ...defaultProps,
+      employee: undefined,
+    };
+    renderWithProviders(<DisciplineFormModal {...propsWithoutEmployee} />);
+    expect(screen.getByRole('heading', { name: /Ghi Nhận Kỷ Luật/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Nhân viên/i)).toBeInTheDocument();
   });
 
   it('shows penalty amount field only when discipline type is salary_deduction', async () => {

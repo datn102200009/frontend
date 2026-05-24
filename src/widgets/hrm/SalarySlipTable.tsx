@@ -10,14 +10,15 @@ import { SalarySlipDetailsModal } from '@features/hrm/manage-salary-slip/ui/Sala
 
 interface SalarySlipTableProps {
   onViewDetails?: (salarySlip: SalarySlip) => void;
+  selectedPeriod: string;
+  onChangePeriod: (period: string) => void;
 }
 
-export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
-    const d = new Date();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    return `${d.getFullYear()}-${mm}`;
-  });
+export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
+  onViewDetails,
+  selectedPeriod,
+  onChangePeriod,
+}) => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'paid'>('all');
   const [selectedSlipId, setSelectedSlipId] = useState<string | null>(null);
 
@@ -118,7 +119,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
                 value={selectedPeriod.split('-')[1]}
                 onChange={(e) => {
                   const [y, _] = selectedPeriod.split('-');
-                  setSelectedPeriod(`${y}-${e.target.value}`);
+                  onChangePeriod(`${y}-${e.target.value}`);
                 }}
                 className="hrmSelectInput"
                 style={{ minWidth: '90px', paddingRight: '24px' }}
@@ -141,7 +142,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({ onViewDetails 
                 value={selectedPeriod.split('-')[0]}
                 onChange={(e) => {
                   const [_, m] = selectedPeriod.split('-');
-                  setSelectedPeriod(`${e.target.value}-${m}`);
+                  onChangePeriod(`${e.target.value}-${m}`);
                 }}
                 className="hrmSelectInput"
                 style={{ minWidth: '95px', paddingRight: '24px' }}

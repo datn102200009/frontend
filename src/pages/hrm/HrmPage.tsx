@@ -8,6 +8,7 @@ import { EmployeeTable } from '@widgets/hrm/EmployeeTable';
 import { AttendanceTable } from '@widgets/hrm/AttendanceTable';
 import { LeaveRequestTable } from '@widgets/hrm/LeaveRequestTable';
 import { SalarySlipTable } from '@widgets/hrm/SalarySlipTable';
+import { RewardDisciplineTable } from '@widgets/hrm/RewardDisciplineTable';
 
 // Modals
 import { EmployeeFormModal } from '@features/hrm/create-employee/ui/EmployeeFormModal';
@@ -22,12 +23,13 @@ import { BatchAttendanceModal } from '@features/hrm/batch-attendance/ui/BatchAtt
 import { InitializeSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/InitializeSalarySlipModal';
 import { RewardFormModal } from '@features/hrm/manage-salary-slip/ui/RewardFormModal';
 import { DisciplineFormModal } from '@features/hrm/manage-salary-slip/ui/DisciplineFormModal';
+import { BulkConfirmSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/BulkConfirmSalarySlipModal';
 
 // Types
 import type { Employee, LeaveRequest } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
-type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary';
+type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines';
 
 const HrmPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('employees');
@@ -47,6 +49,12 @@ const HrmPage: React.FC = () => {
   const [isLeaveRequestFormOpen, setIsLeaveRequestFormOpen] = useState(false);
   const [selectedLeaveRequestForDetails, setSelectedLeaveRequestForDetails] = useState<LeaveRequest | null>(null);
   const [isInitializeSalarySlipOpen, setIsInitializeSalarySlipOpen] = useState(false);
+  const [isBulkPayOpen, setIsBulkPayOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}`;
+  });
 
   // Actions
   const handleTerminateContractTrigger = (emp: Employee, contractId: string) => {
@@ -93,6 +101,15 @@ const HrmPage: React.FC = () => {
           onClick={() => setActiveTab('salary')}
         >
           Bảng Lương
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'rewards_disciplines'}
+          className={clsx(styles.tab, activeTab === 'rewards_disciplines' && styles.active)}
+          onClick={() => setActiveTab('rewards_disciplines')}
+        >
+          Khen Thưởng & Kỷ Luật
         </button>
       </div>
 
@@ -159,11 +176,31 @@ const HrmPage: React.FC = () => {
                   <h2 className={styles.title}>Tính Toán & Thanh Toán Lương</h2>
                   <p className={styles.subtitle}>Quản lý bảng lương nhân sự, tính toán công nợ và chi lương</p>
                 </div>
-                <Button icon={<Plus size={16} />} onClick={() => setIsInitializeSalarySlipOpen(true)}>
-                  Khởi Tạo Kỳ Lương
-                </Button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button variant="ghost" onClick={() => setIsBulkPayOpen(true)}>
+                    Thanh Toán Nhanh
+                  </Button>
+                  <Button icon={<Plus size={16} />} onClick={() => setIsInitializeSalarySlipOpen(true)}>
+                    Khởi Tạo Kỳ Lương
+                  </Button>
+                </div>
               </div>
-              <SalarySlipTable />
+              <SalarySlipTable
+                selectedPeriod={selectedPeriod}
+                onChangePeriod={setSelectedPeriod}
+              />
+            </>
+          )}
+
+          {activeTab === 'rewards_disciplines' && (
+            <>
+              <div className={styles.header}>
+                <div>
+                  <h2 className={styles.title}>Khen Thưởng & Kỷ Luật</h2>
+                  <p className={styles.subtitle}>Ghi nhận khen thưởng thành tích và xử lý kỷ luật lao động</p>
+                </div>
+              </div>
+              <RewardDisciplineTable />
             </>
           )}
         </div>
@@ -277,6 +314,15 @@ const HrmPage: React.FC = () => {
           open={isInitializeSalarySlipOpen}
           onClose={() => setIsInitializeSalarySlipOpen(false)}
           onSuccess={() => setIsInitializeSalarySlipOpen(false)}
+        />
+      )}
+
+      {isBulkPayOpen && (
+        <BulkConfirmSalarySlipModal
+          open={isBulkPayOpen}
+          onClose={() => setIsBulkPayOpen(false)}
+          onSuccess={() => setIsBulkPayOpen(false)}
+          salaryPeriod={selectedPeriod}
         />
       )}
     </div>

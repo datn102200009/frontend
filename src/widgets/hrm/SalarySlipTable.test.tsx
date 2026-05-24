@@ -6,6 +6,8 @@ import { renderWithProviders } from '@shared/lib/test/test-utils';
 describe('SalarySlipTable', () => {
   const defaultProps = {
     onViewDetails: vi.fn(),
+    selectedPeriod: '2026-05',
+    onChangePeriod: vi.fn(),
   };
 
   beforeEach(() => {

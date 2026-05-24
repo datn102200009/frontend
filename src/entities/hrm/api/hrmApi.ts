@@ -142,11 +142,37 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    getHrmRewards: build.query<GetHrmRewardsApiResponse, GetHrmRewardsApiArg>({
+      query: (queryArg) => ({
+        url: `/hrm/rewards/`,
+        params: {
+          employee_id: queryArg.employeeId,
+        },
+      }),
+    }),
     postHrmRewards: build.mutation<PostHrmRewardsApiResponse, PostHrmRewardsApiArg>({
       query: (queryArg) => ({ url: `/hrm/rewards/`, method: 'POST', body: queryArg.body }),
     }),
+    getHrmDisciplines: build.query<GetHrmDisciplinesApiResponse, GetHrmDisciplinesApiArg>({
+      query: (queryArg) => ({
+        url: `/hrm/disciplines/`,
+        params: {
+          employee_id: queryArg.employeeId,
+        },
+      }),
+    }),
     postHrmDisciplines: build.mutation<PostHrmDisciplinesApiResponse, PostHrmDisciplinesApiArg>({
       query: (queryArg) => ({ url: `/hrm/disciplines/`, method: 'POST', body: queryArg.body }),
+    }),
+    postHrmSalarySlipsBulkConfirmPay: build.mutation<
+      PostHrmSalarySlipsBulkConfirmPayApiResponse,
+      PostHrmSalarySlipsBulkConfirmPayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/salary-slips/bulk-confirm-pay/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
     }),
   }),
   overrideExisting: false,
@@ -322,6 +348,11 @@ export type PostHrmSalarySlipsByIdConfirmApiArg = {
     payment_method: 'cash' | 'bank_transfer'
   }
 }
+export type GetHrmRewardsApiResponse = /** status 200 Thành công */ RewardRecord[]
+export type GetHrmRewardsApiArg = {
+  /** Lọc theo ID nhân viên */
+  employeeId?: string
+}
 export type PostHrmRewardsApiResponse = /** status 201 Ghi nhận thành công */ RewardRecord
 export type PostHrmRewardsApiArg = {
   body: {
@@ -332,6 +363,11 @@ export type PostHrmRewardsApiArg = {
     description: string
     salary_slip_id?: string | null
   }
+}
+export type GetHrmDisciplinesApiResponse = /** status 200 Thành công */ DisciplineRecord[]
+export type GetHrmDisciplinesApiArg = {
+  /** Lọc theo ID nhân viên */
+  employeeId?: string
 }
 export type PostHrmDisciplinesApiResponse = /** status 201 Ghi nhận thành công */ DisciplineRecord
 export type PostHrmDisciplinesApiArg = {
@@ -344,6 +380,16 @@ export type PostHrmDisciplinesApiArg = {
     penalty_amount?: number
     salary_slip_id?: string | null
     file_url?: string
+  }
+}
+export type PostHrmSalarySlipsBulkConfirmPayApiResponse =
+  /** status 200 Xác nhận và thanh toán lương nhanh thành công */ SalarySlip[]
+export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
+  body: {
+    /** Kỳ lương cần thanh toán (YYYY-MM) */
+    salary_period: string
+    /** Hình thức chi trả lương */
+    payment_method: 'cash' | 'bank_transfer'
   }
 }
 export type Employee = {
@@ -410,6 +456,9 @@ export type EmployeeDocument = {
 }
 export type RewardRecord = {
   id?: string
+  employee_id?: string
+  employee_code?: string
+  employee_name?: string
   reward_date?: string
   reward_type?: 'performance_bonus' | 'initiative' | 'holiday_bonus' | 'other'
   amount?: string | null
@@ -419,6 +468,9 @@ export type RewardRecord = {
 }
 export type DisciplineRecord = {
   id?: string
+  employee_id?: string
+  employee_code?: string
+  employee_name?: string
   incident_date?: string
   discipline_date?: string
   discipline_type?: 'reprimand' | 'warning' | 'salary_deduction' | 'termination' | 'other'
@@ -514,6 +566,9 @@ export const {
   usePostHrmSalarySlipsInitializeMutation,
   usePostHrmSalarySlipsByIdCalculateMutation,
   usePostHrmSalarySlipsByIdConfirmMutation,
+  useGetHrmRewardsQuery,
   usePostHrmRewardsMutation,
+  useGetHrmDisciplinesQuery,
   usePostHrmDisciplinesMutation,
+  usePostHrmSalarySlipsBulkConfirmPayMutation,
 } = injectedRtkApi

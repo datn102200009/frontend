@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { usePostHrmRewardsMutation } from '@entities/hrm/api/hrmApi';
+import { usePostHrmRewardsMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -10,11 +10,12 @@ interface RewardFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  employee: Employee;
+  employee?: Employee;
   salarySlipId?: string;
 }
 
 interface FormValues {
+  employee_id?: string;
   reward_date: string;
   reward_type: 'performance_bonus' | 'initiative' | 'holiday_bonus' | 'other';
   amount: number;
@@ -31,6 +32,11 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
   const [createReward, { isLoading }] = usePostHrmRewardsMutation();
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const { data: employeesData, isLoading: isEmployeesLoading } = useGetHrmEmployeesQuery(
+    { status: 'active', limit: 100 },
+    { skip: !!employee }
+  );
+
   const {
     register,
     handleSubmit,
@@ -38,6 +44,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     reset,
   } = useForm<FormValues>({
     defaultValues: {
+      employee_id: employee?.id || '',
       reward_date: new Date().toISOString().split('T')[0],
       reward_type: 'performance_bonus',
       amount: 1000000,
@@ -46,8 +53,9 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
   });
 
   useEffect(() => {
-    if (open && employee) {
+    if (open) {
       reset({
+        employee_id: employee?.id || '',
         reward_date: new Date().toISOString().split('T')[0],
         reward_type: 'performance_bonus',
         amount: 1000000,
@@ -59,7 +67,11 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
 
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
-    if (!employee.id) return;
+    const targetEmployeeId = employee?.id || values.employee_id;
+    if (!targetEmployeeId) {
+      setApiError('Vui lòng chọn nhân viên.');
+      return;
+    }
 
     if (Number(values.amount) <= 0) {
       setApiError('Số tiền thưởng phải lớn hơn 0.');
@@ -68,7 +80,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
 
     try {
       const body = {
-        employee_id: employee.id,
+        employee_id: targetEmployeeId,
         reward_date: values.reward_date,
         reward_type: values.reward_type,
         amount: Number(values.amount),
@@ -88,7 +100,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={`Khen Thưởng Nhân Viên - ${employee.full_name}`}
+      title={employee ? `Khen Thưởng Nhân Viên - ${employee.full_name}` : 'Ghi Nhận Khen Thưởng'}
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -105,6 +117,28 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
         {apiError && (
           <div className={styles.errorSection}>
             <span>{apiError}</span>
+          </div>
+        )}
+
+        {!employee && (
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="employee_id">
+              Nhân viên <span className={styles.required}>*</span>
+            </label>
+            <select
+              id="employee_id"
+              className={styles.select}
+              {...register('employee_id', { required: 'Nhân viên là bắt buộc' })}
+              disabled={isLoading || isEmployeesLoading}
+            >
+              <option value="">-- Chọn nhân viên --</option>
+              {employeesData?.results?.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.employee_id} - {emp.full_name}
+                </option>
+              ))}
+            </select>
+            {errors.employee_id && <span className={styles.errorText}>{errors.employee_id.message}</span>}
           </div>
         )}
 

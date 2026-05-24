@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { usePostHrmDisciplinesMutation } from '@entities/hrm/api/hrmApi';
+import { usePostHrmDisciplinesMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -10,11 +10,12 @@ interface DisciplineFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  employee: Employee;
+  employee?: Employee;
   salarySlipId?: string;
 }
 
 interface FormValues {
+  employee_id?: string;
   incident_date: string;
   discipline_date: string;
   discipline_type: 'reprimand' | 'warning' | 'salary_deduction' | 'termination' | 'other';
@@ -33,6 +34,11 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
   const [createDiscipline, { isLoading }] = usePostHrmDisciplinesMutation();
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const { data: employeesData, isLoading: isEmployeesLoading } = useGetHrmEmployeesQuery(
+    { status: 'active', limit: 100 },
+    { skip: !!employee }
+  );
+
   const {
     register,
     handleSubmit,
@@ -41,6 +47,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     watch,
   } = useForm<FormValues>({
     defaultValues: {
+      employee_id: employee?.id || '',
       incident_date: new Date().toISOString().split('T')[0],
       discipline_date: new Date().toISOString().split('T')[0],
       discipline_type: 'warning',
@@ -53,8 +60,9 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
   const disciplineType = watch('discipline_type');
 
   useEffect(() => {
-    if (open && employee) {
+    if (open) {
       reset({
+        employee_id: employee?.id || '',
         incident_date: new Date().toISOString().split('T')[0],
         discipline_date: new Date().toISOString().split('T')[0],
         discipline_type: 'warning',
@@ -68,7 +76,11 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
 
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
-    if (!employee.id) return;
+    const targetEmployeeId = employee?.id || values.employee_id;
+    if (!targetEmployeeId) {
+      setApiError('Vui lòng chọn nhân viên.');
+      return;
+    }
 
     if (values.discipline_type === 'salary_deduction' && Number(values.penalty_amount) <= 0) {
       setApiError('Số tiền phạt khấu trừ phải lớn hơn 0.');
@@ -77,7 +89,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
 
     try {
       const body = {
-        employee_id: employee.id,
+        employee_id: targetEmployeeId,
         incident_date: values.incident_date,
         discipline_date: values.discipline_date,
         discipline_type: values.discipline_type,
@@ -99,7 +111,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={`Ghi Nhận Kỷ Luật - ${employee.full_name}`}
+      title={employee ? `Ghi Nhận Kỷ Luật - ${employee.full_name}` : 'Ghi Nhận Kỷ Luật'}
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -116,6 +128,28 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
         {apiError && (
           <div className={styles.errorSection}>
             <span>{apiError}</span>
+          </div>
+        )}
+
+        {!employee && (
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="employee_id">
+              Nhân viên <span className={styles.required}>*</span>
+            </label>
+            <select
+              id="employee_id"
+              className={styles.select}
+              {...register('employee_id', { required: 'Nhân viên là bắt buộc' })}
+              disabled={isLoading || isEmployeesLoading}
+            >
+              <option value="">-- Chọn nhân viên --</option>
+              {employeesData?.results?.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.employee_id} - {emp.full_name}
+                </option>
+              ))}
+            </select>
+            {errors.employee_id && <span className={styles.errorText}>{errors.employee_id.message}</span>}
           </div>
         )}
 

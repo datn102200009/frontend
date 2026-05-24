@@ -23,13 +23,24 @@ describe('RewardFormModal', () => {
     vi.clearAllMocks();
   });
 
-  it('renders reward form correctly', () => {
+  it('renders reward form correctly with employee', () => {
     renderWithProviders(<RewardFormModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: /Khen Thưởng Nhân Viên - Nguyễn Văn An/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Ngày quyết định/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Loại khen thưởng/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Số tiền thưởng/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Lý do\/Mô tả thành tích/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Nhân viên/i)).not.toBeInTheDocument();
+  });
+
+  it('renders employee selection dropdown when employee is not provided', () => {
+    const propsWithoutEmployee = {
+      ...defaultProps,
+      employee: undefined,
+    };
+    renderWithProviders(<RewardFormModal {...propsWithoutEmployee} />);
+    expect(screen.getByRole('heading', { name: /Ghi Nhận Khen Thưởng/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Nhân viên/i)).toBeInTheDocument();
   });
 
   it('validates required fields', async () => {
