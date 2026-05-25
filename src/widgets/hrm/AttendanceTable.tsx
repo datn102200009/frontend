@@ -70,14 +70,14 @@ export const AttendanceTable: React.FC = () => {
   return (
     <div>
       {/* Date filter toolbar */}
-      <div className="hrmFilterToolbar">
-        <div className="hrmFilterGroup">
-          <span className="hrmFilterLabel">Ngày chấm công:</span>
+      <div className="filterToolbar">
+        <div className="filterGroup">
+          <span className="filterLabel">Ngày chấm công:</span>
           <input
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="hrmDateInput"
+            className="filterDateInput"
             aria-label="Chọn ngày xem chấm công"
           />
         </div>

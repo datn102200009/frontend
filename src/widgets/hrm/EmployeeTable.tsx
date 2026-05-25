@@ -133,21 +133,21 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   return (
     <div>
       {/* Custom status toolbar */}
-      <div className="hrmFilterToolbar">
-        <div className="hrmFilterGroup">
-          <span className="hrmFilterLabel">Trạng thái:</span>
-          <div className="hrmSelectWrapper">
+      <div className="filterToolbar">
+        <div className="filterGroup">
+          <span className="filterLabel">Trạng thái:</span>
+          <div className="filterSelectWrapper">
             <select
               value={statusFilter}
               onChange={(e: any) => setStatusFilter(e.target.value)}
-              className="hrmSelectInput"
+              className="filterSelectInput"
               aria-label="Lọc trạng thái nhân viên"
             >
               <option value="active">Đang hoạt động</option>
               <option value="inactive">Đã nghỉ việc</option>
               <option value="all">Tất cả nhân sự</option>
             </select>
-            <ChevronDown size={14} className="hrmSelectIcon" />
+            <ChevronDown size={14} className="filterSelectIcon" />
           </div>
         </div>
       </div>
