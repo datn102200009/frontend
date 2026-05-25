@@ -8,6 +8,7 @@ import type { PublicHoliday } from '@entities/hrm/api/hrmApi';
 
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { useToast } from '@shared/ui/Toast/Toast';
 import styles from './PublicHolidayFormModal.module.css';
 
 interface PublicHolidayFormModalProps {
@@ -34,6 +35,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
   const isLoading = isCreating || isUpdating;
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const {
     register,
@@ -79,6 +81,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
             description: values.description || undefined,
           },
         }).unwrap();
+        toast('success', `Đã cập nhật ngày nghỉ lễ "${values.name}"`);
       } else {
         await createHoliday({
           body: {
@@ -87,6 +90,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
             description: values.description || undefined,
           },
         }).unwrap();
+        toast('success', `Đã khai báo ngày nghỉ lễ "${values.name}"`);
       }
       onSuccess();
     } catch (err: any) {

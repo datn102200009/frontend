@@ -278,6 +278,24 @@ hrmApi.enhanceEndpoints({
     postHrmDisciplines: {
       invalidatesTags: ['Employees', 'SalarySlips'],
     },
+    getHrmPublicHolidays: {
+      providesTags: ['PublicHolidays'],
+    },
+    getHrmPublicHolidaysById: {
+      providesTags: (_result, _error, arg) => [{ type: 'PublicHolidays' as const, id: arg.id }],
+    },
+    postHrmPublicHolidays: {
+      invalidatesTags: ['PublicHolidays'],
+    },
+    putHrmPublicHolidaysById: {
+      invalidatesTags: (_result, _error, arg) => ['PublicHolidays', { type: 'PublicHolidays' as const, id: arg.id }],
+    },
+    patchHrmPublicHolidaysById: {
+      invalidatesTags: (_result, _error, arg) => ['PublicHolidays', { type: 'PublicHolidays' as const, id: arg.id }],
+    },
+    deleteHrmPublicHolidaysById: {
+      invalidatesTags: ['PublicHolidays'],
+    },
   },
 });
 
