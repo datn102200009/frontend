@@ -96,20 +96,20 @@ const HrmPage: React.FC = () => {
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === 'salary'}
-          className={clsx(styles.tab, activeTab === 'salary' && styles.active)}
-          onClick={() => setActiveTab('salary')}
-        >
-          Bảng Lương
-        </button>
-        <button
-          type="button"
-          role="tab"
           aria-selected={activeTab === 'rewards_disciplines'}
           className={clsx(styles.tab, activeTab === 'rewards_disciplines' && styles.active)}
           onClick={() => setActiveTab('rewards_disciplines')}
         >
           Khen Thưởng & Kỷ Luật
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'salary'}
+          className={clsx(styles.tab, activeTab === 'salary' && styles.active)}
+          onClick={() => setActiveTab('salary')}
+        >
+          Bảng Lương
         </button>
       </div>
 
@@ -177,7 +177,7 @@ const HrmPage: React.FC = () => {
                   <p className={styles.subtitle}>Quản lý bảng lương nhân sự, tính toán công nợ và chi lương</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button variant="ghost" onClick={() => setIsBulkPayOpen(true)}>
+                  <Button variant="secondary" onClick={() => setIsBulkPayOpen(true)}>
                     Thanh Toán Nhanh
                   </Button>
                   <Button icon={<Plus size={16} />} onClick={() => setIsInitializeSalarySlipOpen(true)}>

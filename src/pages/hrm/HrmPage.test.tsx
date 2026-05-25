@@ -27,5 +27,6 @@ describe('HrmPage', () => {
     await user.click(screen.getByRole('tab', { name: 'Bảng Lương' }));
     expect(screen.getByRole('heading', { name: 'Tính Toán & Thanh Toán Lương' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Khởi Tạo Kỳ Lương' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Thanh Toán Nhanh' })).toBeInTheDocument();
   });
 });
