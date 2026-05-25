@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { usePostHrmLeaveRequestsByIdApproveMutation } from '@entities/hrm/api/hrmApi';
 import type { LeaveRequest } from '@entities/hrm/model/types';
+import { getLeaveTypeLabel } from '@entities/hrm/lib/helpers';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './LeaveRequestDetailsModal.module.css';
@@ -36,17 +37,6 @@ export const LeaveRequestDetailsModal: React.FC<LeaveRequestDetailsModalProps> =
       setApiError(
         err?.data?.detail || `Có lỗi xảy ra khi thực hiện thao tác. Vui lòng kiểm tra lại.`
       );
-    }
-  };
-
-  const getLeaveTypeLabel = (type: string) => {
-    switch (type) {
-      case 'paid':
-        return 'Nghỉ có lương';
-      case 'unpaid':
-        return 'Nghỉ không lương';
-      default:
-        return type === 'annual' || type === 'sick' || type === 'maternity' ? 'Nghỉ có lương' : 'Nghỉ không lương';
     }
   };
 

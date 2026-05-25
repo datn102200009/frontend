@@ -20,7 +20,7 @@ interface FormValues {
   start_date: string;
   end_date: string;
   days: number;
-  reason: string;
+  reason?: string;
 }
 
 
@@ -114,7 +114,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
         start_date: values.start_date,
         end_date: values.end_date,
         days: Number(values.days),
-        reason: values.reason,
+        reason: values.reason?.trim() || undefined,
       };
 
 

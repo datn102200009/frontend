@@ -27,10 +27,10 @@ import { DisciplineFormModal } from '@features/hrm/manage-salary-slip/ui/Discipl
 import { BulkConfirmSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/BulkConfirmSalarySlipModal';
 import { PublicHolidayFormModal } from '@features/hrm/manage-public-holiday/ui/PublicHolidayFormModal';
 
+import { formatDateVN } from '@shared/lib/formatDate';
 // Hooks & Types
 import { useGetHrmPublicHolidaysQuery } from '@entities/hrm/api/hrmApi';
-import type { PublicHoliday } from '@entities/hrm/api/hrmApi';
-import type { Employee, LeaveRequest } from '@entities/hrm/model/types';
+import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
 type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
@@ -72,11 +72,6 @@ const HrmPage: React.FC = () => {
 
   const isPublicHoliday = !!currentHoliday;
 
-  const formatDateVN = (dateStr: string) => {
-    if (!dateStr) return '';
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year}`;
-  };
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -195,7 +190,7 @@ const HrmPage: React.FC = () => {
                 <div className={styles.holidayBanner} data-testid="public-holiday-banner">
                   <AlertTriangle className={styles.holidayIcon} size={18} />
                   <p className={styles.holidayText}>
-                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name}</strong>. Bảng chấm công ngày này đã được khóa và hệ thống sẽ tự động tính 100% lương cho toàn bộ nhân sự.
+                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Bảng chấm công ngày này đã được khóa và hệ thống sẽ tự động tính 100% lương cho toàn bộ nhân sự.
                   </p>
                 </div>
               )}

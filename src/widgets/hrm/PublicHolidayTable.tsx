@@ -9,7 +9,7 @@ import {
   useGetHrmPublicHolidaysQuery,
   useDeleteHrmPublicHolidaysByIdMutation,
 } from '@entities/hrm/api/hrmApi';
-import type { PublicHoliday } from '@entities/hrm/api/hrmApi';
+import type { PublicHoliday } from '@entities/hrm/model/types';
 import { Edit, Trash2 } from 'lucide-react';
 import { formatDateVN } from '@shared/lib/formatDate';
 
@@ -29,10 +29,14 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
   const { toast } = useToast();
 
   const confirmDelete = async () => {
-    if (!deletingHoliday || !deletingHoliday.id) return;
+    if (!deletingHoliday || !deletingHoliday.id) {
+      toast('error', 'Không tìm thấy ID ngày nghỉ lễ hợp lệ để xóa.');
+      setDeletingHoliday(null);
+      return;
+    }
     try {
       await deleteHoliday({ id: deletingHoliday.id }).unwrap();
-      toast('success', `Đã xóa ngày nghỉ lễ "${deletingHoliday.name}"`);
+      toast('success', `Đã xóa ngày nghỉ lễ "${deletingHoliday.name || ''}"`);
       setDeletingHoliday(null);
     } catch (err) {
       console.error('Failed to delete public holiday', err);
@@ -149,7 +153,7 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
           }
         >
           <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
-            Bạn có chắc chắn muốn xóa ngày nghỉ lễ <strong>"{deletingHoliday.name}"</strong> không? Hành động này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa ngày nghỉ lễ <strong>"{deletingHoliday.name || ''}"</strong> không? Hành động này không thể hoàn tác.
           </p>
         </Modal>
       )}

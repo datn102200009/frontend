@@ -296,7 +296,7 @@ export const handlers = [
 
   http.get('*/api/v1/hrm/leave-requests/', () => {
     return HttpResponse.json([
-      { id: 'lr-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', leave_type: 'annual', start_date: '2026-06-10', end_date: '2026-06-11', days: '2.0', reason: 'Có việc gia đình', status: 'pending', created_at: '2026-05-22' }
+      { id: 'lr-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', leave_type: 'paid', start_date: '2026-06-10', end_date: '2026-06-11', days: '2.0', reason: 'Có việc gia đình', status: 'pending', created_at: '2026-05-22' }
     ]);
   }),
 

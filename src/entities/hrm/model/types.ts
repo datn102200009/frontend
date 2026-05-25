@@ -8,6 +8,7 @@ import type {
   SalarySlip as GenSalarySlip,
   RewardRecord as GenRewardRecord,
   DisciplineRecord as GenDisciplineRecord,
+  PublicHoliday as GenPublicHoliday,
 } from '../api/hrmApi';
 
 export type Employee = GenEmployee & {
@@ -77,4 +78,9 @@ export type DisciplineRecord = GenDisciplineRecord & {
   incident_date: string;
   discipline_date: string;
   discipline_type: 'reprimand' | 'warning' | 'salary_deduction' | 'termination' | 'other';
+};
+
+export type PublicHoliday = GenPublicHoliday & {
+  name: string;
+  date: string;
 };

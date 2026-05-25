@@ -5,6 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmLeaveRequestsQuery } from '@entities/hrm/api/hrmApi';
 import type { LeaveRequest } from '@entities/hrm/model/types';
+import { getLeaveTypeLabel } from '@entities/hrm/lib/helpers';
 import { Eye, ChevronDown } from 'lucide-react';
 
 interface LeaveRequestTableProps {
@@ -17,17 +18,6 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
   const { data: leaveRequests = [], isLoading } = useGetHrmLeaveRequestsQuery(
     statusFilter === 'all' ? {} : { status: statusFilter }
   );
-
-  const getLeaveTypeLabel = (type: string) => {
-    switch (type) {
-      case 'paid':
-        return 'Nghỉ có lương';
-      case 'unpaid':
-        return 'Nghỉ không lương';
-      default:
-        return type === 'annual' || type === 'sick' || type === 'maternity' ? 'Nghỉ có lương' : 'Nghỉ không lương';
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
