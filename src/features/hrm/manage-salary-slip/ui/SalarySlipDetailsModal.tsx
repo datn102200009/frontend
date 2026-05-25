@@ -26,50 +26,28 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
   const [confirmSalary, { isLoading: isConfirming }] = usePostHrmSalarySlipsByIdConfirmMutation();
 
-  const [standardDays, setStandardDays] = useState<number>(26);
   const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
   const [apiError, setApiError] = useState<string | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
-  // Reset initial load flag when modal opens
-  useEffect(() => {
-    if (open) {
-      setIsInitialLoad(true);
-    }
-  }, [open]);
-
-  // Auto calculate when modal opens or standard days change (debounced)
+  // Auto calculate when modal opens
   useEffect(() => {
     if (!open || !salarySlip.id || salarySlip.status !== 'draft') return;
-    if (standardDays < 1 || standardDays > 31) return;
 
     setApiError(null);
 
-    const executeCalculation = () => {
-      calculateSalary({
-        id: salarySlip.id,
-        body: { standard_days: standardDays },
+    calculateSalary({
+      id: salarySlip.id,
+      body: { standard_days: 26 },
+    })
+      .unwrap()
+      .then(() => {
+        onCalculateSuccess?.();
       })
-        .unwrap()
-        .then(() => {
-          onCalculateSuccess?.();
-        })
-        .catch((err: any) => {
-          console.error('Failed to auto calculate salary slip', err);
-          setApiError(err?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
-        });
-    };
-
-    if (isInitialLoad) {
-      executeCalculation();
-      setIsInitialLoad(false);
-      return;
-    }
-
-    const timer = setTimeout(executeCalculation, 500);
-
-    return () => clearTimeout(timer);
-  }, [open, salarySlip.id, salarySlip.status, standardDays, calculateSalary, onCalculateSuccess, isInitialLoad]);
+      .catch((err: any) => {
+        console.error('Failed to auto calculate salary slip', err);
+        setApiError(err?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
+      });
+  }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
 
   const handleConfirmPayment = async () => {
@@ -207,12 +185,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
                 <input
                   id="standard_days"
                   type="number"
-                  min={1}
-                  max={31}
-                  value={standardDays}
-                  onChange={(e) => setStandardDays(Number(e.target.value))}
+                  value={26}
+                  readOnly
                   className={styles.input}
-                  disabled={isCalculating || isConfirming}
                 />
               </div>
             </div>
