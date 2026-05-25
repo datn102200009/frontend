@@ -17,7 +17,7 @@ describe('LeaveRequestTable', () => {
 
     // Wait for the leave request to load
     expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument();
-    expect(screen.getByText('Nghỉ phép năm')).toBeInTheDocument();
+    expect(screen.getByText('Nghỉ có lương')).toBeInTheDocument();
     expect(screen.getByText('2.0 ngày')).toBeInTheDocument();
     expect(screen.getByText('Có việc gia đình')).toBeInTheDocument();
     expect(screen.getByText('Chờ duyệt')).toBeInTheDocument();

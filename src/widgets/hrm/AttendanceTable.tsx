@@ -5,10 +5,20 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { useGetHrmAttendancesQuery } from '@entities/hrm/api/hrmApi';
 import type { Attendance } from '@entities/hrm/model/types';
 
-export const AttendanceTable: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<string>(
+interface AttendanceTableProps {
+  selectedDate?: string;
+  onChangeDate?: (date: string) => void;
+}
+
+export const AttendanceTable: React.FC<AttendanceTableProps> = ({
+  selectedDate: propSelectedDate,
+  onChangeDate,
+}) => {
+  const [localSelectedDate, setLocalSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+
+  const selectedDate = propSelectedDate !== undefined ? propSelectedDate : localSelectedDate;
 
   const { data: attendances = [], isLoading } = useGetHrmAttendancesQuery({
     date: selectedDate,
@@ -76,7 +86,13 @@ export const AttendanceTable: React.FC = () => {
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              if (onChangeDate) {
+                onChangeDate(e.target.value);
+              } else {
+                setLocalSelectedDate(e.target.value);
+              }
+            }}
             className="filterDateInput"
             aria-label="Chọn ngày xem chấm công"
           />

@@ -126,11 +126,7 @@ const injectedRtkApi = api.injectEndpoints({
       PostHrmSalarySlipsByIdCalculateApiResponse,
       PostHrmSalarySlipsByIdCalculateApiArg
     >({
-      query: (queryArg) => ({
-        url: `/hrm/salary-slips/${queryArg.id}/calculate/`,
-        method: 'POST',
-        body: queryArg.body,
-      }),
+      query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/calculate/`, method: 'POST' }),
     }),
     postHrmSalarySlipsByIdConfirm: build.mutation<
       PostHrmSalarySlipsByIdConfirmApiResponse,
@@ -173,6 +169,52 @@ const injectedRtkApi = api.injectEndpoints({
         method: 'POST',
         body: queryArg.body,
       }),
+    }),
+    getHrmPublicHolidays: build.query<GetHrmPublicHolidaysApiResponse, GetHrmPublicHolidaysApiArg>({
+      query: (queryArg) => ({
+        url: `/hrm/public-holidays/`,
+        params: {
+          year: queryArg.year,
+        },
+      }),
+    }),
+    postHrmPublicHolidays: build.mutation<
+      PostHrmPublicHolidaysApiResponse,
+      PostHrmPublicHolidaysApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/public-holidays/`, method: 'POST', body: queryArg.body }),
+    }),
+    getHrmPublicHolidaysById: build.query<
+      GetHrmPublicHolidaysByIdApiResponse,
+      GetHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/public-holidays/${queryArg.id}/` }),
+    }),
+    putHrmPublicHolidaysById: build.mutation<
+      PutHrmPublicHolidaysByIdApiResponse,
+      PutHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/public-holidays/${queryArg.id}/`,
+        method: 'PUT',
+        body: queryArg.body,
+      }),
+    }),
+    patchHrmPublicHolidaysById: build.mutation<
+      PatchHrmPublicHolidaysByIdApiResponse,
+      PatchHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/public-holidays/${queryArg.id}/`,
+        method: 'PATCH',
+        body: queryArg.body,
+      }),
+    }),
+    deleteHrmPublicHolidaysById: build.mutation<
+      DeleteHrmPublicHolidaysByIdApiResponse,
+      DeleteHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/public-holidays/${queryArg.id}/`, method: 'DELETE' }),
     }),
   }),
   overrideExisting: false,
@@ -301,11 +343,11 @@ export type PostHrmLeaveRequestsCreateApiResponse =
 export type PostHrmLeaveRequestsCreateApiArg = {
   body: {
     employee_id: string
-    leave_type: 'annual' | 'sick' | 'unpaid' | 'maternity' | 'personal' | 'other'
+    leave_type: 'paid' | 'unpaid'
     start_date: string
     end_date: string
     days: number
-    reason: string
+    reason?: string | null
   }
 }
 export type PostHrmLeaveRequestsByIdApproveApiResponse =
@@ -335,10 +377,6 @@ export type PostHrmSalarySlipsByIdCalculateApiResponse =
   /** status 200 Tính toán thành công */ SalarySlip
 export type PostHrmSalarySlipsByIdCalculateApiArg = {
   id: string
-  body: {
-    /** Số ngày công tiêu chuẩn trong tháng (mặc định 26) */
-    standard_days?: number
-  }
 }
 export type PostHrmSalarySlipsByIdConfirmApiResponse =
   /** status 200 Xác nhận và thanh toán lương thành công */ SalarySlip
@@ -391,6 +429,51 @@ export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
     /** Hình thức chi trả lương */
     payment_method: 'cash' | 'bank_transfer'
   }
+}
+export type GetHrmPublicHolidaysApiResponse = /** status 200 Thành công */ PublicHoliday[]
+export type GetHrmPublicHolidaysApiArg = {
+  /** Lọc ngày nghỉ lễ theo năm cụ thể. */
+  year?: number
+}
+export type PostHrmPublicHolidaysApiResponse = /** status 201 Tạo thành công */ PublicHoliday
+export type PostHrmPublicHolidaysApiArg = {
+  body: {
+    name: string
+    date: string
+    description?: string
+  }
+}
+export type GetHrmPublicHolidaysByIdApiResponse = /** status 200 Thành công */ PublicHoliday
+export type GetHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+}
+export type PutHrmPublicHolidaysByIdApiResponse =
+  /** status 200 Cập nhật thành công */ PublicHoliday
+export type PutHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+  body: {
+    name: string
+    date: string
+    description?: string
+  }
+}
+export type PatchHrmPublicHolidaysByIdApiResponse =
+  /** status 200 Cập nhật thành công */ PublicHoliday
+export type PatchHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+  body: {
+    name?: string
+    date?: string
+    description?: string
+  }
+}
+export type DeleteHrmPublicHolidaysByIdApiResponse = unknown
+export type DeleteHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
 }
 export type Employee = {
   id?: string
@@ -505,16 +588,17 @@ export type LeaveRequest = {
   employee_id?: string
   employee_code?: string
   employee_name?: string
-  leave_type?: 'annual' | 'sick' | 'unpaid' | 'maternity' | 'personal' | 'other'
+  leave_type?: 'paid' | 'unpaid'
   start_date?: string
   end_date?: string
   days?: string
-  reason?: string
+  reason?: string | null
   status?: 'pending' | 'approved' | 'rejected'
   approved_by_id?: string | null
   approved_by_username?: string | null
   approved_at?: string | null
   created_at?: string
+  updated_at?: string
 }
 export type SalarySlip = {
   id?: string
@@ -549,6 +633,14 @@ export type SalarySlip = {
   created_at?: string
   updated_at?: string
 }
+export type PublicHoliday = {
+  id?: string
+  name?: string
+  date?: string
+  description?: string | null
+  created_at?: string
+  updated_at?: string
+}
 export const {
   useGetHrmEmployeesQuery,
   usePostHrmEmployeesCreateMutation,
@@ -571,4 +663,10 @@ export const {
   useGetHrmDisciplinesQuery,
   usePostHrmDisciplinesMutation,
   usePostHrmSalarySlipsBulkConfirmPayMutation,
+  useGetHrmPublicHolidaysQuery,
+  usePostHrmPublicHolidaysMutation,
+  useGetHrmPublicHolidaysByIdQuery,
+  usePutHrmPublicHolidaysByIdMutation,
+  usePatchHrmPublicHolidaysByIdMutation,
+  useDeleteHrmPublicHolidaysByIdMutation,
 } = injectedRtkApi

@@ -1,7 +1,9 @@
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import HrmPage from './HrmPage';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
+import { server } from '../../shared/lib/test/server';
+import { http, HttpResponse } from 'msw';
 
 describe('HrmPage', () => {
   it('renders and switches tabs correctly', async () => {
@@ -27,5 +29,63 @@ describe('HrmPage', () => {
     await user.click(screen.getByRole('tab', { name: 'Bảng Lương' }));
     expect(screen.getByRole('heading', { name: 'Tính Toán & Thanh Toán Lương' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Khởi Tạo Kỳ Lương' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Thanh Toán Nhanh' })).toBeInTheDocument();
+  });
+
+  it('locks batch attendance button and shows info banner on public holidays', async () => {
+    renderWithProviders(<HrmPage />);
+    const user = userEvent.setup();
+
+    // Click on Chấm Công tab
+    await user.click(screen.getByRole('tab', { name: 'Chấm Công' }));
+
+    // Find date input and change its value to a public holiday date
+    const dateInput = screen.getByLabelText('Chọn ngày xem chấm công');
+    expect(dateInput).toBeInTheDocument();
+
+    // 1. Set to a public holiday date
+    fireEvent.change(dateInput, { target: { value: '2026-04-30' } });
+
+    // Verify banner is shown
+    const banner = await screen.findByTestId('public-holiday-banner');
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 30/04/2026 là ngày nghỉ Lễ/Tết Ngày Chiến thắng');
+
+    // Verify Chấm Công Hàng Loạt button is disabled
+    const batchButton = screen.getByRole('button', { name: 'Chấm Công Hàng Loạt' });
+    expect(batchButton).toBeDisabled();
+
+    // 2. Set to a normal date
+    fireEvent.change(dateInput, { target: { value: '2026-05-01' } });
+
+    // Verify banner disappears and button is enabled
+    expect(screen.queryByTestId('public-holiday-banner')).not.toBeInTheDocument();
+    expect(batchButton).toBeEnabled();
+  });
+
+  it('renders holiday banner safely even if holiday name is missing', async () => {
+    // Override public-holidays API query to simulate a holiday without a name
+    server.use(
+      http.get('*/api/v1/hrm/public-holidays/', () => {
+        return HttpResponse.json([
+          { id: 'holiday-1', date: '2026-02-17', description: 'Tết không tên' },
+        ]);
+      })
+    );
+
+    renderWithProviders(<HrmPage />);
+    const user = userEvent.setup();
+
+    // Click on Chấm Công tab
+    await user.click(screen.getByRole('tab', { name: 'Chấm Công' }));
+
+    // Find date input and change its value to the mock holiday date
+    const dateInput = screen.getByLabelText('Chọn ngày xem chấm công');
+    fireEvent.change(dateInput, { target: { value: '2026-02-17' } });
+
+    // Verify banner is shown without crashing and name is handled safely
+    const banner = await screen.findByTestId('public-holiday-banner');
+    expect(banner).toBeInTheDocument();
+    expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 17/02/2026 là ngày nghỉ Lễ/Tết .');
   });
 });

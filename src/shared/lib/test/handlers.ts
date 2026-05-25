@@ -296,7 +296,7 @@ export const handlers = [
 
   http.get('*/api/v1/hrm/leave-requests/', () => {
     return HttpResponse.json([
-      { id: 'lr-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', leave_type: 'annual', start_date: '2026-06-10', end_date: '2026-06-11', days: '2.0', reason: 'Có việc gia đình', status: 'pending', created_at: '2026-05-22' }
+      { id: 'lr-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', leave_type: 'paid', start_date: '2026-06-10', end_date: '2026-06-11', days: '2.0', reason: 'Có việc gia đình', status: 'pending', created_at: '2026-05-22' }
     ]);
   }),
 
@@ -359,6 +359,28 @@ export const handlers = [
     return HttpResponse.json([
       { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'paid' }
     ], { status: 200 });
+  }),
+
+  // Public Holidays mocks
+  http.get('*/api/v1/hrm/public-holidays/', () => {
+    return HttpResponse.json([
+      { id: 'holiday-1', name: 'Tết Âm Lịch', date: '2026-02-17', description: 'Nghỉ Tết Âm Lịch' },
+      { id: 'holiday-2', name: 'Ngày Chiến thắng', date: '2026-04-30', description: 'Giải phóng miền Nam' }
+    ]);
+  }),
+
+  http.post('*/api/v1/hrm/public-holidays/', async ({ request }) => {
+    const data = await request.json() as any;
+    return HttpResponse.json({ id: 'new-holiday-123', ...data }, { status: 201 });
+  }),
+
+  http.put('*/api/v1/hrm/public-holidays/:id/', async ({ params, request }) => {
+    const data = await request.json() as any;
+    return HttpResponse.json({ id: params.id, ...data });
+  }),
+
+  http.delete('*/api/v1/hrm/public-holidays/:id/', () => {
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
 

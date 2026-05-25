@@ -60,24 +60,11 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.queryByRole('button', { name: 'Thanh Toán Lương' })).not.toBeInTheDocument();
   });
 
-  it('handles auto calculate salary when standard days change', async () => {
+  it('renders standard days input as read-only with a fixed value of 26', () => {
     renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
-    const user = userEvent.setup();
-
     const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
-    
-    // Wait for the initial auto-calculation to finish so the input gets enabled
-    await waitFor(() => {
-      expect(standardDaysInput).not.toBeDisabled();
-    });
-
-    await user.clear(standardDaysInput);
-    await user.type(standardDaysInput, '24');
-
-    // The calculate action updates the data reactively without calling onSuccess (which would close the modal)
-    await waitFor(() => {
-      expect(defaultProps.onSuccess).not.toHaveBeenCalled();
-    });
+    expect(standardDaysInput).toHaveValue(26);
+    expect(standardDaysInput).toHaveAttribute('readonly');
   });
 
   it('handles confirm payment action successfully', async () => {
