@@ -174,6 +174,47 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    getHrmPublicHolidays: build.query<GetHrmPublicHolidaysApiResponse, GetHrmPublicHolidaysApiArg>({
+      query: () => ({ url: `/hrm/public-holidays/` }),
+    }),
+    postHrmPublicHolidays: build.mutation<
+      PostHrmPublicHolidaysApiResponse,
+      PostHrmPublicHolidaysApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/public-holidays/`, method: 'POST', body: queryArg.body }),
+    }),
+    getHrmPublicHolidaysById: build.query<
+      GetHrmPublicHolidaysByIdApiResponse,
+      GetHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/public-holidays/${queryArg.id}/` }),
+    }),
+    putHrmPublicHolidaysById: build.mutation<
+      PutHrmPublicHolidaysByIdApiResponse,
+      PutHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/public-holidays/${queryArg.id}/`,
+        method: 'PUT',
+        body: queryArg.body,
+      }),
+    }),
+    patchHrmPublicHolidaysById: build.mutation<
+      PatchHrmPublicHolidaysByIdApiResponse,
+      PatchHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/public-holidays/${queryArg.id}/`,
+        method: 'PATCH',
+        body: queryArg.body,
+      }),
+    }),
+    deleteHrmPublicHolidaysById: build.mutation<
+      DeleteHrmPublicHolidaysByIdApiResponse,
+      DeleteHrmPublicHolidaysByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/public-holidays/${queryArg.id}/`, method: 'DELETE' }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -392,6 +433,48 @@ export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
     payment_method: 'cash' | 'bank_transfer'
   }
 }
+export type GetHrmPublicHolidaysApiResponse = /** status 200 Thành công */ PublicHoliday[]
+export type GetHrmPublicHolidaysApiArg = void
+export type PostHrmPublicHolidaysApiResponse = /** status 201 Tạo thành công */ PublicHoliday
+export type PostHrmPublicHolidaysApiArg = {
+  body: {
+    name: string
+    date: string
+    description?: string
+  }
+}
+export type GetHrmPublicHolidaysByIdApiResponse = /** status 200 Thành công */ PublicHoliday
+export type GetHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+}
+export type PutHrmPublicHolidaysByIdApiResponse =
+  /** status 200 Cập nhật thành công */ PublicHoliday
+export type PutHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+  body: {
+    name: string
+    date: string
+    description?: string
+  }
+}
+export type PatchHrmPublicHolidaysByIdApiResponse =
+  /** status 200 Cập nhật thành công */ PublicHoliday
+export type PatchHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+  body: {
+    name?: string
+    date?: string
+    description?: string
+  }
+}
+export type DeleteHrmPublicHolidaysByIdApiResponse = unknown
+export type DeleteHrmPublicHolidaysByIdApiArg = {
+  /** ID của ngày nghỉ lễ */
+  id: string
+}
 export type Employee = {
   id?: string
   /** Mã nhân viên duy nhất (ví dụ NV001) */
@@ -550,6 +633,14 @@ export type SalarySlip = {
   created_at?: string
   updated_at?: string
 }
+export type PublicHoliday = {
+  id?: string
+  name?: string
+  date?: string
+  description?: string | null
+  created_at?: string
+  updated_at?: string
+}
 export const {
   useGetHrmEmployeesQuery,
   usePostHrmEmployeesCreateMutation,
@@ -572,4 +663,10 @@ export const {
   useGetHrmDisciplinesQuery,
   usePostHrmDisciplinesMutation,
   usePostHrmSalarySlipsBulkConfirmPayMutation,
+  useGetHrmPublicHolidaysQuery,
+  usePostHrmPublicHolidaysMutation,
+  useGetHrmPublicHolidaysByIdQuery,
+  usePutHrmPublicHolidaysByIdMutation,
+  usePatchHrmPublicHolidaysByIdMutation,
+  useDeleteHrmPublicHolidaysByIdMutation,
 } = injectedRtkApi
