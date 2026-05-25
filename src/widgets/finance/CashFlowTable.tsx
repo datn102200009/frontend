@@ -4,7 +4,7 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useGetFinanceCashFlowsQuery } from '@entities/finance/api/financeApi';
 import type { CashFlowTransaction } from '@entities/finance/model/types';
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+
 
 export const CashFlowTable: React.FC = () => {
   const { data: flows = [], isLoading } = useGetFinanceCashFlowsQuery();
@@ -21,13 +21,9 @@ export const CashFlowTable: React.FC = () => {
         cell: (info) => {
           const type = info.getValue();
           return type === 'receive' ? (
-            <span className="flex items-center gap-1 text-emerald-600 font-medium">
-              <ArrowDownLeft size={16} /> Thu Tiền
-            </span>
+            <Badge variant="success">Thu Tiền</Badge>
           ) : (
-            <span className="flex items-center gap-1 text-rose-600 font-medium">
-              <ArrowUpRight size={16} /> Chi Tiền
-            </span>
+            <Badge variant="error">Chi Tiền</Badge>
           );
         },
       }),
