@@ -106,14 +106,14 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
   return (
     <div>
       {/* Status filter toolbar */}
-      <div className="hrmFilterToolbar">
-        <div className="hrmFilterGroup">
-          <span className="hrmFilterLabel">Trạng thái:</span>
-          <div className="hrmSelectWrapper">
+      <div className="filterToolbar">
+        <div className="filterGroup">
+          <span className="filterLabel">Trạng thái:</span>
+          <div className="filterSelectWrapper">
             <select
               value={statusFilter}
               onChange={(e: any) => setStatusFilter(e.target.value)}
-              className="hrmSelectInput"
+              className="filterSelectInput"
               aria-label="Lọc trạng thái đơn nghỉ phép"
             >
               <option value="pending">Chờ phê duyệt</option>
@@ -121,7 +121,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
               <option value="rejected">Đã từ chối</option>
               <option value="all">Tất cả đơn phép</option>
             </select>
-            <ChevronDown size={14} className="hrmSelectIcon" />
+            <ChevronDown size={14} className="filterSelectIcon" />
           </div>
         </div>
       </div>

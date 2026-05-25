@@ -110,11 +110,11 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
   return (
     <div>
       {/* Filters toolbar */}
-      <div className="hrmFilterToolbar">
+      <div className="filterToolbar">
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-          <div className="hrmFilterGroup">
-            <span className="hrmFilterLabel">Kỳ lương:</span>
-            <div className="hrmSelectWrapper">
+          <div className="filterGroup">
+            <span className="filterLabel">Kỳ lương:</span>
+            <div className="filterSelectWrapper">
               <select
                 value={selectedPeriod.split('-')[1]}
                 onChange={(e) => {
@@ -122,7 +122,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
                   onChangePeriod(`${y}-${e.target.value}`);
                 }}
 
-                className="hrmSelectInput"
+                className="filterSelectInput"
                 style={{ minWidth: '90px', paddingRight: '24px' }}
                 aria-label="Chọn tháng kỳ lương"
               >
@@ -135,10 +135,10 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
                   );
                 })}
               </select>
-              <ChevronDown size={14} className="hrmSelectIcon" />
+              <ChevronDown size={14} className="filterSelectIcon" />
             </div>
 
-            <div className="hrmSelectWrapper">
+            <div className="filterSelectWrapper">
               <select
                 value={selectedPeriod.split('-')[0]}
                 onChange={(e) => {
@@ -146,7 +146,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
                   onChangePeriod(`${e.target.value}-${m}`);
                 }}
 
-                className="hrmSelectInput"
+                className="filterSelectInput"
                 style={{ minWidth: '95px', paddingRight: '24px' }}
                 aria-label="Chọn năm kỳ lương"
               >
@@ -159,24 +159,24 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
                   );
                 })}
               </select>
-              <ChevronDown size={14} className="hrmSelectIcon" />
+              <ChevronDown size={14} className="filterSelectIcon" />
             </div>
           </div>
 
-          <div className="hrmFilterGroup">
-            <span className="hrmFilterLabel">Trạng thái:</span>
-            <div className="hrmSelectWrapper">
+          <div className="filterGroup">
+            <span className="filterLabel">Trạng thái:</span>
+            <div className="filterSelectWrapper">
               <select
                 value={statusFilter}
                 onChange={(e: any) => setStatusFilter(e.target.value)}
-                className="hrmSelectInput"
+                className="filterSelectInput"
                 aria-label="Lọc trạng thái phiếu lương"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="draft">Bản nháp</option>
                 <option value="paid">Đã thanh toán</option>
               </select>
-              <ChevronDown size={14} className="hrmSelectIcon" />
+              <ChevronDown size={14} className="filterSelectIcon" />
             </div>
           </div>
         </div>
