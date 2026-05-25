@@ -301,11 +301,11 @@ export type PostHrmLeaveRequestsCreateApiResponse =
 export type PostHrmLeaveRequestsCreateApiArg = {
   body: {
     employee_id: string
-    leave_type: 'annual' | 'sick' | 'unpaid' | 'maternity' | 'personal' | 'other'
+    leave_type: 'paid' | 'unpaid'
     start_date: string
     end_date: string
     days: number
-    reason: string
+    reason?: string | null
   }
 }
 export type PostHrmLeaveRequestsByIdApproveApiResponse =
@@ -505,16 +505,17 @@ export type LeaveRequest = {
   employee_id?: string
   employee_code?: string
   employee_name?: string
-  leave_type?: 'annual' | 'sick' | 'unpaid' | 'maternity' | 'personal' | 'other'
+  leave_type?: 'paid' | 'unpaid'
   start_date?: string
   end_date?: string
   days?: string
-  reason?: string
+  reason?: string | null
   status?: 'pending' | 'approved' | 'rejected'
   approved_by_id?: string | null
   approved_by_username?: string | null
   approved_at?: string | null
   created_at?: string
+  updated_at?: string
 }
 export type SalarySlip = {
   id?: string

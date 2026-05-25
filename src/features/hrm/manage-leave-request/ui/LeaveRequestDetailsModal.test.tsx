@@ -10,7 +10,7 @@ describe('LeaveRequestDetailsModal', () => {
     employee_id: 'emp-123',
     employee_code: 'NV001',
     employee_name: 'Nguyễn Văn An',
-    leave_type: 'annual',
+    leave_type: 'paid',
     start_date: '2026-06-01',
     end_date: '2026-06-03',
     days: '3.0',
@@ -38,7 +38,7 @@ describe('LeaveRequestDetailsModal', () => {
     renderWithProviders(<LeaveRequestDetailsModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: 'Chi Tiết Đơn Xin Nghỉ Phép' })).toBeInTheDocument();
     expect(screen.getByText('Nguyễn Văn An (NV001)')).toBeInTheDocument();
-    expect(screen.getByText('Nghỉ phép năm')).toBeInTheDocument();
+    expect(screen.getByText('Nghỉ có lương')).toBeInTheDocument();
     expect(screen.getByText('3.0 ngày')).toBeInTheDocument();
     expect(screen.getByText('Nghỉ mát hè')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duyệt đơn' })).toBeInTheDocument();

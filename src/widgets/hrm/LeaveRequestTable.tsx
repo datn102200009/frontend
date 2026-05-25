@@ -20,18 +20,12 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
 
   const getLeaveTypeLabel = (type: string) => {
     switch (type) {
-      case 'annual':
-        return 'Nghỉ phép năm';
-      case 'sick':
-        return 'Nghỉ ốm';
+      case 'paid':
+        return 'Nghỉ có lương';
       case 'unpaid':
         return 'Nghỉ không lương';
-      case 'maternity':
-        return 'Nghỉ thai sản';
-      case 'personal':
-        return 'Nghỉ việc riêng';
       default:
-        return 'Khác';
+        return type === 'annual' || type === 'sick' || type === 'maternity' ? 'Nghỉ có lương' : 'Nghỉ không lương';
     }
   };
 

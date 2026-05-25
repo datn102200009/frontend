@@ -16,7 +16,7 @@ interface LeaveRequestFormModalProps {
 
 interface FormValues {
   employee_id?: string;
-  leave_type: 'annual' | 'sick' | 'unpaid' | 'maternity' | 'personal' | 'other';
+  leave_type: 'paid' | 'unpaid';
   start_date: string;
   end_date: string;
   days: number;
@@ -47,7 +47,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   } = useForm<FormValues>({
     defaultValues: {
       employee_id: employee?.id || '',
-      leave_type: 'annual',
+      leave_type: 'paid',
       start_date: new Date().toISOString().split('T')[0],
       end_date: new Date().toISOString().split('T')[0],
       days: 1,
@@ -78,7 +78,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     if (open) {
       reset({
         employee_id: employee?.id || '',
-        leave_type: 'annual',
+        leave_type: 'paid',
         start_date: new Date().toISOString().split('T')[0],
         end_date: new Date().toISOString().split('T')[0],
         days: 1,
@@ -189,12 +189,8 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
             {...register('leave_type', { required: 'Loại nghỉ phép là bắt buộc' })}
             disabled={isLoading}
           >
-            <option value="annual">Nghỉ phép năm</option>
-            <option value="sick">Nghỉ ốm/đau</option>
+            <option value="paid">Nghỉ có lương</option>
             <option value="unpaid">Nghỉ không lương</option>
-            <option value="maternity">Nghỉ thai sản</option>
-            <option value="personal">Nghỉ việc riêng</option>
-            <option value="other">Nghỉ phép khác</option>
           </select>
         </div>
 
@@ -249,16 +245,15 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="reason">
-            Lý do xin nghỉ phép <span className={styles.required}>*</span>
+            Lý do xin nghỉ phép (Không bắt buộc)
           </label>
           <textarea
             id="reason"
             placeholder="Mô tả lý do nghỉ phép..."
             className={styles.textarea}
-            {...register('reason', { required: 'Lý do xin nghỉ phép là bắt buộc' })}
+            {...register('reason')}
             disabled={isLoading}
           />
-          {errors.reason && <span className={styles.errorText}>{errors.reason.message}</span>}
         </div>
       </form>
     </Modal>

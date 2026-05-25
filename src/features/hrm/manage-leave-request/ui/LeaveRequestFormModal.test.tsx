@@ -53,17 +53,19 @@ describe('LeaveRequestFormModal', () => {
     });
   });
 
-  it('validates required fields', async () => {
+  it('submits leave request data successfully even without a reason', async () => {
     renderWithProviders(<LeaveRequestFormModal {...defaultProps} />);
     const user = userEvent.setup();
 
-    // Clear reason field
+    // Clear reason field (which is optional)
     const reasonInput = screen.getByLabelText(/Lý do xin nghỉ phép/i);
     await user.clear(reasonInput);
 
     await user.click(screen.getByRole('button', { name: 'Gửi đơn phép' }));
 
-    expect(await screen.findByText('Lý do xin nghỉ phép là bắt buộc')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(defaultProps.onSuccess).toHaveBeenCalled();
+    });
   });
 
   it('submits leave request data successfully', async () => {
