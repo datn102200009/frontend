@@ -37,7 +37,6 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
 
     calculateSalary({
       id: salarySlip.id,
-      body: { standard_days: 26 },
     })
       .unwrap()
       .then(() => {

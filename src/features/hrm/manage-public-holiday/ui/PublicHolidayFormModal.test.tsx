@@ -10,8 +10,6 @@ describe('PublicHolidayFormModal', () => {
     onSuccess: vi.fn(),
   };
 
-  const getTodayStr = () => new Date().toISOString().split('T')[0];
-
   const getYesterdayStr = () => {
     const d = new Date();
     d.setDate(d.getDate() - 1);

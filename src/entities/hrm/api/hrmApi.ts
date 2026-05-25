@@ -126,11 +126,7 @@ const injectedRtkApi = api.injectEndpoints({
       PostHrmSalarySlipsByIdCalculateApiResponse,
       PostHrmSalarySlipsByIdCalculateApiArg
     >({
-      query: (queryArg) => ({
-        url: `/hrm/salary-slips/${queryArg.id}/calculate/`,
-        method: 'POST',
-        body: queryArg.body,
-      }),
+      query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/calculate/`, method: 'POST' }),
     }),
     postHrmSalarySlipsByIdConfirm: build.mutation<
       PostHrmSalarySlipsByIdConfirmApiResponse,
@@ -381,10 +377,6 @@ export type PostHrmSalarySlipsByIdCalculateApiResponse =
   /** status 200 Tính toán thành công */ SalarySlip
 export type PostHrmSalarySlipsByIdCalculateApiArg = {
   id: string
-  body: {
-    /** Số ngày công tiêu chuẩn trong tháng (mặc định 26) */
-    standard_days?: number
-  }
 }
 export type PostHrmSalarySlipsByIdConfirmApiResponse =
   /** status 200 Xác nhận và thanh toán lương thành công */ SalarySlip
