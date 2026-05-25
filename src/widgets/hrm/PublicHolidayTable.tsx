@@ -11,13 +11,19 @@ import {
 } from '@entities/hrm/api/hrmApi';
 import type { PublicHoliday } from '@entities/hrm/api/hrmApi';
 import { Edit, Trash2 } from 'lucide-react';
+import { formatDateVN } from '@shared/lib/formatDate';
 
 interface PublicHolidayTableProps {
   onEdit?: (holiday: PublicHoliday) => void;
 }
 
 export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }) => {
-  const { data: holidays = [], isLoading } = useGetHrmPublicHolidaysQuery();
+  const [selectedYear, setSelectedYear] = useState<number | 'all'>(new Date().getFullYear());
+  const queryArg = useMemo(() => {
+    return selectedYear === 'all' ? {} : { year: selectedYear };
+  }, [selectedYear]);
+
+  const { data: holidays = [], isLoading } = useGetHrmPublicHolidaysQuery(queryArg);
   const [deleteHoliday, { isLoading: isDeleting }] = useDeleteHrmPublicHolidaysByIdMutation();
   const [deletingHoliday, setDeletingHoliday] = useState<PublicHoliday | null>(null);
   const { toast } = useToast();
@@ -39,7 +45,7 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
     return [
       helper.accessor('date', {
         header: 'Ngày nghỉ lễ',
-        cell: (info) => <span className="font-semibold text-slate-800">{info.getValue() || '-'}</span>,
+        cell: (info) => <span className="font-semibold text-slate-800">{formatDateVN(info.getValue())}</span>,
       }),
       helper.accessor('name', {
         header: 'Tên ngày nghỉ lễ',
@@ -74,8 +80,49 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
     ];
   }, [onEdit]);
 
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const result: (number | 'all')[] = ['all'];
+    for (let y = currentYear - 2; y <= currentYear + 5; y++) {
+      result.push(y);
+    }
+    return result;
+  }, []);
+
   return (
     <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 'var(--sp-4)', gap: 'var(--sp-2)' }}>
+        <label htmlFor="year-filter" style={{ fontSize: 'var(--fs-sm)', fontWeight: 'var(--fw-medium)', color: 'var(--clr-text-secondary)' }}>
+          Năm nghỉ lễ:
+        </label>
+        <select
+          id="year-filter"
+          value={selectedYear}
+          onChange={(e) => {
+            const val = e.target.value;
+            setSelectedYear(val === 'all' ? 'all' : Number(val));
+          }}
+          style={{
+            padding: '6px 12px',
+            borderRadius: 'var(--radius-md)',
+            border: '1.5px solid var(--clr-border)',
+            backgroundColor: 'var(--clr-surface)',
+            color: 'var(--clr-text)',
+            fontSize: 'var(--fs-sm)',
+            outline: 'none',
+            cursor: 'pointer',
+            minWidth: '140px',
+            transition: 'border-color var(--duration-fast) ease',
+          }}
+        >
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y === 'all' ? 'Tất cả các năm' : `Năm ${y}`}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <DataTable
         columns={columns as any}
         data={holidays}

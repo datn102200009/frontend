@@ -95,7 +95,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
       onSuccess();
     } catch (err: any) {
       console.error('Failed to save public holiday', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi lưu ngày nghỉ lễ. Vui lòng kiểm tra lại.');
+      setApiError(err?.data?.error || err?.data?.detail || 'Có lỗi xảy ra khi lưu ngày nghỉ lễ. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -146,7 +146,27 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
             id="date"
             type="date"
             className={styles.input}
-            {...register('date', { required: 'Ngày nghỉ lễ là bắt buộc' })}
+            {...register('date', {
+              required: 'Ngày nghỉ lễ là bắt buộc',
+              validate: (value) => {
+                if (holiday && holiday.date === value) {
+                  return true;
+                }
+                const parts = value.split('-');
+                if (parts.length === 3) {
+                  const y = parseInt(parts[0], 10);
+                  const m = parseInt(parts[1], 10) - 1;
+                  const d = parseInt(parts[2], 10);
+                  const parsedSelected = new Date(y, m, d);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  if (parsedSelected < today) {
+                    return 'Không được chọn ngày nghỉ lễ trong quá khứ';
+                  }
+                }
+                return true;
+              },
+            })}
             disabled={isLoading}
           />
           {errors.date && <span className={styles.errorText}>{errors.date.message}</span>}

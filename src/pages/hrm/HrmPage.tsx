@@ -64,7 +64,7 @@ const HrmPage: React.FC = () => {
     return new Date().toISOString().split('T')[0];
   });
 
-  const { data: holidays = [] } = useGetHrmPublicHolidaysQuery();
+  const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
 
   const currentHoliday = React.useMemo(() => {
     return holidays.find((h) => h.date === attendanceDate);

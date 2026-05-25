@@ -175,7 +175,12 @@ const injectedRtkApi = api.injectEndpoints({
       }),
     }),
     getHrmPublicHolidays: build.query<GetHrmPublicHolidaysApiResponse, GetHrmPublicHolidaysApiArg>({
-      query: () => ({ url: `/hrm/public-holidays/` }),
+      query: (queryArg) => ({
+        url: `/hrm/public-holidays/`,
+        params: {
+          year: queryArg.year,
+        },
+      }),
     }),
     postHrmPublicHolidays: build.mutation<
       PostHrmPublicHolidaysApiResponse,
@@ -434,7 +439,10 @@ export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
   }
 }
 export type GetHrmPublicHolidaysApiResponse = /** status 200 Thành công */ PublicHoliday[]
-export type GetHrmPublicHolidaysApiArg = void
+export type GetHrmPublicHolidaysApiArg = {
+  /** Lọc ngày nghỉ lễ theo năm cụ thể. */
+  year?: number
+}
 export type PostHrmPublicHolidaysApiResponse = /** status 201 Tạo thành công */ PublicHoliday
 export type PostHrmPublicHolidaysApiArg = {
   body: {
