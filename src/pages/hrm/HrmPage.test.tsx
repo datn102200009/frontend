@@ -27,9 +27,9 @@ describe('HrmPage', () => {
 
     // Click on Bảng Lương (Salary Slip) tab
     await user.click(screen.getByRole('tab', { name: 'Bảng Lương' }));
-    expect(screen.getByRole('heading', { name: 'Tính Toán & Thanh Toán Lương' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Thanh Toán Lương' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Khởi Tạo Kỳ Lương' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Thanh Toán Nhanh' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Thanh Toán Kỳ Lương' })).toBeInTheDocument();
   });
 
   it('shows info banner and keeps batch attendance button unlocked on public holidays', async () => {

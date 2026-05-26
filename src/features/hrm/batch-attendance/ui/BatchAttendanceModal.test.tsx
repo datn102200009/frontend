@@ -249,5 +249,65 @@ describe('BatchAttendanceModal', () => {
     // Verify submit button is disabled
     expect(submitButton).toBeDisabled();
   });
+
+  it('pre-populates existing attendance records when they exist for the selected date', async () => {
+    const { http, HttpResponse } = await import('msw');
+    const { server } = await import('@shared/lib/test/server');
+
+    // Mock the attendances endpoint to return custom values
+    server.use(
+      http.get('*/api/v1/hrm/attendances/', () => {
+        return HttpResponse.json([
+          {
+            id: 'att-1',
+            employee_id: 'emp-1',
+            employee_code: 'NV001',
+            employee_name: 'Nguyễn Văn An',
+            date: '2026-05-15',
+            status: 'paid_leave',
+            work_hours: '0.00',
+            overtime_hours: '0.00',
+            remarks: 'Nghỉ phép năm đã duyệt',
+          },
+          {
+            id: 'att-2',
+            employee_id: 'emp-2',
+            employee_code: 'NV002',
+            employee_name: 'Trần Thị Bình',
+            date: '2026-05-15',
+            status: 'working',
+            work_hours: '8.00',
+            overtime_hours: '2.50',
+            remarks: 'Đi làm đầy đủ và OT',
+          },
+        ]);
+      })
+    );
+
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-15" />);
+
+    // Wait for the active employees list and check pre-population
+    await screen.findByText('Nguyễn Văn An');
+
+    const selectAn = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
+    const workAn = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
+    const otAn = screen.getByRole('spinbutton', { name: 'Giờ OT của Nguyễn Văn An' });
+    const remarkAn = screen.getByRole('textbox', { name: 'Ghi chú của Nguyễn Văn An' });
+
+    expect(selectAn).toHaveValue('paid_leave');
+    expect(workAn).toHaveValue(0);
+    expect(otAn).toHaveValue(0);
+    expect(remarkAn).toHaveValue('Nghỉ phép năm đã duyệt');
+
+    const selectBinh = screen.getByRole('combobox', { name: 'Trạng thái của Trần Thị Bình' });
+    const workBinh = screen.getByRole('spinbutton', { name: 'Số giờ công của Trần Thị Bình' });
+    const otBinh = screen.getByRole('spinbutton', { name: 'Giờ OT của Trần Thị Bình' });
+    const remarkBinh = screen.getByRole('textbox', { name: 'Ghi chú của Trần Thị Bình' });
+
+    expect(selectBinh).toHaveValue('working');
+    expect(workBinh).toHaveValue(8);
+    expect(otBinh).toHaveValue(2.5);
+    expect(remarkBinh).toHaveValue('Đi làm đầy đủ và OT');
+  });
 });
 

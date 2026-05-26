@@ -4,6 +4,7 @@ import {
   usePostHrmAttendancesBatchMutation,
   useGetHrmPublicHolidaysQuery,
   useGetHrmSalarySlipsQuery,
+  useGetHrmAttendancesQuery,
 } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -68,27 +69,47 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
     { skip: !open }
   );
 
+  // Fetch existing attendance records for the selected date
+  const { data: existingAttendances = [], isLoading: isLoadingAttendances } = useGetHrmAttendancesQuery(
+    { date },
+    { skip: !date || !open }
+  );
+
   const [saveAttendance, { isLoading: isSaving }] = usePostHrmAttendancesBatchMutation();
 
-  // Initialize records when employee data loads or holiday status changes
+  // Initialize records when employee data loads, holiday status changes, or existing attendances change
   useEffect(() => {
     if (employeeData?.results) {
       const isHoliday = !!selectedHolidayInfo;
       const defaultStatus = isHoliday ? 'holiday' : 'working';
       const defaultWorkHours = isHoliday ? 0 : 8;
 
-      const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => ({
-        employee_id: emp.id || '',
-        employee_name: emp.full_name || '',
-        employee_code: emp.employee_id || '',
-        status: defaultStatus,
-        work_hours: defaultWorkHours,
-        overtime_hours: 0,
-        remarks: '',
-      }));
+      const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => {
+        const existing = existingAttendances?.find((att) => att.employee_id === emp.id);
+        if (existing) {
+          return {
+            employee_id: emp.id || '',
+            employee_name: emp.full_name || '',
+            employee_code: emp.employee_id || '',
+            status: (existing.status as any) || defaultStatus,
+            work_hours: existing.work_hours !== undefined ? Number(existing.work_hours) : defaultWorkHours,
+            overtime_hours: existing.overtime_hours !== undefined ? Number(existing.overtime_hours) : 0,
+            remarks: existing.remarks || '',
+          };
+        }
+        return {
+          employee_id: emp.id || '',
+          employee_name: emp.full_name || '',
+          employee_code: emp.employee_id || '',
+          status: defaultStatus,
+          work_hours: defaultWorkHours,
+          overtime_hours: 0,
+          remarks: '',
+        };
+      });
       setRecords(initialRecords);
     }
-  }, [employeeData, selectedHolidayInfo]);
+  }, [employeeData, selectedHolidayInfo, existingAttendances]);
 
   // Reset local state when opened/closed
   useEffect(() => {
@@ -174,7 +195,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
             variant="primary"
             onClick={handleSubmit}
             loading={isSaving}
-            disabled={isLoadingEmployees || records.length === 0 || isPeriodPaid}
+            disabled={isLoadingEmployees || isLoadingAttendances || records.length === 0 || isPeriodPaid}
           >
             Lưu chấm công
           </Button>
@@ -225,7 +246,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
           </div>
         )}
 
-        {isLoadingEmployees ? (
+        {isLoadingEmployees || isLoadingAttendances ? (
           <div className={styles.loadingSection}>Đang tải danh sách nhân viên...</div>
         ) : loadError ? (
           <div className={styles.errorSection}>Không thể tải danh sách nhân viên.</div>
