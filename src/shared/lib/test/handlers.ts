@@ -364,8 +364,8 @@ export const handlers = [
   // Public Holidays mocks
   http.get('*/api/v1/hrm/public-holidays/', () => {
     return HttpResponse.json([
-      { id: 'holiday-1', name: 'Tết Âm Lịch', date: '2026-02-17', description: 'Nghỉ Tết Âm Lịch' },
-      { id: 'holiday-2', name: 'Ngày Chiến thắng', date: '2026-04-30', description: 'Giải phóng miền Nam' }
+      { id: 'holiday-1', name: 'Tết Âm Lịch', start_date: '2026-02-17', days: 5, description: 'Nghỉ Tết Âm Lịch' },
+      { id: 'holiday-2', name: 'Ngày Chiến thắng', start_date: '2026-04-30', days: 1, description: 'Giải phóng miền Nam' }
     ]);
   }),
 

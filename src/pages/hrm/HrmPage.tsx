@@ -33,6 +33,17 @@ import { useGetHrmPublicHolidaysQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
+const parseLocalDate = (dateStr: string): Date => {
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    return new Date(y, m, d);
+  }
+  return new Date(dateStr);
+};
+
 type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
 
 const HrmPage: React.FC = () => {
@@ -67,7 +78,22 @@ const HrmPage: React.FC = () => {
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
 
   const currentHoliday = React.useMemo(() => {
-    return holidays.find((h) => h.date === attendanceDate);
+    if (!attendanceDate) return undefined;
+    const current = parseLocalDate(attendanceDate);
+    current.setHours(0, 0, 0, 0);
+    const currentTime = current.getTime();
+
+    return holidays.find((h) => {
+      if (!h.start_date) return false;
+      const start = parseLocalDate(h.start_date);
+      start.setHours(0, 0, 0, 0);
+      const startTime = start.getTime();
+      
+      const days = h.days || 1;
+      const endTime = startTime + (days - 1) * 24 * 60 * 60 * 1000;
+      
+      return currentTime >= startTime && currentTime <= endTime;
+    });
   }, [holidays, attendanceDate]);
 
   const isPublicHoliday = !!currentHoliday;

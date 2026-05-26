@@ -9,6 +9,8 @@ import type { PublicHoliday } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
+import { Calendar } from 'lucide-react';
 import styles from './PublicHolidayFormModal.module.css';
 
 interface PublicHolidayFormModalProps {
@@ -20,9 +22,20 @@ interface PublicHolidayFormModalProps {
 
 interface FormValues {
   name: string;
-  date: string;
+  start_date: string;
+  days: number;
   description: string;
 }
+
+const formatDateToDMY = (isoDateStr: string): string => {
+  if (!isoDateStr) return '';
+  const cleanDateStr = isoDateStr.split('T')[0];
+  const parts = cleanDateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return isoDateStr;
+};
 
 export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
   open,
@@ -35,6 +48,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
   const isLoading = isCreating || isUpdating;
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -42,26 +56,33 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = useForm<FormValues>({
     defaultValues: {
       name: '',
-      date: new Date().toISOString().split('T')[0],
+      start_date: new Date().toISOString().split('T')[0],
+      days: 1,
       description: '',
     },
   });
+
+  const watchStartDate = watch('start_date');
 
   useEffect(() => {
     if (open) {
       if (holiday) {
         reset({
           name: holiday.name || '',
-          date: holiday.date || '',
+          start_date: holiday.start_date || '',
+          days: holiday.days || 1,
           description: holiday.description || '',
         });
       } else {
         reset({
           name: '',
-          date: new Date().toISOString().split('T')[0],
+          start_date: new Date().toISOString().split('T')[0],
+          days: 1,
           description: '',
         });
       }
@@ -77,7 +98,8 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           id: holiday.id,
           body: {
             name: values.name,
-            date: values.date,
+            start_date: values.start_date,
+            days: values.days,
             description: values.description || undefined,
           },
         }).unwrap();
@@ -86,7 +108,8 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
         await createHoliday({
           body: {
             name: values.name,
-            date: values.date,
+            start_date: values.start_date,
+            days: values.days,
             description: values.description || undefined,
           },
         }).unwrap();
@@ -139,17 +162,35 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="date">
-            Ngày nghỉ lễ <span className={styles.required}>*</span>
+          <label className={styles.label} htmlFor="start_date_display">
+            Ngày bắt đầu <span className={styles.required}>*</span>
           </label>
+          <div className={styles.inputWithIcon}>
+            <input
+              id="start_date_display"
+              type="text"
+              readOnly
+              placeholder="DD/MM/YYYY"
+              value={formatDateToDMY(watchStartDate)}
+              onClick={() => !isLoading && setIsDatePickerOpen(true)}
+              onKeyDown={(e) => {
+                if (!isLoading && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  setIsDatePickerOpen(true);
+                }
+              }}
+              className={styles.input}
+              disabled={isLoading}
+              style={{ cursor: 'pointer' }}
+            />
+            <Calendar className={styles.inputIcon} size={16} />
+          </div>
           <input
-            id="date"
-            type="date"
-            className={styles.input}
-            {...register('date', {
-              required: 'Ngày nghỉ lễ là bắt buộc',
+            type="hidden"
+            {...register('start_date', {
+              required: 'Ngày bắt đầu là bắt buộc',
               validate: (value) => {
-                if (holiday && holiday.date === value) {
+                if (holiday && holiday.start_date === value) {
                   return true;
                 }
                 const parts = value.split('-');
@@ -167,9 +208,36 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
                 return true;
               },
             })}
+          />
+          {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label} htmlFor="days">
+            Số ngày nghỉ <span className={styles.required}>*</span>
+          </label>
+          <input
+            id="days"
+            type="number"
+            step={1}
+            min={1}
+            className={styles.input}
+            {...register('days', {
+              required: 'Số ngày nghỉ là bắt buộc',
+              valueAsNumber: true,
+              validate: (value) => {
+                if (value === undefined || value === null || isNaN(value)) {
+                  return 'Số ngày nghỉ là bắt buộc';
+                }
+                if (!Number.isInteger(value) || value <= 0) {
+                  return 'Số ngày nghỉ phải là số nguyên dương lớn hơn 0';
+                }
+                return true;
+              },
+            })}
             disabled={isLoading}
           />
-          {errors.date && <span className={styles.errorText}>{errors.date.message}</span>}
+          {errors.days && <span className={styles.errorText}>{errors.days.message}</span>}
         </div>
 
         <div className={styles.formGroup}>
@@ -185,6 +253,15 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           />
         </div>
       </form>
+      <DatePickerModal
+        open={isDatePickerOpen}
+        onClose={() => setIsDatePickerOpen(false)}
+        value={watchStartDate}
+        onChange={(newDate) => {
+          setValue('start_date', newDate, { shouldValidate: true, shouldDirty: true });
+        }}
+      />
     </Modal>
   );
 };
+

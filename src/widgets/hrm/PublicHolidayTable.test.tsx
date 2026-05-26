@@ -31,8 +31,9 @@ describe('PublicHolidayTable', () => {
     // Wait for the data to load and render
     expect(await screen.findByText('Tết Âm Lịch')).toBeInTheDocument();
     expect(screen.getByText('Ngày Chiến thắng')).toBeInTheDocument();
-    expect(screen.getByText('17/02/2026')).toBeInTheDocument(); // formatted date
-    expect(screen.getByText('30/04/2026')).toBeInTheDocument(); // formatted date
+    expect(screen.getByText('17/02/2026')).toBeInTheDocument(); // formatted start date
+    expect(screen.getByText('30/04/2026')).toBeInTheDocument(); // formatted start date
+    expect(screen.getByText('5')).toBeInTheDocument(); // days for Tết Âm Lịch
   });
 
   it('invokes onEdit when editing a holiday', async () => {

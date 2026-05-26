@@ -81,6 +81,8 @@ export type DisciplineRecord = GenDisciplineRecord & {
 };
 
 export type PublicHoliday = GenPublicHoliday & {
+  id: string;
   name: string;
-  date: string;
+  start_date: string;
+  days: number;
 };

@@ -4,6 +4,9 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useGetHrmAttendancesQuery } from '@entities/hrm/api/hrmApi';
 import type { Attendance } from '@entities/hrm/model/types';
+import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
+import { Calendar } from 'lucide-react';
+import { formatDateVN } from '@shared/lib/formatDate';
 
 interface AttendanceTableProps {
   selectedDate?: string;
@@ -17,6 +20,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   const [localSelectedDate, setLocalSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const selectedDate = propSelectedDate !== undefined ? propSelectedDate : localSelectedDate;
 
@@ -83,19 +87,33 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       <div className="filterToolbar">
         <div className="filterGroup">
           <span className="filterLabel">Ngày chấm công:</span>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => {
-              if (onChangeDate) {
-                onChangeDate(e.target.value);
-              } else {
-                setLocalSelectedDate(e.target.value);
-              }
-            }}
-            className="filterDateInput"
-            aria-label="Chọn ngày xem chấm công"
-          />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              id="attendance-date-filter"
+              type="text"
+              readOnly
+              value={formatDateVN(selectedDate)}
+              onClick={() => setIsDatePickerOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsDatePickerOpen(true);
+                }
+              }}
+              className="filterDateInput"
+              style={{ paddingRight: '36px', cursor: 'pointer', minWidth: '150px' }}
+              aria-label="Chọn ngày xem chấm công"
+            />
+            <Calendar
+              size={16}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                color: 'var(--clr-text-secondary)',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -105,6 +123,19 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         loading={isLoading}
         searchPlaceholder="Tìm kiếm bản ghi chấm công theo mã hoặc tên..."
         emptyMessage="Không tìm thấy bản ghi chấm công nào"
+      />
+
+      <DatePickerModal
+        open={isDatePickerOpen}
+        onClose={() => setIsDatePickerOpen(false)}
+        value={selectedDate}
+        onChange={(newDate) => {
+          if (onChangeDate) {
+            onChangeDate(newDate);
+          } else {
+            setLocalSelectedDate(newDate);
+          }
+        }}
       />
     </div>
   );

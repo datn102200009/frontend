@@ -432,14 +432,15 @@ export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
 }
 export type GetHrmPublicHolidaysApiResponse = /** status 200 Thành công */ PublicHoliday[]
 export type GetHrmPublicHolidaysApiArg = {
-  /** Lọc ngày nghỉ lễ theo năm cụ thể. */
+  /** Lọc ngày nghỉ lễ theo năm cụ thể. Bao gồm cả các ngày nghỉ lễ kéo dài vắt qua ranh giới năm. */
   year?: number
 }
 export type PostHrmPublicHolidaysApiResponse = /** status 201 Tạo thành công */ PublicHoliday
 export type PostHrmPublicHolidaysApiArg = {
   body: {
     name: string
-    date: string
+    start_date: string
+    days?: number
     description?: string
   }
 }
@@ -455,7 +456,8 @@ export type PutHrmPublicHolidaysByIdApiArg = {
   id: string
   body: {
     name: string
-    date: string
+    start_date: string
+    days?: number
     description?: string
   }
 }
@@ -636,7 +638,8 @@ export type SalarySlip = {
 export type PublicHoliday = {
   id?: string
   name?: string
-  date?: string
+  start_date?: string
+  days?: number
   description?: string | null
   created_at?: string
   updated_at?: string
