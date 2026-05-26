@@ -1,5 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { SalarySlipDetailsModal } from './SalarySlipDetailsModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 import type { SalarySlip } from '@entities/hrm/model/types';
@@ -46,9 +45,6 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument();
     expect(screen.getByText('Mã NV: NV001 | Kỳ lương: 2026-05')).toBeInTheDocument();
     expect(screen.getByText('Bản nháp')).toBeInTheDocument();
-    
-    // Check button
-    expect(screen.getByRole('button', { name: 'Thanh Toán Lương' })).toBeInTheDocument();
   });
 
   it('renders paid salary slip correctly and hides draft forms', () => {
@@ -84,17 +80,5 @@ describe('SalarySlipDetailsModal', () => {
     expect(standardDaysInput).toHaveAttribute('readonly');
   });
 
-  it('handles confirm payment action successfully', async () => {
-    renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
-    const user = userEvent.setup();
 
-    const paymentSelect = screen.getByLabelText(/Hình thức chi trả:/i);
-    await user.selectOptions(paymentSelect, 'cash');
-
-    await user.click(screen.getByRole('button', { name: 'Thanh Toán Lương' }));
-
-    await waitFor(() => {
-      expect(defaultProps.onSuccess).toHaveBeenCalled();
-    });
-  });
 });

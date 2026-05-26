@@ -266,9 +266,6 @@ hrmApi.enhanceEndpoints({
     postHrmSalarySlipsByIdCalculate: {
       invalidatesTags: ['SalarySlips'],
     },
-    postHrmSalarySlipsByIdConfirm: {
-      invalidatesTags: ['SalarySlips', 'CashFlows'],
-    },
     postHrmSalarySlipsBulkConfirmPay: {
       invalidatesTags: ['SalarySlips', 'CashFlows'],
     },

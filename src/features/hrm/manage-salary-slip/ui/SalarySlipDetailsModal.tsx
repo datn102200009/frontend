@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   usePostHrmSalarySlipsByIdCalculateMutation,
-  usePostHrmSalarySlipsByIdConfirmMutation,
 } from '@entities/hrm/api/hrmApi';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
@@ -16,17 +15,10 @@ interface SalarySlipDetailsModalProps {
   salarySlip: SalarySlip;
 }
 
-export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
-  open,
-  onClose,
-  onSuccess,
-  onCalculateSuccess,
-  salarySlip,
-}) => {
+export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (props) => {
+  const { open, onClose, onCalculateSuccess, salarySlip } = props;
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
-  const [confirmSalary, { isLoading: isConfirming }] = usePostHrmSalarySlipsByIdConfirmMutation();
 
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Auto calculate when modal opens
@@ -49,20 +41,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
 
-  const handleConfirmPayment = async () => {
-    setApiError(null);
-    if (!salarySlip.id) return;
-    try {
-      await confirmSalary({
-        id: salarySlip.id,
-        body: { payment_method: paymentMethod },
-      }).unwrap();
-      onSuccess();
-    } catch (err: any) {
-      console.error('Failed to pay salary slip', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi thanh toán lương. Vui lòng kiểm tra lại.');
-    }
-  };
+
 
   const formatVND = (value: any) => {
     if (value === undefined || value === null) return '0 đ';
@@ -176,7 +155,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
         {salarySlip.status === 'draft' && (
           <div className={styles.actionRow}>
             {/* Form tính toán */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', borderBottom: '1px solid var(--clr-border)', paddingBottom: '16px', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', width: '100%' }}>
               <div className={styles.formGroup} style={{ flex: 1 }}>
                 <label className={styles.label} htmlFor="standard_days">
                   Số ngày công tiêu chuẩn tháng: {isCalculating && <span style={{ color: 'var(--clr-primary)', fontSize: 'var(--fs-xs)', marginLeft: '8px', fontWeight: 'normal' }}>(Đang tính toán lại...)</span>}
@@ -189,34 +168,6 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
                   className={styles.input}
                 />
               </div>
-            </div>
-
-            {/* Form thanh toán */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
-              <div className={styles.formGroup} style={{ flex: 1 }}>
-                <label className={styles.label} htmlFor="payment_method">
-                  Hình thức chi trả:
-                </label>
-                <select
-                  id="payment_method"
-                  value={paymentMethod}
-                  onChange={(e: any) => setPaymentMethod(e.target.value)}
-                  className={styles.select}
-                  disabled={isCalculating || isConfirming}
-                >
-                  <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                  <option value="cash">Tiền mặt</option>
-                </select>
-              </div>
-              <Button
-                variant="primary"
-                onClick={handleConfirmPayment}
-                loading={isConfirming}
-                disabled={isCalculating}
-                style={{ backgroundColor: 'var(--clr-success)', borderColor: 'var(--clr-success)' }}
-              >
-                Thanh Toán Lương
-              </Button>
             </div>
           </div>
         )}

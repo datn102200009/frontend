@@ -327,11 +327,6 @@ export const handlers = [
     return HttpResponse.json({ id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'draft' });
   }),
 
-  http.post('*/api/v1/hrm/salary-slips/:id/confirm/', async ({ params, request }) => {
-    const data = await request.json() as any;
-    return HttpResponse.json({ id: params.id, status: 'paid', payment_method: data.payment_method });
-  }),
-
   http.post('*/api/v1/hrm/rewards/', async ({ request }) => {
     const data = await request.json() as any;
     return HttpResponse.json({ id: 'reward-123', ...data }, { status: 201 });
