@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { AttendanceTable } from './AttendanceTable';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 
@@ -11,5 +12,28 @@ describe('AttendanceTable', () => {
     expect(screen.getByText('Trần Thị Bình')).toBeInTheDocument();
     expect(screen.getByText('Đi làm')).toBeInTheDocument();
     expect(screen.getByText('Nghỉ phép (Hưởng lương)')).toBeInTheDocument();
+  });
+
+  it('opens date picker modal on Enter or Space key press on the date filter input', async () => {
+    renderWithProviders(<AttendanceTable />);
+    const user = userEvent.setup();
+    const dateInput = screen.getByLabelText('Chọn ngày xem chấm công');
+    
+    // Focus the input
+    dateInput.focus();
+    expect(dateInput).toHaveFocus();
+    
+    // Press Space
+    await user.keyboard(' ');
+    expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
+    
+    // Close modal
+    await user.click(screen.getByRole('button', { name: 'Hủy' }));
+    expect(screen.queryByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).not.toBeInTheDocument();
+    
+    // Press Enter
+    dateInput.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
   });
 });

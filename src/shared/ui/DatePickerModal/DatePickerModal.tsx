@@ -56,15 +56,17 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     }
   }, [open, value]);
 
-  // Year choices range: currentYear - 5 to currentYear + 10
+  // Year choices range: dynamically derived from current year and viewYear
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
+    const minYear = Math.min(currentYear - 10, viewYear - 10);
+    const maxYear = Math.max(currentYear + 10, viewYear + 10);
     const years: number[] = [];
-    for (let y = currentYear - 5; y <= currentYear + 10; y++) {
+    for (let y = minYear; y <= maxYear; y++) {
       years.push(y);
     }
     return years;
-  }, []);
+  }, [viewYear]);
 
   const monthOptions = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => i);

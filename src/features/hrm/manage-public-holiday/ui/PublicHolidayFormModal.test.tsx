@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PublicHolidayFormModal } from './PublicHolidayFormModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -159,5 +159,45 @@ describe('PublicHolidayFormModal', () => {
     await waitFor(() => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
+  });
+
+  it('formats ISO datetime with time correctly to DD/MM/YYYY in edit mode', () => {
+    const holiday = {
+      id: 'holiday-1',
+      name: 'Tết Âm Lịch',
+      start_date: '2026-02-17T00:00:00Z',
+      days: 5,
+      description: 'Nghỉ Tết Âm Lịch',
+    };
+    renderWithProviders(<PublicHolidayFormModal {...defaultProps} holiday={holiday} />);
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17/02/2026');
+  });
+
+  it('opens DatePickerModal on Enter or Space key press on the date display input', async () => {
+    renderWithProviders(<PublicHolidayFormModal {...defaultProps} />);
+    const user = userEvent.setup();
+    const dateInput = screen.getByLabelText('Ngày bắt đầu *');
+    
+    dateInput.focus();
+    expect(dateInput).toHaveFocus();
+    
+    // Press Space
+    await user.keyboard(' ');
+    expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
+
+    // Cancel modal
+    const heading = screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' });
+    const datePickerDialog = heading.closest('[role="dialog"]') as HTMLElement;
+    if (!datePickerDialog) throw new Error('DatePickerModal dialog not found');
+    const datePickerCancelBtn = within(datePickerDialog).getByRole('button', { name: 'Hủy' });
+    await user.click(datePickerCancelBtn);
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).not.toBeInTheDocument();
+    });
+
+    // Press Enter
+    dateInput.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
   });
 });

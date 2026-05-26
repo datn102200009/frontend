@@ -29,7 +29,8 @@ interface FormValues {
 
 const formatDateToDMY = (isoDateStr: string): string => {
   if (!isoDateStr) return '';
-  const parts = isoDateStr.split('-');
+  const cleanDateStr = isoDateStr.split('T')[0];
+  const parts = cleanDateStr.split('-');
   if (parts.length === 3) {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
@@ -172,6 +173,12 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
               placeholder="DD/MM/YYYY"
               value={formatDateToDMY(watchStartDate)}
               onClick={() => !isLoading && setIsDatePickerOpen(true)}
+              onKeyDown={(e) => {
+                if (!isLoading && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  setIsDatePickerOpen(true);
+                }
+              }}
               className={styles.input}
               disabled={isLoading}
               style={{ cursor: 'pointer' }}
@@ -219,6 +226,9 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
               required: 'Số ngày nghỉ là bắt buộc',
               valueAsNumber: true,
               validate: (value) => {
+                if (value === undefined || value === null || isNaN(value)) {
+                  return 'Số ngày nghỉ là bắt buộc';
+                }
                 if (!Number.isInteger(value) || value <= 0) {
                   return 'Số ngày nghỉ phải là số nguyên dương lớn hơn 0';
                 }

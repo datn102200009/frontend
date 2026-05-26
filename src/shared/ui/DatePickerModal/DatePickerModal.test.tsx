@@ -102,4 +102,17 @@ describe('DatePickerModal', () => {
     expect(screen.queryByRole('button', { name: /Xóa/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Clear/i })).not.toBeInTheDocument();
   });
+
+  it('includes the selected year in options even if it is outside currentYear - 5 to currentYear + 10', () => {
+    const historicalProps = {
+      ...defaultProps,
+      value: '2010-05-26',
+    };
+    renderWithProviders(<DatePickerModal {...historicalProps} />);
+    const yearSelect = screen.getByLabelText('Chọn năm');
+    expect(yearSelect).toHaveValue('2010');
+    
+    // It should also have options around 2010
+    expect(screen.getByRole('option', { name: 'Năm 2010' })).toBeInTheDocument();
+  });
 });

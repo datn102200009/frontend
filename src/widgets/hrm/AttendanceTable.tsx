@@ -94,6 +94,12 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               readOnly
               value={formatDateVN(selectedDate)}
               onClick={() => setIsDatePickerOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsDatePickerOpen(true);
+                }
+              }}
               className="filterDateInput"
               style={{ paddingRight: '36px', cursor: 'pointer', minWidth: '150px' }}
               aria-label="Chọn ngày xem chấm công"
