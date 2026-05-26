@@ -32,7 +32,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     }
   }, [open]);
 
-  const { register, handleSubmit, reset } = useForm<CashFlowInput>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CashFlowInput>({
     defaultValues: {
       payment_type: paymentType,
       amount: defaultValues?.amount || 0,
@@ -153,7 +153,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           label="Số Tiền" 
           type="number" 
           min="0"
-          {...register('amount', { required: true, valueAsNumber: true, min: 0 })}
+          {...register('amount', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số tiền tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
+          error={errors.amount?.message}
           disabled={isWorking}
         />
 

@@ -18,7 +18,7 @@ import {
   usePostManufacturingWorkOrderByWorkOrderIdDeclareMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCompleteMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCancelMutation,
-} from '../../manufacturing/api/manufacturingApi';
+} from '@features/manufacturing/api/manufacturingApi';
 import styles from './BomList.module.css';
 
 const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' | 'error' }> = {

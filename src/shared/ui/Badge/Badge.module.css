@@ -39,6 +39,6 @@
 }
 
 .accent {
-  background: #f3e8ff; /* purple-100 */
-  color: #6b21a8;    /* purple-800 */
+  background: var(--clr-accent-bg);
+  color: var(--clr-accent);
 }

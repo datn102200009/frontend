@@ -33,16 +33,7 @@ import { useGetHrmPublicHolidaysQuery, useGetHrmSalarySlipsQuery } from '@entiti
 import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
-const parseLocalDate = (dateStr: string): Date => {
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    const y = parseInt(parts[0], 10);
-    const m = parseInt(parts[1], 10) - 1;
-    const d = parseInt(parts[2], 10);
-    return new Date(y, m, d);
-  }
-  return new Date(dateStr);
-};
+import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
 type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
 
@@ -90,93 +81,12 @@ const HrmPage: React.FC = () => {
 
   // Analyze holidays and calculate compensatory holidays (compensating official holidays on Sunday)
   const holidayAnalysis = React.useMemo(() => {
-    const officialMap = new Map<string, typeof holidays[number]>();
-    holidays.forEach((h) => {
-      if (!h.start_date) return;
-      const start = parseLocalDate(h.start_date);
-      const days = h.days || 1;
-      for (let i = 0; i < days; i++) {
-        const current = new Date(start);
-        current.setDate(start.getDate() + i);
-        const y = current.getFullYear();
-        const m = String(current.getMonth() + 1).padStart(2, '0');
-        const d = String(current.getDate()).padStart(2, '0');
-        const dateStr = `${y}-${m}-${d}`;
-        officialMap.set(dateStr, h);
-      }
-    });
-
-    const sortedDates = Array.from(officialMap.keys()).sort((a, b) => {
-      return new Date(a).getTime() - new Date(b).getTime();
-    });
-
-    const compensatoryMap = new Map<string, typeof holidays[number]>();
-    const officialToCompensatoryMap = new Map<string, string>();
-    sortedDates.forEach((dateStr) => {
-      const d = parseLocalDate(dateStr);
-      if (d.getDay() === 0) { // Sunday is rest day
-        const compDate = new Date(d);
-        compDate.setDate(d.getDate() + 1);
-
-        const getFormatted = (dt: Date) => {
-          const y = dt.getFullYear();
-          const m = String(dt.getMonth() + 1).padStart(2, '0');
-          const day = String(dt.getDate()).padStart(2, '0');
-          return `${y}-${m}-${day}`;
-        };
-
-        while (
-          compDate.getDay() === 0 ||
-          officialMap.has(getFormatted(compDate)) ||
-          compensatoryMap.has(getFormatted(compDate))
-        ) {
-          compDate.setDate(compDate.getDate() + 1);
-        }
-        const compDateStr = getFormatted(compDate);
-        compensatoryMap.set(compDateStr, officialMap.get(dateStr)!);
-        officialToCompensatoryMap.set(dateStr, compDateStr);
-      }
-    });
-
-    return {
-      officialMap,
-      compensatoryMap,
-      officialToCompensatoryMap,
-    };
+    return calculateHolidayAnalysis(holidays);
   }, [holidays]);
 
   // Info for the currently selected date
   const selectedHolidayInfo = React.useMemo(() => {
-    if (!attendanceDate) return null;
-    const official = holidayAnalysis.officialMap.get(attendanceDate);
-    if (official) {
-      const d = parseLocalDate(attendanceDate);
-      const isSunday = d.getDay() === 0;
-      let compensatoryDayName = '';
-      if (isSunday) {
-        const compDateStr = holidayAnalysis.officialToCompensatoryMap.get(attendanceDate);
-        if (compDateStr) {
-          const compDate = parseLocalDate(compDateStr);
-          const dayOfWeek = compDate.getDay();
-          const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-          compensatoryDayName = dayNames[dayOfWeek];
-        }
-      }
-      return {
-        type: 'official' as const,
-        name: official.name,
-        isSunday,
-        compensatoryDayName,
-      };
-    }
-    const compensatory = holidayAnalysis.compensatoryMap.get(attendanceDate);
-    if (compensatory) {
-      return {
-        type: 'compensatory' as const,
-        name: compensatory.name,
-      };
-    }
-    return null;
+    return getSelectedHolidayInfo(attendanceDate, holidayAnalysis);
   }, [holidayAnalysis, attendanceDate]);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {

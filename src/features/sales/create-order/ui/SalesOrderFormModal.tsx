@@ -278,15 +278,15 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                 </div>
                 {fields.map((field, index) => (
                   <div key={field.id} className={styles.itemRow} style={{ padding: '8px 0', gridTemplateColumns: isReadOnly ? '1fr 100px 150px' : '1fr 100px 150px 36px' }}>
-                    <select className={styles.itemInput} {...register(`lines.${index}.item_id` as const, { required: true })} disabled={isWorking || isReadOnly}>
+                    <select className={styles.itemInput} {...register(`lines.${index}.item_id` as const, { required: 'Bắt buộc' })} disabled={isWorking || isReadOnly}>
                       {getSelectableItems(field.item_id).map(item => (
                         <option key={item.id} value={item.id}>
                           {item.item_name} ({item.item_code})
                         </option>
                       ))}
                     </select>
-                    <input className={styles.itemInput} type="number" min={1} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true, required: true, min: 1 })} disabled={isWorking || isReadOnly} />
-                    <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true, required: true, min: 0 })} disabled={isWorking || isReadOnly} />
+                    <input className={styles.itemInput} type="number" min={1} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 1, message: 'Số lượng tối thiểu là 1' }, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking || isReadOnly} />
+                    <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0, message: 'Đơn giá tối thiểu là 0' }, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking || isReadOnly} />
                     {!isReadOnly && (
                       <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa sản phẩm"
                         disabled={fields.length <= 1 || isWorking} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

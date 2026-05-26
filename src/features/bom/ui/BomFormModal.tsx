@@ -154,7 +154,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
                   ))}
                 </select>
                 <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)' }}>{selectedItem?.stock_uom_name || '-'}</span>
-                <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`items.${index}.quantity` as const, { valueAsNumber: true, required: true, min: 0.01 })} disabled={isCreating || isUpdating} />
+                <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`items.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0.01, message: 'Số lượng tối thiểu là 0.01' }, validate: val => !isNaN(val) || 'Bắt buộc' })} disabled={isCreating || isUpdating} />
                 <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa linh kiện"
                   disabled={fields.length <= 1 || isCreating || isUpdating} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text-muted)' }}>
                   <Trash2 size={16} />

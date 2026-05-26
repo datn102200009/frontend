@@ -237,6 +237,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
             {...register('days', {
               required: 'Số ngày nghỉ là bắt buộc',
               valueAsNumber: true,
+              validate: (val) => !isNaN(val) || 'Số ngày nghỉ là bắt buộc',
             })}
             disabled={isLoading}
           />

@@ -36,8 +36,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         return <Badge variant="info">Nghỉ phép (Hưởng lương)</Badge>;
       case 'unpaid_leave':
         return <Badge variant="neutral">Nghỉ không lương</Badge>;
-      case 'sick_leave':
-        return <Badge variant="warning">Nghỉ ốm</Badge>;
       case 'holiday':
         return <Badge variant="accent">Nghỉ lễ</Badge>;
       default:

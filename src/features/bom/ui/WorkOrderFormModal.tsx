@@ -11,13 +11,15 @@ import {
   useGetManufacturingBomListQuery,
   usePostManufacturingWorkOrderCreateMutation,
   usePostManufacturingMaterialPreviewMutation,
-} from '../../manufacturing/api/manufacturingApi';
+} from '@features/manufacturing/api/manufacturingApi';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 
 const woSchema = z.object({
   name: z.string().min(1, 'Bắt buộc nhập tên/mã lệnh'),
   bom_id: z.string().min(1, 'Bắt buộc chọn định mức (BOM)'),
-  quantity: z.number().min(1, 'Số lượng tối thiểu là 1'),
+  quantity: z.number()
+    .refine((val) => !isNaN(val), 'Bắt buộc')
+    .refine((val) => val >= 1, 'Số lượng tối thiểu là 1'),
   source_warehouse_id: z.string().min(1, 'Bắt buộc chọn kho nguồn'),
   target_warehouse_id: z.string().min(1, 'Bắt buộc chọn kho đích'),
   production_warehouse_id: z.string().min(1, 'Bắt buộc chọn kho sản xuất'),

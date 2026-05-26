@@ -1,12 +1,12 @@
 import { masterDataApi } from '@features/inventory/api/masterDataApi';
 import { manufacturingApi } from '@features/manufacturing/api/manufacturingApi';
 import { inventoryApi } from '@features/inventory/api/inventoryApi';
-import { purchasingApi } from '../../entities/purchasing/api/purchasingApi';
-import { salesApi } from '../../entities/sales/api/salesApi';
-import { financeApi } from '../../entities/finance/api/financeApi';
-import { crmApi } from '../../entities/crm/api/crmApi';
-import { procurementApi } from '../../entities/procurement/api/procurementApi';
-import { hrmApi } from '../../entities/hrm/api/hrmApi';
+import { purchasingApi } from '@entities/purchasing/api/purchasingApi';
+import { salesApi } from '@entities/sales/api/salesApi';
+import { financeApi } from '@entities/finance/api/financeApi';
+import { crmApi } from '@entities/crm/api/crmApi';
+import { procurementApi } from '@entities/procurement/api/procurementApi';
+import { hrmApi } from '@entities/hrm/api/hrmApi';
 
 // ==========================================
 // Caching Strategy for Master Data

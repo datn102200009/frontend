@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AttendanceTable } from './AttendanceTable';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
-import { server } from '../../shared/lib/test/server';
+import { server } from '@shared/lib/test/server';
 import { http, HttpResponse } from 'msw';
 
 describe('AttendanceTable', () => {

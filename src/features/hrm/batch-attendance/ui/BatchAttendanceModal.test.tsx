@@ -107,7 +107,7 @@ describe('BatchAttendanceModal', () => {
   it('locks status dropdown to holiday when date is a public holiday and displays warning banner', async () => {
     // Override the public holiday query mock to return a holiday on 2026-05-01
     const { http, HttpResponse } = await import('msw');
-    const { server } = await import('../../../../shared/lib/test/server');
+    const { server } = await import('@shared/lib/test/server');
     server.use(
       http.get('*/api/v1/hrm/public-holidays/', () => {
         return HttpResponse.json([
@@ -146,7 +146,7 @@ describe('BatchAttendanceModal', () => {
 
   it('locks status dropdown to holiday and displays success banner when date is a compensatory holiday', async () => {
     const { http, HttpResponse } = await import('msw');
-    const { server } = await import('../../../../shared/lib/test/server');
+    const { server } = await import('@shared/lib/test/server');
     server.use(
       http.get('*/api/v1/hrm/public-holidays/', () => {
         return HttpResponse.json([
@@ -181,7 +181,7 @@ describe('BatchAttendanceModal', () => {
 
   it('displays dynamic compensatory day off on warning banner for consecutive holiday block', async () => {
     const { http, HttpResponse } = await import('msw');
-    const { server } = await import('../../../../shared/lib/test/server');
+    const { server } = await import('@shared/lib/test/server');
     server.use(
       http.get('*/api/v1/hrm/public-holidays/', () => {
         return HttpResponse.json([
@@ -216,7 +216,7 @@ describe('BatchAttendanceModal', () => {
 
   it('locks fields and disables submit button when date belongs to a paid period', async () => {
     const { http, HttpResponse } = await import('msw');
-    const { server } = await import('../../../../shared/lib/test/server');
+    const { server } = await import('@shared/lib/test/server');
     server.use(
       http.get('*/api/v1/hrm/salary-slips/', () => {
         return HttpResponse.json([
