@@ -37,3 +37,8 @@
   background: var(--clr-bg);
   color: var(--clr-text-secondary);
 }
+
+.accent {
+  background: #f3e8ff; /* purple-100 */
+  color: #6b21a8;    /* purple-800 */
+}

@@ -31,7 +31,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'working':
-        return <Badge variant="success">Đi làm</Badge>;
+        return <Badge variant="success">Ngày công thường</Badge>;
       case 'paid_leave':
         return <Badge variant="info">Nghỉ phép (Hưởng lương)</Badge>;
       case 'unpaid_leave':
@@ -39,7 +39,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       case 'sick_leave':
         return <Badge variant="warning">Nghỉ ốm</Badge>;
       case 'holiday':
-        return <Badge variant="success">Nghỉ lễ</Badge>;
+        return <Badge variant="accent">Nghỉ lễ</Badge>;
       default:
         return <Badge variant="neutral">Khác</Badge>;
     }

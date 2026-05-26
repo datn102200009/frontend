@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BatchAttendanceModal } from './BatchAttendanceModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -52,5 +52,74 @@ describe('BatchAttendanceModal', () => {
     await waitFor(() => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
+  });
+
+  it('disables and resets hours inputs based on the selected status', async () => {
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
+    const user = userEvent.setup();
+
+    // Wait for employees to load
+    await screen.findByText('Nguyễn Văn An');
+
+    const select = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
+    const workInput = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
+    const otInput = screen.getByRole('spinbutton', { name: 'Giờ OT của Nguyễn Văn An' });
+
+    // Default status is 'working', both should be enabled
+    expect(select).toHaveValue('working');
+    expect(workInput).toBeEnabled();
+    expect(workInput).toHaveValue(8);
+    expect(otInput).toBeEnabled();
+
+    // 1. Change status to 'paid_leave'
+    await user.selectOptions(select, 'paid_leave');
+    // Both hours inputs should be disabled and reset to 0
+    expect(workInput).toBeDisabled();
+    expect(workInput).toHaveValue(0);
+    expect(otInput).toBeDisabled();
+    expect(otInput).toHaveValue(0);
+
+    // 2. Change status to 'holiday'
+    await user.selectOptions(select, 'holiday');
+    // work_hours should be disabled and reset to 0, overtime_hours should be enabled
+    expect(workInput).toBeDisabled();
+    expect(workInput).toHaveValue(0);
+    expect(otInput).toBeEnabled();
+  });
+
+  it('locks status dropdown to holiday when date is a public holiday', async () => {
+    // Override the public holiday query mock to return a holiday on 2026-05-01
+    const { http, HttpResponse } = await import('msw');
+    const { server } = await import('../../../../shared/lib/test/server');
+    server.use(
+      http.get('*/api/v1/hrm/public-holidays/', () => {
+        return HttpResponse.json([
+          { id: 'holiday-1', start_date: '2026-05-01', days: 1, name: 'Ngày Chiến thắng' },
+        ]);
+      })
+    );
+
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
+
+    // Change date to the public holiday (2026-05-01)
+    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
+    fireEvent.change(dateInput, { target: { value: '2026-05-01' } });
+
+    // Wait for the active employees list to load
+    await screen.findByText('Nguyễn Văn An');
+
+    const select = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
+    const workInput = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
+    const otInput = screen.getByRole('spinbutton', { name: 'Giờ OT của Nguyễn Văn An' });
+
+    // Select dropdown should be locked (disabled) to 'holiday'
+    expect(select).toBeDisabled();
+    expect(select).toHaveValue('holiday');
+
+    // work_hours should be disabled and 0, overtime_hours should be enabled and 0
+    expect(workInput).toBeDisabled();
+    expect(workInput).toHaveValue(0);
+    expect(otInput).toBeEnabled();
+    expect(otInput).toHaveValue(0);
   });
 });

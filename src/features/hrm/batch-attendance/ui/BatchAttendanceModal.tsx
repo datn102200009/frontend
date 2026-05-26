@@ -107,11 +107,14 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   const handleStatusChange = (index: number, newStatus: AttendanceRecord['status']) => {
     setRecords((prev) => {
       const next = [...prev];
+      const workHoursDisabled = ['holiday', 'paid_leave', 'unpaid_leave', 'sick_leave'].includes(newStatus);
+      const otHoursDisabled = ['paid_leave', 'unpaid_leave', 'sick_leave'].includes(newStatus);
+
       next[index] = {
         ...next[index],
         status: newStatus,
-        // Set work hours to 0 if they are off, or 8 if they are working
-        work_hours: newStatus === 'working' ? 8 : 0,
+        work_hours: workHoursDisabled ? 0 : (newStatus === 'working' ? 8 : next[index].work_hours),
+        overtime_hours: otHoursDisabled ? 0 : next[index].overtime_hours,
       };
       return next;
     });
@@ -236,9 +239,9 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.status}
                         onChange={(e) => handleStatusChange(idx, e.target.value as any)}
                         className={styles.select}
-                        disabled={isSaving}
+                        disabled={isSaving || isDatePublicHoliday}
                       >
-                        <option value="working">Đi làm</option>
+                        <option value="working">Ngày công thường</option>
                         <option value="paid_leave">Nghỉ phép</option>
                         <option value="unpaid_leave">Nghỉ không lương</option>
                         <option value="sick_leave">Nghỉ ốm</option>
@@ -256,7 +259,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.work_hours}
                         onChange={(e) => handleFieldChange(idx, 'work_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving}
+                        disabled={isSaving || ['holiday', 'paid_leave', 'unpaid_leave', 'sick_leave'].includes(record.status)}
                       />
                     </td>
                     <td className={styles.td}>
@@ -269,7 +272,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.overtime_hours}
                         onChange={(e) => handleFieldChange(idx, 'overtime_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving}
+                        disabled={isSaving || ['paid_leave', 'unpaid_leave', 'sick_leave'].includes(record.status)}
                       />
                     </td>
                     <td className={styles.td}>
