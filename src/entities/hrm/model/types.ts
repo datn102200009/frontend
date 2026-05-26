@@ -47,7 +47,7 @@ export type Attendance = GenAttendance & {
   id: string;
   employee_id: string;
   date: string;
-  status: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other';
+  status: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday';
 };
 
 export type LeaveRequest = GenLeaveRequest & {

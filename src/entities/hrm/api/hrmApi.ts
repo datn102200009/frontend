@@ -326,7 +326,7 @@ export type PostHrmAttendancesBatchApiArg = {
     date: string
     records: {
       employee_id: string
-      status: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other'
+      status: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday'
       work_hours?: number
       overtime_hours?: number
       remarks?: string
@@ -578,7 +578,7 @@ export type Attendance = {
   employee_code?: string
   employee_name?: string
   date?: string
-  status?: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other'
+  status?: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday'
   work_hours?: string
   overtime_hours?: string
   remarks?: string | null

@@ -206,7 +206,7 @@ const HrmPage: React.FC = () => {
                   icon={<CheckSquare size={16} />}
                   onClick={() => setIsBatchAttendanceOpen(true)}
                 >
-                  Chấm Công Hàng Loạt
+                  Chấm Công
                 </Button>
               </div>
 
@@ -214,7 +214,7 @@ const HrmPage: React.FC = () => {
                 <div className={styles.holidayBanner} data-testid="public-holiday-banner">
                   <AlertTriangle className={styles.holidayIcon} size={18} />
                   <p className={styles.holidayText}>
-                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Hệ thống tự động tính 100% lương cho nhân sự nghỉ lễ. Nếu có nhân sự thực tế đi làm, vui lòng nhấn <strong>Chấm Công Hàng Loạt</strong> để ghi nhận giờ tăng ca (hệ số 3.0x).
+                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Hệ thống tự động tính 100% lương cho nhân sự nghỉ lễ. Nếu có nhân sự thực tế đi làm, vui lòng nhấn <strong>Chấm Công</strong> để ghi nhận giờ tăng ca (hệ số 3.0x).
                   </p>
                 </div>
               )}
@@ -370,6 +370,7 @@ const HrmPage: React.FC = () => {
           open={isBatchAttendanceOpen}
           onClose={() => setIsBatchAttendanceOpen(false)}
           onSuccess={() => setIsBatchAttendanceOpen(false)}
+          initialDate={attendanceDate}
         />
       )}
 

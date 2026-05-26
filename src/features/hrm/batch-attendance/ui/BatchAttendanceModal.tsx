@@ -23,13 +23,14 @@ interface BatchAttendanceModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialDate?: string;
 }
 
 interface AttendanceRecord {
   employee_id: string;
   employee_name: string;
   employee_code: string;
-  status: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other';
+  status: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday';
   work_hours: number;
   overtime_hours: number;
   remarks: string;
@@ -39,8 +40,9 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   open,
   onClose,
   onSuccess,
+  initialDate,
 }) => {
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -97,18 +99,18 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   // Reset local state when opened/closed
   useEffect(() => {
     if (open) {
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(initialDate || new Date().toISOString().split('T')[0]);
       setApiError(null);
     } else {
       setRecords([]);
     }
-  }, [open]);
+  }, [open, initialDate]);
 
   const handleStatusChange = (index: number, newStatus: AttendanceRecord['status']) => {
     setRecords((prev) => {
       const next = [...prev];
-      const workHoursDisabled = ['holiday', 'paid_leave', 'unpaid_leave', 'sick_leave'].includes(newStatus);
-      const otHoursDisabled = ['paid_leave', 'unpaid_leave', 'sick_leave'].includes(newStatus);
+      const workHoursDisabled = ['holiday', 'paid_leave', 'unpaid_leave'].includes(newStatus);
+      const otHoursDisabled = ['paid_leave', 'unpaid_leave'].includes(newStatus);
 
       next[index] = {
         ...next[index],
@@ -167,7 +169,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title="Chấm Công Hàng Loạt"
+      title="Chấm Công"
       size="lg"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -242,11 +244,9 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         disabled={isSaving || isDatePublicHoliday}
                       >
                         <option value="working">Ngày công thường</option>
-                        <option value="paid_leave">Nghỉ phép</option>
+                        <option value="paid_leave">Nghỉ phép có lương</option>
                         <option value="unpaid_leave">Nghỉ không lương</option>
-                        <option value="sick_leave">Nghỉ ốm</option>
                         <option value="holiday">Nghỉ lễ</option>
-                        <option value="other">Khác</option>
                       </select>
                     </td>
                     <td className={styles.td}>
@@ -259,7 +259,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.work_hours}
                         onChange={(e) => handleFieldChange(idx, 'work_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving || ['holiday', 'paid_leave', 'unpaid_leave', 'sick_leave'].includes(record.status)}
+                        disabled={isSaving || ['holiday', 'paid_leave', 'unpaid_leave'].includes(record.status)}
                       />
                     </td>
                     <td className={styles.td}>
@@ -272,7 +272,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.overtime_hours}
                         onChange={(e) => handleFieldChange(idx, 'overtime_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving || ['paid_leave', 'unpaid_leave', 'sick_leave'].includes(record.status)}
+                        disabled={isSaving || ['paid_leave', 'unpaid_leave'].includes(record.status)}
                       />
                     </td>
                     <td className={styles.td}>

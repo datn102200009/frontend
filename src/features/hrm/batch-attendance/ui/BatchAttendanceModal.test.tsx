@@ -17,7 +17,7 @@ describe('BatchAttendanceModal', () => {
   it('renders batch attendance modal and fetches active employees', async () => {
     renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
 
-    expect(screen.getByRole('heading', { name: 'Chấm Công Hàng Loạt' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Chấm Công' })).toBeInTheDocument();
     expect(screen.getByLabelText(/Ngày chấm công:/i)).toBeInTheDocument();
     
     // Wait for the active employees list to load from mock
@@ -54,7 +54,7 @@ describe('BatchAttendanceModal', () => {
     });
   });
 
-  it('disables and resets hours inputs based on the selected status', async () => {
+  it('disables and resets hours inputs based on the selected status and restricts options', async () => {
     renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
     const user = userEvent.setup();
 
@@ -64,6 +64,15 @@ describe('BatchAttendanceModal', () => {
     const select = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
     const workInput = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
     const otInput = screen.getByRole('spinbutton', { name: 'Giờ OT của Nguyễn Văn An' });
+
+    // Assert options restricted
+    const options = Array.from(select.querySelectorAll('option')).map((o) => o.value);
+    expect(options).toContain('working');
+    expect(options).toContain('paid_leave');
+    expect(options).toContain('unpaid_leave');
+    expect(options).toContain('holiday');
+    expect(options).not.toContain('sick_leave');
+    expect(options).not.toContain('other');
 
     // Default status is 'working', both should be enabled
     expect(select).toHaveValue('working');
@@ -79,7 +88,15 @@ describe('BatchAttendanceModal', () => {
     expect(otInput).toBeDisabled();
     expect(otInput).toHaveValue(0);
 
-    // 2. Change status to 'holiday'
+    // 2. Change status to 'unpaid_leave'
+    await user.selectOptions(select, 'unpaid_leave');
+    // Both hours inputs should be disabled and reset to 0
+    expect(workInput).toBeDisabled();
+    expect(workInput).toHaveValue(0);
+    expect(otInput).toBeDisabled();
+    expect(otInput).toHaveValue(0);
+
+    // 3. Change status to 'holiday'
     await user.selectOptions(select, 'holiday');
     // work_hours should be disabled and reset to 0, overtime_hours should be enabled
     expect(workInput).toBeDisabled();
@@ -121,5 +138,12 @@ describe('BatchAttendanceModal', () => {
     expect(workInput).toHaveValue(0);
     expect(otInput).toBeEnabled();
     expect(otInput).toHaveValue(0);
+  });
+
+  it('initializes the date input with the initialDate prop if provided', () => {
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-20" />);
+
+    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
+    expect(dateInput).toHaveValue('2026-05-20');
   });
 });

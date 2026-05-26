@@ -18,7 +18,7 @@ describe('HrmPage', () => {
     // Click on Chấm Công (Attendance) tab
     await user.click(screen.getByRole('tab', { name: 'Chấm Công' }));
     expect(screen.getByRole('heading', { name: 'Quản Lý Chấm Công' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Chấm Công Hàng Loạt' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chấm Công' })).toBeInTheDocument();
 
     // Click on Nghỉ Phép (Leave Request) tab
     await user.click(screen.getByRole('tab', { name: 'Nghỉ Phép' }));
@@ -55,8 +55,8 @@ describe('HrmPage', () => {
     expect(banner).toBeInTheDocument();
     expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 30/04/2026 là ngày nghỉ Lễ/Tết Ngày Chiến thắng');
 
-    // Verify Chấm Công Hàng Loạt button is not disabled (unlocked)
-    const batchButton = screen.getByRole('button', { name: 'Chấm Công Hàng Loạt' });
+    // Verify Chấm Công button is not disabled (unlocked)
+    const batchButton = screen.getByRole('button', { name: 'Chấm Công' });
     expect(batchButton).not.toBeDisabled();
 
     // 2. Open DatePickerModal and set to a normal date (01/05/2026)
