@@ -285,8 +285,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                         </option>
                       ))}
                     </select>
-                    <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true, required: true, min: 0.01 })} disabled={isWorking || isReadOnly} />
-                    <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true, required: true, min: 0 })} disabled={isWorking || isReadOnly} />
+                    <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true, required: true, min: 0.01, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking || isReadOnly} />
+                    <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true, required: true, min: 0, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking || isReadOnly} />
                     {!isReadOnly && (
                       <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa linh kiện"
                         disabled={fields.length <= 1 || isWorking} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

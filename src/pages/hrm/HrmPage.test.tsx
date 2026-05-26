@@ -32,7 +32,7 @@ describe('HrmPage', () => {
     expect(screen.getByRole('button', { name: 'Thanh Toán Nhanh' })).toBeInTheDocument();
   });
 
-  it('locks batch attendance button and shows info banner on public holidays', async () => {
+  it('shows info banner and keeps batch attendance button unlocked on public holidays', async () => {
     renderWithProviders(<HrmPage />);
     const user = userEvent.setup();
 
@@ -55,9 +55,9 @@ describe('HrmPage', () => {
     expect(banner).toBeInTheDocument();
     expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 30/04/2026 là ngày nghỉ Lễ/Tết Ngày Chiến thắng');
 
-    // Verify Chấm Công Hàng Loạt button is disabled
+    // Verify Chấm Công Hàng Loạt button is not disabled (unlocked)
     const batchButton = screen.getByRole('button', { name: 'Chấm Công Hàng Loạt' });
-    expect(batchButton).toBeDisabled();
+    expect(batchButton).not.toBeDisabled();
 
     // 2. Open DatePickerModal and set to a normal date (01/05/2026)
     await user.click(dateInput);
@@ -66,7 +66,7 @@ describe('HrmPage', () => {
     await user.click(screen.getByRole('button', { name: '1 Tháng 5 Năm 2026' }));
     await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
 
-    // Verify banner disappears and button is enabled
+    // Verify banner disappears and button remains enabled
     await waitFor(() => {
       expect(screen.queryByTestId('public-holiday-banner')).not.toBeInTheDocument();
     });

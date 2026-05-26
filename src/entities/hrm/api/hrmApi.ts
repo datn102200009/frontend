@@ -622,6 +622,7 @@ export type SalarySlip = {
   payment_method?: ('cash' | 'bank_transfer') | null
   status?: 'draft' | 'paid'
   remarks?: string | null
+  /** Chi tiết bảng lương bao gồm lương theo ngày công và phân loại các loại lương tăng ca ngoài giờ (OT ngày thường 1.5x, OT Chủ Nhật 2.0x, OT ngày Lễ 3.0x). */
   breakdown?: {
     incomes?: {
       name?: string

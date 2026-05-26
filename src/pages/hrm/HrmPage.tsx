@@ -205,8 +205,6 @@ const HrmPage: React.FC = () => {
                 <Button
                   icon={<CheckSquare size={16} />}
                   onClick={() => setIsBatchAttendanceOpen(true)}
-                  disabled={isPublicHoliday}
-                  title={isPublicHoliday ? 'Không thể chấm công hàng loạt vào ngày nghỉ lễ' : undefined}
                 >
                   Chấm Công Hàng Loạt
                 </Button>
@@ -216,7 +214,7 @@ const HrmPage: React.FC = () => {
                 <div className={styles.holidayBanner} data-testid="public-holiday-banner">
                   <AlertTriangle className={styles.holidayIcon} size={18} />
                   <p className={styles.holidayText}>
-                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Bảng chấm công ngày này đã được khóa và hệ thống sẽ tự động tính 100% lương cho toàn bộ nhân sự.
+                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Hệ thống tự động tính 100% lương cho nhân sự nghỉ lễ. Nếu có nhân sự thực tế đi làm, vui lòng nhấn <strong>Chấm Công Hàng Loạt</strong> để ghi nhận giờ tăng ca (hệ số 3.0x).
                   </p>
                 </div>
               )}

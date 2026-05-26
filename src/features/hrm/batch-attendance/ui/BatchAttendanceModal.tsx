@@ -1,8 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { useGetHrmEmployeesQuery, usePostHrmAttendancesBatchMutation } from '@entities/hrm/api/hrmApi';
+import {
+  useGetHrmEmployeesQuery,
+  usePostHrmAttendancesBatchMutation,
+  useGetHrmPublicHolidaysQuery,
+} from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './BatchAttendanceModal.module.css';
+
+const parseLocalDate = (dateStr: string): Date => {
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    return new Date(y, m, d);
+  }
+  return new Date(dateStr);
+};
 
 interface BatchAttendanceModalProps {
   open: boolean;
@@ -29,6 +44,29 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Fetch public holidays
+  const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
+
+  // Check if selected date is a public holiday
+  const isDatePublicHoliday = React.useMemo(() => {
+    if (!date) return false;
+    const current = parseLocalDate(date);
+    current.setHours(0, 0, 0, 0);
+    const currentTime = current.getTime();
+
+    return holidays.some((h) => {
+      if (!h.start_date) return false;
+      const start = parseLocalDate(h.start_date);
+      start.setHours(0, 0, 0, 0);
+      const startTime = start.getTime();
+
+      const days = h.days || 1;
+      const endTime = startTime + (days - 1) * 24 * 60 * 60 * 1000;
+
+      return currentTime >= startTime && currentTime <= endTime;
+    });
+  }, [holidays, date]);
+
   // Fetch active employees
   const { data: employeeData, isLoading: isLoadingEmployees, error: loadError } = useGetHrmEmployeesQuery(
     { status: 'active', limit: 100 },
@@ -37,21 +75,24 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
   const [saveAttendance, { isLoading: isSaving }] = usePostHrmAttendancesBatchMutation();
 
-  // Initialize records when employee data loads
+  // Initialize records when employee data loads or holiday status changes
   useEffect(() => {
     if (employeeData?.results) {
+      const defaultStatus = isDatePublicHoliday ? 'holiday' : 'working';
+      const defaultWorkHours = isDatePublicHoliday ? 0 : 8;
+
       const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => ({
         employee_id: emp.id || '',
         employee_name: emp.full_name || '',
         employee_code: emp.employee_id || '',
-        status: 'working',
-        work_hours: 8,
+        status: defaultStatus,
+        work_hours: defaultWorkHours,
         overtime_hours: 0,
         remarks: '',
       }));
       setRecords(initialRecords);
     }
-  }, [employeeData]);
+  }, [employeeData, isDatePublicHoliday]);
 
   // Reset local state when opened/closed
   useEffect(() => {
