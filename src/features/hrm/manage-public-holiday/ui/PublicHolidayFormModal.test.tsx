@@ -3,23 +3,20 @@ import userEvent from '@testing-library/user-event';
 import { PublicHolidayFormModal } from './PublicHolidayFormModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 
+const formatDateToDMY = (isoDateStr: string): string => {
+  if (!isoDateStr) return '';
+  const parts = isoDateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return isoDateStr;
+};
+
 describe('PublicHolidayFormModal', () => {
   const defaultProps = {
     open: true,
     onClose: vi.fn(),
     onSuccess: vi.fn(),
-  };
-
-  const getYesterdayStr = () => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().split('T')[0];
-  };
-
-  const getTomorrowStr = () => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
   };
 
   beforeEach(() => {
@@ -30,7 +27,9 @@ describe('PublicHolidayFormModal', () => {
     renderWithProviders(<PublicHolidayFormModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: 'Khai Báo Ngày Nghỉ Lễ Mới' })).toBeInTheDocument();
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toBeInTheDocument();
-    expect(screen.getByLabelText('Ngày nghỉ lễ *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue(formatDateToDMY(new Date().toISOString().split('T')[0]));
+    expect(screen.getByLabelText('Số ngày nghỉ *')).toBeInTheDocument();
     expect(screen.getByLabelText('Mô tả')).toBeInTheDocument();
   });
 
@@ -38,13 +37,15 @@ describe('PublicHolidayFormModal', () => {
     const holiday = {
       id: 'holiday-1',
       name: 'Tết Âm Lịch',
-      date: '2026-02-17',
+      start_date: '2026-02-17',
+      days: 5,
       description: 'Nghỉ Tết Âm Lịch',
     };
     renderWithProviders(<PublicHolidayFormModal {...defaultProps} holiday={holiday} />);
     expect(screen.getByRole('heading', { name: 'Cập Nhật Ngày Nghỉ Lễ' })).toBeInTheDocument();
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toHaveValue('Tết Âm Lịch');
-    expect(screen.getByLabelText('Ngày nghỉ lễ *')).toHaveValue('2026-02-17');
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17/02/2026');
+    expect(screen.getByLabelText('Số ngày nghỉ *')).toHaveValue(5);
     expect(screen.getByLabelText('Mô tả')).toHaveValue('Nghỉ Tết Âm Lịch');
   });
 
@@ -56,14 +57,29 @@ describe('PublicHolidayFormModal', () => {
     const nameInput = screen.getByLabelText('Tên ngày nghỉ lễ *');
     await user.clear(nameInput);
 
-    // Clear date
-    const dateInput = screen.getByLabelText('Ngày nghỉ lễ *');
-    await user.clear(dateInput);
+    // Clear days
+    const daysInput = screen.getByLabelText('Số ngày nghỉ *');
+    await user.clear(daysInput);
 
     await user.click(screen.getByRole('button', { name: 'Lưu' }));
 
     expect(await screen.findByText('Tên ngày nghỉ lễ là bắt buộc')).toBeInTheDocument();
-    expect(await screen.findByText('Ngày nghỉ lễ là bắt buộc')).toBeInTheDocument();
+    expect(await screen.findByText('Số ngày nghỉ là bắt buộc')).toBeInTheDocument();
+  });
+
+  it('blocks negative or decimal values for days', async () => {
+    renderWithProviders(<PublicHolidayFormModal {...defaultProps} />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText('Tên ngày nghỉ lễ *'), 'Ngày lễ test');
+
+    const daysInput = screen.getByLabelText('Số ngày nghỉ *');
+    await user.clear(daysInput);
+    await user.type(daysInput, '0');
+
+    await user.click(screen.getByRole('button', { name: 'Lưu' }));
+
+    expect(await screen.findByText('Số ngày nghỉ phải là số nguyên dương lớn hơn 0')).toBeInTheDocument();
   });
 
   it('blocks selecting a past date when creating a holiday', async () => {
@@ -72,11 +88,20 @@ describe('PublicHolidayFormModal', () => {
 
     await user.type(screen.getByLabelText('Tên ngày nghỉ lễ *'), 'Ngày lễ quá khứ');
     
-    // Choose a date in the past
-    const dateInput = screen.getByLabelText('Ngày nghỉ lễ *');
-    await user.clear(dateInput);
-    await user.type(dateInput, getYesterdayStr());
+    // Open DatePickerModal
+    await user.click(screen.getByLabelText('Ngày bắt đầu *'));
+    expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
 
+    // Select yesterday in calendar grid
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayLabel = `${yesterday.getDate()} Tháng ${yesterday.getMonth() + 1} Năm ${yesterday.getFullYear()}`;
+    await user.click(screen.getByRole('button', { name: yesterdayLabel }));
+
+    // Confirm selection
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
+
+    // Click Save
     await user.click(screen.getByRole('button', { name: 'Lưu' }));
 
     expect(await screen.findByText('Không được chọn ngày nghỉ lễ trong quá khứ')).toBeInTheDocument();
@@ -89,11 +114,19 @@ describe('PublicHolidayFormModal', () => {
 
     await user.type(screen.getByLabelText('Tên ngày nghỉ lễ *'), 'Ngày lễ tương lai');
     
-    // Choose a date in the future
-    const dateInput = screen.getByLabelText('Ngày nghỉ lễ *');
-    await user.clear(dateInput);
-    await user.type(dateInput, getTomorrowStr());
+    // Open DatePickerModal
+    await user.click(screen.getByLabelText('Ngày bắt đầu *'));
+    
+    // Select tomorrow in calendar grid
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowLabel = `${tomorrow.getDate()} Tháng ${tomorrow.getMonth() + 1} Năm ${tomorrow.getFullYear()}`;
+    await user.click(screen.getByRole('button', { name: tomorrowLabel }));
 
+    // Confirm selection
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
+
+    // Click Save
     await user.click(screen.getByRole('button', { name: 'Lưu' }));
 
     await waitFor(() => {
@@ -102,10 +135,15 @@ describe('PublicHolidayFormModal', () => {
   });
 
   it('allows editing and saving even if the original date is in the past', async () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
     const holiday = {
       id: 'holiday-1',
       name: 'Tết Âm Lịch',
-      date: getYesterdayStr(), // past date
+      start_date: yesterdayStr, // past date
+      days: 5,
       description: 'Nghỉ Tết Âm Lịch',
     };
     renderWithProviders(<PublicHolidayFormModal {...defaultProps} holiday={holiday} />);

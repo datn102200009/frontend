@@ -1,4 +1,4 @@
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import HrmPage from './HrmPage';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -39,12 +39,16 @@ describe('HrmPage', () => {
     // Click on Chấm Công tab
     await user.click(screen.getByRole('tab', { name: 'Chấm Công' }));
 
-    // Find date input and change its value to a public holiday date
+    // Find date input and open DatePickerModal
     const dateInput = screen.getByLabelText('Chọn ngày xem chấm công');
     expect(dateInput).toBeInTheDocument();
 
-    // 1. Set to a public holiday date
-    fireEvent.change(dateInput, { target: { value: '2026-04-30' } });
+    // 1. Open DatePickerModal and set to a public holiday date (30/04/2026)
+    await user.click(dateInput);
+    fireEvent.change(screen.getByLabelText('Chọn tháng'), { target: { value: '3' } }); // April
+    fireEvent.change(screen.getByLabelText('Chọn năm'), { target: { value: '2026' } });
+    await user.click(screen.getByRole('button', { name: '30 Tháng 4 Năm 2026' }));
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
 
     // Verify banner is shown
     const banner = await screen.findByTestId('public-holiday-banner');
@@ -55,11 +59,17 @@ describe('HrmPage', () => {
     const batchButton = screen.getByRole('button', { name: 'Chấm Công Hàng Loạt' });
     expect(batchButton).toBeDisabled();
 
-    // 2. Set to a normal date
-    fireEvent.change(dateInput, { target: { value: '2026-05-01' } });
+    // 2. Open DatePickerModal and set to a normal date (01/05/2026)
+    await user.click(dateInput);
+    fireEvent.change(screen.getByLabelText('Chọn tháng'), { target: { value: '4' } }); // May
+    fireEvent.change(screen.getByLabelText('Chọn năm'), { target: { value: '2026' } });
+    await user.click(screen.getByRole('button', { name: '1 Tháng 5 Năm 2026' }));
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
 
     // Verify banner disappears and button is enabled
-    expect(screen.queryByTestId('public-holiday-banner')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByTestId('public-holiday-banner')).not.toBeInTheDocument();
+    });
     expect(batchButton).toBeEnabled();
   });
 
@@ -68,7 +78,7 @@ describe('HrmPage', () => {
     server.use(
       http.get('*/api/v1/hrm/public-holidays/', () => {
         return HttpResponse.json([
-          { id: 'holiday-1', date: '2026-02-17', description: 'Tết không tên' },
+          { id: 'holiday-1', start_date: '2026-02-17', days: 1, description: 'Tết không tên' },
         ]);
       })
     );
@@ -79,9 +89,15 @@ describe('HrmPage', () => {
     // Click on Chấm Công tab
     await user.click(screen.getByRole('tab', { name: 'Chấm Công' }));
 
-    // Find date input and change its value to the mock holiday date
+    // Find date input and open DatePickerModal
     const dateInput = screen.getByLabelText('Chọn ngày xem chấm công');
-    fireEvent.change(dateInput, { target: { value: '2026-02-17' } });
+    await user.click(dateInput);
+    
+    // Choose February 17, 2026
+    fireEvent.change(screen.getByLabelText('Chọn tháng'), { target: { value: '1' } }); // February
+    fireEvent.change(screen.getByLabelText('Chọn năm'), { target: { value: '2026' } });
+    await user.click(screen.getByRole('button', { name: '17 Tháng 2 Năm 2026' }));
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
 
     // Verify banner is shown without crashing and name is handled safely
     const banner = await screen.findByTestId('public-holiday-banner');

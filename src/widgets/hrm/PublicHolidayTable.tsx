@@ -47,9 +47,13 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
   const columns = useMemo(() => {
     const helper = createColumnHelper<PublicHoliday>();
     return [
-      helper.accessor('date', {
-        header: 'Ngày nghỉ lễ',
+      helper.accessor('start_date', {
+        header: 'Ngày bắt đầu',
         cell: (info) => <span className="font-semibold text-slate-800">{formatDateVN(info.getValue())}</span>,
+      }),
+      helper.accessor('days', {
+        header: 'Số ngày nghỉ',
+        cell: (info) => <span className="font-medium text-slate-700">{info.getValue() ?? 1}</span>,
       }),
       helper.accessor('name', {
         header: 'Tên ngày nghỉ lễ',

@@ -67,7 +67,19 @@ const HrmPage: React.FC = () => {
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
 
   const currentHoliday = React.useMemo(() => {
-    return holidays.find((h) => h.date === attendanceDate);
+    return holidays.find((h) => {
+      if (!h.start_date) return false;
+      const start = new Date(h.start_date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      const days = h.days || 1;
+      end.setDate(start.getDate() + days - 1);
+      
+      const current = new Date(attendanceDate);
+      current.setHours(0, 0, 0, 0);
+      
+      return current >= start && current <= end;
+    });
   }, [holidays, attendanceDate]);
 
   const isPublicHoliday = !!currentHoliday;

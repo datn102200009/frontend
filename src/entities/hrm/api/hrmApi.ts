@@ -439,7 +439,8 @@ export type PostHrmPublicHolidaysApiResponse = /** status 201 Tạo thành công
 export type PostHrmPublicHolidaysApiArg = {
   body: {
     name: string
-    date: string
+    start_date: string
+    days?: number
     description?: string
   }
 }
@@ -455,7 +456,8 @@ export type PutHrmPublicHolidaysByIdApiArg = {
   id: string
   body: {
     name: string
-    date: string
+    start_date: string
+    days?: number
     description?: string
   }
 }
@@ -636,7 +638,8 @@ export type SalarySlip = {
 export type PublicHoliday = {
   id?: string
   name?: string
-  date?: string
+  start_date?: string
+  days?: number
   description?: string | null
   created_at?: string
   updated_at?: string
