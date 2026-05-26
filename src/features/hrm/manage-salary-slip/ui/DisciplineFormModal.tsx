@@ -216,6 +216,10 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
                 {...register('penalty_amount', {
                   required: disciplineType === 'salary_deduction' ? 'Số tiền phạt là bắt buộc' : false,
                   valueAsNumber: true,
+                  validate: (val) => {
+                    if (disciplineType !== 'salary_deduction') return true;
+                    return (val !== undefined && val !== null && !isNaN(val)) || 'Số tiền phạt là bắt buộc';
+                  }
                 })}
                 disabled={isLoading}
               />

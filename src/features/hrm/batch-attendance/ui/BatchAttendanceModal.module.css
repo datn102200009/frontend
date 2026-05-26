@@ -103,6 +103,13 @@
   border-color: var(--clr-primary-400);
 }
 
+.select:disabled {
+  background-color: var(--clr-bg);
+  color: var(--clr-text-secondary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .numberInput {
   width: 80px;
   padding: 6px 8px;
@@ -150,3 +157,30 @@
   color: var(--clr-error);
   font-size: var(--fs-sm);
 }
+
+.numberInput:disabled {
+  background-color: var(--clr-bg);
+  color: var(--clr-text-secondary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.infoBanner {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.warningBanner {
+  background-color: var(--clr-warning-bg, #fffbeb);
+  border: 1px solid var(--clr-warning, #d97706);
+  color: var(--clr-warning, #d97706);
+}
+
+.successBanner {
+  background-color: var(--clr-success-bg, #f0fdf4);
+  border: 1px solid var(--clr-success, #16a34a);
+  color: var(--clr-success, #16a34a);
+}
+

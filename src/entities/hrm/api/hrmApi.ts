@@ -128,16 +128,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/calculate/`, method: 'POST' }),
     }),
-    postHrmSalarySlipsByIdConfirm: build.mutation<
-      PostHrmSalarySlipsByIdConfirmApiResponse,
-      PostHrmSalarySlipsByIdConfirmApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/salary-slips/${queryArg.id}/confirm/`,
-        method: 'POST',
-        body: queryArg.body,
-      }),
-    }),
     getHrmRewards: build.query<GetHrmRewardsApiResponse, GetHrmRewardsApiArg>({
       query: (queryArg) => ({
         url: `/hrm/rewards/`,
@@ -326,7 +316,7 @@ export type PostHrmAttendancesBatchApiArg = {
     date: string
     records: {
       employee_id: string
-      status: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other'
+      status: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday'
       work_hours?: number
       overtime_hours?: number
       remarks?: string
@@ -377,14 +367,6 @@ export type PostHrmSalarySlipsByIdCalculateApiResponse =
   /** status 200 Tính toán thành công */ SalarySlip
 export type PostHrmSalarySlipsByIdCalculateApiArg = {
   id: string
-}
-export type PostHrmSalarySlipsByIdConfirmApiResponse =
-  /** status 200 Xác nhận và thanh toán lương thành công */ SalarySlip
-export type PostHrmSalarySlipsByIdConfirmApiArg = {
-  id: string
-  body: {
-    payment_method: 'cash' | 'bank_transfer'
-  }
 }
 export type GetHrmRewardsApiResponse = /** status 200 Thành công */ RewardRecord[]
 export type GetHrmRewardsApiArg = {
@@ -578,7 +560,7 @@ export type Attendance = {
   employee_code?: string
   employee_name?: string
   date?: string
-  status?: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other'
+  status?: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday'
   work_hours?: string
   overtime_hours?: string
   remarks?: string | null
@@ -622,7 +604,10 @@ export type SalarySlip = {
   payment_method?: ('cash' | 'bank_transfer') | null
   status?: 'draft' | 'paid'
   remarks?: string | null
+  /** Chi tiết bảng lương bao gồm lương theo ngày công và phân loại các loại lương tăng ca ngoài giờ (OT ngày thường 1.5x, OT Chủ Nhật 2.0x, OT ngày Lễ 3.0x, OT ngày nghỉ bù theo cấu hình HRM_COMPENSATORY_OVERTIME_RATE). */
   breakdown?: {
+    /** Số ngày công tiêu chuẩn hằng tháng theo chế độ làm việc của doanh nghiệp (ví dụ 26 ngày). */
+    standard_working_days?: number
     incomes?: {
       name?: string
       amount?: number
@@ -660,7 +645,6 @@ export const {
   useGetHrmSalarySlipsQuery,
   usePostHrmSalarySlipsInitializeMutation,
   usePostHrmSalarySlipsByIdCalculateMutation,
-  usePostHrmSalarySlipsByIdConfirmMutation,
   useGetHrmRewardsQuery,
   usePostHrmRewardsMutation,
   useGetHrmDisciplinesQuery,

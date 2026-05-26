@@ -25,7 +25,8 @@
   --clr-secondary-200: #6cfffe;
   --clr-secondary-100: #d1faf5;
 
-  --clr-accent: #263b95;
+  --clr-accent:      #6b21a8;
+  --clr-accent-bg:   #f3e8ff;
 
   /* Semantic */
   --clr-success:     #16a34a;

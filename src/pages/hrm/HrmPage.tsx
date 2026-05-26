@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
-import { Plus, CheckSquare, AlertTriangle } from 'lucide-react';
+import { Plus, CheckSquare, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@shared/ui/Button/Button';
 
 // Tables
@@ -29,20 +29,11 @@ import { PublicHolidayFormModal } from '@features/hrm/manage-public-holiday/ui/P
 
 import { formatDateVN } from '@shared/lib/formatDate';
 // Hooks & Types
-import { useGetHrmPublicHolidaysQuery } from '@entities/hrm/api/hrmApi';
+import { useGetHrmPublicHolidaysQuery, useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
-const parseLocalDate = (dateStr: string): Date => {
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    const y = parseInt(parts[0], 10);
-    const m = parseInt(parts[1], 10) - 1;
-    const d = parseInt(parts[2], 10);
-    return new Date(y, m, d);
-  }
-  return new Date(dateStr);
-};
+import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
 type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
 
@@ -77,26 +68,26 @@ const HrmPage: React.FC = () => {
 
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
 
-  const currentHoliday = React.useMemo(() => {
-    if (!attendanceDate) return undefined;
-    const current = parseLocalDate(attendanceDate);
-    current.setHours(0, 0, 0, 0);
-    const currentTime = current.getTime();
+  const attendancePeriod = attendanceDate ? attendanceDate.slice(0, 7) : '';
+  const { data: attendanceSalarySlips = [] } = useGetHrmSalarySlipsQuery(
+    { salaryPeriod: attendancePeriod },
+    { skip: activeTab !== 'attendance' || !attendancePeriod }
+  );
 
-    return holidays.find((h) => {
-      if (!h.start_date) return false;
-      const start = parseLocalDate(h.start_date);
-      start.setHours(0, 0, 0, 0);
-      const startTime = start.getTime();
-      
-      const days = h.days || 1;
-      const endTime = startTime + (days - 1) * 24 * 60 * 60 * 1000;
-      
-      return currentTime >= startTime && currentTime <= endTime;
-    });
-  }, [holidays, attendanceDate]);
+  const isAttendancePeriodPaid = React.useMemo(() => {
+    if (!attendanceSalarySlips || attendanceSalarySlips.length === 0) return false;
+    return attendanceSalarySlips.every((slip) => slip.status === 'paid');
+  }, [attendanceSalarySlips]);
 
-  const isPublicHoliday = !!currentHoliday;
+  // Analyze holidays and calculate compensatory holidays (compensating official holidays on Sunday)
+  const holidayAnalysis = React.useMemo(() => {
+    return calculateHolidayAnalysis(holidays);
+  }, [holidays]);
+
+  // Info for the currently selected date
+  const selectedHolidayInfo = React.useMemo(() => {
+    return getSelectedHolidayInfo(attendanceDate, holidayAnalysis);
+  }, [holidayAnalysis, attendanceDate]);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
     const d = new Date();
@@ -205,20 +196,41 @@ const HrmPage: React.FC = () => {
                 <Button
                   icon={<CheckSquare size={16} />}
                   onClick={() => setIsBatchAttendanceOpen(true)}
-                  disabled={isPublicHoliday}
-                  title={isPublicHoliday ? 'Không thể chấm công hàng loạt vào ngày nghỉ lễ' : undefined}
+                  disabled={isAttendancePeriodPaid}
+                  title={isAttendancePeriodPaid ? "Kỳ lương cho ngày này đã được thanh toán 100%" : undefined}
                 >
-                  Chấm Công Hàng Loạt
+                  Chấm Công
                 </Button>
               </div>
 
-              {isPublicHoliday && currentHoliday && (
-                <div className={styles.holidayBanner} data-testid="public-holiday-banner">
-                  <AlertTriangle className={styles.holidayIcon} size={18} />
+              {isAttendancePeriodPaid && (
+                <div className={styles.paidBanner} data-testid="paid-period-banner">
+                  <AlertTriangle className={styles.paidIcon} size={18} />
                   <p className={styles.holidayText}>
-                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Bảng chấm công ngày này đã được khóa và hệ thống sẽ tự động tính 100% lương cho toàn bộ nhân sự.
+                    <strong>Kỳ lương đã thanh toán:</strong> Kỳ lương {attendancePeriod} cho ngày {formatDateVN(attendanceDate)} đã được thanh toán 100%. Không cho phép chỉnh sửa chấm công.
                   </p>
                 </div>
+              )}
+
+              {selectedHolidayInfo && (
+                selectedHolidayInfo.type === 'official' ? (
+                  <div className={styles.holidayBanner} data-testid="public-holiday-banner">
+                    <AlertTriangle className={styles.holidayIcon} size={18} />
+                    <p className={styles.holidayText}>
+                      <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{selectedHolidayInfo.name || ''}</strong>
+                      {selectedHolidayInfo.isSunday && selectedHolidayInfo.compensatoryDayName ? (
+                        <> trùng Chủ Nhật (sẽ được nghỉ bù vào <strong>{selectedHolidayInfo.compensatoryDayName}</strong>)</>
+                      ) : null}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.compensatoryBanner} data-testid="compensatory-holiday-banner">
+                    <CheckCircle className={styles.compensatoryIcon} size={18} />
+                    <p className={styles.holidayText}>
+                      <strong>Thông báo nghỉ bù:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ bù cho ngày lễ <strong>{selectedHolidayInfo.name || ''}</strong> (do trùng vào Chủ Nhật).
+                    </p>
+                  </div>
+                )
               )}
 
               <AttendanceTable selectedDate={attendanceDate} onChangeDate={setAttendanceDate} />
@@ -372,6 +384,7 @@ const HrmPage: React.FC = () => {
           open={isBatchAttendanceOpen}
           onClose={() => setIsBatchAttendanceOpen(false)}
           onSuccess={() => setIsBatchAttendanceOpen(false)}
+          initialDate={attendanceDate}
         />
       )}
 

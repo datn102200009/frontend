@@ -195,9 +195,10 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
               step="0.5"
               min="0"
               className={styles.input}
-              {...register('unused_leave_days', { valueAsNumber: true })}
+              {...register('unused_leave_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số ngày phép tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
               disabled={isLoading}
             />
+            {errors.unused_leave_days && <span className={styles.errorText}>{errors.unused_leave_days.message}</span>}
           </div>
 
           <div className={styles.formGroup}>
@@ -209,9 +210,10 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
               type="number"
               min="1"
               className={styles.input}
-              {...register('standard_working_days', { valueAsNumber: true })}
+              {...register('standard_working_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 1, message: 'Ngày công chuẩn tối thiểu là 1' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
               disabled={isLoading}
             />
+            {errors.standard_working_days && <span className={styles.errorText}>{errors.standard_working_days.message}</span>}
           </div>
         </div>
 
@@ -235,9 +237,10 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
                 type="number"
                 min="0"
                 className={styles.input}
-                {...register('unnotified_days', { valueAsNumber: true })}
+                {...register('unnotified_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số ngày tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
                 disabled={isLoading}
               />
+              {errors.unnotified_days && <span className={styles.errorText}>{errors.unnotified_days.message}</span>}
             </div>
           )}
         </div>

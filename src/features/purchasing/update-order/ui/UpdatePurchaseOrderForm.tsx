@@ -95,7 +95,8 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
                   label="Quantity" 
                   type="number" 
                   min="0.01" step="0.01"
-                  {...register(`lines.${index}.quantity` as const, { required: true, valueAsNumber: true, min: 0.01 })}
+                  {...register(`lines.${index}.quantity` as const, { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0.01, message: 'Số lượng tối thiểu là 0.01' }, validate: v => !isNaN(v) || 'Bắt buộc' })}
+                  error={errors.lines?.[index]?.quantity?.message}
                 />
               </div>
               <div className="w-48">
@@ -103,7 +104,8 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
                   label="Unit Price" 
                   type="number" 
                   min="0"
-                  {...register(`lines.${index}.unit_price` as const, { required: true, valueAsNumber: true, min: 0 })}
+                  {...register(`lines.${index}.unit_price` as const, { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Đơn giá tối thiểu là 0' }, validate: v => !isNaN(v) || 'Bắt buộc' })}
+                  error={errors.lines?.[index]?.unit_price?.message}
                 />
               </div>
               <div className="pt-7">

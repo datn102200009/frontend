@@ -1,5 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { SalarySlipDetailsModal } from './SalarySlipDetailsModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 import type { SalarySlip } from '@entities/hrm/model/types';
@@ -46,9 +45,6 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument();
     expect(screen.getByText('Mã NV: NV001 | Kỳ lương: 2026-05')).toBeInTheDocument();
     expect(screen.getByText('Bản nháp')).toBeInTheDocument();
-    
-    // Check button
-    expect(screen.getByRole('button', { name: 'Thanh Toán Lương' })).toBeInTheDocument();
   });
 
   it('renders paid salary slip correctly and hides draft forms', () => {
@@ -60,24 +56,29 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.queryByRole('button', { name: 'Thanh Toán Lương' })).not.toBeInTheDocument();
   });
 
-  it('renders standard days input as read-only with a fixed value of 26', () => {
+  it('renders standard days input as read-only with a value of 26 by default', () => {
     renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
     const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
     expect(standardDaysInput).toHaveValue(26);
     expect(standardDaysInput).toHaveAttribute('readonly');
   });
 
-  it('handles confirm payment action successfully', async () => {
-    renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
-    const user = userEvent.setup();
-
-    const paymentSelect = screen.getByLabelText(/Hình thức chi trả:/i);
-    await user.selectOptions(paymentSelect, 'cash');
-
-    await user.click(screen.getByRole('button', { name: 'Thanh Toán Lương' }));
-
-    await waitFor(() => {
-      expect(defaultProps.onSuccess).toHaveBeenCalled();
-    });
+  it('renders standard days input as read-only with dynamic standard working days from breakdown', () => {
+    const customSlip: SalarySlip = {
+      ...mockDraftSalarySlip,
+      breakdown: {
+        standard_working_days: 24,
+        incomes: [],
+        deductions: [],
+      },
+    } as any;
+    renderWithProviders(
+      <SalarySlipDetailsModal {...defaultProps} salarySlip={customSlip} />
+    );
+    const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
+    expect(standardDaysInput).toHaveValue(24);
+    expect(standardDaysInput).toHaveAttribute('readonly');
   });
+
+
 });

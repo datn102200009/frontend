@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { useGetHrmEmployeesQuery, usePostHrmAttendancesBatchMutation } from '@entities/hrm/api/hrmApi';
+import {
+  useGetHrmEmployeesQuery,
+  usePostHrmAttendancesBatchMutation,
+  useGetHrmPublicHolidaysQuery,
+  useGetHrmSalarySlipsQuery,
+} from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './BatchAttendanceModal.module.css';
+
+import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
 interface BatchAttendanceModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialDate?: string;
 }
 
 interface AttendanceRecord {
   employee_id: string;
   employee_name: string;
   employee_code: string;
-  status: 'working' | 'paid_leave' | 'unpaid_leave' | 'sick_leave' | 'holiday' | 'other';
+  status: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday';
   work_hours: number;
   overtime_hours: number;
   remarks: string;
@@ -24,10 +32,35 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   open,
   onClose,
   onSuccess,
+  initialDate,
 }) => {
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const period = date ? date.slice(0, 7) : '';
+  const { data: salarySlips = [] } = useGetHrmSalarySlipsQuery(
+    { salaryPeriod: period },
+    { skip: !period || !open }
+  );
+
+  const isPeriodPaid = React.useMemo(() => {
+    if (!salarySlips || salarySlips.length === 0) return false;
+    return salarySlips.every((slip) => slip.status === 'paid');
+  }, [salarySlips]);
+
+  // Fetch public holidays
+  const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
+
+  // Analyze holidays and calculate compensatory holidays (compensating official holidays on Sunday)
+  const holidayAnalysis = React.useMemo(() => {
+    return calculateHolidayAnalysis(holidays);
+  }, [holidays]);
+
+  // Info for the currently selected date
+  const selectedHolidayInfo = React.useMemo(() => {
+    return getSelectedHolidayInfo(date, holidayAnalysis);
+  }, [holidayAnalysis, date]);
 
   // Fetch active employees
   const { data: employeeData, isLoading: isLoadingEmployees, error: loadError } = useGetHrmEmployeesQuery(
@@ -37,40 +70,47 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
   const [saveAttendance, { isLoading: isSaving }] = usePostHrmAttendancesBatchMutation();
 
-  // Initialize records when employee data loads
+  // Initialize records when employee data loads or holiday status changes
   useEffect(() => {
     if (employeeData?.results) {
+      const isHoliday = !!selectedHolidayInfo;
+      const defaultStatus = isHoliday ? 'holiday' : 'working';
+      const defaultWorkHours = isHoliday ? 0 : 8;
+
       const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => ({
         employee_id: emp.id || '',
         employee_name: emp.full_name || '',
         employee_code: emp.employee_id || '',
-        status: 'working',
-        work_hours: 8,
+        status: defaultStatus,
+        work_hours: defaultWorkHours,
         overtime_hours: 0,
         remarks: '',
       }));
       setRecords(initialRecords);
     }
-  }, [employeeData]);
+  }, [employeeData, selectedHolidayInfo]);
 
   // Reset local state when opened/closed
   useEffect(() => {
     if (open) {
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(initialDate || new Date().toISOString().split('T')[0]);
       setApiError(null);
     } else {
       setRecords([]);
     }
-  }, [open]);
+  }, [open, initialDate]);
 
   const handleStatusChange = (index: number, newStatus: AttendanceRecord['status']) => {
     setRecords((prev) => {
       const next = [...prev];
+      const workHoursDisabled = ['holiday', 'paid_leave', 'unpaid_leave'].includes(newStatus);
+      const otHoursDisabled = ['paid_leave', 'unpaid_leave'].includes(newStatus);
+
       next[index] = {
         ...next[index],
         status: newStatus,
-        // Set work hours to 0 if they are off, or 8 if they are working
-        work_hours: newStatus === 'working' ? 8 : 0,
+        work_hours: workHoursDisabled ? 0 : (newStatus === 'working' ? 8 : next[index].work_hours),
+        overtime_hours: otHoursDisabled ? 0 : next[index].overtime_hours,
       };
       return next;
     });
@@ -123,7 +163,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title="Chấm Công Hàng Loạt"
+      title="Chấm Công"
       size="lg"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -134,7 +174,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
             variant="primary"
             onClick={handleSubmit}
             loading={isSaving}
-            disabled={isLoadingEmployees || records.length === 0}
+            disabled={isLoadingEmployees || records.length === 0 || isPeriodPaid}
           >
             Lưu chấm công
           </Button>
@@ -145,6 +185,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
         {apiError && (
           <div className={styles.errorSection}>
             <span>{apiError}</span>
+          </div>
+        )}
+
+        {isPeriodPaid && (
+          <div className={styles.errorSection} data-testid="paid-period-modal-banner">
+            <span>Kỳ lương {period} đã được thanh toán 100%. Không cho phép chỉnh sửa chấm công.</span>
           </div>
         )}
 
@@ -161,6 +207,23 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
             disabled={isSaving}
           />
         </div>
+
+        {selectedHolidayInfo && (
+          <div className={`${styles.infoBanner} ${selectedHolidayInfo.type === 'official' ? styles.warningBanner : styles.successBanner}`}>
+            {selectedHolidayInfo.type === 'official' ? (
+              <span>
+                Hôm nay là ngày nghỉ lễ chính thức: <strong>{selectedHolidayInfo.name}</strong>
+                {selectedHolidayInfo.isSunday && selectedHolidayInfo.compensatoryDayName && (
+                  <> trùng Chủ Nhật (sẽ được nghỉ bù vào <strong>{selectedHolidayInfo.compensatoryDayName}</strong>)</>
+                )}.
+              </span>
+            ) : (
+              <span>
+                Hôm nay là ngày nghỉ bù cho: <strong>{selectedHolidayInfo.name}</strong> (do trùng vào Chủ Nhật). Người lao động được nghỉ hưởng 100% lương, đi làm tính tăng ca hệ số 2.0x.
+              </span>
+            )}
+          </div>
+        )}
 
         {isLoadingEmployees ? (
           <div className={styles.loadingSection}>Đang tải danh sách nhân viên...</div>
@@ -195,14 +258,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.status}
                         onChange={(e) => handleStatusChange(idx, e.target.value as any)}
                         className={styles.select}
-                        disabled={isSaving}
+                        disabled={isSaving || !!selectedHolidayInfo || isPeriodPaid}
                       >
-                        <option value="working">Đi làm</option>
-                        <option value="paid_leave">Nghỉ phép</option>
+                        <option value="working">Ngày công thường</option>
+                        <option value="paid_leave">Nghỉ phép có lương</option>
                         <option value="unpaid_leave">Nghỉ không lương</option>
-                        <option value="sick_leave">Nghỉ ốm</option>
                         <option value="holiday">Nghỉ lễ</option>
-                        <option value="other">Khác</option>
                       </select>
                     </td>
                     <td className={styles.td}>
@@ -215,7 +276,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.work_hours}
                         onChange={(e) => handleFieldChange(idx, 'work_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving}
+                        disabled={isSaving || ['holiday', 'paid_leave', 'unpaid_leave'].includes(record.status) || isPeriodPaid}
                       />
                     </td>
                     <td className={styles.td}>
@@ -228,7 +289,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.overtime_hours}
                         onChange={(e) => handleFieldChange(idx, 'overtime_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving}
+                        disabled={isSaving || ['paid_leave', 'unpaid_leave'].includes(record.status) || isPeriodPaid}
                       />
                     </td>
                     <td className={styles.td}>
@@ -239,7 +300,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.remarks}
                         onChange={(e) => handleFieldChange(idx, 'remarks', e.target.value)}
                         className={styles.textInput}
-                        disabled={isSaving}
+                        disabled={isSaving || isPeriodPaid}
                       />
                     </td>
                   </tr>

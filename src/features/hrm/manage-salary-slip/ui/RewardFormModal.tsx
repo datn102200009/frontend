@@ -188,6 +188,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             {...register('amount', {
               required: 'Số tiền thưởng là bắt buộc',
               valueAsNumber: true,
+              validate: (val) => !isNaN(val) || 'Số tiền thưởng là bắt buộc',
             })}
             disabled={isLoading}
           />

@@ -162,6 +162,10 @@ export const UpdateSalaryTitleModal: React.FC<UpdateSalaryTitleModalProps> = ({
               {...register('new_salary_base', {
                 required: changeType === 'salary_change' ? 'Lương cơ bản mới là bắt buộc' : false,
                 valueAsNumber: true,
+                validate: (val) => {
+                  if (changeType !== 'salary_change') return true;
+                  return (val !== undefined && val !== null && !isNaN(val)) || 'Lương cơ bản mới là bắt buộc';
+                }
               })}
               disabled={isLoading}
             />
