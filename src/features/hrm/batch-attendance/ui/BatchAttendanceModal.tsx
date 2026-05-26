@@ -49,25 +49,96 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   // Fetch public holidays
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
 
-  // Check if selected date is a public holiday
-  const isDatePublicHoliday = React.useMemo(() => {
-    if (!date) return false;
-    const current = parseLocalDate(date);
-    current.setHours(0, 0, 0, 0);
-    const currentTime = current.getTime();
-
-    return holidays.some((h) => {
-      if (!h.start_date) return false;
+  // Analyze holidays and calculate compensatory holidays (compensating official holidays on Sunday)
+  const holidayAnalysis = React.useMemo(() => {
+    const officialMap = new Map<string, typeof holidays[number]>();
+    holidays.forEach((h) => {
+      if (!h.start_date) return;
       const start = parseLocalDate(h.start_date);
-      start.setHours(0, 0, 0, 0);
-      const startTime = start.getTime();
-
       const days = h.days || 1;
-      const endTime = startTime + (days - 1) * 24 * 60 * 60 * 1000;
-
-      return currentTime >= startTime && currentTime <= endTime;
+      for (let i = 0; i < days; i++) {
+        const current = new Date(start);
+        current.setDate(start.getDate() + i);
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+        officialMap.set(dateStr, h);
+      }
     });
-  }, [holidays, date]);
+
+    const sortedDates = Array.from(officialMap.keys()).sort((a, b) => {
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
+
+    const compensatoryMap = new Map<string, typeof holidays[number]>();
+    const officialToCompensatoryMap = new Map<string, string>();
+    sortedDates.forEach((dateStr) => {
+      const d = parseLocalDate(dateStr);
+      if (d.getDay() === 0) { // Sunday is rest day
+        const compDate = new Date(d);
+        compDate.setDate(d.getDate() + 1);
+        
+        const getFormatted = (dt: Date) => {
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const day = String(dt.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
+
+        while (
+          compDate.getDay() === 0 ||
+          officialMap.has(getFormatted(compDate)) ||
+          compensatoryMap.has(getFormatted(compDate))
+        ) {
+          compDate.setDate(compDate.getDate() + 1);
+        }
+        const compDateStr = getFormatted(compDate);
+        compensatoryMap.set(compDateStr, officialMap.get(dateStr)!);
+        officialToCompensatoryMap.set(dateStr, compDateStr);
+      }
+    });
+
+    return {
+      officialMap,
+      compensatoryMap,
+      officialToCompensatoryMap,
+    };
+  }, [holidays]);
+
+  // Info for the currently selected date
+  const selectedHolidayInfo = React.useMemo(() => {
+    if (!date) return null;
+    const official = holidayAnalysis.officialMap.get(date);
+    if (official) {
+      const d = parseLocalDate(date);
+      const isSunday = d.getDay() === 0;
+      let compensatoryDayName = '';
+      if (isSunday) {
+        const compDateStr = holidayAnalysis.officialToCompensatoryMap.get(date);
+        if (compDateStr) {
+          const compDate = parseLocalDate(compDateStr);
+          const dayOfWeek = compDate.getDay();
+          const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+          compensatoryDayName = dayNames[dayOfWeek];
+        }
+      }
+      return {
+        type: 'official' as const,
+        name: official.name,
+        isSunday,
+        compensatoryDayName,
+      };
+    }
+    const compensatory = holidayAnalysis.compensatoryMap.get(date);
+    if (compensatory) {
+      return {
+        type: 'compensatory' as const,
+        name: compensatory.name,
+      };
+    }
+    return null;
+  }, [holidayAnalysis, date]);
 
   // Fetch active employees
   const { data: employeeData, isLoading: isLoadingEmployees, error: loadError } = useGetHrmEmployeesQuery(
@@ -80,8 +151,9 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   // Initialize records when employee data loads or holiday status changes
   useEffect(() => {
     if (employeeData?.results) {
-      const defaultStatus = isDatePublicHoliday ? 'holiday' : 'working';
-      const defaultWorkHours = isDatePublicHoliday ? 0 : 8;
+      const isHoliday = !!selectedHolidayInfo;
+      const defaultStatus = isHoliday ? 'holiday' : 'working';
+      const defaultWorkHours = isHoliday ? 0 : 8;
 
       const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => ({
         employee_id: emp.id || '',
@@ -94,7 +166,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
       }));
       setRecords(initialRecords);
     }
-  }, [employeeData, isDatePublicHoliday]);
+  }, [employeeData, selectedHolidayInfo]);
 
   // Reset local state when opened/closed
   useEffect(() => {
@@ -208,6 +280,23 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
           />
         </div>
 
+        {selectedHolidayInfo && (
+          <div className={`${styles.infoBanner} ${selectedHolidayInfo.type === 'official' ? styles.warningBanner : styles.successBanner}`}>
+            {selectedHolidayInfo.type === 'official' ? (
+              <span>
+                Hôm nay là ngày nghỉ lễ chính thức: <strong>{selectedHolidayInfo.name}</strong>
+                {selectedHolidayInfo.isSunday && selectedHolidayInfo.compensatoryDayName && (
+                  <> trùng Chủ Nhật (sẽ được nghỉ bù vào <strong>{selectedHolidayInfo.compensatoryDayName}</strong>)</>
+                )}.
+              </span>
+            ) : (
+              <span>
+                Hôm nay là ngày nghỉ bù cho: <strong>{selectedHolidayInfo.name}</strong> (do trùng vào Chủ Nhật). Người lao động được nghỉ hưởng 100% lương, đi làm tính tăng ca hệ số 2.0x.
+              </span>
+            )}
+          </div>
+        )}
+
         {isLoadingEmployees ? (
           <div className={styles.loadingSection}>Đang tải danh sách nhân viên...</div>
         ) : loadError ? (
@@ -241,7 +330,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.status}
                         onChange={(e) => handleStatusChange(idx, e.target.value as any)}
                         className={styles.select}
-                        disabled={isSaving || isDatePublicHoliday}
+                        disabled={isSaving || !!selectedHolidayInfo}
                       >
                         <option value="working">Ngày công thường</option>
                         <option value="paid_leave">Nghỉ phép có lương</option>

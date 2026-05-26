@@ -104,4 +104,47 @@ describe('HrmPage', () => {
     expect(banner).toBeInTheDocument();
     expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 17/02/2026 là ngày nghỉ Lễ/Tết .');
   });
+
+  it('renders official holiday banner with compensatory day off note on Sunday, and compensatory banner on Wednesday', async () => {
+    // Setup a 4-day public holiday starting Saturday 2026-05-30
+    server.use(
+      http.get('*/api/v1/hrm/public-holidays/', () => {
+        return HttpResponse.json([
+          { id: 'holiday-block', name: 'Nghỉ Lễ Dài Ngày', start_date: '2026-05-30', days: 4, description: 'Nghỉ 4 ngày' },
+        ]);
+      })
+    );
+
+    renderWithProviders(<HrmPage />);
+    const user = userEvent.setup();
+
+    // Click Chấm Công tab
+    await user.click(screen.getByRole('tab', { name: 'Chấm Công' }));
+
+    const dateInput = screen.getByLabelText('Chọn ngày xem chấm công');
+
+    // 1. Select Sunday 2026-05-31
+    await user.click(dateInput);
+    fireEvent.change(screen.getByLabelText('Chọn tháng'), { target: { value: '4' } }); // May
+    fireEvent.change(screen.getByLabelText('Chọn năm'), { target: { value: '2026' } });
+    await user.click(screen.getByRole('button', { name: '31 Tháng 5 Năm 2026' }));
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
+
+    // Should show official holiday banner indicating it's compensated on Wednesday (Thứ Tư)
+    const officialBanner = await screen.findByTestId('public-holiday-banner');
+    expect(officialBanner).toBeInTheDocument();
+    expect(officialBanner).toHaveTextContent('trùng Chủ Nhật (sẽ được nghỉ bù vào Thứ Tư)');
+
+    // 2. Select Wednesday 2026-06-03
+    await user.click(dateInput);
+    fireEvent.change(screen.getByLabelText('Chọn tháng'), { target: { value: '5' } }); // June
+    fireEvent.change(screen.getByLabelText('Chọn năm'), { target: { value: '2026' } });
+    await user.click(screen.getByRole('button', { name: '3 Tháng 6 Năm 2026' }));
+    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
+
+    // Should show compensatory banner
+    const compBanner = await screen.findByTestId('compensatory-holiday-banner');
+    expect(compBanner).toBeInTheDocument();
+    expect(compBanner).toHaveTextContent('Thông báo nghỉ bù: Ngày 03/06/2026 là ngày nghỉ bù cho ngày lễ Nghỉ Lễ Dài Ngày');
+  });
 });

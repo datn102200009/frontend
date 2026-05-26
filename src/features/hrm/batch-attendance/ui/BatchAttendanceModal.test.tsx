@@ -104,7 +104,7 @@ describe('BatchAttendanceModal', () => {
     expect(otInput).toBeEnabled();
   });
 
-  it('locks status dropdown to holiday when date is a public holiday', async () => {
+  it('locks status dropdown to holiday when date is a public holiday and displays warning banner', async () => {
     // Override the public holiday query mock to return a holiday on 2026-05-01
     const { http, HttpResponse } = await import('msw');
     const { server } = await import('../../../../shared/lib/test/server');
@@ -125,6 +125,10 @@ describe('BatchAttendanceModal', () => {
     // Wait for the active employees list to load
     await screen.findByText('Nguyễn Văn An');
 
+    // Warning banner should display
+    expect(screen.getByText(/Hôm nay là ngày nghỉ lễ chính thức:/i)).toBeInTheDocument();
+    expect(screen.getByText('Ngày Chiến thắng')).toBeInTheDocument();
+
     const select = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
     const workInput = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
     const otInput = screen.getByRole('spinbutton', { name: 'Giờ OT của Nguyễn Văn An' });
@@ -139,6 +143,69 @@ describe('BatchAttendanceModal', () => {
     expect(otInput).toBeEnabled();
     expect(otInput).toHaveValue(0);
   });
+
+  it('locks status dropdown to holiday and displays success banner when date is a compensatory holiday', async () => {
+    const { http, HttpResponse } = await import('msw');
+    const { server } = await import('../../../../shared/lib/test/server');
+    server.use(
+      http.get('*/api/v1/hrm/public-holidays/', () => {
+        return HttpResponse.json([
+          { id: 'holiday-1', start_date: '2026-05-03', days: 1, name: 'Ngày Chiến thắng' }, // May 3rd, 2026 is Sunday
+        ]);
+      })
+    );
+
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
+
+    // Change date to Monday (2026-05-04), which is the compensatory holiday
+    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
+    fireEvent.change(dateInput, { target: { value: '2026-05-04' } });
+
+    // Wait for the active employees list to load
+    await screen.findByText('Nguyễn Văn An');
+
+    // Success banner should display explaining compensatory holiday rules
+    expect(screen.getByText(/Hôm nay là ngày nghỉ bù cho:/i)).toBeInTheDocument();
+    expect(screen.getByText('Ngày Chiến thắng')).toBeInTheDocument();
+
+    const select = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
+    const workInput = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
+
+    // Select dropdown should be locked (disabled) to 'holiday'
+    expect(select).toBeDisabled();
+    expect(select).toHaveValue('holiday');
+
+    expect(workInput).toBeDisabled();
+    expect(workInput).toHaveValue(0);
+  });
+
+  it('displays dynamic compensatory day off on warning banner for consecutive holiday block', async () => {
+    const { http, HttpResponse } = await import('msw');
+    const { server } = await import('../../../../shared/lib/test/server');
+    server.use(
+      http.get('*/api/v1/hrm/public-holidays/', () => {
+        return HttpResponse.json([
+          { id: 'holiday-1', start_date: '2026-05-02', days: 4, name: 'Đại lễ' }, // May 2nd (Saturday) to May 5th (Tuesday) - May 3rd is Sunday
+        ]);
+      })
+    );
+
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
+
+    // Change date to Sunday (2026-05-03), which overlaps with rest day
+    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
+    fireEvent.change(dateInput, { target: { value: '2026-05-03' } });
+
+    // Wait for the active employees list to load
+    await screen.findByText('Nguyễn Văn An');
+
+    // Warning banner should display and show Wednesday (Thứ Tư) as compensatory day!
+    expect(screen.getByText(/Hôm nay là ngày nghỉ lễ chính thức:/i)).toBeInTheDocument();
+    expect(screen.getByText('Đại lễ')).toBeInTheDocument();
+    expect(screen.getByText(/trùng Chủ Nhật \(sẽ được nghỉ bù vào/i)).toBeInTheDocument();
+    expect(screen.getByText('Thứ Tư')).toBeInTheDocument();
+  });
+
 
   it('initializes the date input with the initialDate prop if provided', () => {
     renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-20" />);

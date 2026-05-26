@@ -60,10 +60,27 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.queryByRole('button', { name: 'Thanh Toán Lương' })).not.toBeInTheDocument();
   });
 
-  it('renders standard days input as read-only with a fixed value of 26', () => {
+  it('renders standard days input as read-only with a value of 26 by default', () => {
     renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
     const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
     expect(standardDaysInput).toHaveValue(26);
+    expect(standardDaysInput).toHaveAttribute('readonly');
+  });
+
+  it('renders standard days input as read-only with dynamic standard working days from breakdown', () => {
+    const customSlip: SalarySlip = {
+      ...mockDraftSalarySlip,
+      breakdown: {
+        standard_working_days: 24,
+        incomes: [],
+        deductions: [],
+      },
+    } as any;
+    renderWithProviders(
+      <SalarySlipDetailsModal {...defaultProps} salarySlip={customSlip} />
+    );
+    const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
+    expect(standardDaysInput).toHaveValue(24);
     expect(standardDaysInput).toHaveAttribute('readonly');
   });
 

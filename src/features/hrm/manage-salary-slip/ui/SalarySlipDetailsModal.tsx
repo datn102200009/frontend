@@ -184,7 +184,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = ({
                 <input
                   id="standard_days"
                   type="number"
-                  value={26}
+                  value={salarySlip.breakdown?.standard_working_days ?? 26}
                   readOnly
                   className={styles.input}
                 />

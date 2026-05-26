@@ -97,3 +97,23 @@
   margin: 0;
   line-height: 1.5;
 }
+
+.compensatoryBanner {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  color: #166534;
+  font-size: var(--fs-sm);
+  margin-bottom: var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.compensatoryIcon {
+  color: #16a34a;
+  flex-shrink: 0;
+}

@@ -624,6 +624,8 @@ export type SalarySlip = {
   remarks?: string | null
   /** Chi tiết bảng lương bao gồm lương theo ngày công và phân loại các loại lương tăng ca ngoài giờ (OT ngày thường 1.5x, OT Chủ Nhật 2.0x, OT ngày Lễ 3.0x). */
   breakdown?: {
+    /** Số ngày công tiêu chuẩn hằng tháng theo chế độ làm việc của doanh nghiệp (ví dụ 26 ngày). */
+    standard_working_days?: number
     incomes?: {
       name?: string
       amount?: number

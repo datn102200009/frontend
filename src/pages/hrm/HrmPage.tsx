@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
-import { Plus, CheckSquare, AlertTriangle } from 'lucide-react';
+import { Plus, CheckSquare, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@shared/ui/Button/Button';
 
 // Tables
@@ -77,26 +77,96 @@ const HrmPage: React.FC = () => {
 
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
 
-  const currentHoliday = React.useMemo(() => {
-    if (!attendanceDate) return undefined;
-    const current = parseLocalDate(attendanceDate);
-    current.setHours(0, 0, 0, 0);
-    const currentTime = current.getTime();
-
-    return holidays.find((h) => {
-      if (!h.start_date) return false;
+  // Analyze holidays and calculate compensatory holidays (compensating official holidays on Sunday)
+  const holidayAnalysis = React.useMemo(() => {
+    const officialMap = new Map<string, typeof holidays[number]>();
+    holidays.forEach((h) => {
+      if (!h.start_date) return;
       const start = parseLocalDate(h.start_date);
-      start.setHours(0, 0, 0, 0);
-      const startTime = start.getTime();
-      
       const days = h.days || 1;
-      const endTime = startTime + (days - 1) * 24 * 60 * 60 * 1000;
-      
-      return currentTime >= startTime && currentTime <= endTime;
+      for (let i = 0; i < days; i++) {
+        const current = new Date(start);
+        current.setDate(start.getDate() + i);
+        const y = current.getFullYear();
+        const m = String(current.getMonth() + 1).padStart(2, '0');
+        const d = String(current.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+        officialMap.set(dateStr, h);
+      }
     });
-  }, [holidays, attendanceDate]);
 
-  const isPublicHoliday = !!currentHoliday;
+    const sortedDates = Array.from(officialMap.keys()).sort((a, b) => {
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
+
+    const compensatoryMap = new Map<string, typeof holidays[number]>();
+    const officialToCompensatoryMap = new Map<string, string>();
+    sortedDates.forEach((dateStr) => {
+      const d = parseLocalDate(dateStr);
+      if (d.getDay() === 0) { // Sunday is rest day
+        const compDate = new Date(d);
+        compDate.setDate(d.getDate() + 1);
+
+        const getFormatted = (dt: Date) => {
+          const y = dt.getFullYear();
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const day = String(dt.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        };
+
+        while (
+          compDate.getDay() === 0 ||
+          officialMap.has(getFormatted(compDate)) ||
+          compensatoryMap.has(getFormatted(compDate))
+        ) {
+          compDate.setDate(compDate.getDate() + 1);
+        }
+        const compDateStr = getFormatted(compDate);
+        compensatoryMap.set(compDateStr, officialMap.get(dateStr)!);
+        officialToCompensatoryMap.set(dateStr, compDateStr);
+      }
+    });
+
+    return {
+      officialMap,
+      compensatoryMap,
+      officialToCompensatoryMap,
+    };
+  }, [holidays]);
+
+  // Info for the currently selected date
+  const selectedHolidayInfo = React.useMemo(() => {
+    if (!attendanceDate) return null;
+    const official = holidayAnalysis.officialMap.get(attendanceDate);
+    if (official) {
+      const d = parseLocalDate(attendanceDate);
+      const isSunday = d.getDay() === 0;
+      let compensatoryDayName = '';
+      if (isSunday) {
+        const compDateStr = holidayAnalysis.officialToCompensatoryMap.get(attendanceDate);
+        if (compDateStr) {
+          const compDate = parseLocalDate(compDateStr);
+          const dayOfWeek = compDate.getDay();
+          const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+          compensatoryDayName = dayNames[dayOfWeek];
+        }
+      }
+      return {
+        type: 'official' as const,
+        name: official.name,
+        isSunday,
+        compensatoryDayName,
+      };
+    }
+    const compensatory = holidayAnalysis.compensatoryMap.get(attendanceDate);
+    if (compensatory) {
+      return {
+        type: 'compensatory' as const,
+        name: compensatory.name,
+      };
+    }
+    return null;
+  }, [holidayAnalysis, attendanceDate]);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
     const d = new Date();
@@ -210,13 +280,25 @@ const HrmPage: React.FC = () => {
                 </Button>
               </div>
 
-              {isPublicHoliday && currentHoliday && (
-                <div className={styles.holidayBanner} data-testid="public-holiday-banner">
-                  <AlertTriangle className={styles.holidayIcon} size={18} />
-                  <p className={styles.holidayText}>
-                    <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{currentHoliday.name || ''}</strong>. Hệ thống tự động tính 100% lương cho nhân sự nghỉ lễ. Nếu có nhân sự thực tế đi làm, vui lòng nhấn <strong>Chấm Công</strong> để ghi nhận giờ tăng ca (hệ số 3.0x).
-                  </p>
-                </div>
+              {selectedHolidayInfo && (
+                selectedHolidayInfo.type === 'official' ? (
+                  <div className={styles.holidayBanner} data-testid="public-holiday-banner">
+                    <AlertTriangle className={styles.holidayIcon} size={18} />
+                    <p className={styles.holidayText}>
+                      <strong>Thông báo nghỉ lễ:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ Lễ/Tết <strong>{selectedHolidayInfo.name || ''}</strong>
+                      {selectedHolidayInfo.isSunday && selectedHolidayInfo.compensatoryDayName ? (
+                        <> trùng Chủ Nhật (sẽ được nghỉ bù vào <strong>{selectedHolidayInfo.compensatoryDayName}</strong>)</>
+                      ) : null}.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.compensatoryBanner} data-testid="compensatory-holiday-banner">
+                    <CheckCircle className={styles.compensatoryIcon} size={18} />
+                    <p className={styles.holidayText}>
+                      <strong>Thông báo nghỉ bù:</strong> Ngày {formatDateVN(attendanceDate)} là ngày nghỉ bù cho ngày lễ <strong>{selectedHolidayInfo.name || ''}</strong> (do trùng vào Chủ Nhật).
+                    </p>
+                  </div>
+                )
               )}
 
               <AttendanceTable selectedDate={attendanceDate} onChangeDate={setAttendanceDate} />
