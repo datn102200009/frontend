@@ -3,6 +3,7 @@ import {
   useGetHrmEmployeesQuery,
   usePostHrmAttendancesBatchMutation,
   useGetHrmPublicHolidaysQuery,
+  useGetHrmSalarySlipsQuery,
 } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -45,6 +46,17 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   const [date, setDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const period = date ? date.slice(0, 7) : '';
+  const { data: salarySlips = [] } = useGetHrmSalarySlipsQuery(
+    { salaryPeriod: period },
+    { skip: !period || !open }
+  );
+
+  const isPeriodPaid = React.useMemo(() => {
+    if (!salarySlips || salarySlips.length === 0) return false;
+    return salarySlips.every((slip) => slip.status === 'paid');
+  }, [salarySlips]);
 
   // Fetch public holidays
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
@@ -252,7 +264,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
             variant="primary"
             onClick={handleSubmit}
             loading={isSaving}
-            disabled={isLoadingEmployees || records.length === 0}
+            disabled={isLoadingEmployees || records.length === 0 || isPeriodPaid}
           >
             Lưu chấm công
           </Button>
@@ -263,6 +275,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
         {apiError && (
           <div className={styles.errorSection}>
             <span>{apiError}</span>
+          </div>
+        )}
+
+        {isPeriodPaid && (
+          <div className={styles.errorSection} data-testid="paid-period-modal-banner">
+            <span>Kỳ lương {period} đã được thanh toán 100%. Không cho phép chỉnh sửa chấm công.</span>
           </div>
         )}
 
@@ -330,7 +348,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.status}
                         onChange={(e) => handleStatusChange(idx, e.target.value as any)}
                         className={styles.select}
-                        disabled={isSaving || !!selectedHolidayInfo}
+                        disabled={isSaving || !!selectedHolidayInfo || isPeriodPaid}
                       >
                         <option value="working">Ngày công thường</option>
                         <option value="paid_leave">Nghỉ phép có lương</option>
@@ -348,7 +366,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.work_hours}
                         onChange={(e) => handleFieldChange(idx, 'work_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving || ['holiday', 'paid_leave', 'unpaid_leave'].includes(record.status)}
+                        disabled={isSaving || ['holiday', 'paid_leave', 'unpaid_leave'].includes(record.status) || isPeriodPaid}
                       />
                     </td>
                     <td className={styles.td}>
@@ -361,7 +379,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.overtime_hours}
                         onChange={(e) => handleFieldChange(idx, 'overtime_hours', Number(e.target.value))}
                         className={styles.numberInput}
-                        disabled={isSaving || ['paid_leave', 'unpaid_leave'].includes(record.status)}
+                        disabled={isSaving || ['paid_leave', 'unpaid_leave'].includes(record.status) || isPeriodPaid}
                       />
                     </td>
                     <td className={styles.td}>
@@ -372,7 +390,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                         value={record.remarks}
                         onChange={(e) => handleFieldChange(idx, 'remarks', e.target.value)}
                         className={styles.textInput}
-                        disabled={isSaving}
+                        disabled={isSaving || isPeriodPaid}
                       />
                     </td>
                   </tr>

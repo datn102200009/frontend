@@ -213,4 +213,41 @@ describe('BatchAttendanceModal', () => {
     const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
     expect(dateInput).toHaveValue('2026-05-20');
   });
+
+  it('locks fields and disables submit button when date belongs to a paid period', async () => {
+    const { http, HttpResponse } = await import('msw');
+    const { server } = await import('../../../../shared/lib/test/server');
+    server.use(
+      http.get('*/api/v1/hrm/salary-slips/', () => {
+        return HttpResponse.json([
+          { id: 'slip-1', salary_period: '2026-05', status: 'paid' },
+        ]);
+      })
+    );
+
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-15" />);
+
+    // Wait for the active employees list to load
+    await screen.findByText('Nguyễn Văn An');
+
+    // Warning banner should display
+    expect(screen.getByTestId('paid-period-modal-banner')).toBeInTheDocument();
+    expect(screen.getByText(/Kỳ lương 2026-05 đã được thanh toán 100%/i)).toBeInTheDocument();
+
+    const select = screen.getByRole('combobox', { name: 'Trạng thái của Nguyễn Văn An' });
+    const workInput = screen.getByRole('spinbutton', { name: 'Số giờ công của Nguyễn Văn An' });
+    const otInput = screen.getByRole('spinbutton', { name: 'Giờ OT của Nguyễn Văn An' });
+    const remarkInput = screen.getByRole('textbox', { name: 'Ghi chú của Nguyễn Văn An' });
+    const submitButton = screen.getByRole('button', { name: 'Lưu chấm công' });
+
+    // Verify all editing inputs are disabled
+    expect(select).toBeDisabled();
+    expect(workInput).toBeDisabled();
+    expect(otInput).toBeDisabled();
+    expect(remarkInput).toBeDisabled();
+
+    // Verify submit button is disabled
+    expect(submitButton).toBeDisabled();
+  });
 });
+

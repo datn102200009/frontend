@@ -29,7 +29,7 @@ import { PublicHolidayFormModal } from '@features/hrm/manage-public-holiday/ui/P
 
 import { formatDateVN } from '@shared/lib/formatDate';
 // Hooks & Types
-import { useGetHrmPublicHolidaysQuery } from '@entities/hrm/api/hrmApi';
+import { useGetHrmPublicHolidaysQuery, useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
@@ -76,6 +76,17 @@ const HrmPage: React.FC = () => {
   });
 
   const { data: holidays = [] } = useGetHrmPublicHolidaysQuery({});
+
+  const attendancePeriod = attendanceDate ? attendanceDate.slice(0, 7) : '';
+  const { data: attendanceSalarySlips = [] } = useGetHrmSalarySlipsQuery(
+    { salaryPeriod: attendancePeriod },
+    { skip: activeTab !== 'attendance' || !attendancePeriod }
+  );
+
+  const isAttendancePeriodPaid = React.useMemo(() => {
+    if (!attendanceSalarySlips || attendanceSalarySlips.length === 0) return false;
+    return attendanceSalarySlips.every((slip) => slip.status === 'paid');
+  }, [attendanceSalarySlips]);
 
   // Analyze holidays and calculate compensatory holidays (compensating official holidays on Sunday)
   const holidayAnalysis = React.useMemo(() => {
@@ -275,10 +286,21 @@ const HrmPage: React.FC = () => {
                 <Button
                   icon={<CheckSquare size={16} />}
                   onClick={() => setIsBatchAttendanceOpen(true)}
+                  disabled={isAttendancePeriodPaid}
+                  title={isAttendancePeriodPaid ? "Kỳ lương cho ngày này đã được thanh toán 100%" : undefined}
                 >
                   Chấm Công
                 </Button>
               </div>
+
+              {isAttendancePeriodPaid && (
+                <div className={styles.paidBanner} data-testid="paid-period-banner">
+                  <AlertTriangle className={styles.paidIcon} size={18} />
+                  <p className={styles.holidayText}>
+                    <strong>Kỳ lương đã thanh toán:</strong> Kỳ lương {attendancePeriod} cho ngày {formatDateVN(attendanceDate)} đã được thanh toán 100%. Không cho phép chỉnh sửa chấm công.
+                  </p>
+                </div>
+              )}
 
               {selectedHolidayInfo && (
                 selectedHolidayInfo.type === 'official' ? (
