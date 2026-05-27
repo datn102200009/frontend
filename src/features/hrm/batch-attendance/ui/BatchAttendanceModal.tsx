@@ -29,7 +29,7 @@ interface AttendanceRecord {
   remarks: string;
 }
 
-const EMPTY_ARRAY: any[] = [];
+const EMPTY_ARRAY: never[] = [];
 
 export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   open,
@@ -125,7 +125,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
               employee_id: emp.id || '',
               employee_name: emp.full_name || '',
               employee_code: emp.employee_id || '',
-              status: (existing.status as any) || defaultStatus,
+              status: (existing.status as AttendanceRecord['status']) || defaultStatus,
               work_hours: existing.work_hours !== undefined ? Number(existing.work_hours) : defaultWorkHours,
               overtime_hours: existing.overtime_hours !== undefined ? Number(existing.overtime_hours) : 0,
               remarks: existing.remarks || '',
