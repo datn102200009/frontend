@@ -29,6 +29,8 @@ interface AttendanceRecord {
   remarks: string;
 }
 
+const EMPTY_ARRAY: any[] = [];
+
 export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   open,
   onClose,
@@ -70,7 +72,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   );
 
   // Fetch existing attendance records for the selected date
-  const { data: existingAttendances = [], isLoading: isLoadingAttendances } = useGetHrmAttendancesQuery(
+  const { data: existingAttendances = EMPTY_ARRAY, isLoading: isLoadingAttendances } = useGetHrmAttendancesQuery(
     { date },
     { skip: !date || !open }
   );
