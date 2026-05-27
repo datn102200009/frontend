@@ -87,11 +87,12 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
         },
       }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to terminate contract', err);
+      const error = err as { data?: { error?: string; detail?: string } };
       setApiError(
-        err?.data?.error ||
-          err?.data?.detail ||
+        error?.data?.error ||
+          error?.data?.detail ||
           'Có lỗi xảy ra khi chấm dứt hợp đồng. Vui lòng kiểm tra lại.'
       );
     }

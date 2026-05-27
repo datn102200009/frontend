@@ -32,6 +32,17 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
   const [createReward, { isLoading }] = usePostHrmRewardsMutation();
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevEmployee, setPrevEmployee] = useState(employee);
+
+  if (open !== prevOpen || employee !== prevEmployee) {
+    setPrevOpen(open);
+    setPrevEmployee(employee);
+    if (open) {
+      setApiError(null);
+    }
+  }
+
   const { data: employeesData, isLoading: isEmployeesLoading } = useGetHrmEmployeesQuery(
     { status: 'active', limit: 100 },
     { skip: !!employee }
@@ -61,7 +72,6 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
         amount: 1000000,
         description: '',
       });
-      setApiError(null);
     }
   }, [open, employee, reset]);
 
@@ -90,9 +100,10 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
 
       await createReward({ body }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create reward record', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi ghi nhận khen thưởng. Vui lòng kiểm tra lại.');
+      const apiErr = err as { data?: { detail?: string } };
+      setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi ghi nhận khen thưởng. Vui lòng kiểm tra lại.');
     }
   };
 

@@ -35,7 +35,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
     return filteredSlips.find((s) => s.id === selectedSlipId);
   }, [filteredSlips, selectedSlipId]);
 
-  const formatVND = (value: any) => {
+  const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
     const amount = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -54,11 +54,11 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
     return [
       helper.accessor('employee_code', {
         header: 'Mã NV',
-        cell: (info) => <span className="font-semibold text-slate-800">{(info.row.original as any).employee_code || 'N/A'}</span>,
+        cell: (info) => <span className="font-semibold text-slate-800">{info.row.original.employee_code || 'N/A'}</span>,
       }),
       helper.accessor('employee_name', {
         header: 'Họ và Tên',
-        cell: (info) => <span className="font-medium text-slate-700">{(info.row.original as any).employee_name || 'N/A'}</span>,
+        cell: (info) => <span className="font-medium text-slate-700">{info.row.original.employee_name || 'N/A'}</span>,
       }),
       helper.accessor('salary_period', {
         header: 'Kỳ lương',
@@ -66,19 +66,19 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
       }),
       helper.accessor('base_salary', {
         header: 'Lương cơ bản',
-        cell: (info) => formatVND((info.row.original as any).base_salary),
+        cell: (info) => formatVND(info.row.original.base_salary),
       }),
       helper.accessor('reward_amount_total', {
         header: 'Thưởng',
-        cell: (info) => formatVND((info.row.original as any).reward_amount_total),
+        cell: (info) => formatVND(info.row.original.reward_amount_total),
       }),
       helper.accessor('discipline_deduction_total', {
         header: 'Khấu trừ',
-        cell: (info) => formatVND((info.row.original as any).discipline_deduction_total),
+        cell: (info) => formatVND(info.row.original.discipline_deduction_total),
       }),
       helper.accessor('net_pay', {
         header: 'Thực nhận',
-        cell: (info) => <span className="font-semibold text-primary-600">{formatVND((info.row.original as any).net_pay)}</span>,
+        cell: (info) => <span className="font-semibold text-primary-600">{formatVND(info.row.original.net_pay)}</span>,
       }),
       helper.accessor('status', {
         header: 'Trạng thái',
@@ -168,7 +168,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
             <div className="filterSelectWrapper">
               <select
                 value={statusFilter}
-                onChange={(e: any) => setStatusFilter(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'paid')}
                 className="filterSelectInput"
                 aria-label="Lọc trạng thái phiếu lương"
               >
@@ -183,8 +183,8 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
       </div>
 
       <DataTable
-        columns={columns as any}
-        data={filteredSlips}
+        columns={columns}
+        data={filteredSlips as SalarySlip[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm phiếu lương theo mã hoặc tên..."
         emptyMessage="Không tìm thấy phiếu lương nào cho kỳ này"

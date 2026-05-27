@@ -32,10 +32,11 @@ export const LeaveRequestDetailsModal: React.FC<LeaveRequestDetailsModalProps> =
         body: { action },
       }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`Failed to ${action} leave request`, err);
+      const error = err as { data?: { detail?: string } };
       setApiError(
-        err?.data?.detail || `Có lỗi xảy ra khi thực hiện thao tác. Vui lòng kiểm tra lại.`
+        error?.data?.detail || `Có lỗi xảy ra khi thực hiện thao tác. Vui lòng kiểm tra lại.`
       );
     }
   };
@@ -111,8 +112,8 @@ export const LeaveRequestDetailsModal: React.FC<LeaveRequestDetailsModalProps> =
           <div className={styles.detailGroup}>
             <span className={styles.label}>Nhân viên</span>
             <span className={styles.value}>
-              {(leaveRequest as any).employee_name || 'N/A'} (
-              {(leaveRequest as any).employee_code || 'N/A'})
+              {leaveRequest.employee_name || 'N/A'} (
+              {leaveRequest.employee_code || 'N/A'})
             </span>
           </div>
           <div className={styles.detailGroup}>
@@ -148,7 +149,7 @@ export const LeaveRequestDetailsModal: React.FC<LeaveRequestDetailsModalProps> =
         <div className={styles.reasonSection}>
           <span className={styles.label}>Lý do nghỉ</span>
           <span className={styles.value} style={{ whiteSpace: 'pre-wrap', fontWeight: 'normal' }}>
-            {(leaveRequest as any).reason || 'Không có lý do chi tiết'}
+            {leaveRequest.reason || 'Không có lý do chi tiết'}
           </span>
         </div>
       </div>

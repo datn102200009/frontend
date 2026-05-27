@@ -16,12 +16,12 @@ describe('LeaveRequestDetailsModal', () => {
     days: '3.0',
     reason: 'Nghỉ mát hè',
     status: 'pending',
-  } as any;
+  } as LeaveRequest;
 
   const mockApprovedLeaveRequest: LeaveRequest = {
     ...mockPendingLeaveRequest,
     status: 'approved',
-  } as any;
+  } as LeaveRequest;
 
   const defaultProps = {
     open: true,

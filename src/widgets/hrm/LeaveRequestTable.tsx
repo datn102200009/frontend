@@ -37,11 +37,11 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
     return [
       helper.accessor('employee_code', {
         header: 'Mã NV',
-        cell: (info) => <span className="font-semibold text-slate-800">{(info.row.original as any).employee_code || 'N/A'}</span>,
+        cell: (info) => <span className="font-semibold text-slate-800">{info.row.original.employee_code || 'N/A'}</span>,
       }),
       helper.accessor('employee_name', {
         header: 'Nhân viên',
-        cell: (info) => <span className="font-medium text-slate-700">{(info.row.original as any).employee_name || 'N/A'}</span>,
+        cell: (info) => <span className="font-medium text-slate-700">{info.row.original.employee_name || 'N/A'}</span>,
       }),
       helper.accessor('leave_type', {
         header: 'Loại phép',
@@ -61,7 +61,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
       }),
       helper.accessor('reason', {
         header: 'Lý do',
-        cell: (info) => <span className="truncate max-w-[200px] inline-block">{(info.row.original as any).reason || '-'}</span>,
+        cell: (info) => <span className="truncate max-w-[200px] inline-block">{info.row.original.reason || '-'}</span>,
       }),
       helper.accessor('status', {
         header: 'Trạng thái',
@@ -96,7 +96,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
           <div className="filterSelectWrapper">
             <select
               value={statusFilter}
-              onChange={(e: any) => setStatusFilter(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'pending' | 'approved' | 'rejected' | 'all')}
               className="filterSelectInput"
               aria-label="Lọc trạng thái đơn nghỉ phép"
             >
@@ -111,8 +111,8 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
       </div>
 
       <DataTable
-        columns={columns as any}
-        data={leaveRequests}
+        columns={columns}
+        data={leaveRequests as LeaveRequest[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn phép theo mã hoặc tên..."
         emptyMessage="Không tìm thấy đơn nghỉ phép nào"

@@ -21,11 +21,20 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
 
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevSalarySlipId, setPrevSalarySlipId] = useState(salarySlip.id);
+
+  if (open !== prevOpen || salarySlip.id !== prevSalarySlipId) {
+    setPrevOpen(open);
+    setPrevSalarySlipId(salarySlip.id);
+    if (open) {
+      setApiError(null);
+    }
+  }
+
   // Auto calculate when modal opens
   useEffect(() => {
     if (!open || !salarySlip.id || salarySlip.status !== 'draft') return;
-
-    setApiError(null);
 
     calculateSalary({
       id: salarySlip.id,
@@ -34,16 +43,17 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       .then(() => {
         onCalculateSuccess?.();
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         console.error('Failed to auto calculate salary slip', err);
-        setApiError(err?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
+        const apiErr = err as { data?: { detail?: string } };
+        setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
       });
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
 
 
 
-  const formatVND = (value: any) => {
+  const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
     const amount = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -92,9 +102,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
 
         <div className={styles.slipHeader}>
           <div>
-            <div className={styles.employeeName}>{(salarySlip as any).employee_name || 'N/A'}</div>
+            <div className={styles.employeeName}>{salarySlip.employee_name || 'N/A'}</div>
             <div className={styles.employeeMeta}>
-              Mã NV: {(salarySlip as any).employee_code || 'N/A'} | Kỳ lương: {salarySlip.salary_period}
+              Mã NV: {salarySlip.employee_code || 'N/A'} | Kỳ lương: {salarySlip.salary_period}
             </div>
           </div>
           <span className={getStatusClass(salarySlip.status)}>{getStatusLabel(salarySlip.status)}</span>

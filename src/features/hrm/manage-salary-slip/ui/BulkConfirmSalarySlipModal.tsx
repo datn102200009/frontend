@@ -58,10 +58,11 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
         },
       }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to execute bulk confirm and pay', err);
+      const error = err as { data?: { detail?: string } };
       setApiError(
-        err?.data?.detail || 'Có lỗi xảy ra khi thanh toán lương nhanh. Vui lòng kiểm tra lại.'
+        error?.data?.detail || 'Có lỗi xảy ra khi thanh toán lương nhanh. Vui lòng kiểm tra lại.'
       );
     }
   };

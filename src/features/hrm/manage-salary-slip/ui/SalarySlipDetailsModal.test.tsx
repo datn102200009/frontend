@@ -21,7 +21,7 @@ describe('SalarySlipDetailsModal', () => {
     deduction: '0',
     union_fee: '100000',
     net_salary: '11600000',
-  } as any;
+  } as unknown as SalarySlip;
 
   const mockPaidSalarySlip: SalarySlip = {
     ...mockDraftSalarySlip,
@@ -71,7 +71,7 @@ describe('SalarySlipDetailsModal', () => {
         incomes: [],
         deductions: [],
       },
-    } as any;
+    } as unknown as SalarySlip;
     renderWithProviders(
       <SalarySlipDetailsModal {...defaultProps} salarySlip={customSlip} />
     );

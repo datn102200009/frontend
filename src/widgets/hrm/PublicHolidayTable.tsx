@@ -132,8 +132,8 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
       </div>
 
       <DataTable
-        columns={columns as any}
-        data={holidays}
+        columns={columns}
+        data={holidays as PublicHoliday[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm ngày lễ theo tên hoặc ngày..."
         emptyMessage="Không tìm thấy ngày nghỉ lễ nào"

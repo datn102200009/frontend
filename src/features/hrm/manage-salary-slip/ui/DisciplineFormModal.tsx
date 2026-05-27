@@ -101,9 +101,10 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
 
       await createDiscipline({ body }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create discipline record', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi ghi nhận kỷ luật. Vui lòng kiểm tra lại.');
+      const error = err as { data?: { detail?: string } };
+      setApiError(error?.data?.detail || 'Có lỗi xảy ra khi ghi nhận kỷ luật. Vui lòng kiểm tra lại.');
     }
   };
 

@@ -95,7 +95,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
   const onSubmit = async (values: EmployeeFormValues) => {
     setApiError(null);
     try {
-      const payload: any = {
+      const payload = {
         employee_id: values.employee_id,
         full_name: values.full_name,
         department: values.department || undefined,
@@ -109,19 +109,17 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
         address: values.address || undefined,
         join_date: values.join_date || undefined,
         create_user: values.create_user,
+        username: values.create_user ? values.username : undefined,
+        password: values.create_user ? values.password : undefined,
+        role_id: values.create_user ? values.role_id : undefined,
       };
-
-      if (values.create_user) {
-        payload.username = values.username;
-        payload.password = values.password;
-        payload.role_id = values.role_id;
-      }
 
       await createEmployee({ body: payload }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create employee', err);
-      setApiError(err?.data?.detail || err?.data?.errors?.detail || 'Có lỗi xảy ra khi tạo nhân viên. Vui lòng thử lại.');
+      const error = err as { data?: { detail?: string; errors?: { detail?: string } } };
+      setApiError(error?.data?.detail || error?.data?.errors?.detail || 'Có lỗi xảy ra khi tạo nhân viên. Vui lòng thử lại.');
     }
   };
 

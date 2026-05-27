@@ -36,7 +36,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
     return employeeResponse.results.filter((emp) => emp.employment_status === statusFilter);
   }, [employeeResponse, statusFilter]);
 
-  const formatVND = (value: any) => {
+  const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
     const amount = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -139,7 +139,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
           <div className="filterSelectWrapper">
             <select
               value={statusFilter}
-              onChange={(e: any) => setStatusFilter(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'active' | 'inactive' | 'all')}
               className="filterSelectInput"
               aria-label="Lọc trạng thái nhân viên"
             >
@@ -153,8 +153,8 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       </div>
 
       <DataTable
-        columns={columns as any}
-        data={employees}
+        columns={columns}
+        data={employees as Employee[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm nhân viên theo mã hoặc tên..."
         emptyMessage="Không tìm thấy nhân viên nào"

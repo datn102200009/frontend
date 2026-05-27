@@ -13,7 +13,7 @@ import { Plus, CheckCircle, Eye, ChevronDown } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
-import { Badge } from '@shared/ui/Badge/Badge';
+import { Badge, type BadgeVariant } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { StockEntryForm } from './StockEntryForm';
@@ -47,8 +47,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 export function StockEntryList() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>('all');
   const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({ status: statusFilter === 'all' ? 'all' : statusFilter });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entries = (entriesData as any)?.results || (Array.isArray(entriesData) ? entriesData : []);
+  const entries = (entriesData && 'results' in entriesData) ? (entriesData.results || []) : (Array.isArray(entriesData) ? entriesData : []);
   
   const { data: warehouses } = useGetMasterDataWarehousesListQuery();
   const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({});
@@ -129,9 +128,9 @@ export function StockEntryList() {
       toast('success', `Phê duyệt ${approving.name} (${purposeLabel}) thành công — đã ghi sổ cái`);
       setApproving(null);
       refetch();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
+    } catch (error: unknown) {
+      const err = error as { data?: { detail?: string } };
+      toast('error', err?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
     }
   };
 
@@ -146,8 +145,7 @@ export function StockEntryList() {
           const entry = row.original;
           const t = entry.purpose || '';
           const label = t === 'issue' && entry.sales_order_id ? 'Xuất kho' : (PURPOSE_LABELS[t] || t);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return <Badge variant={PURPOSE_VARIANTS[t] as any}>{label}</Badge>;
+          return <Badge variant={PURPOSE_VARIANTS[t] as BadgeVariant}>{label}</Badge>;
         },
       },
       {
@@ -161,16 +159,14 @@ export function StockEntryList() {
         size: 110,
         cell: ({ getValue }) => {
           const s = STATUS_LABELS[getValue<string>()] || { label: getValue<string>(), variant: 'neutral' };
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return <Badge variant={s.variant as any}>{s.label}</Badge>;
+          return <Badge variant={s.variant as BadgeVariant}>{s.label}</Badge>;
         },
       },
       {
         accessorKey: 'created_at',
         header: 'Ngày Tạo',
         size: 140,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cell: ({ row }) => formatDateTime((row.original as any).created_at),
+        cell: ({ row }) => formatDateTime(row.original.created_at),
       },
       {
         id: 'actions',
@@ -234,7 +230,7 @@ export function StockEntryList() {
           <div className="filterSelectWrapper">
             <select
               value={statusFilter}
-              onChange={(e: any) => setStatusFilter(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'posted')}
               className="filterSelectInput"
               aria-label="Lọc trạng thái phiếu kho"
             >

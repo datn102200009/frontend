@@ -3,10 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { PublicHolidayTable } from './PublicHolidayTable';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 import { useToast } from '@shared/ui/Toast/Toast';
+import * as toastModule from '@shared/ui/Toast/Toast';
 
 // Mock useToast to inspect call arguments
 vi.mock('@shared/ui/Toast/Toast', async () => {
-  const actual = await vi.importActual<any>('@shared/ui/Toast/Toast');
+  const actual = await vi.importActual<typeof toastModule>('@shared/ui/Toast/Toast');
   const mockToast = vi.fn();
   return {
     ...actual,

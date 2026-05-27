@@ -34,7 +34,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const formatVND = (value: any) => {
+  const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
     const amount = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);

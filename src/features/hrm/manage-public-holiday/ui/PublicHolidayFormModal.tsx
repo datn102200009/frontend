@@ -116,9 +116,10 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
         toast('success', `Đã khai báo ngày nghỉ lễ "${values.name}"`);
       }
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save public holiday', err);
-      setApiError(err?.data?.error || err?.data?.detail || 'Có lỗi xảy ra khi lưu ngày nghỉ lễ. Vui lòng kiểm tra lại.');
+      const error = err as { data?: { error?: string; detail?: string } };
+      setApiError(error?.data?.error || error?.data?.detail || 'Có lỗi xảy ra khi lưu ngày nghỉ lễ. Vui lòng kiểm tra lại.');
     }
   };
 

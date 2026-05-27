@@ -31,6 +31,17 @@ export const UpdateSalaryTitleModal: React.FC<UpdateSalaryTitleModalProps> = ({
   const [updateSalaryTitle, { isLoading }] = usePostHrmEmployeesByIdUpdateSalaryTitleMutation();
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevEmployee, setPrevEmployee] = useState(employee);
+
+  if (open !== prevOpen || employee !== prevEmployee) {
+    setPrevOpen(open);
+    setPrevEmployee(employee);
+    if (open) {
+      setApiError(null);
+    }
+  }
+
   const {
     register,
     handleSubmit,
@@ -60,7 +71,6 @@ export const UpdateSalaryTitleModal: React.FC<UpdateSalaryTitleModalProps> = ({
         effective_date: new Date().toISOString().split('T')[0],
         reason: '',
       });
-      setApiError(null);
     }
   }, [open, employee, reset]);
 
@@ -68,7 +78,14 @@ export const UpdateSalaryTitleModal: React.FC<UpdateSalaryTitleModalProps> = ({
     setApiError(null);
     if (!employee.id) return;
     try {
-      const payload: any = {
+      const payload: {
+        change_type: FormValues['change_type'];
+        effective_date: string;
+        reason?: string;
+        new_salary_base?: number;
+        new_title?: string;
+        new_department?: string;
+      } = {
         change_type: values.change_type,
         effective_date: values.effective_date,
         reason: values.reason || undefined,
@@ -106,9 +123,10 @@ export const UpdateSalaryTitleModal: React.FC<UpdateSalaryTitleModalProps> = ({
         body: payload,
       }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update salary/title', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi thực hiện cập nhật. Vui lòng kiểm tra lại.');
+      const apiErr = err as { data?: { detail?: string } };
+      setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi thực hiện cập nhật. Vui lòng kiểm tra lại.');
     }
   };
 

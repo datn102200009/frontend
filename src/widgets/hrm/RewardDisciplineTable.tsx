@@ -27,7 +27,7 @@ export const RewardDisciplineTable: React.FC = () => {
     refetch: refetchDisciplines,
   } = useGetHrmDisciplinesQuery({});
 
-  const formatVND = (value: any) => {
+  const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
     const amount = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -188,16 +188,16 @@ export const RewardDisciplineTable: React.FC = () => {
       <div className={styles.tableSection}>
         {subTab === 'rewards' ? (
           <DataTable
-            columns={rewardColumns as any}
-            data={rewards}
+            columns={rewardColumns}
+            data={rewards as RewardRecord[]}
             loading={isRewardsLoading}
             searchPlaceholder="Tìm kiếm thông tin khen thưởng..."
             emptyMessage="Chưa có bản ghi khen thưởng nào"
           />
         ) : (
           <DataTable
-            columns={disciplineColumns as any}
-            data={disciplines}
+            columns={disciplineColumns}
+            data={disciplines as DisciplineRecord[]}
             loading={isDisciplinesLoading}
             searchPlaceholder="Tìm kiếm thông tin kỷ luật..."
             emptyMessage="Chưa có bản ghi kỷ luật nào"

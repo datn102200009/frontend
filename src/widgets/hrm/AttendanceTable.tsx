@@ -116,8 +116,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       </div>
 
       <DataTable
-        columns={columns as any}
-        data={attendances}
+        columns={columns}
+        data={attendances as Attendance[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm bản ghi chấm công theo mã hoặc tên..."
         emptyMessage="Không tìm thấy bản ghi chấm công nào"

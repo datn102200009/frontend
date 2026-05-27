@@ -211,7 +211,7 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/employees/create/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as { employee_id: string };
     if (data.employee_id === 'NV_EXISTS') {
       return HttpResponse.json({ detail: 'Mã nhân viên đã tồn tại' }, { status: 400 });
     }
@@ -252,22 +252,22 @@ export const handlers = [
   }),
 
   http.patch('*/api/v1/hrm/employees/:id/update/', async ({ params, request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: params.id, ...data });
   }),
 
   http.post('*/api/v1/hrm/employees/:id/update-salary-title/', async ({ params, request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: params.id, ...data });
   }),
 
   http.post('*/api/v1/hrm/contracts/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: 'new-contract-123', ...data }, { status: 201 });
   }),
 
   http.post('*/api/v1/hrm/contracts/:id/terminate/', async ({ params, request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: params.id, status: 'terminated', ...data });
   }),
 
@@ -279,9 +279,20 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/attendances/batch/', async ({ request }) => {
-    const data = await request.json() as any;
+    interface AttendanceRecord {
+      employee_id: string;
+      status: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday';
+      work_hours?: number | string;
+      overtime_hours?: number | string;
+      remarks?: string;
+    }
+    interface BatchAttendanceRequest {
+      date: string;
+      records: AttendanceRecord[];
+    }
+    const data = await request.json() as BatchAttendanceRequest;
     return HttpResponse.json(
-      data.records.map((r: any) => ({
+      data.records.map((r) => ({
         id: `att-${Math.random()}`,
         employee_id: r.employee_id,
         date: data.date,
@@ -301,12 +312,12 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/leave-requests/create/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: 'new-lr-123', status: 'pending', ...data }, { status: 201 });
   }),
 
   http.post('*/api/v1/hrm/leave-requests/:id/approve/', async ({ params, request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as { action: 'approve' | 'reject' };
     return HttpResponse.json({ id: params.id, status: data.action === 'approve' ? 'approved' : 'rejected' });
   }),
 
@@ -317,7 +328,7 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/salary-slips/initialize/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as { salary_period: string };
     return HttpResponse.json([
       { id: 'slip-1', name: `SAL-${data.salary_period}-NV001',`, employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '0', allowance_amount: '0', reward_amount_total: '0', discipline_deduction_total: '0', union_fee_2pct: '200000', gross_pay: '10000000', deductions: '200000', net_pay: '9800000', status: 'draft' }
     ], { status: 201 });
@@ -328,7 +339,7 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/rewards/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: 'reward-123', ...data }, { status: 201 });
   }),
 
@@ -339,7 +350,7 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/disciplines/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: 'discipline-123', ...data }, { status: 201 });
   }),
 
@@ -350,7 +361,7 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/salary-slips/bulk-confirm-pay/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as { salary_period: string };
     return HttpResponse.json([
       { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'paid' }
     ], { status: 200 });
@@ -365,12 +376,12 @@ export const handlers = [
   }),
 
   http.post('*/api/v1/hrm/public-holidays/', async ({ request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: 'new-holiday-123', ...data }, { status: 201 });
   }),
 
   http.put('*/api/v1/hrm/public-holidays/:id/', async ({ params, request }) => {
-    const data = await request.json() as any;
+    const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: params.id, ...data });
   }),
 

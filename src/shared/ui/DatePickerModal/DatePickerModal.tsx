@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Modal } from '../Modal/Modal';
 import { Button } from '../Button/Button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -46,15 +46,20 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
   const [viewMonth, setViewMonth] = useState<number>(initialDate.getMonth());
   const [viewYear, setViewYear] = useState<number>(initialDate.getFullYear());
 
-  // Synchronize internal state when modal opens
-  useEffect(() => {
+  // Synchronize internal state during render when modal opens or value changes
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevValue, setPrevValue] = useState(value);
+
+  if (open !== prevOpen || value !== prevValue) {
+    setPrevOpen(open);
+    setPrevValue(value);
     if (open) {
       const d = parseISODate(value);
       setSelectedDate(d);
       setViewMonth(d.getMonth());
       setViewYear(d.getFullYear());
     }
-  }, [open, value]);
+  }
 
   // Year choices range: dynamically derived from current year and viewYear
   const yearOptions = useMemo(() => {

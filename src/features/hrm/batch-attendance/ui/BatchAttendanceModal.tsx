@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   useGetHrmEmployeesQuery,
   usePostHrmAttendancesBatchMutation,
@@ -70,35 +70,51 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
   const [saveAttendance, { isLoading: isSaving }] = usePostHrmAttendancesBatchMutation();
 
-  // Initialize records when employee data loads or holiday status changes
-  useEffect(() => {
-    if (employeeData?.results) {
-      const isHoliday = !!selectedHolidayInfo;
-      const defaultStatus = isHoliday ? 'holiday' : 'working';
-      const defaultWorkHours = isHoliday ? 0 : 8;
+  // Synchronize internal state during render instead of using useEffect
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevInitialDate, setPrevInitialDate] = useState(initialDate);
+  const [prevEmployeeData, setPrevEmployeeData] = useState(employeeData);
+  const [prevSelectedHolidayInfo, setPrevSelectedHolidayInfo] = useState(selectedHolidayInfo);
 
-      const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => ({
-        employee_id: emp.id || '',
-        employee_name: emp.full_name || '',
-        employee_code: emp.employee_id || '',
-        status: defaultStatus,
-        work_hours: defaultWorkHours,
-        overtime_hours: 0,
-        remarks: '',
-      }));
-      setRecords(initialRecords);
-    }
-  }, [employeeData, selectedHolidayInfo]);
+  if (
+    open !== prevOpen ||
+    initialDate !== prevInitialDate ||
+    employeeData !== prevEmployeeData ||
+    selectedHolidayInfo !== prevSelectedHolidayInfo
+  ) {
+    setPrevOpen(open);
+    setPrevInitialDate(initialDate);
+    setPrevEmployeeData(employeeData);
+    setPrevSelectedHolidayInfo(selectedHolidayInfo);
 
-  // Reset local state when opened/closed
-  useEffect(() => {
-    if (open) {
-      setDate(initialDate || new Date().toISOString().split('T')[0]);
-      setApiError(null);
-    } else {
-      setRecords([]);
+    if (open !== prevOpen || initialDate !== prevInitialDate) {
+      if (open) {
+        setDate(initialDate || new Date().toISOString().split('T')[0]);
+        setApiError(null);
+      } else {
+        setRecords([]);
+      }
     }
-  }, [open, initialDate]);
+
+    if (employeeData !== prevEmployeeData || selectedHolidayInfo !== prevSelectedHolidayInfo) {
+      if (employeeData?.results) {
+        const isHoliday = !!selectedHolidayInfo;
+        const defaultStatus = isHoliday ? 'holiday' : 'working';
+        const defaultWorkHours = isHoliday ? 0 : 8;
+
+        const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => ({
+          employee_id: emp.id || '',
+          employee_name: emp.full_name || '',
+          employee_code: emp.employee_id || '',
+          status: defaultStatus,
+          work_hours: defaultWorkHours,
+          overtime_hours: 0,
+          remarks: '',
+        }));
+        setRecords(initialRecords);
+      }
+    }
+  }
 
   const handleStatusChange = (index: number, newStatus: AttendanceRecord['status']) => {
     setRecords((prev) => {
@@ -116,7 +132,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
     });
   };
 
-  const handleFieldChange = (index: number, key: keyof AttendanceRecord, value: any) => {
+  const handleFieldChange = (index: number, key: keyof AttendanceRecord, value: string | number) => {
     setRecords((prev) => {
       const next = [...prev];
       next[index] = {
@@ -153,9 +169,10 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
       await saveAttendance({ body }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save batch attendance', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi lưu bảng công. Vui lòng kiểm tra lại.');
+      const error = err as { data?: { detail?: string } };
+      setApiError(error?.data?.detail || 'Có lỗi xảy ra khi lưu bảng công. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -256,7 +273,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                       <select
                         aria-label={`Trạng thái của ${record.employee_name}`}
                         value={record.status}
-                        onChange={(e) => handleStatusChange(idx, e.target.value as any)}
+                        onChange={(e) => handleStatusChange(idx, e.target.value as AttendanceRecord['status'])}
                         className={styles.select}
                         disabled={isSaving || !!selectedHolidayInfo || isPeriodPaid}
                       >

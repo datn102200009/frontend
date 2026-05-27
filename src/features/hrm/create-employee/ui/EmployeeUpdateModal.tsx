@@ -43,6 +43,17 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
     },
   });
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevEmployee, setPrevEmployee] = useState(employee);
+
+  if (open !== prevOpen || employee !== prevEmployee) {
+    setPrevOpen(open);
+    setPrevEmployee(employee);
+    if (open) {
+      setApiError(null);
+    }
+  }
+
   useEffect(() => {
     if (open && employee) {
       reset({
@@ -51,7 +62,6 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
         address: employee.address || '',
         employment_status: employee.employment_status || 'active',
       });
-      setApiError(null);
     }
   }, [open, employee, reset]);
 
@@ -64,9 +74,10 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
         body: values,
       }).unwrap();
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update employee', err);
-      setApiError(err?.data?.detail || 'Có lỗi xảy ra khi cập nhật hồ sơ. Vui lòng thử lại.');
+      const error = err as { data?: { detail?: string } };
+      setApiError(error?.data?.detail || 'Có lỗi xảy ra khi cập nhật hồ sơ. Vui lòng thử lại.');
     }
   };
 
