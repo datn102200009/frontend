@@ -25,7 +25,8 @@
   --clr-secondary-200: #6cfffe;
   --clr-secondary-100: #d1faf5;
 
-  --clr-accent: #263b95;
+  --clr-accent:      #6b21a8;
+  --clr-accent-bg:   #f3e8ff;
 
   /* Semantic */
   --clr-success:     #16a34a;
@@ -34,6 +35,8 @@
   --clr-warning-bg:  #fef3c7;
   --clr-error:       #dc2626;
   --clr-error-bg:    #fee2e2;
+  --clr-danger:      var(--clr-error);
+  --clr-danger-bg:   var(--clr-error-bg);
   --clr-info:        #2563eb;
   --clr-info-bg:     #dbeafe;
 
@@ -247,4 +250,92 @@ code, pre {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ── 7. Filter Toolbar Styles (Shared & HRM) ── */
+.filterToolbar, .hrmFilterToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--sp-4);
+}
+
+.filterGroup, .hrmFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.filterLabel, .hrmFilterLabel {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text-secondary);
+}
+
+.filterSelectWrapper, .hrmSelectWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.filterSelectInput, .hrmSelectInput {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text-secondary);
+  background-color: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-8) var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+  min-width: 150px;
+}
+
+.filterSelectInput:focus, .hrmSelectInput:focus {
+  outline: none;
+  border-color: var(--clr-primary-400);
+  box-shadow: 0 0 0 3px rgba(5, 85, 104, 0.1);
+}
+
+.filterSelectInput:hover, .hrmSelectInput:hover {
+  border-color: var(--clr-border-focus);
+}
+
+.filterSelectIcon, .hrmSelectIcon {
+  position: absolute;
+  right: 10px;
+  color: var(--clr-text-muted);
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.filterDateInput, .hrmDateInput, .filterMonthInput, .hrmMonthInput {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text-secondary);
+  background-color: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.filterDateInput:focus, .hrmDateInput:focus, .filterMonthInput:focus, .hrmMonthInput:focus {
+  outline: none;
+  border-color: var(--clr-primary-400);
+  box-shadow: 0 0 0 3px rgba(5, 85, 104, 0.1);
+}
+
+.filterDateInput:hover, .hrmDateInput:hover, .filterMonthInput:hover, .hrmMonthInput:hover {
+  border-color: var(--clr-border-focus);
 }

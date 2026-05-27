@@ -1,0 +1,142 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--clr-text-secondary);
+}
+
+.required {
+  color: var(--clr-danger);
+}
+
+.infoBox {
+  background: var(--clr-primary-50);
+  border: 1px solid var(--clr-primary-100);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.infoTitle {
+  font-size: var(--fs-sm);
+  color: var(--clr-primary-700);
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: var(--fs-md);
+  color: var(--clr-primary-900);
+  font-weight: 700;
+}
+
+.paymentOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.paymentCard {
+  border: 2px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease-in-out;
+  position: relative;
+  background: var(--clr-surface);
+}
+
+.paymentCard:hover {
+  border-color: var(--clr-primary-200);
+  background: var(--clr-surface-hover);
+}
+
+.activeCard {
+  border-color: var(--clr-primary-500);
+  background: var(--clr-primary-50-opacity, rgba(59, 130, 246, 0.05));
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+
+.radioInput {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--clr-primary-500);
+}
+
+.paymentCardContent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.paymentIcon {
+  font-size: var(--fs-xl);
+  line-height: 1;
+  padding-top: 2px;
+}
+
+.paymentText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.paymentLabel {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--clr-text);
+}
+
+.paymentDesc {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-secondary);
+}
+
+.warningBox {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+  color: #b45309;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+}
+
+.warningBox strong {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-sm);
+}
+
+.warningBox p {
+  margin: 0;
+}
+
+.warningBox p:not(:last-child) {
+  margin-bottom: var(--sp-2);
+}
+
+.errorSection {
+  background-color: var(--clr-error-bg);
+  border: 1px solid var(--clr-error);
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  color: var(--clr-error);
+  font-size: var(--fs-sm);
+}

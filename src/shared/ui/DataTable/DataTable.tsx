@@ -13,7 +13,8 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, Ar
 import styles from './DataTable.module.css';
 
 interface DataTableProps<TData> {
-  columns: ColumnDef<TData, unknown>[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  columns: ColumnDef<TData, any>[];
   data: TData[];
   searchPlaceholder?: string;
   pageSize?: number;

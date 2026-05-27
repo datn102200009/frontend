@@ -41,8 +41,8 @@ describe('StockEntryList', () => {
     // Wait for initial load
     await screen.findByText('ENTRY-001');
 
-    const postedTab = screen.getByRole('button', { name: /^Đã duyệt/i });
-    await user.click(postedTab);
+    const statusSelect = screen.getByRole('combobox', { name: /Lọc trạng thái phiếu kho/i });
+    await user.selectOptions(statusSelect, 'posted');
 
     // Wait for changes
     await waitFor(() => {

@@ -13,6 +13,7 @@ const SalesPage = lazy(() => import('../pages/sales/SalesPage'));
 const FinancePage = lazy(() => import('../pages/finance/FinancePage'));
 const CustomersPage = lazy(() => import('../pages/crm/CustomersPage'));
 const SuppliersPage = lazy(() => import('../pages/procurement/SuppliersPage'));
+const HrmPage = lazy(() => import('../pages/hrm/HrmPage'));
 
 function PageLoader() {
   return (
@@ -105,6 +106,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <SuppliersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hrm',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <HrmPage />
           </Suspense>
         ),
       },

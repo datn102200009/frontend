@@ -1,0 +1,77 @@
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+  border-bottom: 1px solid var(--clr-border);
+  padding-bottom: var(--sp-2);
+}
+
+.detailGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--clr-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.value {
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  font-weight: 500;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  width: fit-content;
+}
+
+.pending {
+  background-color: var(--clr-warning-bg);
+  color: var(--clr-warning);
+}
+
+.approved {
+  background-color: var(--clr-success-bg);
+  color: var(--clr-success);
+}
+
+.rejected {
+  background-color: var(--clr-error-bg);
+  color: var(--clr-error);
+}
+
+.reasonSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  background-color: var(--clr-surface-alt);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--clr-border);
+}
+
+.errorSection {
+  background-color: var(--clr-error-bg);
+  border: 1px solid var(--clr-error);
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  color: var(--clr-error);
+  font-size: var(--fs-sm);
+}

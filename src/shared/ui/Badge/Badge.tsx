@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import styles from './Badge.module.css';
 import clsx from 'clsx';
 
-export type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral';
+export type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'accent';
 
 export interface BadgeProps {
   variant?: BadgeVariant;

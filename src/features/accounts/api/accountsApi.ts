@@ -7,6 +7,9 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/accounts/auth/login/`, method: 'POST', body: queryArg.body }),
     }),
+    getAccountsRoles: build.query<GetAccountsRolesApiResponse, GetAccountsRolesApiArg>({
+      query: () => ({ url: `/accounts/roles/` }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -18,6 +21,8 @@ export type PostAccountsAuthLoginApiArg = {
     password: string
   }
 }
+export type GetAccountsRolesApiResponse = /** status 200 Thành công */ UserRole[]
+export type GetAccountsRolesApiArg = void
 export type LoginResponse = {
   /** Access token (JWT) */
   access?: string
@@ -32,4 +37,9 @@ export type LoginResponse = {
 export type ErrorResponse = {
   detail?: string
 }
-export const { usePostAccountsAuthLoginMutation } = injectedRtkApi
+export type UserRole = {
+  id?: string
+  name?: string
+  description?: string
+}
+export const { usePostAccountsAuthLoginMutation, useGetAccountsRolesQuery } = injectedRtkApi

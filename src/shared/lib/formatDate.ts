@@ -23,3 +23,20 @@ export function formatDateShort(dateStr: string | undefined | null) {
   
   return `${yy}-${mm}-${dd}`;
 }
+
+export function formatDateVN(dateStr: string | undefined | null) {
+  if (!dateStr) return '—';
+  const parts = dateStr.split('T')[0].split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  
+  return `${dd}/${mm}/${yyyy}`;
+}

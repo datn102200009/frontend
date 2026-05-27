@@ -37,3 +37,8 @@
   background: var(--clr-bg);
   color: var(--clr-text-secondary);
 }
+
+.accent {
+  background: var(--clr-accent-bg);
+  color: var(--clr-accent);
+}

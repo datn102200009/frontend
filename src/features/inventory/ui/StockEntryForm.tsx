@@ -34,7 +34,7 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
   const itemsList = itemsResponse?.results || [];
   const { data: warehouses } = useGetMasterDataWarehousesListQuery();
   
-  const { register, control, handleSubmit, watch } = useForm<StockEntryFormData>({
+  const { register, control, handleSubmit, watch, formState: { errors } } = useForm<StockEntryFormData>({
     defaultValues: {
       name: '',
       posting_date: new Date().toISOString().slice(0, 10),
@@ -81,8 +81,8 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
       footer={<><Button variant="ghost" onClick={onClose} disabled={isLoading}>Hủy</Button><Button onClick={handleSubmit(onSubmit, (errors) => console.log('Validation errors:', errors))} disabled={isLoading}>Tạo mới</Button></>}>
       <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <Input label="Tên phiếu" required {...register('name', { required: true })} />
-          <Input label="Ngày ghi sổ" type="date" required {...register('posting_date', { required: true })} />
+          <Input label="Tên phiếu" required error={errors.name?.message} {...register('name', { required: 'Bắt buộc' })} />
+          <Input label="Ngày ghi sổ" type="date" required error={errors.posting_date?.message} {...register('posting_date', { required: 'Bắt buộc' })} />
         </div>
         {(type === 'stock_issue' || type === 'internal_transfer') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
@@ -92,11 +92,12 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
               required
               disabled={isLoading}
               style={{ padding: '10px 14px', border: '1.5px solid var(--clr-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--fs-base)', background: 'var(--clr-surface)', color: 'var(--clr-text)' }}
-              {...register('source_warehouse_id', { required: true })}
+              {...register('source_warehouse_id', { required: 'Bắt buộc' })}
             >
               <option value="">-- Chọn kho nguồn --</option>
               {warehouses?.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
+            {errors.source_warehouse_id && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-sm)' }}>{errors.source_warehouse_id.message}</span>}
           </div>
         )}
         {(type === 'stock_in' || type === 'internal_transfer') && (
@@ -107,11 +108,12 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
               required
               disabled={isLoading}
               style={{ padding: '10px 14px', border: '1.5px solid var(--clr-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--fs-base)', background: 'var(--clr-surface)', color: 'var(--clr-text)' }}
-              {...register('target_warehouse_id', { required: true })}
+              {...register('target_warehouse_id', { required: 'Bắt buộc' })}
             >
               <option value="">-- Chọn kho đích --</option>
               {warehouses?.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
+            {errors.target_warehouse_id && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-sm)' }}>{errors.target_warehouse_id.message}</span>}
           </div>
         )}
 
@@ -132,7 +134,7 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
                 <select 
                   aria-label="Mã vật tư"
                   style={{ flex: 1, padding: '0.5rem', border: '1.5px solid var(--clr-border)', borderRadius: 'var(--radius-md)', background: 'var(--clr-surface)', color: 'var(--clr-text)' }} 
-                  {...register(`details.${index}.item_id` as const, { required: true })}
+                  {...register(`details.${index}.item_id` as const, { required: 'Bắt buộc' })}
                 >
                   <option value="">-- Chọn vật tư --</option>
                   {itemsList.map(item => (
@@ -141,7 +143,7 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
                     </option>
                   ))}
                 </select>
-                <input style={{ width: '100px', padding: '0.5rem', border: '1.5px solid var(--clr-border)', borderRadius: 'var(--radius-md)' }} type="number" min="1" {...register(`details.${index}.quantity` as const, { valueAsNumber: true, required: true, min: 1 })} />
+                <input style={{ width: '100px', padding: '0.5rem', border: '1.5px solid var(--clr-border)', borderRadius: 'var(--radius-md)' }} type="number" min="1" {...register(`details.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 1, message: 'Số lượng tối thiểu là 1' }, validate: val => !isNaN(val) || 'Bắt buộc' })} />
                 <span style={{ width: type === 'stock_issue' ? '120px' : '60px', fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                   <span>{selectedItem?.stock_uom_name || '-'}</span>
                   {type === 'stock_issue' && selectedItemCode && (

@@ -9,11 +9,11 @@ import {
 } from '@features/inventory/api/inventoryApi';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, CheckCircle, Eye } from 'lucide-react';
+import { Plus, CheckCircle, Eye, ChevronDown } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
-import { Badge } from '@shared/ui/Badge/Badge';
+import { Badge, type BadgeVariant } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { StockEntryForm } from './StockEntryForm';
@@ -47,8 +47,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 export function StockEntryList() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>('all');
   const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({ status: statusFilter === 'all' ? 'all' : statusFilter });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const entries = (entriesData as any)?.results || (Array.isArray(entriesData) ? entriesData : []);
+  const entries = (entriesData && 'results' in entriesData) ? (entriesData.results || []) : (Array.isArray(entriesData) ? entriesData : []);
   
   const { data: warehouses } = useGetMasterDataWarehousesListQuery();
   const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({});
@@ -129,9 +128,9 @@ export function StockEntryList() {
       toast('success', `Phê duyệt ${approving.name} (${purposeLabel}) thành công — đã ghi sổ cái`);
       setApproving(null);
       refetch();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
+    } catch (error: unknown) {
+      const err = error as { data?: { detail?: string } };
+      toast('error', err?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
     }
   };
 
@@ -146,8 +145,7 @@ export function StockEntryList() {
           const entry = row.original;
           const t = entry.purpose || '';
           const label = t === 'issue' && entry.sales_order_id ? 'Xuất kho' : (PURPOSE_LABELS[t] || t);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return <Badge variant={PURPOSE_VARIANTS[t] as any}>{label}</Badge>;
+          return <Badge variant={PURPOSE_VARIANTS[t] as BadgeVariant}>{label}</Badge>;
         },
       },
       {
@@ -161,16 +159,14 @@ export function StockEntryList() {
         size: 110,
         cell: ({ getValue }) => {
           const s = STATUS_LABELS[getValue<string>()] || { label: getValue<string>(), variant: 'neutral' };
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return <Badge variant={s.variant as any}>{s.label}</Badge>;
+          return <Badge variant={s.variant as BadgeVariant}>{s.label}</Badge>;
         },
       },
       {
         accessorKey: 'created_at',
         header: 'Ngày Tạo',
         size: 140,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        cell: ({ row }) => formatDateTime((row.original as any).created_at),
+        cell: ({ row }) => formatDateTime(row.original.created_at),
       },
       {
         id: 'actions',
@@ -214,33 +210,11 @@ export function StockEntryList() {
     : (approving?.purpose === 'issue' ? (!!selectedWarehouseId && hasSufficientStock) : true);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-5)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)' }}>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--fs-lg)', fontWeight: 600, margin: 0 }}>Phiếu Kho</h2>
-            <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)', marginTop: 2 }}>{entries.length} phiếu</p>
-          </div>
-          <div style={{ display: 'flex', background: 'var(--clr-surface)', padding: 4, borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)' }}>
-            <button 
-              onClick={() => setStatusFilter('all')}
-              style={{ padding: '6px 12px', fontSize: 'var(--fs-sm)', borderRadius: 'var(--radius-sm)', border: 'none', background: statusFilter === 'all' ? 'var(--clr-bg)' : 'transparent', color: statusFilter === 'all' ? 'var(--clr-text)' : 'var(--clr-text-muted)', cursor: 'pointer', fontWeight: statusFilter === 'all' ? 600 : 400 }}
-            >
-              Tất cả
-            </button>
-            <button 
-              onClick={() => setStatusFilter('draft')}
-              style={{ padding: '6px 12px', fontSize: 'var(--fs-sm)', borderRadius: 'var(--radius-sm)', border: 'none', background: statusFilter === 'draft' ? 'var(--clr-bg)' : 'transparent', color: statusFilter === 'draft' ? 'var(--clr-text)' : 'var(--clr-text-muted)', cursor: 'pointer', fontWeight: statusFilter === 'draft' ? 600 : 400 }}
-            >
-              Chờ duyệt
-            </button>
-            <button 
-              onClick={() => setStatusFilter('posted')}
-              style={{ padding: '6px 12px', fontSize: 'var(--fs-sm)', borderRadius: 'var(--radius-sm)', border: 'none', background: statusFilter === 'posted' ? 'var(--clr-bg)' : 'transparent', color: statusFilter === 'posted' ? 'var(--clr-text)' : 'var(--clr-text-muted)', cursor: 'pointer', fontWeight: statusFilter === 'posted' ? 600 : 400 }}
-            >
-              Đã duyệt
-            </button>
-          </div>
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--fs-lg)', fontWeight: 600, margin: 0 }}>Phiếu Kho</h2>
+          <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)', marginTop: 2 }}>{entries.length} phiếu</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button icon={<Plus size={16} />} onClick={() => setShowCreate('stock_in')}>Nhập Kho</Button>
@@ -248,6 +222,27 @@ export function StockEntryList() {
           <Button icon={<Plus size={16} />} variant="outline" onClick={() => setShowCreate('internal_transfer')}>Chuyển Kho</Button>
         </div>
       </div>
+
+      {/* Filter toolbar using shared CSS class */}
+      <div className="filterToolbar">
+        <div className="filterGroup">
+          <span className="filterLabel">Trạng thái:</span>
+          <div className="filterSelectWrapper">
+            <select
+              value={statusFilter}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'posted')}
+              className="filterSelectInput"
+              aria-label="Lọc trạng thái phiếu kho"
+            >
+              <option value="all">Tất cả phiếu kho</option>
+              <option value="draft">Chờ duyệt (Nháp)</option>
+              <option value="posted">Đã duyệt (Ghi sổ)</option>
+            </select>
+            <ChevronDown size={14} className="filterSelectIcon" />
+          </div>
+        </div>
+      </div>
+
       <DataTable columns={columns} data={entries} searchPlaceholder="Tìm mã phiếu..." loading={isLoading} />
 
       {approving && (

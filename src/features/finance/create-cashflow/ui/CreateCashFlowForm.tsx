@@ -54,13 +54,13 @@ export const CreateCashFlowForm: React.FC<{ onSuccess?: () => void }> = ({ onSuc
             label="Amount (VND)" 
             type="number" 
             min="0.01" step="0.01"
-            {...register('amount', { required: true, valueAsNumber: true, min: 0.01 })}
+            {...register('amount', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0.01, message: 'Số tiền tối thiểu là 0.01' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
             error={errors.amount?.message}
           />
           <Input 
             label="Date" 
             type="date" 
-            {...register('payment_date', { required: true })}
+            {...register('payment_date', { required: 'Bắt buộc' })}
             error={errors.payment_date?.message}
           />
           <Select 
