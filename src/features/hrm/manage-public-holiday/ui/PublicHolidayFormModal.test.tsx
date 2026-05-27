@@ -134,7 +134,7 @@ describe('PublicHolidayFormModal', () => {
     });
   });
 
-  it('allows editing and saving even if the original date is in the past', async () => {
+  it('blocks editing and saving if the original date is in the past or ongoing', async () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -147,18 +147,20 @@ describe('PublicHolidayFormModal', () => {
       description: 'Nghỉ Tết Âm Lịch',
     };
     renderWithProviders(<PublicHolidayFormModal {...defaultProps} holiday={holiday} />);
-    const user = userEvent.setup();
 
-    // Change description, keep the date same
-    const descInput = screen.getByLabelText('Mô tả');
-    await user.clear(descInput);
-    await user.type(descInput, 'Nghỉ Tết Âm Lịch cập nhật');
+    // Fields should be disabled
+    expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toBeDisabled();
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toBeDisabled();
+    expect(screen.getByLabelText('Số ngày nghỉ *')).toBeDisabled();
+    expect(screen.getByLabelText('Mô tả')).toBeDisabled();
 
-    await user.click(screen.getByRole('button', { name: 'Lưu' }));
+    // Save button should be disabled
+    const saveBtn = screen.getByRole('button', { name: 'Lưu' });
+    expect(saveBtn).toBeDisabled();
 
-    await waitFor(() => {
-      expect(defaultProps.onSuccess).toHaveBeenCalled();
-    });
+    // Warning banner should display
+    expect(screen.getByTestId('past-ongoing-holiday-banner')).toBeInTheDocument();
+    expect(screen.getByText('Không được phép chỉnh sửa hoặc xóa ngày nghỉ lễ trong quá khứ hoặc đang diễn ra.')).toBeInTheDocument();
   });
 
   it('formats ISO datetime with time correctly to DD/MM/YYYY in edit mode', () => {

@@ -271,11 +271,21 @@ export const handlers = [
     return HttpResponse.json({ id: params.id, status: 'terminated', ...data });
   }),
 
-  http.get('*/api/v1/hrm/attendances/', () => {
-    return HttpResponse.json([
+  http.get('*/api/v1/hrm/attendances/', ({ request }) => {
+    const url = new URL(request.url);
+    const dateParam = url.searchParams.get('date');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const mockData = [
       { id: 'att-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', date: '2026-05-23', status: 'working', work_hours: '8.00', overtime_hours: '0.00' },
       { id: 'att-2', employee_id: 'emp-2', employee_code: 'NV002', employee_name: 'Trần Thị Bình', date: '2026-05-23', status: 'paid_leave', work_hours: '0.00', overtime_hours: '0.00' }
-    ]);
+    ];
+    if (dateParam) {
+      if (dateParam === '2026-05-23' || dateParam === todayStr) {
+        return HttpResponse.json(mockData.map(d => ({ ...d, date: dateParam })));
+      }
+      return HttpResponse.json([]);
+    }
+    return HttpResponse.json(mockData);
   }),
 
   http.post('*/api/v1/hrm/attendances/batch/', async ({ request }) => {

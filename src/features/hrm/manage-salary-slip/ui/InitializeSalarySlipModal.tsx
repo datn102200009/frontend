@@ -63,9 +63,9 @@ export const InitializeSalarySlipModal: React.FC<InitializeSalarySlipModalProps>
       onSuccess();
     } catch (err: unknown) {
       console.error('Failed to initialize salary slips', err);
-      const error = err as { data?: { detail?: string } };
+      const error = err as { data?: { error?: string; detail?: string } };
       setApiError(
-        error?.data?.detail || 'Có lỗi xảy ra khi khởi tạo phiếu lương. Vui lòng kiểm tra lại.'
+        error?.data?.error || error?.data?.detail || 'Có lỗi xảy ra khi khởi tạo phiếu lương. Vui lòng kiểm tra lại.'
       );
     }
   };
