@@ -3,7 +3,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolk
 import { logout } from '@features/auth/model/authSlice';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:8000/api/v1',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
   prepareHeaders: (headers) => {
     const token = localStorage.getItem('access_token');
     if (token) {
