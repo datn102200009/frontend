@@ -90,6 +90,22 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
     }
   }, [open, holiday, reset]);
 
+  const isPastOrOngoing = React.useMemo(() => {
+    if (!holiday || !holiday.start_date) return false;
+    const cleanDateStr = holiday.start_date.split('T')[0];
+    const parts = cleanDateStr.split('-');
+    if (parts.length === 3) {
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const parsedHolidayDate = new Date(y, m, d);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return parsedHolidayDate <= today;
+    }
+    return false;
+  }, [holiday]);
+
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
     try {
@@ -134,13 +150,18 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           <Button variant="ghost" onClick={onClose} disabled={isLoading}>
             Hủy
           </Button>
-          <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={isLoading}>
+          <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={isLoading} disabled={isPastOrOngoing}>
             Lưu
           </Button>
         </div>
       }
     >
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+        {isPastOrOngoing && (
+          <div className={styles.errorSection} data-testid="past-ongoing-holiday-banner">
+            <span>Không được phép chỉnh sửa hoặc xóa ngày nghỉ lễ trong quá khứ hoặc đang diễn ra.</span>
+          </div>
+        )}
         {apiError && (
           <div className={styles.errorSection}>
             <span>{apiError}</span>
@@ -157,7 +178,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
             placeholder="Ví dụ: Tết Nguyên Đán, Ngày Quốc tế Lao động..."
             className={styles.input}
             {...register('name', { required: 'Tên ngày nghỉ lễ là bắt buộc' })}
-            disabled={isLoading}
+            disabled={isLoading || isPastOrOngoing}
           />
           {errors.name && <span className={styles.errorText}>{errors.name.message}</span>}
         </div>
@@ -173,16 +194,16 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
               readOnly
               placeholder="DD/MM/YYYY"
               value={formatDateToDMY(watchStartDate)}
-              onClick={() => !isLoading && setIsDatePickerOpen(true)}
+              onClick={() => !(isLoading || isPastOrOngoing) && setIsDatePickerOpen(true)}
               onKeyDown={(e) => {
-                if (!isLoading && (e.key === 'Enter' || e.key === ' ')) {
+                if (!(isLoading || isPastOrOngoing) && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
                   setIsDatePickerOpen(true);
                 }
               }}
               className={styles.input}
-              disabled={isLoading}
-              style={{ cursor: 'pointer' }}
+              disabled={isLoading || isPastOrOngoing}
+              style={{ cursor: isPastOrOngoing ? 'not-allowed' : 'pointer' }}
             />
             <Calendar className={styles.inputIcon} size={16} />
           </div>
@@ -236,7 +257,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
                 return true;
               },
             })}
-            disabled={isLoading}
+            disabled={isLoading || isPastOrOngoing}
           />
           {errors.days && <span className={styles.errorText}>{errors.days.message}</span>}
         </div>
@@ -250,7 +271,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
             placeholder="Mô tả chi tiết hoặc ghi chú..."
             className={styles.textarea}
             {...register('description')}
-            disabled={isLoading}
+            disabled={isLoading || isPastOrOngoing}
           />
         </div>
       </form>

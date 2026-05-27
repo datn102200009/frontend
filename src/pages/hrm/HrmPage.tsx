@@ -257,12 +257,12 @@ const HrmPage: React.FC = () => {
             <>
               <div className={styles.header}>
                 <div>
-                  <h2 className={styles.title}>Tính Toán & Thanh Toán Lương</h2>
+                  <h2 className={styles.title}>Thanh Toán Lương</h2>
                   <p className={styles.subtitle}>Quản lý bảng lương nhân sự, tính toán công nợ và chi lương</p>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <Button variant="secondary" onClick={() => setIsBulkPayOpen(true)}>
-                    Thanh Toán Nhanh
+                    Thanh Toán Kỳ Lương
                   </Button>
                   <Button icon={<Plus size={16} />} onClick={() => setIsInitializeSalarySlipOpen(true)}>
                     Khởi Tạo Kỳ Lương

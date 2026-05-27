@@ -23,6 +23,22 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
     return selectedYear === 'all' ? {} : { year: selectedYear };
   }, [selectedYear]);
 
+  const hasHolidayStarted = (startDateStr?: string) => {
+    if (!startDateStr) return false;
+    const cleanDateStr = startDateStr.split('T')[0];
+    const parts = cleanDateStr.split('-');
+    if (parts.length === 3) {
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      const parsedHolidayDate = new Date(y, m, d);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return parsedHolidayDate <= today;
+    }
+    return false;
+  };
+
   const { data: holidays = [], isLoading } = useGetHrmPublicHolidaysQuery(queryArg);
   const [deleteHoliday, { isLoading: isDeleting }] = useDeleteHrmPublicHolidaysByIdMutation();
   const [deletingHoliday, setDeletingHoliday] = useState<PublicHoliday | null>(null);
@@ -69,6 +85,10 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
         size: 80,
         cell: (info) => {
           const holiday = info.row.original;
+          const hasStarted = hasHolidayStarted(holiday.start_date);
+          if (hasStarted) {
+            return <span style={{ color: 'var(--clr-text-secondary)', fontSize: 'var(--fs-xs)' }}>-</span>;
+          }
           return (
             <TableActions>
               <ActionButton
@@ -80,6 +100,7 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
                 icon={<Trash2 size={15} />}
                 title="Xóa ngày nghỉ lễ"
                 onClick={() => setDeletingHoliday(holiday)}
+                variant="danger"
               />
             </TableActions>
           );
