@@ -5,7 +5,8 @@ import {
   useGetSalesOrdersByPkQuery,
   usePutSalesOrdersByPkMutation,
   useDeleteSalesOrdersByPkMutation,
-  usePostSalesOrdersByPkApproveMutation
+  usePostSalesOrdersByPkApproveMutation,
+  usePostSalesOrdersByPkApproveCreditBypassMutation
 } from '@entities/sales/api/salesApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetCrmCustomersQuery } from '@entities/crm/api/crmApi';
@@ -15,6 +16,7 @@ import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
 import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
+import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalesOrderFormModal.module.css';
 
 
@@ -34,14 +36,18 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const [updateOrder, { isLoading: isUpdating }] = usePutSalesOrdersByPkMutation();
   const [deleteOrder, { isLoading: isDeleting }] = useDeleteSalesOrdersByPkMutation();
   const [approveOrder, { isLoading: isApproving }] = usePostSalesOrdersByPkApproveMutation();
+  const [approveCreditBypass, { isLoading: isBypassing }] = usePostSalesOrdersByPkApproveCreditBypassMutation();
+
+  const canBypass = usePermission('sales.approve_credit_bypass');
 
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
 
   const isDraft = orderData ? orderData.status === 'draft' : true;
   const isPending = orderData?.status === 'pending';
+  const isCreditApproval = orderData?.status === 'pending_credit_approval';
   const isReadOnly = !isDraft;
-  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isLoadingOrder;
+  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isBypassing || isLoadingOrder;
 
   const { register, control, handleSubmit, formState: { errors }, reset } = useForm<SalesOrderInput>({
     defaultValues: {
@@ -167,6 +173,16 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     }
   };
 
+  const handleBypass = async () => {
+    if (!orderId || !orderData) return;
+    try {
+      await approveCreditBypass({ pk: orderId }).unwrap();
+      onSuccess();
+    } catch (err) {
+      console.error('Failed to bypass credit approval', err);
+    }
+  };
+
   const handleCancel = () => {
     if (!orderId) return;
     setConfirmState({
@@ -198,7 +214,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                   Xóa
                 </Button>
               )}
-              {orderId && isPending && (
+              {orderId && (isPending || isCreditApproval) && (
                 <Button variant="outline" onClick={handleCancel} loading={isUpdating} disabled={isWorking} icon={<XCircle size={16} />}>
                   Hủy Đơn
                 </Button>
@@ -223,6 +239,11 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                   Nhận Thanh Toán Cọc
                 </Button>
               )}
+              {orderId && isCreditApproval && canBypass && (
+                <Button variant="primary" onClick={handleBypass} loading={isBypassing} disabled={isWorking} icon={<CheckCircle size={16} />}>
+                  Duyệt tín dụng đặc cách
+                </Button>
+              )}
             </div>
           </div>
         }
@@ -231,7 +252,31 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
           <div style={{ padding: 'var(--sp-6)', textAlign: 'center', color: 'var(--clr-text-muted)' }}>Đang tải dữ liệu...</div>
         ) : (
           <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
-            {!isDraft && (
+            {isCreditApproval && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px',
+                padding: '16px',
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                borderRadius: '12px',
+                marginBottom: '20px',
+                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.04)'
+              }}>
+                <AlertCircle size={20} color="rgb(239, 68, 68)" style={{ marginTop: '2px', flexShrink: 0 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'rgb(220, 38, 38)' }}>
+                    Đơn hàng bị Khóa Tín Dụng
+                  </span>
+                  <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', lineHeight: 1.5 }}>
+                    Đơn hàng này đã bị hệ thống tự động khóa và chuyển sang trạng thái chờ duyệt do khách hàng vượt quá hạn mức nợ hoặc có nợ quá hạn trên 30 ngày. Vui lòng liên hệ Admin/CFO để duyệt đặc cách.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!isDraft && !isCreditApproval && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', backgroundColor: 'var(--clr-surface-muted)', borderRadius: 'var(--radius-md)', marginBottom: '16px' }}>
                 <AlertCircle size={18} color="var(--clr-primary)" />
                 <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)' }}>Đơn hàng không thể chỉnh sửa ở trạng thái hiện tại.</span>

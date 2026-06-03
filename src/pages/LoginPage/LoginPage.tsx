@@ -30,7 +30,8 @@ export default function LoginPage() {
         id: res.user_id || '',
         username: res.username || '',
         full_name: res.username || '',
-        role: (res.role || 'staff') as 'admin' | 'manager' | 'staff'
+        role: (res.role || 'staff') as 'admin' | 'manager' | 'staff',
+        permissions: res.permissions || []
       };
       dispatch(loginSuccess({ user, token: res.access || '', refresh: res.refresh }));
       toast('success', 'Đăng nhập thành công');

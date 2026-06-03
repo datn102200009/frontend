@@ -70,6 +70,12 @@ export type Customer = {
   contact_email?: string | null
   contact_phone?: string | null
   address?: string | null
+  /** Hạn mức nợ tối đa cho phép đại lý mua chịu */
+  credit_limit?: number
+  /** Điều khoản thanh toán (ví dụ: NET30, NET45) */
+  payment_terms?: string
+  /** Khóa tín dụng chủ động */
+  is_credit_locked?: boolean
   is_active?: boolean
   created_at?: string
   updated_at?: string
@@ -87,6 +93,12 @@ export type CustomerInput = {
   contact_email?: string | null
   contact_phone?: string | null
   address?: string | null
+  /** Hạn mức nợ tối đa cho phép đại lý mua chịu */
+  credit_limit?: number
+  /** Điều khoản thanh toán (ví dụ: NET30, NET45) */
+  payment_terms?: string
+  /** Khóa tín dụng chủ động */
+  is_credit_locked?: boolean
 }
 export const {
   useGetCrmCustomersQuery,

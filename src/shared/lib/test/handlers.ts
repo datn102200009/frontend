@@ -11,7 +11,8 @@ export const handlers = [
         refresh: 'mock-refresh-token',
         user_id: '1',
         username: 'admin',
-        role: 'admin'
+        role: 'admin',
+        permissions: ['sales.approve_credit_bypass']
       });
     }
     return new HttpResponse(

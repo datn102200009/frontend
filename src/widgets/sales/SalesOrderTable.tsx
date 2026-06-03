@@ -36,6 +36,7 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
           const labelMap: Record<string, string> = {
             draft: 'Nháp',
             pending: 'Đang hoạt động',
+            pending_credit_approval: 'Chờ duyệt tín dụng',
             paid_unshipped: 'Chờ giao hàng',
             shipped_unpaid: 'Chờ thanh toán',
             completed: 'Hoàn thành',
@@ -44,6 +45,7 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
           const colorMap: Record<string, 'neutral' | 'success' | 'error' | 'warning' | 'info'> = {
             draft: 'neutral',
             pending: 'info',
+            pending_credit_approval: 'error',
             paid_unshipped: 'warning',
             shipped_unpaid: 'warning',
             completed: 'success',

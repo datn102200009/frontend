@@ -33,6 +33,8 @@ export type LoginResponse = {
   email?: string
   /** Tên role của user */
   role?: string | null
+  /** Danh sách mã quyền của user */
+  permissions?: string[]
 }
 export type ErrorResponse = {
   detail?: string
