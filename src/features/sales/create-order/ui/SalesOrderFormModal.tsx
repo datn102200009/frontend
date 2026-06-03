@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { useSelector } from 'react-redux';
 import { 
   usePostSalesOrdersMutation, 
   useGetSalesOrdersByPkQuery,
@@ -12,12 +11,12 @@ import {
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetCrmCustomersQuery } from '@entities/crm/api/crmApi';
 import type { SalesOrderInput } from '@entities/sales/model/types';
-import type { RootState } from '@app/store';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
 import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
+import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalesOrderFormModal.module.css';
 
 
@@ -39,7 +38,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const [approveOrder, { isLoading: isApproving }] = usePostSalesOrdersByPkApproveMutation();
   const [approveCreditBypass, { isLoading: isBypassing }] = usePostSalesOrdersByPkApproveCreditBypassMutation();
 
-  const user = useSelector((s: RootState) => s.auth.user);
+  const canBypass = usePermission('sales.approve_credit_bypass');
 
   const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
@@ -240,7 +239,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                   Nhận Thanh Toán Cọc
                 </Button>
               )}
-              {orderId && isCreditApproval && (user?.role?.toLowerCase() === 'admin' || user?.role?.toLowerCase() === 'manager') && (
+              {orderId && isCreditApproval && canBypass && (
                 <Button variant="primary" onClick={handleBypass} loading={isBypassing} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt tín dụng đặc cách
                 </Button>
