@@ -89,7 +89,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         .toUpperCase()
     : '??';
 
-  const roleLabel = user?.role === 'admin' ? 'Quản trị viên' : user?.role === 'manager' ? 'Quản lý' : 'Nhân viên';
+  const roleLabel = user?.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : user?.role?.toLowerCase() === 'manager' ? 'Quản lý' : 'Nhân viên';
 
   return (
     <>

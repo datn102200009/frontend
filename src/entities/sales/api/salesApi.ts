@@ -39,6 +39,15 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/sales/orders/${queryArg.pk}/approve/`, method: 'POST' }),
     }),
+    postSalesOrdersByPkApproveCreditBypass: build.mutation<
+      PostSalesOrdersByPkApproveCreditBypassApiResponse,
+      PostSalesOrdersByPkApproveCreditBypassApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/sales/orders/${queryArg.pk}/approve-credit-bypass/`,
+        method: 'POST',
+      }),
+    }),
     getSalesInvoices: build.query<GetSalesInvoicesApiResponse, GetSalesInvoicesApiArg>({
       query: () => ({ url: `/sales/invoices/` }),
     }),
@@ -79,6 +88,11 @@ export type PostSalesOrdersByPkApproveApiResponse =
 export type PostSalesOrdersByPkApproveApiArg = {
   pk: string
 }
+export type PostSalesOrdersByPkApproveCreditBypassApiResponse =
+  /** status 200 Đơn bán hàng đã được duyệt đặc cách tín dụng thành công. */ SalesOrder
+export type PostSalesOrdersByPkApproveCreditBypassApiArg = {
+  pk: string
+}
 export type GetSalesInvoicesApiResponse = /** status 200 A list of sales invoices. */ SalesInvoice[]
 export type GetSalesInvoicesApiArg = void
 export type GetSalesInvoicesByPkApiResponse = /** status 200 Sales invoice details. */ SalesInvoice
@@ -98,7 +112,14 @@ export type SalesOrder = {
   id?: string
   customer?: string
   customer_name?: string
-  status?: 'draft' | 'pending' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled'
+  status?:
+    | 'draft'
+    | 'pending'
+    | 'pending_credit_approval'
+    | 'paid_unshipped'
+    | 'shipped_unpaid'
+    | 'completed'
+    | 'cancelled'
   total_amount?: number
   advance_paid_amount?: number
   created_at?: string
@@ -124,7 +145,14 @@ export type SalesOrderLineInput = {
 }
 export type SalesOrderInput = {
   customer_id: string
-  status?: 'draft' | 'pending' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled'
+  status?:
+    | 'draft'
+    | 'pending'
+    | 'pending_credit_approval'
+    | 'paid_unshipped'
+    | 'shipped_unpaid'
+    | 'completed'
+    | 'cancelled'
   lines: SalesOrderLineInput[]
 }
 export type SalesInvoiceLine = {
@@ -159,6 +187,7 @@ export const {
   useDeleteSalesOrdersByPkMutation,
   usePostSalesOrdersByPkDeliverMutation,
   usePostSalesOrdersByPkApproveMutation,
+  usePostSalesOrdersByPkApproveCreditBypassMutation,
   useGetSalesInvoicesQuery,
   useGetSalesInvoicesByPkQuery,
 } = injectedRtkApi

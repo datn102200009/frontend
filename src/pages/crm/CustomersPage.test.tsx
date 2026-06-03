@@ -85,7 +85,10 @@ describe('CustomersPage', () => {
         customer_group: 'Individual',
         contact_email: 'beta@test.com',
         contact_phone: '0987654321',
-        address: 'TP.HCM'
+        address: 'TP.HCM',
+        credit_limit: 0,
+        payment_terms: 'NET30',
+        is_credit_locked: false,
       });
       // Modal should be closed
       expect(screen.queryByRole('heading', { name: /Thêm Khách Hàng Mới/i })).not.toBeInTheDocument();
@@ -158,7 +161,10 @@ describe('CustomersPage', () => {
         customer_group: 'Commercial',
         contact_email: 'alpha@test.com',
         contact_phone: '0123456789',
-        address: 'Hà Nội'
+        address: 'Hà Nội',
+        credit_limit: 0,
+        payment_terms: 'NET30',
+        is_credit_locked: false,
       });
     });
   });
