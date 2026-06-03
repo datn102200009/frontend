@@ -159,6 +159,9 @@ salesApi.enhanceEndpoints({
     postSalesOrdersByPkApprove: {
       invalidatesTags: ['SalesOrders', 'Inventory', 'Invoices'],
     },
+    postSalesOrdersByPkApproveCreditBypass: {
+      invalidatesTags: ['SalesOrders', 'Inventory', 'Invoices'],
+    },
   },
 });
 
