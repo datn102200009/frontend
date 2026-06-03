@@ -253,7 +253,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
             <div style={{ marginTop: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--sp-4)' }}>
               <h4 style={{ margin: '0 0 var(--sp-3) 0', fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--clr-text-primary)' }}>
-                Thông Tin Tín Dụng & Công Nợ
+                Thông Tin Tín Dụng {"&"} Công Nợ
               </h4>
               <div className={styles.row}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
