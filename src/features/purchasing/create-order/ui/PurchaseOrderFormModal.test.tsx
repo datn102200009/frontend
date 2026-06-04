@@ -128,9 +128,12 @@ describe('PurchaseOrderFormModal', () => {
     );
 
     renderWithProviders(<PurchaseOrderFormModal {...defaultProps} orderId="PO-PENDING" />);
-    const depositInput = await screen.findByLabelText(/Số tiền đặt cọc/i);
-    expect(depositInput).toBeInTheDocument();
-    expect(depositInput).toBeDisabled();
+    
+    // Deposit input should not be in the document
+    expect(screen.queryByRole('spinbutton', { name: /Số tiền đặt cọc/i })).not.toBeInTheDocument();
+    
+    // Check that the formatted deposit value is displayed as static text
+    expect(await screen.findByText(/1\.000\.000/)).toBeInTheDocument();
   });
 
   it('renders Cancel Order button when user has purchasing.cancel_order permission', async () => {
@@ -207,8 +210,48 @@ describe('PurchaseOrderFormModal', () => {
       { preloadedState }
     );
 
-    // Wait for the modal contents to render
-    await screen.findByLabelText(/Số tiền đặt cọc/i);
+    // Wait for the modal contents to render by checking static vendor
+    await screen.findByTestId('static-vendor');
+    expect(screen.queryByRole('button', { name: /Hủy Đơn/i })).not.toBeInTheDocument();
+  });
+
+  it('does not render Cancel Order button when order is completed', async () => {
+    server.use(
+      http.get('*/api/v1/purchasing/orders/PO-COMPLETED/', () => {
+        return HttpResponse.json({
+          id: 'PO-COMPLETED',
+          vendor: '33333333-3333-3333-3333-333333333333',
+          vendor_name: 'Tech Component Inc',
+          status: 'completed',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 5, unit_price: 2000000 }
+          ]
+        });
+      })
+    );
+
+    const preloadedState = {
+      auth: {
+        user: {
+          id: '1',
+          username: 'admin',
+          full_name: 'Admin User',
+          role: 'admin' as const,
+          permissions: ['purchasing.cancel_order'],
+        },
+        token: 'test_token',
+        isAuthenticated: true,
+      },
+    };
+
+    renderWithProviders(
+      <PurchaseOrderFormModal {...defaultProps} orderId="PO-COMPLETED" />,
+      { preloadedState }
+    );
+
+    // Wait for the modal contents to render by checking static vendor
+    await screen.findByTestId('static-vendor');
     expect(screen.queryByRole('button', { name: /Hủy Đơn/i })).not.toBeInTheDocument();
   });
 });

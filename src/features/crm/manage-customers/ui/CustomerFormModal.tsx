@@ -124,7 +124,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             <div>
               {customerId && (
                 <Button
-                  variant="outline"
+                  variant="danger"
                   onClick={() => setShowConfirmDelete(true)}
                   loading={isDeleting}
                   disabled={isWorking}
@@ -313,6 +313,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           message="Bạn có chắc chắn muốn xóa khách hàng này khỏi hệ thống? Thao tác này không thể hoàn tác."
           onConfirm={handleDelete}
           onCancel={() => setShowConfirmDelete(false)}
+          confirmVariant="danger"
         />
       )}
     </>

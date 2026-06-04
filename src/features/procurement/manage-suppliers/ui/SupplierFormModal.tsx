@@ -115,7 +115,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
             <div>
               {supplierId && (
                 <Button
-                  variant="outline"
+                  variant="danger"
                   onClick={() => setShowConfirmDelete(true)}
                   loading={isDeleting}
                   disabled={isWorking}
@@ -252,6 +252,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
           message="Bạn có chắc chắn muốn xóa nhà cung cấp này khỏi hệ thống? Thao tác này không thể hoàn tác."
           onConfirm={handleDelete}
           onCancel={() => setShowConfirmDelete(false)}
+          confirmVariant="danger"
         />
       )}
     </>

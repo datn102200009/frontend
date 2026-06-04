@@ -155,9 +155,12 @@ describe('SalesOrderFormModal', () => {
     );
 
     renderWithProviders(<SalesOrderFormModal {...defaultProps} orderId="SO-PENDING" />);
-    const depositInput = await screen.findByLabelText(/Số tiền đặt cọc/i);
-    expect(depositInput).toBeInTheDocument();
-    expect(depositInput).toBeDisabled();
+    
+    // Deposit input should not be in the document
+    expect(screen.queryByRole('spinbutton', { name: /Số tiền đặt cọc/i })).not.toBeInTheDocument();
+    
+    // Check that the formatted deposit value is displayed as static text
+    expect(await screen.findByText(/1\.000\.000/)).toBeInTheDocument();
   });
 
   it('renders Cancel Order button when user has sales.cancel_order permission', async () => {
@@ -234,8 +237,48 @@ describe('SalesOrderFormModal', () => {
       { preloadedState }
     );
 
-    // Wait for the modal contents to render
-    await screen.findByLabelText(/Số tiền đặt cọc/i);
+    // Wait for the modal contents to render by checking static customer
+    await screen.findByTestId('static-customer');
+    expect(screen.queryByRole('button', { name: /Hủy Đơn/i })).not.toBeInTheDocument();
+  });
+
+  it('does not render Cancel Order button when order is completed', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/SO-COMPLETED/', () => {
+        return HttpResponse.json({
+          id: 'SO-COMPLETED',
+          customer: '44444444-4444-4444-4444-444444444444',
+          customer_name: 'Công ty Cổ phần Alpha',
+          status: 'completed',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 10, unit_price: 15000000 }
+          ]
+        });
+      })
+    );
+
+    const preloadedState = {
+      auth: {
+        user: {
+          id: '1',
+          username: 'admin',
+          full_name: 'Admin User',
+          role: 'admin' as const,
+          permissions: ['sales.cancel_order'],
+        },
+        token: 'test_token',
+        isAuthenticated: true,
+      },
+    };
+
+    renderWithProviders(
+      <SalesOrderFormModal {...defaultProps} orderId="SO-COMPLETED" />,
+      { preloadedState }
+    );
+
+    // Wait for the modal contents to render by checking static customer
+    await screen.findByTestId('static-customer');
     expect(screen.queryByRole('button', { name: /Hủy Đơn/i })).not.toBeInTheDocument();
   });
 });

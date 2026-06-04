@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { Button } from '../Button/Button';
+import { Button, type ButtonVariant } from '../Button/Button';
 import { AlertCircle } from 'lucide-react';
 
 interface ConfirmModalProps {
@@ -12,6 +12,7 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
+  confirmVariant?: ButtonVariant;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -23,6 +24,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
   isLoading = false,
+  confirmVariant = 'primary',
 }) => {
   return (
     <Modal
@@ -35,7 +37,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <Button variant="ghost" onClick={onCancel} disabled={isLoading}>
             {cancelText}
           </Button>
-          <Button variant="danger" onClick={onConfirm} loading={isLoading}>
+          <Button variant={confirmVariant} onClick={onConfirm} loading={isLoading}>
             {confirmText}
           </Button>
         </div>

@@ -113,3 +113,13 @@
   font-weight: var(--fw-semibold);
   color: var(--clr-text-primary);
 }
+
+.staticText {
+  padding: 7px 0;
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  font-weight: var(--fw-medium);
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+}
