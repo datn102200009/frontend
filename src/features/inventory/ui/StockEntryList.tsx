@@ -42,6 +42,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
   draft: { label: 'Nháp', variant: 'neutral' },
   submitted: { label: 'Chờ duyệt', variant: 'warning' },
   posted: { label: 'Đã duyệt', variant: 'success' },
+  cancelled: { label: 'Đã hủy', variant: 'neutral' },
 };
 
 export function StockEntryList() {
@@ -50,7 +51,7 @@ export function StockEntryList() {
   const entries = (entriesData && 'results' in entriesData) ? (entriesData.results || []) : (Array.isArray(entriesData) ? entriesData : []);
   
   const { data: warehouses } = useGetMasterDataWarehousesListQuery();
-  const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({});
+  const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({ detailed: true });
   const [updateStockEntry, { isLoading: isUpdating }] = usePostInventoryStockEntryByStockEntryIdUpdateMutation();
 
   const [approveStockIn, { isLoading: isApprovingIn }] = usePostInventoryStockInByStockEntryIdApproveMutation();

@@ -48,6 +48,12 @@ const injectedRtkApi = api.injectEndpoints({
         method: 'POST',
       }),
     }),
+    postSalesOrdersByPkCancel: build.mutation<
+      PostSalesOrdersByPkCancelApiResponse,
+      PostSalesOrdersByPkCancelApiArg
+    >({
+      query: (queryArg) => ({ url: `/sales/orders/${queryArg.pk}/cancel/`, method: 'POST' }),
+    }),
     getSalesInvoices: build.query<GetSalesInvoicesApiResponse, GetSalesInvoicesApiArg>({
       query: () => ({ url: `/sales/invoices/` }),
     }),
@@ -91,6 +97,11 @@ export type PostSalesOrdersByPkApproveApiArg = {
 export type PostSalesOrdersByPkApproveCreditBypassApiResponse =
   /** status 200 Đơn bán hàng đã được duyệt đặc cách tín dụng thành công. */ SalesOrder
 export type PostSalesOrdersByPkApproveCreditBypassApiArg = {
+  pk: string
+}
+export type PostSalesOrdersByPkCancelApiResponse =
+  /** status 200 Đơn bán hàng đã được hủy thành công. */ SalesOrder
+export type PostSalesOrdersByPkCancelApiArg = {
   pk: string
 }
 export type GetSalesInvoicesApiResponse = /** status 200 A list of sales invoices. */ SalesInvoice[]
@@ -153,6 +164,7 @@ export type SalesOrderInput = {
     | 'shipped_unpaid'
     | 'completed'
     | 'cancelled'
+  advance_paid_amount?: number
   lines: SalesOrderLineInput[]
 }
 export type SalesInvoiceLine = {
@@ -188,6 +200,7 @@ export const {
   usePostSalesOrdersByPkDeliverMutation,
   usePostSalesOrdersByPkApproveMutation,
   usePostSalesOrdersByPkApproveCreditBypassMutation,
+  usePostSalesOrdersByPkCancelMutation,
   useGetSalesInvoicesQuery,
   useGetSalesInvoicesByPkQuery,
 } = injectedRtkApi

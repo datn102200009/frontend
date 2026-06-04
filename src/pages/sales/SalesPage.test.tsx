@@ -121,6 +121,7 @@ describe('SalesPage', () => {
       expect(postPayload).toEqual({
         customer_id: 'CUS01',
         status: 'draft',
+        advance_paid_amount: 0,
         lines: [
           {
             item_id: 'SP001',

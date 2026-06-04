@@ -66,6 +66,7 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/inventory/stock-ledger/balance/`,
         params: {
           warehouse_id: queryArg.warehouseId,
+          detailed: queryArg.detailed,
         },
       }),
     }),
@@ -127,6 +128,7 @@ export type PostInventoryStockTransferByStockEntryIdApproveApiArg = {
 export type GetInventoryStockLedgerBalanceApiResponse = /** status 200 Success */ StockBalance[]
 export type GetInventoryStockLedgerBalanceApiArg = {
   warehouseId?: string
+  detailed?: boolean
 }
 export type GetInventoryStockEntryListApiResponse = /** status 200 Success */ StockEntryListResponse
 export type GetInventoryStockEntryListApiArg = {

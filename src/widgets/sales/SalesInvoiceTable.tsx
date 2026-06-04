@@ -47,7 +47,13 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({ onView }) 
             paid: 'success',
             cancelled: 'neutral',
           };
-          return <Badge variant={colorMap[status] || 'neutral'}>{status.toUpperCase()}</Badge>;
+          const labelMap: Record<string, string> = {
+            unpaid: 'Chưa Thanh Toán',
+            partial: 'Thanh Toán Một Phần',
+            paid: 'Đã Thanh Toán',
+            cancelled: 'Đã Hủy',
+          };
+          return <Badge variant={colorMap[status] || 'neutral'}>{labelMap[status] || status.toUpperCase()}</Badge>;
         },
       }),
       helper.display({
