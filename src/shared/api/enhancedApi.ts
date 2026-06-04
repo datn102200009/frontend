@@ -127,6 +127,9 @@ purchasingApi.enhanceEndpoints({
     postPurchasingOrdersByPkApprove: {
       invalidatesTags: ['PurchaseOrders', 'Inventory', 'Invoices'],
     },
+    postPurchasingOrdersByPkCancel: {
+      invalidatesTags: ['PurchaseOrders', 'Invoices', 'Inventory', 'CashFlows'],
+    },
   },
 });
 
@@ -161,6 +164,9 @@ salesApi.enhanceEndpoints({
     },
     postSalesOrdersByPkApproveCreditBypass: {
       invalidatesTags: ['SalesOrders', 'Inventory', 'Invoices'],
+    },
+    postSalesOrdersByPkCancel: {
+      invalidatesTags: ['SalesOrders', 'Invoices', 'Inventory', 'CashFlows'],
     },
   },
 });

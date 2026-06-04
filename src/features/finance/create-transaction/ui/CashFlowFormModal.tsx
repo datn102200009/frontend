@@ -41,7 +41,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
       purchase_invoice_id: defaultValues?.purchase_invoice_id || null,
       sales_order_id: defaultValues?.sales_order_id || null,
       purchase_order_id: defaultValues?.purchase_order_id || null,
-      category: defaultValues?.category || 'bank_transfer',
+      category: defaultValues?.category || '',
+      payment_method: defaultValues?.payment_method || 'bank_transfer',
       remarks: defaultValues?.remarks || ''
     }
   });
@@ -59,7 +60,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           purchase_invoice_id: null,
           sales_order_id: null,
           purchase_order_id: null,
-          category: defaultValues?.category || 'bank_transfer',
+          category: defaultValues?.category || '',
+          payment_method: defaultValues?.payment_method || 'bank_transfer',
           remarks: defaultValues?.remarks || ''
         });
         hasInitialized.current = true;
@@ -72,7 +74,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           purchase_invoice_id: purchaseInvoices[0].id || '',
           sales_order_id: null,
           purchase_order_id: null,
-          category: defaultValues?.category || 'bank_transfer',
+          category: defaultValues?.category || '',
+          payment_method: defaultValues?.payment_method || 'bank_transfer',
           remarks: defaultValues?.remarks || ''
         });
         hasInitialized.current = true;
@@ -82,7 +85,27 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
 
   const onSubmit = async (data: CashFlowInput) => {
     try {
-      await createTx({ cashFlowInput: data }).unwrap();
+      let inferredCategory = data.category || defaultValues?.category;
+      if (!inferredCategory) {
+        if (data.sales_order_id || defaultValues?.sales_order_id) {
+          inferredCategory = 'Đặt cọc đơn hàng';
+        } else if (data.purchase_order_id || defaultValues?.purchase_order_id) {
+          inferredCategory = 'Đặt cọc đơn hàng';
+        } else if (data.sales_invoice_id || defaultValues?.sales_invoice_id) {
+          inferredCategory = 'Thanh toán hóa đơn';
+        } else if (data.purchase_invoice_id || defaultValues?.purchase_invoice_id) {
+          inferredCategory = 'Thanh toán hóa đơn';
+        } else {
+          inferredCategory = 'Thu/Chi khác';
+        }
+      }
+
+      const payload = {
+        ...data,
+        category: inferredCategory,
+      };
+
+      await createTx({ cashFlowInput: payload }).unwrap();
       onSuccess();
     } catch (err) {
       console.error('Failed to record transaction', err);
@@ -140,8 +163,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', flex: 1 }}>
-            <label htmlFor="category" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>Phương Thức <span style={{ color: 'var(--clr-danger)' }}>*</span></label>
-            <select id="category" className={styles.itemInput} {...register('category', { required: 'Bắt buộc' })} disabled={isWorking}>
+            <label htmlFor="payment_method" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>Phương Thức <span style={{ color: 'var(--clr-danger)' }}>*</span></label>
+            <select id="payment_method" className={styles.itemInput} {...register('payment_method', { required: 'Bắt buộc' })} disabled={isWorking}>
               <option value="cash">Tiền mặt</option>
               <option value="bank_transfer">Chuyển khoản</option>
               <option value="credit_card">Thẻ tín dụng</option>

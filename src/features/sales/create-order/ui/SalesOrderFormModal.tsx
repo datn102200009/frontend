@@ -6,19 +6,53 @@ import {
   usePutSalesOrdersByPkMutation,
   useDeleteSalesOrdersByPkMutation,
   usePostSalesOrdersByPkApproveMutation,
-  usePostSalesOrdersByPkApproveCreditBypassMutation
+  usePostSalesOrdersByPkApproveCreditBypassMutation,
+  usePostSalesOrdersByPkCancelMutation
 } from '@entities/sales/api/salesApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetCrmCustomersQuery } from '@entities/crm/api/crmApi';
 import type { SalesOrderInput } from '@entities/sales/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
-import { Plus, Trash2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
-import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
+import { Plus, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalesOrderFormModal.module.css';
 
+
+const getStockEntryStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'posted': return 'Đã Xuất';
+    case 'cancelled': return 'Đã Hủy';
+    case 'submitted': return 'Chờ Duyệt';
+    default: return 'Bản Nháp';
+  }
+};
+
+const getStockEntryStatusColor = (status?: string) => {
+  switch (status) {
+    case 'posted': return 'var(--clr-success)';
+    case 'cancelled': return 'var(--clr-danger)';
+    default: return 'var(--clr-warning)';
+  }
+};
+
+const getInvoiceStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'paid': return 'Đã Thu Tiền';
+    case 'partial': return 'Thu Một Phần';
+    case 'cancelled': return 'Đã Hủy';
+    default: return 'Chưa Thanh Toán';
+  }
+};
+
+const getInvoiceStatusColor = (status?: string) => {
+  switch (status) {
+    case 'paid': return 'var(--clr-success)';
+    case 'cancelled': return 'var(--clr-danger)';
+    default: return 'var(--clr-warning)';
+  }
+};
 
 interface SalesOrderFormModalProps {
   open: boolean;
@@ -37,21 +71,22 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const [deleteOrder, { isLoading: isDeleting }] = useDeleteSalesOrdersByPkMutation();
   const [approveOrder, { isLoading: isApproving }] = usePostSalesOrdersByPkApproveMutation();
   const [approveCreditBypass, { isLoading: isBypassing }] = usePostSalesOrdersByPkApproveCreditBypassMutation();
+  const [cancelOrder, { isLoading: isCancelling }] = usePostSalesOrdersByPkCancelMutation();
 
   const canBypass = usePermission('sales.approve_credit_bypass');
+  const canCancel = usePermission('sales.cancel_order');
 
-  const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
 
   const isDraft = orderData ? orderData.status === 'draft' : true;
-  const isPending = orderData?.status === 'pending';
   const isCreditApproval = orderData?.status === 'pending_credit_approval';
   const isReadOnly = !isDraft;
-  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isBypassing || isLoadingOrder;
+  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isBypassing || isCancelling || isLoadingOrder;
 
-  const { register, control, handleSubmit, formState: { errors }, reset } = useForm<SalesOrderInput>({
+  const { register, control, handleSubmit, formState: { errors }, reset, watch } = useForm<SalesOrderInput>({
     defaultValues: {
       customer_id: '',
+      advance_paid_amount: 0,
       lines: [{ item_id: '', quantity: 1, unit_price: 15000000 }],
     }
   });
@@ -73,16 +108,18 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     if (orderId && orderData && !hasInitialized.current) {
       reset({
         customer_id: orderData.customer,
+        advance_paid_amount: Number(orderData.advance_paid_amount) || 0,
         lines: (orderData.lines || []).map(l => ({
           item_id: l.item,
-          quantity: l.quantity,
-          unit_price: l.unit_price,
+          quantity: Number(l.quantity) || 0,
+          unit_price: Number(l.unit_price) || 0,
         }))
       });
       hasInitialized.current = true;
     } else if (!orderId && customersData !== undefined && itemsData !== undefined && !hasInitialized.current) {
       reset({
         customer_id: customersData?.[0]?.id || '',
+        advance_paid_amount: 0,
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 15000000 }],
       });
       hasInitialized.current = true;
@@ -143,18 +180,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       if (confirmState.action === 'delete') {
         await deleteOrder({ pk: confirmState.orderId }).unwrap();
       } else if (confirmState.action === 'cancel') {
-        await updateOrder({
-          pk: confirmState.orderId,
-          salesOrderInput: {
-            customer_id: orderData!.customer!,
-            status: 'cancelled',
-            lines: orderData!.lines!.map(l => ({
-              item_id: l.item!,
-              quantity: l.quantity!,
-              unit_price: l.unit_price!,
-            }))
-          }
-        }).unwrap();
+        await cancelOrder({ pk: confirmState.orderId }).unwrap();
       }
       setConfirmState(null);
       onSuccess();
@@ -193,6 +219,17 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     });
   };
 
+  const lines = watch('lines') || [];
+  const calculatedTotal = lines.reduce((sum, line) => {
+    const qty = Number(line?.quantity) || 0;
+    const price = Number(line?.unit_price) || 0;
+    return sum + (qty * price);
+  }, 0);
+
+  const formatVND = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
   const modalTitle = !orderId 
     ? "Thêm Đơn Bán Hàng Mới" 
     : isDraft 
@@ -202,7 +239,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   return (
     <>
       <Modal 
-        open={open && !showAdvancePayment} 
+        open={open} 
         onClose={onClose} 
         title={modalTitle} 
         size="lg"
@@ -214,8 +251,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                   Xóa
                 </Button>
               )}
-              {orderId && (isPending || isCreditApproval) && (
-                <Button variant="outline" onClick={handleCancel} loading={isUpdating} disabled={isWorking} icon={<XCircle size={16} />}>
+              {orderId && orderData?.status !== 'draft' && orderData?.status !== 'cancelled' && canCancel && (
+                <Button variant="outline" onClick={handleCancel} loading={isCancelling} disabled={isWorking} icon={<XCircle size={16} />}>
                   Hủy Đơn
                 </Button>
               )}
@@ -232,11 +269,6 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
               {orderId && isDraft && (
                 <Button variant="primary" onClick={handleConfirm} loading={isUpdating} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt Đơn
-                </Button>
-              )}
-              {orderId && isPending && (
-                <Button onClick={() => setShowAdvancePayment(true)} disabled={isWorking} icon={<CreditCard size={16} />}>
-                  Nhận Thanh Toán Cọc
                 </Button>
               )}
               {orderId && isCreditApproval && canBypass && (
@@ -342,6 +374,43 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                 ))}
               </div>
             </div>
+
+            <div className={styles.summarySection}>
+              <div className={styles.summaryRow}>
+                <span>Tổng giá trị đơn hàng:</span>
+                <span className={styles.summaryTotal}>{formatVND(calculatedTotal)}</span>
+              </div>
+              <div className={styles.summaryRow} style={{ gap: 'var(--sp-2)' }}>
+                <label htmlFor="advance_paid_amount" style={{ fontWeight: 500, fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)' }}>
+                  Số tiền đặt cọc:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                  <input
+                    id="advance_paid_amount"
+                    type="number"
+                    min={0}
+                    step={1000}
+                    className={styles.itemInput}
+                    style={{ width: '180px', textAlign: 'right' }}
+                    {...register('advance_paid_amount', {
+                      valueAsNumber: true,
+                      min: { value: 0, message: 'Tiền cọc không được âm' },
+                      validate: v => {
+                        if (v === undefined || isNaN(v)) return 'Bắt buộc';
+                        if (v > calculatedTotal) return 'Tiền cọc không vượt quá tổng giá trị đơn hàng';
+                        return true;
+                      }
+                    })}
+                    disabled={isWorking || isReadOnly}
+                  />
+                  {errors.advance_paid_amount && (
+                    <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>
+                      {errors.advance_paid_amount.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
             
             {isReadOnly && (orderData?.stock_entries?.length || orderData?.invoices?.length) ? (
               <div style={{ marginTop: '24px', borderTop: '1px dashed var(--clr-border)', paddingTop: '16px' }}>
@@ -354,8 +423,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                         {orderData.stock_entries.map(entry => (
                           <div key={entry.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--clr-background)' }}>
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>{entry.name}</span>
-                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: entry.status === 'posted' ? 'var(--clr-success)' : 'var(--clr-warning)' }}>
-                              {entry.status === 'posted' ? 'Đã Xuất' : 'Bản Nháp'}
+                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getStockEntryStatusColor(entry.status) }}>
+                              {getStockEntryStatusLabel(entry.status)}
                             </span>
                           </div>
                         ))}
@@ -371,8 +440,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>
                               INV-{inv.id?.slice(0, 8).toUpperCase()}
                             </span>
-                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: inv.status === 'paid' ? 'var(--clr-success)' : 'var(--clr-warning)' }}>
-                              {inv.status?.toUpperCase() || 'UNPAID'}
+                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getInvoiceStatusColor(inv.status) }}>
+                              {getInvoiceStatusLabel(inv.status)}
                             </span>
                           </div>
                         ))}
@@ -386,18 +455,6 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
         )}
       </Modal>
 
-      {showAdvancePayment && (
-        <CashFlowFormModal 
-          open={showAdvancePayment} 
-          onClose={() => setShowAdvancePayment(false)} 
-          onSuccess={() => {
-            setShowAdvancePayment(false);
-            onSuccess();
-          }} 
-          defaultValues={{ payment_type: 'receive', sales_order_id: orderId }} 
-        />
-      )}
-
       {confirmState && (
         <ConfirmModal
           open={!!confirmState}
@@ -405,7 +462,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
           message={confirmState.message}
           onConfirm={handleConfirmAction}
           onCancel={() => setConfirmState(null)}
-          isLoading={isDeleting || isUpdating}
+          isLoading={isDeleting || isCancelling}
         />
       )}
     </>

@@ -114,4 +114,128 @@ describe('SalesOrderFormModal', () => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
   });
+
+  it('renders deposit input enabled in Draft state', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/SO-DRAFT/', () => {
+        return HttpResponse.json({
+          id: 'SO-DRAFT',
+          customer: '44444444-4444-4444-4444-444444444444',
+          customer_name: 'Công ty Cổ phần Alpha',
+          status: 'draft',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 10, unit_price: 15000000 }
+          ]
+        });
+      })
+    );
+
+    renderWithProviders(<SalesOrderFormModal {...defaultProps} orderId="SO-DRAFT" />);
+    const depositInput = await screen.findByLabelText(/Số tiền đặt cọc/i);
+    expect(depositInput).toBeInTheDocument();
+    expect(depositInput).toBeEnabled();
+    expect(depositInput).toHaveValue(1000000);
+  });
+
+  it('disables deposit input in Pending state', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/SO-PENDING/', () => {
+        return HttpResponse.json({
+          id: 'SO-PENDING',
+          customer: '44444444-4444-4444-4444-444444444444',
+          customer_name: 'Công ty Cổ phần Alpha',
+          status: 'pending',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 10, unit_price: 15000000 }
+          ]
+        });
+      })
+    );
+
+    renderWithProviders(<SalesOrderFormModal {...defaultProps} orderId="SO-PENDING" />);
+    const depositInput = await screen.findByLabelText(/Số tiền đặt cọc/i);
+    expect(depositInput).toBeInTheDocument();
+    expect(depositInput).toBeDisabled();
+  });
+
+  it('renders Cancel Order button when user has sales.cancel_order permission', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/SO-PENDING/', () => {
+        return HttpResponse.json({
+          id: 'SO-PENDING',
+          customer: '44444444-4444-4444-4444-444444444444',
+          customer_name: 'Công ty Cổ phần Alpha',
+          status: 'pending',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 10, unit_price: 15000000 }
+          ]
+        });
+      })
+    );
+
+    const preloadedState = {
+      auth: {
+        user: {
+          id: '1',
+          username: 'admin',
+          full_name: 'Admin User',
+          role: 'admin' as const,
+          permissions: ['sales.cancel_order'],
+        },
+        token: 'test_token',
+        isAuthenticated: true,
+      },
+    };
+
+    renderWithProviders(
+      <SalesOrderFormModal {...defaultProps} orderId="SO-PENDING" />,
+      { preloadedState }
+    );
+
+    const cancelBtn = await screen.findByRole('button', { name: /Hủy Đơn/i });
+    expect(cancelBtn).toBeInTheDocument();
+  });
+
+  it('does not render Cancel Order button when user lacks permission', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/SO-PENDING/', () => {
+        return HttpResponse.json({
+          id: 'SO-PENDING',
+          customer: '44444444-4444-4444-4444-444444444444',
+          customer_name: 'Công ty Cổ phần Alpha',
+          status: 'pending',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 10, unit_price: 15000000 }
+          ]
+        });
+      })
+    );
+
+    const preloadedState = {
+      auth: {
+        user: {
+          id: '1',
+          username: 'staff',
+          full_name: 'Staff User',
+          role: 'staff' as const,
+          permissions: [],
+        },
+        token: 'test_token',
+        isAuthenticated: true,
+      },
+    };
+
+    renderWithProviders(
+      <SalesOrderFormModal {...defaultProps} orderId="SO-PENDING" />,
+      { preloadedState }
+    );
+
+    // Wait for the modal contents to render
+    await screen.findByLabelText(/Số tiền đặt cọc/i);
+    expect(screen.queryByRole('button', { name: /Hủy Đơn/i })).not.toBeInTheDocument();
+  });
 });

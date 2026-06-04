@@ -57,6 +57,7 @@ export type CashFlowInput = {
   amount: number
   payment_date: string
   category?: string
+  payment_method?: 'cash' | 'bank_transfer' | 'credit_card' | 'other'
   purchase_order_id?: string | null
   sales_order_id?: string | null
   purchase_invoice_id?: string | null

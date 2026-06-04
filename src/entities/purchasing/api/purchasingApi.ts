@@ -48,6 +48,12 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/purchasing/orders/${queryArg.pk}/approve/`, method: 'POST' }),
     }),
+    postPurchasingOrdersByPkCancel: build.mutation<
+      PostPurchasingOrdersByPkCancelApiResponse,
+      PostPurchasingOrdersByPkCancelApiArg
+    >({
+      query: (queryArg) => ({ url: `/purchasing/orders/${queryArg.pk}/cancel/`, method: 'POST' }),
+    }),
     getPurchasingInvoices: build.query<
       GetPurchasingInvoicesApiResponse,
       GetPurchasingInvoicesApiArg
@@ -94,6 +100,11 @@ export type PostPurchasingOrdersByPkReceiveApiArg = {
 export type PostPurchasingOrdersByPkApproveApiResponse =
   /** status 200 Đơn mua hàng đã được duyệt thành công. */ PurchaseOrder
 export type PostPurchasingOrdersByPkApproveApiArg = {
+  pk: string
+}
+export type PostPurchasingOrdersByPkCancelApiResponse =
+  /** status 200 Đơn mua hàng đã được hủy thành công. */ PurchaseOrder
+export type PostPurchasingOrdersByPkCancelApiArg = {
   pk: string
 }
 export type GetPurchasingInvoicesApiResponse =
@@ -144,6 +155,7 @@ export type PurchaseOrderLineInput = {
 export type PurchaseOrderInput = {
   vendor_id: string
   status?: 'draft' | 'pending' | 'completed' | 'cancelled'
+  advance_paid_amount?: number
   lines: PurchaseOrderLineInput[]
 }
 export type PurchaseInvoiceLine = {
@@ -179,6 +191,7 @@ export const {
   useDeletePurchasingOrdersByPkMutation,
   usePostPurchasingOrdersByPkReceiveMutation,
   usePostPurchasingOrdersByPkApproveMutation,
+  usePostPurchasingOrdersByPkCancelMutation,
   useGetPurchasingInvoicesQuery,
   useGetPurchasingInvoicesByPkQuery,
 } = injectedRtkApi

@@ -89,3 +89,27 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.summarySection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1.5px dashed var(--clr-border);
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  font-size: var(--fs-sm);
+  color: var(--clr-text-secondary);
+}
+
+.summaryTotal {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text-primary);
+}

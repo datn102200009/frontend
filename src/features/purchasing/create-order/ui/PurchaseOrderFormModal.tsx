@@ -5,18 +5,53 @@ import {
   useGetPurchasingOrdersByPkQuery,
   usePutPurchasingOrdersByPkMutation,
   useDeletePurchasingOrdersByPkMutation,
-  usePostPurchasingOrdersByPkApproveMutation
+  usePostPurchasingOrdersByPkApproveMutation,
+  usePostPurchasingOrdersByPkCancelMutation
 } from '@entities/purchasing/api/purchasingApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetProcurementSuppliersQuery } from '@entities/procurement/api/procurementApi';
 import type { PurchaseOrderInput } from '@entities/purchasing/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
-import { Plus, Trash2, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
-import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
+import { Plus, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
+import { usePermission } from '@shared/hooks/usePermission';
 import styles from './PurchaseOrderFormModal.module.css';
 
+
+const getStockEntryStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'posted': return 'Đã Nhập';
+    case 'cancelled': return 'Đã Hủy';
+    case 'submitted': return 'Chờ Duyệt';
+    default: return 'Bản Nháp';
+  }
+};
+
+const getStockEntryStatusColor = (status?: string) => {
+  switch (status) {
+    case 'posted': return 'var(--clr-success)';
+    case 'cancelled': return 'var(--clr-danger)';
+    default: return 'var(--clr-warning)';
+  }
+};
+
+const getInvoiceStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'paid': return 'Đã Thanh Toán';
+    case 'partial': return 'Thanh Toán Một Phần';
+    case 'cancelled': return 'Đã Hủy';
+    default: return 'Chưa Thanh Toán';
+  }
+};
+
+const getInvoiceStatusColor = (status?: string) => {
+  switch (status) {
+    case 'paid': return 'var(--clr-success)';
+    case 'cancelled': return 'var(--clr-danger)';
+    default: return 'var(--clr-warning)';
+  }
+};
 
 interface PurchaseOrderFormModalProps {
   open: boolean;
@@ -34,18 +69,19 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const [updateOrder, { isLoading: isUpdating }] = usePutPurchasingOrdersByPkMutation();
   const [deleteOrder, { isLoading: isDeleting }] = useDeletePurchasingOrdersByPkMutation();
   const [approveOrder, { isLoading: isApproving }] = usePostPurchasingOrdersByPkApproveMutation();
+  const [cancelOrder, { isLoading: isCancelling }] = usePostPurchasingOrdersByPkCancelMutation();
 
-  const [showAdvancePayment, setShowAdvancePayment] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
 
+  const canCancel = usePermission('purchasing.cancel_order');
   const isDraft = orderData ? orderData.status === 'draft' : true;
-  const isPending = orderData?.status === 'pending';
   const isReadOnly = !isDraft; // Only editable if draft or creating
-  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isLoadingOrder;
+  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isCancelling || isLoadingOrder;
 
-  const { register, control, handleSubmit, formState: { errors }, reset } = useForm<PurchaseOrderInput>({
+  const { register, control, handleSubmit, formState: { errors }, reset, watch } = useForm<PurchaseOrderInput>({
     defaultValues: {
       vendor_id: '',
+      advance_paid_amount: 0,
       lines: [{ item_id: '', quantity: 1, unit_price: 2000000 }],
     }
   });
@@ -67,16 +103,18 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     if (orderId && orderData && !hasInitialized.current) {
       reset({
         vendor_id: orderData.vendor,
+        advance_paid_amount: Number(orderData.advance_paid_amount) || 0,
         lines: (orderData.lines || []).map(l => ({
           item_id: l.item,
-          quantity: l.quantity,
-          unit_price: l.unit_price,
+          quantity: Number(l.quantity) || 0,
+          unit_price: Number(l.unit_price) || 0,
         }))
       });
       hasInitialized.current = true;
     } else if (!orderId && suppliersData !== undefined && itemsData !== undefined && !hasInitialized.current) {
       reset({
         vendor_id: suppliersData?.[0]?.id || '',
+        advance_paid_amount: 0,
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 2000000 }],
       });
       hasInitialized.current = true;
@@ -137,18 +175,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
       if (confirmState.action === 'delete') {
         await deleteOrder({ pk: confirmState.orderId }).unwrap();
       } else if (confirmState.action === 'cancel') {
-        await updateOrder({
-          pk: confirmState.orderId,
-          purchaseOrderInput: {
-            vendor_id: orderData!.vendor!,
-            status: 'cancelled',
-            lines: orderData!.lines!.map(l => ({
-              item_id: l.item!,
-              quantity: l.quantity!,
-              unit_price: l.unit_price!,
-            }))
-          }
-        }).unwrap();
+        await cancelOrder({ pk: confirmState.orderId }).unwrap();
       }
       setConfirmState(null);
       onSuccess();
@@ -177,6 +204,17 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     });
   };
 
+  const lines = watch('lines') || [];
+  const calculatedTotal = lines.reduce((sum, line) => {
+    const qty = Number(line?.quantity) || 0;
+    const price = Number(line?.unit_price) || 0;
+    return sum + (qty * price);
+  }, 0);
+
+  const formatVND = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  };
+
   const modalTitle = !orderId 
     ? "Thêm Đơn Mua Hàng Mới" 
     : isDraft 
@@ -186,7 +224,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   return (
     <>
       <Modal 
-        open={open && !showAdvancePayment} 
+        open={open} 
         onClose={onClose} 
         title={modalTitle} 
         size="lg"
@@ -198,8 +236,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                   Xóa
                 </Button>
               )}
-              {orderId && isPending && (
-                <Button variant="outline" onClick={handleCancel} loading={isUpdating} disabled={isWorking} icon={<XCircle size={16} />}>
+              {orderId && orderData?.status !== 'draft' && orderData?.status !== 'cancelled' && canCancel && (
+                <Button variant="outline" onClick={handleCancel} loading={isCancelling} disabled={isWorking} icon={<XCircle size={16} />}>
                   Hủy Đơn
                 </Button>
               )}
@@ -216,11 +254,6 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
               {orderId && isDraft && (
                 <Button variant="primary" onClick={handleConfirm} loading={isApproving} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt Đơn
-                </Button>
-              )}
-              {orderId && isPending && (
-                <Button onClick={() => setShowAdvancePayment(true)} disabled={isWorking} icon={<CreditCard size={16} />}>
-                  Thanh Toán Cọc
                 </Button>
               )}
             </div>
@@ -297,6 +330,43 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                 ))}
               </div>
             </div>
+
+            <div className={styles.summarySection}>
+              <div className={styles.summaryRow}>
+                <span>Tổng giá trị đơn hàng:</span>
+                <span className={styles.summaryTotal}>{formatVND(calculatedTotal)}</span>
+              </div>
+              <div className={styles.summaryRow} style={{ gap: 'var(--sp-2)' }}>
+                <label htmlFor="advance_paid_amount" style={{ fontWeight: 500, fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)' }}>
+                  Số tiền đặt cọc:
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                  <input
+                    id="advance_paid_amount"
+                    type="number"
+                    min={0}
+                    step={1000}
+                    className={styles.itemInput}
+                    style={{ width: '180px', textAlign: 'right' }}
+                    {...register('advance_paid_amount', {
+                      valueAsNumber: true,
+                      min: { value: 0, message: 'Tiền cọc không được âm' },
+                      validate: v => {
+                        if (v === undefined || isNaN(v)) return 'Bắt buộc';
+                        if (v > calculatedTotal) return 'Tiền cọc không vượt quá tổng giá trị đơn hàng';
+                        return true;
+                      }
+                    })}
+                    disabled={isWorking || isReadOnly}
+                  />
+                  {errors.advance_paid_amount && (
+                    <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>
+                      {errors.advance_paid_amount.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
             
             {isReadOnly && (orderData?.stock_entries?.length || orderData?.invoices?.length) ? (
               <div style={{ marginTop: '24px', borderTop: '1px dashed var(--clr-border)', paddingTop: '16px' }}>
@@ -309,8 +379,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                         {orderData.stock_entries.map(entry => (
                           <div key={entry.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--clr-background)' }}>
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>{entry.name}</span>
-                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: entry.status === 'posted' ? 'var(--clr-success)' : 'var(--clr-warning)' }}>
-                              {entry.status === 'posted' ? 'Đã Nhập' : 'Bản Nháp'}
+                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getStockEntryStatusColor(entry.status) }}>
+                              {getStockEntryStatusLabel(entry.status)}
                             </span>
                           </div>
                         ))}
@@ -326,8 +396,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>
                               INV-{inv.id?.slice(0, 8).toUpperCase()}
                             </span>
-                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: inv.status === 'paid' ? 'var(--clr-success)' : 'var(--clr-warning)' }}>
-                              {inv.status?.toUpperCase() || 'UNPAID'}
+                            <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getInvoiceStatusColor(inv.status) }}>
+                              {getInvoiceStatusLabel(inv.status)}
                             </span>
                           </div>
                         ))}
@@ -341,18 +411,6 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
         )}
       </Modal>
 
-      {showAdvancePayment && (
-        <CashFlowFormModal 
-          open={showAdvancePayment} 
-          onClose={() => setShowAdvancePayment(false)} 
-          onSuccess={() => {
-            setShowAdvancePayment(false);
-            onSuccess();
-          }} 
-          defaultValues={{ payment_type: 'pay', purchase_order_id: orderId }} 
-        />
-      )}
-
       {confirmState && (
         <ConfirmModal
           open={!!confirmState}
@@ -360,7 +418,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
           message={confirmState.message}
           onConfirm={handleConfirmAction}
           onCancel={() => setConfirmState(null)}
-          isLoading={isDeleting || isUpdating}
+          isLoading={isDeleting || isCancelling}
         />
       )}
     </>

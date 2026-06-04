@@ -121,6 +121,7 @@ describe('PurchasingPage', () => {
       expect(postPayload).toEqual({
         vendor_id: 'SUP01',
         status: 'draft',
+        advance_paid_amount: 0,
         lines: [
           {
             item_id: 'VT001',
