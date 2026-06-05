@@ -120,7 +120,7 @@ describe('PurchasingPage', () => {
     await waitFor(() => {
       expect(postPayload).toEqual({
         vendor_id: 'SUP01',
-        status: 'draft',
+        expected_delivery_date: '',
         advance_paid_amount: 0,
         lines: [
           {

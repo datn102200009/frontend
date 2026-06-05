@@ -63,7 +63,7 @@ const NAV_SECTIONS = [
     label: 'Tài Chính',
     items: [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền' },
-      { to: '/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định' },
+      { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định' },
     ],
   },
   {

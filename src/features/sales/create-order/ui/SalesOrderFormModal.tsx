@@ -151,7 +151,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       reset({
         customer_id: '',
         advance_paid_amount: 0,
-        lines: [{ item_id: '', quantity: 1, unit_price: 0 }],
+        lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 0 }],
       });
       hasInitialized.current = true;
     }

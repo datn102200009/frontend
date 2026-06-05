@@ -111,6 +111,7 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
               <Button 
                 onClick={handleOpenPayment} 
                 icon={<CreditCard size={16} />}
+                disabled={invoice.status === 'blocked_for_payment'}
               >
                 Thanh Toán Hóa Đơn
               </Button>

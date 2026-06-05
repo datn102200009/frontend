@@ -122,7 +122,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'fixed-assets',
+        path: 'finance/fixed-assets',
         element: (
           <Suspense fallback={<PageLoader />}>
             <PermissionGuard requiredPermission="finance.view_fixed_asset" fallback={<ForbiddenPage />}>

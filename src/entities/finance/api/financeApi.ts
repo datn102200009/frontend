@@ -160,7 +160,7 @@ export type CashFlowTransaction = {
   name?: string
   payment_type?: 'receive' | 'pay'
   category?: string
-  amount?: number
+  amount?: string
   payment_date?: string
   remarks?: string
   purchase_order?: string | null
@@ -172,7 +172,7 @@ export type CashFlowTransaction = {
 }
 export type CashFlowInput = {
   payment_type: 'receive' | 'pay'
-  amount: number
+  amount: string
   payment_date: string
   category?: string
   payment_method?: 'cash' | 'bank_transfer' | 'credit_card' | 'other'
@@ -186,14 +186,14 @@ export type FixedAsset = {
   id?: string
   asset_code?: string
   asset_name?: string
-  original_value?: number
-  salvage_value?: number
+  original_value?: string
+  salvage_value?: string
   depreciation_method?: 'straight_line' | 'unit_of_production'
   useful_life_months?: number
   remaining_life_months?: number
   designed_capacity?: number | null
-  accumulated_depreciation?: number
-  remaining_value?: number
+  accumulated_depreciation?: string
+  remaining_value?: string
   department?: string | null
   is_active?: boolean
   created_at?: string
@@ -202,8 +202,8 @@ export type FixedAsset = {
 export type FixedAssetInput = {
   asset_code: string
   asset_name: string
-  original_value: number
-  salvage_value?: number
+  original_value: string
+  salvage_value?: string
   depreciation_method: 'straight_line' | 'unit_of_production'
   useful_life_months: number
   designed_capacity?: number | null
@@ -211,8 +211,8 @@ export type FixedAssetInput = {
 }
 export type FixedAssetUpdateInput = {
   asset_name?: string
-  original_value?: number
-  salvage_value?: number
+  original_value?: string
+  salvage_value?: string
   depreciation_method?: 'straight_line' | 'unit_of_production'
   useful_life_months?: number
   designed_capacity?: number | null
@@ -224,7 +224,7 @@ export type FixedAssetDepreciationLog = {
   asset_code?: string
   asset_name?: string
   period?: string
-  depreciation_amount?: number
+  depreciation_amount?: string
   remarks?: string
   created_at?: string
   updated_at?: string

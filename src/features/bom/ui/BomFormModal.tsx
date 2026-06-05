@@ -34,7 +34,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
   const { data: itemsResponse, isSuccess: isItemsLoaded } = useGetMasterDataItemsListQuery({ limit: 1000 });
   const itemsList = itemsResponse?.results || [];
 
-  const { data: fixedAssetsResponse } = useGetFinanceFixedAssetsQuery({ limit: 1000 });
+  const { data: fixedAssetsResponse } = useGetFinanceFixedAssetsQuery({ limit: 1000 }, { skip: !open });
   const fixedAssets = fixedAssetsResponse?.results || [];
 
   const { data: bomDetails, isFetching: isFetchingBom } = useGetManufacturingBomByBomIdQuery(
@@ -188,6 +188,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
                   render={({ field }) => (
                     <SearchableSelect
                       placeholder="-- Chọn linh kiện --"
+                      ariaLabel="Mã linh kiện"
                       options={itemsList.map(item => ({
                         label: `${item.item_code} - ${item.item_name}`,
                         value: item.item_code || ''

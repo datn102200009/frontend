@@ -185,8 +185,14 @@ describe('FixedAssetsPage', () => {
     // Fill fields
     await user.type(within(modal).getByLabelText(/Mã tài sản/i), 'MOLD-003');
     await user.type(within(modal).getByLabelText(/Tên tài sản/i), 'Khuôn nhựa C');
-    await user.type(within(modal).getByLabelText(/Nguyên giá/i), '60000000');
-    await user.type(within(modal).getByLabelText(/Giá trị thanh lý/i), '5000000');
+
+    const originalValueInput = within(modal).getByLabelText(/Nguyên giá/i);
+    await user.clear(originalValueInput);
+    await user.type(originalValueInput, '60000000');
+
+    const salvageValueInput = within(modal).getByLabelText(/Giá trị thanh lý/i);
+    await user.clear(salvageValueInput);
+    await user.type(salvageValueInput, '5000000');
     
     const usefulLifeInput = within(modal).getByLabelText(/Số tháng khấu hao/i);
     await user.clear(usefulLifeInput);
@@ -216,8 +222,8 @@ describe('FixedAssetsPage', () => {
       expect(postPayload).toEqual({
         asset_code: 'MOLD-003',
         asset_name: 'Khuôn nhựa C',
-        original_value: 60000000,
-        salvage_value: 5000000,
+        original_value: '60000000',
+        salvage_value: '5000000',
         depreciation_method: 'unit_of_production',
         useful_life_months: 20,
         designed_capacity: 20000,

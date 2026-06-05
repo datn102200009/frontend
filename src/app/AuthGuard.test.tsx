@@ -33,14 +33,14 @@ describe('AuthGuard', () => {
     expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
   });
 
-  it('renders children when user is authenticated', () => {
+  it('renders children when user is authenticated', async () => {
     setupTestRouter({
       isAuthenticated: true,
       user: { id: '1', username: 'admin', role: 'admin' },
       token: 'fake-token',
     });
     
-    expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+    expect(await screen.findByTestId('protected-content')).toBeInTheDocument();
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
   });
 });

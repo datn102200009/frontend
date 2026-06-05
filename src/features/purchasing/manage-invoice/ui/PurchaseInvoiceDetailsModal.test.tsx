@@ -51,7 +51,7 @@ describe('PurchaseInvoiceDetailsModal', () => {
     expect(await screen.findByText('Hóa Đơn PI-BLOCK')).toBeInTheDocument();
 
     // Check warning block alert exists and displays reason
-    expect(screen.getByText(/Hóa đơn bị chặn thanh toán/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cảnh báo đối soát/i)).toBeInTheDocument();
     expect(screen.getByText(/Chênh lệch đơn giá dòng sản phẩm LKA/i)).toBeInTheDocument();
 
     // Check quantity mismatch alert is present
