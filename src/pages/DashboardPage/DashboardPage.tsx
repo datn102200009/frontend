@@ -1,12 +1,8 @@
 import { Boxes, ClipboardList, AlertTriangle, TrendingUp, Package } from 'lucide-react';
+import { useGetManufacturingBomListQuery, useGetManufacturingWorkOrderListQuery } from '@features/manufacturing/api/manufacturingApi';
+import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
+import { useGetInventoryStockLedgerBalanceQuery } from '@features/inventory/api/inventoryApi';
 import styles from './DashboardPage.module.css';
-
-const KPI_CARDS = [
-  { title: 'Định mức BOM', value: 12, icon: <Boxes size={22} />, color: 'primary' as const, change: '+2 tuần này' },
-  { title: 'Lệnh sản xuất', value: 5, icon: <ClipboardList size={22} />, color: 'secondary' as const, change: '3 đang chạy' },
-  { title: 'Sản phẩm', value: 48, icon: <Package size={22} />, color: 'info' as const, change: '+5 tháng này' },
-  { title: 'Tồn kho thấp', value: 3, icon: <AlertTriangle size={22} />, color: 'warning' as const, change: 'Cần bổ sung' },
-];
 
 const RECENT_ACTIVITIES = [
   { id: 1, action: 'Tạo BOM mới', target: 'Bàn học sinh BHS-001', user: 'Nguyễn Xuân Hòa', time: '2 giờ trước', type: 'bom' },
@@ -17,11 +13,30 @@ const RECENT_ACTIVITIES = [
 ];
 
 export default function DashboardPage() {
+  const { data: bomsData } = useGetManufacturingBomListQuery({});
+  const { data: wosData } = useGetManufacturingWorkOrderListQuery({});
+  const { data: itemsData } = useGetMasterDataItemsListQuery({ status: 'active', limit: 200 });
+  const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({ detailed: true });
+
+  const bomCount = bomsData?.count || bomsData?.results?.length || 0;
+  const woCount = wosData?.count || wosData?.results?.length || 0;
+  const itemCount = itemsData?.count || itemsData?.results?.length || 0;
+
+  const runningWosCount = (wosData?.results || []).filter(wo => wo.status === 'in_progress').length;
+  const lowStockCount = (stockBalances || []).filter(b => (b.total_quantity || 0) < 50).length;
+
+  const kpiCards = [
+    { title: 'Định mức BOM', value: bomCount, icon: <Boxes size={22} />, color: 'primary' as const, change: 'Hoạt động' },
+    { title: 'Lệnh sản xuất', value: woCount, icon: <ClipboardList size={22} />, color: 'secondary' as const, change: `${runningWosCount} đang chạy` },
+    { title: 'Sản phẩm', value: itemCount, icon: <Package size={22} />, color: 'info' as const, change: 'Đang quản lý' },
+    { title: 'Tồn kho thấp (<50)', value: lowStockCount, icon: <AlertTriangle size={22} />, color: 'warning' as const, change: lowStockCount > 0 ? 'Cần bổ sung' : 'An toàn' },
+  ];
+
   return (
     <div className={styles.page}>
       {/* KPI Grid */}
       <div className={styles.kpiGrid}>
-        {KPI_CARDS.map((card, i) => (
+        {kpiCards.map((card, i) => (
           <div key={card.title} className={styles.kpiCard} style={{ animationDelay: `${i * 60}ms` }}>
             <div className={`${styles.kpiIcon} ${styles[card.color]}`}>
               {card.icon}

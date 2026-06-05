@@ -79,72 +79,50 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
   const [saveAttendance, { isLoading: isSaving }] = usePostHrmAttendancesBatchMutation();
 
-  // Synchronize internal state during render instead of using useEffect
-  const [prevOpen, setPrevOpen] = useState(open);
-  const [prevInitialDate, setPrevInitialDate] = useState(initialDate);
-  const [prevEmployeeData, setPrevEmployeeData] = useState(employeeData);
-  const [prevSelectedHolidayInfo, setPrevSelectedHolidayInfo] = useState(selectedHolidayInfo);
-  const [prevExistingAttendances, setPrevExistingAttendances] = useState(existingAttendances);
-
-  if (
-    open !== prevOpen ||
-    initialDate !== prevInitialDate ||
-    employeeData !== prevEmployeeData ||
-    selectedHolidayInfo !== prevSelectedHolidayInfo ||
-    existingAttendances !== prevExistingAttendances
-  ) {
-    setPrevOpen(open);
-    setPrevInitialDate(initialDate);
-    setPrevEmployeeData(employeeData);
-    setPrevSelectedHolidayInfo(selectedHolidayInfo);
-    setPrevExistingAttendances(existingAttendances);
-
-    if (open !== prevOpen || initialDate !== prevInitialDate) {
-      if (open) {
-        setDate(initialDate || new Date().toISOString().split('T')[0]);
-        setApiError(null);
-      } else {
-        setRecords([]);
-      }
+  // Đồng bộ ngày và lỗi khi mở/đóng modal hoặc thay đổi initialDate
+  React.useEffect(() => {
+    if (open) {
+      setDate(initialDate || new Date().toISOString().split('T')[0]);
+      setApiError(null);
+    } else {
+      setRecords([]);
     }
+  }, [open, initialDate]);
 
-    if (
-      employeeData !== prevEmployeeData ||
-      selectedHolidayInfo !== prevSelectedHolidayInfo ||
-      existingAttendances !== prevExistingAttendances
-    ) {
-      if (employeeData?.results) {
-        const isHoliday = !!selectedHolidayInfo;
-        const defaultStatus = isHoliday ? 'holiday' : 'working';
-        const defaultWorkHours = isHoliday ? 0 : 8;
+  // Đồng bộ danh sách chấm công (records) khi nhân sự, thông tin nghỉ lễ, hoặc chấm công đã có thay đổi
+  React.useEffect(() => {
+    if (!open) return;
+    if (employeeData?.results) {
+      const isHoliday = !!selectedHolidayInfo;
+      const defaultStatus = isHoliday ? 'holiday' : 'working';
+      const defaultWorkHours = isHoliday ? 0 : 8;
 
-        const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => {
-          const existing = existingAttendances?.find((att) => att.employee_id === emp.id);
-          if (existing) {
-            return {
-              employee_id: emp.id || '',
-              employee_name: emp.full_name || '',
-              employee_code: emp.employee_id || '',
-              status: (existing.status as AttendanceRecord['status']) || defaultStatus,
-              work_hours: existing.work_hours !== undefined ? Number(existing.work_hours) : defaultWorkHours,
-              overtime_hours: existing.overtime_hours !== undefined ? Number(existing.overtime_hours) : 0,
-              remarks: existing.remarks || '',
-            };
-          }
+      const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => {
+        const existing = existingAttendances?.find((att) => att.employee_id === emp.id);
+        if (existing) {
           return {
             employee_id: emp.id || '',
             employee_name: emp.full_name || '',
             employee_code: emp.employee_id || '',
-            status: defaultStatus,
-            work_hours: defaultWorkHours,
-            overtime_hours: 0,
-            remarks: '',
+            status: (existing.status as AttendanceRecord['status']) || defaultStatus,
+            work_hours: existing.work_hours !== undefined ? Number(existing.work_hours) : defaultWorkHours,
+            overtime_hours: existing.overtime_hours !== undefined ? Number(existing.overtime_hours) : 0,
+            remarks: existing.remarks || '',
           };
-        });
-        setRecords(initialRecords);
-      }
+        }
+        return {
+          employee_id: emp.id || '',
+          employee_name: emp.full_name || '',
+          employee_code: emp.employee_id || '',
+          status: defaultStatus,
+          work_hours: defaultWorkHours,
+          overtime_hours: 0,
+          remarks: '',
+        };
+      });
+      setRecords(initialRecords);
     }
-  }
+  }, [employeeData, selectedHolidayInfo, existingAttendances, open]);
 
   const handleStatusChange = (index: number, newStatus: AttendanceRecord['status']) => {
     setRecords((prev) => {

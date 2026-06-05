@@ -18,6 +18,7 @@ import {
   usePostManufacturingWorkOrderByWorkOrderIdDeclareMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCompleteMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCancelMutation,
+  type WorkOrder,
 } from '@features/manufacturing/api/manufacturingApi';
 import styles from './BomList.module.css';
 
@@ -30,14 +31,11 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 
 export function WorkOrderList() {
   const [search, setSearch] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [declaringWo, setDeclaringWo] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [viewingWo, setViewingWo] = useState<any>(null);
+  const [declaringWo, setDeclaringWo] = useState<WorkOrder | null>(null);
+  const [viewingWo, setViewingWo] = useState<WorkOrder | null>(null);
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: any, message: string } | null>(null);
+  const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: WorkOrder, message: string } | null>(null);
   const { toast } = useToast();
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
@@ -49,8 +47,7 @@ export function WorkOrderList() {
   const [completeWo, { isLoading: isCompleting }] = usePostManufacturingWorkOrderByWorkOrderIdCompleteMutation();
   const [cancelWo, { isLoading: isCanceling }] = usePostManufacturingWorkOrderByWorkOrderIdCancelMutation();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleApprove = useCallback((wo: any) => {
+  const handleApprove = useCallback((wo: WorkOrder) => {
     setConfirmState({
       action: 'approve',
       wo,
@@ -58,8 +55,7 @@ export function WorkOrderList() {
     });
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleComplete = useCallback((wo: any) => {
+  const handleComplete = useCallback((wo: WorkOrder) => {
     setConfirmState({
       action: 'complete',
       wo,
@@ -67,8 +63,7 @@ export function WorkOrderList() {
     });
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCancel = useCallback((wo: any) => {
+  const handleCancel = useCallback((wo: WorkOrder) => {
     setConfirmState({
       action: 'cancel',
       wo,
@@ -81,13 +76,13 @@ export function WorkOrderList() {
     const { action, wo } = confirmState;
     try {
       if (action === 'approve') {
-        await approveWo({ workOrderId: wo.id }).unwrap();
+        await approveWo({ workOrderId: wo.id || '' }).unwrap();
         toast('success', `Phê duyệt lệnh ${wo.name} thành công.`);
       } else if (action === 'complete') {
-        await completeWo({ workOrderId: wo.id }).unwrap();
+        await completeWo({ workOrderId: wo.id || '' }).unwrap();
         toast('success', `Hoàn thành lệnh ${wo.name} thành công.`);
       } else if (action === 'cancel') {
-        await cancelWo({ workOrderId: wo.id }).unwrap();
+        await cancelWo({ workOrderId: wo.id || '' }).unwrap();
         toast('success', `Hủy lệnh ${wo.name} thành công.`);
       }
       refetch();
@@ -104,7 +99,7 @@ export function WorkOrderList() {
     try {
       const qty = Number(producedQty);
       await declareWo({
-        workOrderId: declaringWo.id,
+        workOrderId: declaringWo.id || '',
         workOrderDeclareInput: {
           produced_qty: qty,
         },
@@ -120,14 +115,13 @@ export function WorkOrderList() {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns = useMemo<ColumnDef<any, unknown>[]>(
+  const columns = useMemo<ColumnDef<WorkOrder, unknown>[]>(
     () => [
       { accessorKey: 'name', header: 'Mã Lệnh', size: 140 },
       { 
         accessorKey: 'bom_name', 
         header: 'Định mức (BOM)',
-        cell: ({ row }) => row.original.bom?.name || row.original.bom_name || '-'
+        cell: ({ row }) => (row.original as any).bom?.name || (row.original as any).bom_name || '-'
       },
       {
         accessorKey: 'quantity',
@@ -191,7 +185,7 @@ export function WorkOrderList() {
               )}
               {status === 'in_progress' && (
                 <>
-                  {(row.original.produced_qty || 0) < row.original.quantity && (
+                  {(row.original.produced_qty || 0) < (row.original.quantity || 0) && (
                     <ActionButton
                       icon={<ArrowRightCircle size={18} />}
                       title="Nhập liệu"
@@ -201,7 +195,7 @@ export function WorkOrderList() {
                       }}
                     />
                   )}
-                  {(row.original.produced_qty || 0) >= row.original.quantity && (
+                  {(row.original.produced_qty || 0) >= (row.original.quantity || 0) && (
                     <ActionButton
                       icon={<CheckCircle size={18} />}
                       title="Hoàn thành"
@@ -219,16 +213,14 @@ export function WorkOrderList() {
     [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting],
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const workOrders = (data as any)?.results || [];
+  const workOrders = data?.results || [];
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Lệnh Sản Xuất</h2>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <p className={styles.subtitle}>{(data as any)?.count ?? 0} lệnh</p>
+          <p className={styles.subtitle}>{data?.count ?? 0} lệnh</p>
         </div>
         <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
           Tạo lệnh
@@ -274,7 +266,7 @@ export function WorkOrderList() {
               Nhập số lượng sản phẩm hoàn thành cho lệnh <strong>"{declaringWo.name}"</strong>. 
               Thành phẩm sẽ được nhập vào kho đích.
               <br/>
-              <em>Yêu cầu: {declaringWo.quantity} | Đã sản xuất: {declaringWo.produced_qty || 0} | Còn lại: {Math.max(0, declaringWo.quantity - (declaringWo.produced_qty || 0))}</em>
+              <em>Yêu cầu: {declaringWo.quantity || 0} | Đã sản xuất: {declaringWo.produced_qty || 0} | Còn lại: {Math.max(0, (declaringWo.quantity || 0) - (declaringWo.produced_qty || 0))}</em>
             </p>
             <Input
               label="Số lượng sản xuất đợt này"
@@ -282,7 +274,7 @@ export function WorkOrderList() {
               value={producedQty}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProducedQty(e.target.value)}
               min={1}
-              max={Math.max(0, declaringWo.quantity - (declaringWo.produced_qty || 0))}
+              max={Math.max(0, (declaringWo.quantity || 0) - (declaringWo.produced_qty || 0))}
               disabled={isDeclaring}
               required
             />

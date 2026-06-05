@@ -45,12 +45,14 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onVi
             unpaid: 'error',
             partial: 'warning',
             paid: 'success',
+            blocked_for_payment: 'error',
             cancelled: 'neutral',
           };
           const labelMap: Record<string, string> = {
             unpaid: 'Chưa Thanh Toán',
             partial: 'Thanh Toán Một Phần',
             paid: 'Đã Thanh Toán',
+            blocked_for_payment: 'Bị Chặn Thanh Toán',
             cancelled: 'Đã Hủy',
           };
           return <Badge variant={colorMap[status] || 'neutral'}>{labelMap[status] || status.toUpperCase()}</Badge>;

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { SearchableSelect } from '../../../shared/ui/Select/SearchableSelect';
 import { usePostManufacturingBomCreateMutation, usePutManufacturingBomByBomIdUpdateMutation, useGetManufacturingBomByBomIdQuery } from '@features/manufacturing/api/manufacturingApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useToast } from '@shared/ui/Toast/Toast';
@@ -103,19 +104,26 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
             {...register('name', { required: 'Bắt buộc' })} />
             
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', flex: 1 }}>
-            <label htmlFor="product_code" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>Sản phẩm <span style={{ color: 'var(--clr-danger)' }}>*</span></label>
-            <select
-              id="product_code"
-              style={{ padding: '10px 14px', border: '1.5px solid var(--clr-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--fs-base)', background: 'var(--clr-surface)', color: 'var(--clr-text)' }}
-              {...register('product_code', { required: 'Bắt buộc' })}
-              disabled={isEdit || isCreating || isUpdating}
-            >
-              <option value="">-- Chọn sản phẩm --</option>
-              {itemsList.map(item => (
-                <option key={item.item_code} value={item.item_code}>{item.item_code} - {item.item_name}</option>
-              ))}
-            </select>
-            {errors.product_code && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-sm)' }}>{errors.product_code.message}</span>}
+            <Controller
+              control={control}
+              name="product_code"
+              rules={{ required: 'Bắt buộc' }}
+              render={({ field }) => (
+                <SearchableSelect
+                  label="Sản phẩm"
+                  required
+                  placeholder="-- Chọn sản phẩm --"
+                  options={itemsList.map(item => ({
+                    label: `${item.item_code} - ${item.item_name}`,
+                    value: item.item_code || ''
+                  }))}
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.product_code?.message}
+                  disabled={isEdit || isCreating || isUpdating}
+                />
+              )}
+            />
           </div>
         </div>
 
@@ -142,17 +150,23 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
               const selectedItem = itemsList.find((i) => i.item_code === selectedItemCode);
               return (
               <div key={field.id} className={styles.itemRow} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 100px 32px', gap: '8px', padding: '8px 0', alignItems: 'center' }}>
-                <select
-                  aria-label="Mã linh kiện"
-                  className={styles.itemInput}
-                  {...register(`items.${index}.item_code` as const, { required: true })}
-                  disabled={isCreating || isUpdating}
-                >
-                  <option value="">-- Chọn linh kiện --</option>
-                  {itemsList.map(item => (
-                    <option key={item.item_code} value={item.item_code}>{item.item_code} - {item.item_name}</option>
-                  ))}
-                </select>
+                <Controller
+                  control={control}
+                  name={`items.${index}.item_code` as const}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <SearchableSelect
+                      placeholder="-- Chọn linh kiện --"
+                      options={itemsList.map(item => ({
+                        label: `${item.item_code} - ${item.item_name}`,
+                        value: item.item_code || ''
+                      }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isCreating || isUpdating}
+                    />
+                  )}
+                />
                 <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)' }}>{selectedItem?.stock_uom_name || '-'}</span>
                 <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`items.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0.01, message: 'Số lượng tối thiểu là 0.01' }, validate: val => !isNaN(val) || 'Bắt buộc' })} disabled={isCreating || isUpdating} />
                 <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa linh kiện"

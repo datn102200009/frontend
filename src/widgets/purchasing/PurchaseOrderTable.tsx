@@ -30,6 +30,47 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
         header: 'Tổng Tiền',
         cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue()),
       }),
+      helper.accessor('expected_delivery_date', {
+        header: 'Hẹn Giao',
+        cell: (info) => {
+          const val = info.getValue();
+          return val ? new Date(val as string).toLocaleDateString('vi-VN') : '—';
+        },
+      }),
+      helper.accessor('receipt_fulfillment_rate', {
+        header: 'Nhập Kho',
+        cell: (info) => {
+          const val = Number(info.getValue() || 0);
+          return (
+            <div className="flex items-center gap-2 min-w-[100px]">
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-emerald-500 h-full transition-all duration-300" 
+                  style={{ width: `${Math.min(val, 100)}%` }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-slate-700">{val}%</span>
+            </div>
+          );
+        },
+      }),
+      helper.accessor('payment_fulfillment_rate', {
+        header: 'Thanh Toán',
+        cell: (info) => {
+          const val = Number(info.getValue() || 0);
+          return (
+            <div className="flex items-center gap-2 min-w-[100px]">
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-indigo-500 h-full transition-all duration-300" 
+                  style={{ width: `${Math.min(val, 100)}%` }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-slate-700">{val}%</span>
+            </div>
+          );
+        },
+      }),
       helper.accessor('status', {
         header: 'Trạng Thái',
         cell: (info) => {
