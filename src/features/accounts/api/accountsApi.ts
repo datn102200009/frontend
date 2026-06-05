@@ -1,4 +1,4 @@
-import { baseApi as api } from '../../../shared/api/baseApi'
+import { baseApi as api } from '@shared/api/baseApi'
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
     postAccountsAuthLogin: build.mutation<
@@ -9,6 +9,9 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     getAccountsRoles: build.query<GetAccountsRolesApiResponse, GetAccountsRolesApiArg>({
       query: () => ({ url: `/accounts/roles/` }),
+    }),
+    getAccountsAuthMe: build.query<GetAccountsAuthMeApiResponse, GetAccountsAuthMeApiArg>({
+      query: () => ({ url: `/accounts/auth/me/` }),
     }),
   }),
   overrideExisting: false,
@@ -23,6 +26,15 @@ export type PostAccountsAuthLoginApiArg = {
 }
 export type GetAccountsRolesApiResponse = /** status 200 Thành công */ UserRole[]
 export type GetAccountsRolesApiArg = void
+export type GetAccountsAuthMeApiResponse = /** status 200 Thành công */ {
+  id?: string
+  username?: string
+  email?: string
+  role?: string | null
+  employee_id?: string | null
+  permissions?: string[]
+}
+export type GetAccountsAuthMeApiArg = void
 export type LoginResponse = {
   /** Access token (JWT) */
   access?: string
@@ -44,4 +56,8 @@ export type UserRole = {
   name?: string
   description?: string
 }
-export const { usePostAccountsAuthLoginMutation, useGetAccountsRolesQuery } = injectedRtkApi
+export const {
+  usePostAccountsAuthLoginMutation,
+  useGetAccountsRolesQuery,
+  useGetAccountsAuthMeQuery,
+} = injectedRtkApi

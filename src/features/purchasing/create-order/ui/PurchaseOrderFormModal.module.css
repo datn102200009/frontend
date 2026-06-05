@@ -123,3 +123,23 @@
   display: flex;
   align-items: center;
 }
+
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.inputWithIcon input {
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.inputIcon {
+  position: absolute;
+  right: 12px;
+  color: var(--clr-text-secondary);
+  pointer-events: none;
+}
+

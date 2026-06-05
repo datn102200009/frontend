@@ -47,7 +47,10 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 
 export function StockEntryList() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>('all');
-  const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({ status: statusFilter === 'all' ? 'all' : statusFilter });
+  const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    limit: 100
+  });
   const entries = (entriesData && 'results' in entriesData) ? (entriesData.results || []) : (Array.isArray(entriesData) ? entriesData : []);
   
   const { data: warehouses } = useGetMasterDataWarehousesListQuery();

@@ -254,4 +254,150 @@ describe('PurchaseOrderFormModal', () => {
     await screen.findByTestId('static-vendor');
     expect(screen.queryByRole('button', { name: /Hủy Đơn/i })).not.toBeInTheDocument();
   });
+
+  it('handles cancellation flow when no goods received but deposit exists', async () => {
+    let cancelPayload: any = null;
+    server.use(
+      http.get('*/api/v1/purchasing/orders/PO-PENDING-DEPOSIT/', () => {
+        return HttpResponse.json({
+          id: 'PO-PENDING-DEPOSIT',
+          vendor: '33333333-3333-3333-3333-333333333333',
+          vendor_name: 'Tech Component Inc',
+          status: 'pending',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 5, unit_price: 2000000 }
+          ],
+          stock_entries: []
+        });
+      }),
+      http.post('*/api/v1/purchasing/orders/PO-PENDING-DEPOSIT/cancel/', async ({ request }) => {
+        cancelPayload = await request.json();
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
+
+    const preloadedState = {
+      auth: {
+        user: {
+          id: '1',
+          username: 'admin',
+          full_name: 'Admin User',
+          role: 'admin' as const,
+          permissions: ['purchasing.cancel_order'],
+        },
+        token: 'test_token',
+        isAuthenticated: true,
+      },
+    };
+
+    renderWithProviders(
+      <PurchaseOrderFormModal {...defaultProps} orderId="PO-PENDING-DEPOSIT" />,
+      { preloadedState }
+    );
+
+    const user = userEvent.setup();
+
+    // Open cancellation modal
+    const cancelBtn = await screen.findByRole('button', { name: /Hủy Đơn/i });
+    await user.click(cancelBtn);
+
+    expect(screen.getByRole('heading', { name: 'Xác Nhận Hủy Đơn Mua Hàng' })).toBeInTheDocument();
+    
+    // Checkbox refund_deposit is shown and is checked by default
+    const refundCheckbox = screen.getByRole('checkbox', { name: /Nhận lại tiền đặt cọc/i });
+    expect(refundCheckbox).toBeChecked();
+    expect(screen.queryByText(/⚠️ Cảnh báo: Tiền cọc sẽ không được hoàn lại/i)).not.toBeInTheDocument();
+
+    // Uncheck to see warning
+    await user.click(refundCheckbox);
+    expect(refundCheckbox).not.toBeChecked();
+    expect(screen.getByText(/⚠️ Cảnh báo: Tiền cọc sẽ không được hoàn lại/i)).toBeInTheDocument();
+
+    // Recheck and submit
+    await user.click(refundCheckbox);
+    await user.click(screen.getByRole('button', { name: 'Xác nhận hủy' }));
+
+    await waitFor(() => {
+      expect(cancelPayload).toEqual({
+        refund_deposit: true,
+        keep_goods: true
+      });
+      expect(defaultProps.onSuccess).toHaveBeenCalled();
+    });
+  });
+
+  it('handles cancellation flow when goods are received', async () => {
+    let cancelPayload: any = null;
+    server.use(
+      http.get('*/api/v1/purchasing/orders/PO-SHIPPED/', () => {
+        return HttpResponse.json({
+          id: 'PO-SHIPPED',
+          vendor: '33333333-3333-3333-3333-333333333333',
+          vendor_name: 'Tech Component Inc',
+          status: 'pending',
+          advance_paid_amount: '1000000.00',
+          lines: [
+            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 5, unit_price: 2000000 }
+          ],
+          stock_entries: [
+            { id: 'SE-001', name: 'IN-001', status: 'posted', purpose: 'receipt' }
+          ]
+        });
+      }),
+      http.post('*/api/v1/purchasing/orders/PO-SHIPPED/cancel/', async ({ request }) => {
+        cancelPayload = await request.json();
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
+
+    const preloadedState = {
+      auth: {
+        user: {
+          id: '1',
+          username: 'admin',
+          full_name: 'Admin User',
+          role: 'admin' as const,
+          permissions: ['purchasing.cancel_order'],
+        },
+        token: 'test_token',
+        isAuthenticated: true,
+      },
+    };
+
+    renderWithProviders(
+      <PurchaseOrderFormModal {...defaultProps} orderId="PO-SHIPPED" />,
+      { preloadedState }
+    );
+
+    const user = userEvent.setup();
+
+    // Open cancellation modal
+    const cancelBtn = await screen.findByRole('button', { name: /Hủy Đơn/i });
+    await user.click(cancelBtn);
+
+    expect(screen.getByRole('heading', { name: 'Xác Nhận Hủy Đơn Mua Hàng' })).toBeInTheDocument();
+    
+    // Checkbox keep_goods is shown and checked by default
+    const keepGoodsCheckbox = screen.getByRole('checkbox', { name: /Giữ lại phần hàng đã nhận/i });
+    expect(keepGoodsCheckbox).toBeChecked();
+    expect(screen.queryByText(/🚨 Cảnh báo: Trả hàng toàn bộ!/i)).not.toBeInTheDocument();
+
+    // Uncheck to see warning
+    await user.click(keepGoodsCheckbox);
+    expect(keepGoodsCheckbox).not.toBeChecked();
+    expect(screen.getByText(/🚨 Cảnh báo: Trả hàng toàn bộ!/i)).toBeInTheDocument();
+
+    // Recheck and submit
+    await user.click(keepGoodsCheckbox);
+    await user.click(screen.getByRole('button', { name: 'Xác nhận hủy' }));
+
+    await waitFor(() => {
+      expect(cancelPayload).toEqual({
+        refund_deposit: true,
+        keep_goods: true
+      });
+      expect(defaultProps.onSuccess).toHaveBeenCalled();
+    });
+  });
 });

@@ -21,7 +21,6 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
   const { register, control, handleSubmit, formState: { errors } } = useForm<PurchaseOrderInput>({
     defaultValues: {
       vendor_id: order.vendor,
-      status: (order.status === 'draft' || order.status === 'pending' || order.status === 'completed' || order.status === 'cancelled') ? order.status : undefined,
       lines: order.lines.map(l => ({ item_id: l.item, quantity: l.quantity, unit_price: l.unit_price })),
     }
   });
@@ -55,16 +54,6 @@ export const UpdatePurchaseOrderForm: React.FC<UpdatePOFormProps> = ({ order, on
               value: s.id || '',
               label: s.supplier_name || s.name || ''
             })) || []}
-          />
-          <Select 
-            label="Status" 
-            {...register('status', { required: 'Status is required' })}
-            error={errors.status?.message}
-            options={[
-              { value: 'draft', label: 'Draft' },
-              { value: 'pending', label: 'Pending (Ready to receive)' },
-              { value: 'cancelled', label: 'Cancelled' },
-            ]}
           />
         </div>
       </div>

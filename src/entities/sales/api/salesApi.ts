@@ -156,14 +156,6 @@ export type SalesOrderLineInput = {
 }
 export type SalesOrderInput = {
   customer_id: string
-  status?:
-    | 'draft'
-    | 'pending'
-    | 'pending_credit_approval'
-    | 'paid_unshipped'
-    | 'shipped_unpaid'
-    | 'completed'
-    | 'cancelled'
   advance_paid_amount?: number
   lines: SalesOrderLineInput[]
 }

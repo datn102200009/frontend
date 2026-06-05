@@ -362,9 +362,19 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                   {...register('password', {
                     required: watchCreateUser ? 'Mật khẩu là bắt buộc' : false,
                     minLength: {
-                      value: 6,
-                      message: 'Mật khẩu phải chứa ít nhất 6 ký tự',
+                      value: 8,
+                      message: 'Mật khẩu phải chứa ít nhất 8 ký tự',
                     },
+                    validate: {
+                      hasUppercase: (value) =>
+                        !watchCreateUser || /[A-Z]/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 chữ hoa',
+                      hasLowercase: (value) =>
+                        !watchCreateUser || /[a-z]/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 chữ thường',
+                      hasNumber: (value) =>
+                        !watchCreateUser || /\d/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 chữ số',
+                      hasSpecialChar: (value) =>
+                        !watchCreateUser || /[!@#$%^&*(),.?":{}|<>]/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt',
+                    }
                   })}
                   disabled={isLoading}
                 />

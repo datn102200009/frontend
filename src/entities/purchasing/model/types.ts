@@ -35,15 +35,19 @@ export type PurchaseInvoiceLine = GenPurchaseInvoiceLine & {
   quantity: number;
   unit_price: number;
   line_total: number;
+  qty_fulfillment_rate?: number | null;
 };
 
 export type PurchaseInvoice = GenPurchaseInvoice & {
   id: string;
   order: string;
   vendor: string;
-  status: 'unpaid' | 'partial' | 'paid' | 'cancelled';
+  status: 'unpaid' | 'partial' | 'paid' | 'blocked_for_payment' | 'cancelled';
   total_amount: number;
   paid_amount: number;
+  block_reason?: string | null;
+  due_date?: string | null;
+  qty_fulfillment_rate?: number | null;
   created_at: string;
   updated_at: string;
   lines: PurchaseInvoiceLine[];

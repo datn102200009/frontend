@@ -17,6 +17,7 @@ import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
+import { useToast } from '@shared/ui/Toast/Toast';
 import styles from './SalesOrderFormModal.module.css';
 
 
@@ -75,6 +76,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
 
   const canBypass = usePermission('sales.approve_credit_bypass');
   const canCancel = usePermission('sales.cancel_order');
+  const { toast } = useToast();
 
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
 
@@ -107,7 +109,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     defaultValues: {
       customer_id: '',
       advance_paid_amount: 0,
-      lines: [{ item_id: '', quantity: 1, unit_price: 15000000 }],
+      lines: [{ item_id: '', quantity: 1, unit_price: 0 }],
     }
   });
 
@@ -147,9 +149,9 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       hasInitialized.current = true;
     } else if (!orderId && customersData !== undefined && itemsData !== undefined && !hasInitialized.current) {
       reset({
-        customer_id: customersData?.[0]?.id || '',
+        customer_id: '',
         advance_paid_amount: 0,
-        lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 15000000 }],
+        lines: [{ item_id: '', quantity: 1, unit_price: 0 }],
       });
       hasInitialized.current = true;
     }
@@ -185,11 +187,13 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       if (orderId) {
         await updateOrder({ pk: orderId, salesOrderInput: data }).unwrap();
       } else {
-        await createOrder({ salesOrderInput: { ...data, status: 'draft' } }).unwrap();
+        await createOrder({ salesOrderInput: data }).unwrap();
       }
       onSuccess();
     } catch (err) {
       console.error('Failed to save sales order', err);
+      const errData = err as { data?: { detail?: string } };
+      toast('error', errData?.data?.detail || 'Không thể lưu đơn bán hàng');
     }
   };
 
@@ -215,6 +219,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       onSuccess();
     } catch (err) {
       console.error('Failed action', err);
+      const errData = err as { data?: { detail?: string } };
+      toast('error', errData?.data?.detail || 'Thao tác thất bại');
     }
   };
 
@@ -225,6 +231,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       onSuccess();
     } catch (err) {
       console.error('Failed to confirm', err);
+      const errData = err as { data?: { detail?: string } };
+      toast('error', errData?.data?.detail || 'Duyệt đơn hàng thất bại');
     }
   };
 
@@ -235,6 +243,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
       onSuccess();
     } catch (err) {
       console.error('Failed to bypass credit approval', err);
+      const errData = err as { data?: { detail?: string } };
+      toast('error', errData?.data?.detail || 'Duyệt tín dụng đặc cách thất bại');
     }
   };
 

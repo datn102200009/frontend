@@ -255,9 +255,20 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
             type="text"
             placeholder="https://storage.example.com/documents/terminate_hdld.pdf"
             className={styles.input}
-            {...register('file_url')}
+            {...register('file_url', {
+              validate: (val) => {
+                if (!val) return true;
+                try {
+                  new URL(val);
+                  return true;
+                } catch (_) {
+                  return 'Định dạng URL không hợp lệ';
+                }
+              }
+            })}
             disabled={isLoading}
           />
+          {errors.file_url && <span className={styles.errorText}>{errors.file_url.message}</span>}
         </div>
       </form>
     </Modal>

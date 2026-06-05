@@ -28,13 +28,12 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
 
   const { data: employeeResponse, isLoading } = useGetHrmEmployeesQuery({
     limit: 100,
+    status: statusFilter === 'all' ? undefined : statusFilter,
   });
 
   const employees = useMemo(() => {
-    if (!employeeResponse?.results) return [];
-    if (statusFilter === 'all') return employeeResponse.results;
-    return employeeResponse.results.filter((emp) => emp.employment_status === statusFilter);
-  }, [employeeResponse, statusFilter]);
+    return employeeResponse?.results || [];
+  }, [employeeResponse]);
 
   const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';

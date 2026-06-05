@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { useToast } from '@shared/ui/Toast/Toast';
 import { usePostFinanceCashFlowsMutation } from '@entities/finance/api/financeApi';
 import { useGetSalesInvoicesQuery } from '@entities/sales/api/salesApi';
 import { useGetPurchasingInvoicesQuery } from '@entities/purchasing/api/purchasingApi';
@@ -18,6 +19,7 @@ interface CashFlowFormModalProps {
 
 export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onClose, onSuccess, defaultValues }) => {
   const [createTx, { isLoading }] = usePostFinanceCashFlowsMutation();
+  const { toast } = useToast();
   const paymentType = defaultValues?.payment_type || 'receive';
   const isDirect = !!defaultValues?.sales_order_id || !!defaultValues?.purchase_order_id || !!defaultValues?.sales_invoice_id || !!defaultValues?.purchase_invoice_id;
 
@@ -109,6 +111,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
       onSuccess();
     } catch (err) {
       console.error('Failed to record transaction', err);
+      const errData = err as { data?: { detail?: string } };
+      toast('error', errData?.data?.detail || 'Ghi nhận dòng tiền thất bại');
     }
   };
 

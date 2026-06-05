@@ -154,6 +154,14 @@ export type StockEntryDetail = {
   source_warehouse_name?: string | null
   target_warehouse_id?: string | null
   target_warehouse_name?: string | null
+  qc_status?: string
+  latest_cert?: {
+    id?: string
+    cert_id?: string
+    result?: string
+    remarks?: string | null
+    issue_date?: string
+  } | null
 }
 export type StockEntry = {
   id?: string
@@ -165,6 +173,10 @@ export type StockEntry = {
   status?: 'draft' | 'submitted' | 'posted'
   purchase_order_id?: string | null
   sales_order_id?: string | null
+  vendor_name?: string | null
+  shipment_id?: string | null
+  shipment_num?: string | null
+  shipment_status?: string | null
   details?: StockEntryDetail[]
   created_at?: string
   created_at_formatted?: string
