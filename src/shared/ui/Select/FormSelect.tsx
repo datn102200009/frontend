@@ -26,7 +26,8 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
           <select
             ref={ref}
             id={id}
-            className={clsx(inputStyles.input, inputStyles[size], 'appearance-none')}
+            className={clsx(inputStyles.input, inputStyles[size])}
+            style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: '32px' }}
             aria-invalid={!!error}
             aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
             required={required}
@@ -38,7 +39,17 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
               </option>
             ))}
           </select>
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+          <div style={{
+            position: 'absolute',
+            right: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            color: 'var(--clr-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            opacity: rest.disabled ? 0.5 : 1
+          }}>
             <ChevronDown size={18} />
           </div>
         </div>

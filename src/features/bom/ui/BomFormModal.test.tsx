@@ -55,12 +55,19 @@ describe('BomFormModal', () => {
     renderWithProviders(<BomFormModal {...defaultProps} />);
     const user = userEvent.setup();
     
-    await screen.findAllByRole('option', { name: /SP001/i });
-    await user.selectOptions(await screen.findByRole('combobox', { name: /^Sản phẩm/i }), 'SP001');
+    // Open product dropdown
+    const productCombobox = await screen.findByRole('combobox', { name: /^Sản phẩm/i });
+    await user.click(productCombobox);
+    const spOption = await screen.findByRole('option', { name: /SP001/i });
+    await user.click(spOption);
+
     await user.type(screen.getByLabelText(/^Tên định mức/i), 'New BOM Name');
     
+    // Open items dropdown
     const itemsComboboxes = await screen.findAllByRole('combobox', { name: /^Mã linh kiện/i });
-    await user.selectOptions(itemsComboboxes[0], 'LK001');
+    await user.click(itemsComboboxes[0]);
+    const lkOption = await screen.findByRole('option', { name: /LK001/i });
+    await user.click(lkOption);
     
     await user.click(screen.getByRole('button', { name: 'Tạo mới' }));
     
@@ -74,12 +81,19 @@ describe('BomFormModal', () => {
     renderWithProviders(<BomFormModal {...defaultProps} />);
     const user = userEvent.setup();
     
-    await screen.findAllByRole('option', { name: /EXISTING/i });
-    await user.selectOptions(await screen.findByRole('combobox', { name: /^Sản phẩm/i }), 'EXISTING');
+    // Open product dropdown
+    const productCombobox = await screen.findByRole('combobox', { name: /^Sản phẩm/i });
+    await user.click(productCombobox);
+    const existingOption = await screen.findByRole('option', { name: /EXISTING/i });
+    await user.click(existingOption);
+
     await user.type(screen.getByLabelText(/^Tên định mức/i), 'Existing BOM Name');
     
+    // Open items dropdown
     const itemsComboboxes = await screen.findAllByRole('combobox', { name: /^Mã linh kiện/i });
-    await user.selectOptions(itemsComboboxes[0], 'LK001');
+    await user.click(itemsComboboxes[0]);
+    const lkOption = await screen.findByRole('option', { name: /LK001/i });
+    await user.click(lkOption);
     
     await user.click(screen.getByRole('button', { name: 'Tạo mới' }));
     

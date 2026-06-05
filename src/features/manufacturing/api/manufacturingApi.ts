@@ -213,6 +213,9 @@ export type Bom = {
   quantity?: number
   description?: string | null
   is_active?: boolean
+  mold?: string | null
+  mold_code?: string | null
+  mold_name?: string | null
   items_count?: number
   items?: BomItem[]
   created_at?: string
@@ -226,14 +229,17 @@ export type BomInput = {
   item_id: string
   quantity?: number
   description?: string | null
+  mold_id?: string | null
   items: {
     item_id: string
     quantity: number
   }[]
 }
 export type BomUpdateInput = {
+  name?: string
   quantity?: number
   description?: string | null
+  mold_id?: string | null
   items?: {
     item_id: string
     quantity: number

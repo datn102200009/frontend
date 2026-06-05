@@ -13,6 +13,7 @@ import {
   Users,
   Truck,
   Contact,
+  Briefcase,
 } from 'lucide-react';
 import type { RootState } from '@app/store';
 import { logout } from '@features/auth/model/authSlice';
@@ -62,6 +63,7 @@ const NAV_SECTIONS = [
     label: 'Tài Chính',
     items: [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền' },
+      { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định' },
     ],
   },
   {

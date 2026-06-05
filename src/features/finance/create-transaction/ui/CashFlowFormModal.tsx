@@ -10,11 +10,24 @@ import { Button } from '@shared/ui/Button/Button';
 import { Input } from '@shared/ui/Input/Input';
 import styles from './CashFlowFormModal.module.css';
 
+interface CashFlowFormState {
+  payment_type: 'receive' | 'pay';
+  amount: number;
+  payment_date: string;
+  sales_invoice_id: string | null;
+  purchase_invoice_id: string | null;
+  sales_order_id: string | null;
+  purchase_order_id: string | null;
+  category: string;
+  payment_method: 'cash' | 'bank_transfer' | 'credit_card' | 'other';
+  remarks?: string;
+}
+
 interface CashFlowFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  defaultValues?: Partial<CashFlowInput>;
+  defaultValues?: Partial<Omit<CashFlowInput, 'amount'>> & { amount?: string | number };
 }
 
 export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onClose, onSuccess, defaultValues }) => {
@@ -34,10 +47,10 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     }
   }, [open]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CashFlowInput>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CashFlowFormState>({
     defaultValues: {
       payment_type: paymentType,
-      amount: defaultValues?.amount || 0,
+      amount: Number(defaultValues?.amount) || 0,
       payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
       sales_invoice_id: defaultValues?.sales_invoice_id || null,
       purchase_invoice_id: defaultValues?.purchase_invoice_id || null,
@@ -56,7 +69,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
       if (paymentType === 'receive' && salesInvoices && salesInvoices.length > 0) {
         reset({
           payment_type: 'receive',
-          amount: defaultValues?.amount || 0,
+          amount: Number(defaultValues?.amount) || 0,
           payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
           sales_invoice_id: salesInvoices[0].id || '',
           purchase_invoice_id: null,
@@ -70,7 +83,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
       } else if (paymentType === 'pay' && purchaseInvoices && purchaseInvoices.length > 0) {
         reset({
           payment_type: 'pay',
-          amount: defaultValues?.amount || 0,
+          amount: Number(defaultValues?.amount) || 0,
           payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
           sales_invoice_id: null,
           purchase_invoice_id: purchaseInvoices[0].id || '',
@@ -85,7 +98,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     }
   }, [salesInvoices, purchaseInvoices, paymentType, reset, defaultValues, isDirect]);
 
-  const onSubmit = async (data: CashFlowInput) => {
+  const onSubmit = async (data: CashFlowFormState) => {
     try {
       let inferredCategory = data.category || defaultValues?.category;
       if (!inferredCategory) {
@@ -104,6 +117,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
 
       const payload = {
         ...data,
+        amount: String(data.amount),
         category: inferredCategory,
       };
 

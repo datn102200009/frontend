@@ -28,6 +28,7 @@ const InventoryPage = lazy(() => import('../pages/InventoryPage/InventoryPage'))
 const PurchasingPage = lazy(() => import('../pages/purchasing/PurchasingPage'));
 const SalesPage = lazy(() => import('../pages/sales/SalesPage'));
 const FinancePage = lazy(() => import('../pages/finance/FinancePage'));
+const FixedAssetsPage = lazy(() => import('../pages/finance/assets/FixedAssetsPage').then(m => ({ default: m.FixedAssetsPage })));
 const CustomersPage = lazy(() => import('../pages/crm/CustomersPage'));
 const SuppliersPage = lazy(() => import('../pages/procurement/SuppliersPage'));
 const HrmPage = lazy(() => import('../pages/hrm/HrmPage'));
@@ -116,6 +117,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={<PageLoader />}>
             <PermissionGuard requiredPermission="finance.view_cash_flow" fallback={<ForbiddenPage />}>
               <FinancePage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'finance/fixed-assets',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="finance.view_fixed_asset" fallback={<ForbiddenPage />}>
+              <FixedAssetsPage />
             </PermissionGuard>
           </Suspense>
         ),
