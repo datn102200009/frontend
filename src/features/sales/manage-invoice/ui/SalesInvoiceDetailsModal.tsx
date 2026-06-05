@@ -62,10 +62,12 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
               <span className={styles.label}>Trạng Thái</span>
               <Badge variant={
                 invoice.status === 'paid' ? 'success' : 
-                invoice.status === 'partial' ? 'warning' : 'error'
+                invoice.status === 'partial' ? 'warning' : 
+                invoice.status === 'cancelled' ? 'neutral' : 'error'
               }>
                 {invoice.status === 'paid' ? 'Đã thu tiền' : 
-                 invoice.status === 'partial' ? 'Thu một phần' : 'Chưa thanh toán'}
+                 invoice.status === 'partial' ? 'Thu một phần' : 
+                 invoice.status === 'cancelled' ? 'Đã Hủy' : 'Chưa thanh toán'}
               </Badge>
             </div>
             <div className={styles.infoGroup}>
@@ -128,7 +130,13 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
             setShowPayment(false);
             onClose();
           }} 
-          defaultValues={{ payment_type: 'receive', sales_invoice_id: invoiceId, amount: remainingAmount }} 
+          defaultValues={{ 
+            payment_type: 'receive', 
+            sales_invoice_id: invoiceId, 
+            amount: remainingAmount,
+            category: 'Thanh toán hóa đơn',
+            remarks: `Thu tiền thanh toán hóa đơn bán ${invoice.id?.slice(0, 8).toUpperCase()} (Khách hàng: ${invoice.customer_name || 'N/A'}, Số tiền: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}).`
+          }} 
         />
       )}
     </>

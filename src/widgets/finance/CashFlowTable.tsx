@@ -36,8 +36,21 @@ export const CashFlowTable: React.FC = () => {
         },
       }),
       helper.accessor('category', {
+        header: 'Phân Loại',
+        cell: (info) => <Badge variant="neutral">{info.getValue() || 'Chưa phân loại'}</Badge>,
+      }),
+      helper.accessor('payment_method', {
         header: 'Phương Thức',
-        cell: (info) => <Badge variant="neutral">{info.getValue() || 'Khác'}</Badge>,
+        cell: (info) => {
+          const method = info.getValue();
+          const labels: Record<string, string> = {
+            cash: 'Tiền mặt',
+            bank_transfer: 'Chuyển khoản',
+            credit_card: 'Thẻ tín dụng',
+            other: 'Khác',
+          };
+          return <span className="text-slate-600">{labels[method] || method || '-'}</span>;
+        },
       }),
       helper.accessor('remarks', {
         header: 'Ghi Chú',

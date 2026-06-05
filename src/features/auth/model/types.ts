@@ -3,6 +3,7 @@ export interface User {
   username: string;
   full_name: string;
   role: 'admin' | 'manager' | 'staff';
+  permissions: string[];
 }
 
 export interface AuthState {

@@ -102,8 +102,9 @@ describe('FinancePage', () => {
         purchase_invoice_id: null,
         sales_order_id: null,
         purchase_order_id: null,
-        category: 'bank_transfer',
-        amount: 3000000,
+        category: 'Thanh toán hóa đơn',
+        payment_method: 'bank_transfer',
+        amount: '3000000',
         remarks: 'Ghi nhận thu cọc đơn hàng',
         payment_date: new Date().toISOString().split('T')[0]
       });

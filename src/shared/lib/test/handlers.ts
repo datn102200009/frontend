@@ -11,7 +11,8 @@ export const handlers = [
         refresh: 'mock-refresh-token',
         user_id: '1',
         username: 'admin',
-        role: 'admin'
+        role: 'admin',
+        permissions: ['sales.approve_credit_bypass']
       });
     }
     return new HttpResponse(
@@ -20,6 +21,14 @@ export const handlers = [
     );
   }),
 
+  http.get('*/api/v1/accounts/auth/me/', () => {
+    return HttpResponse.json({
+      id: '1',
+      username: 'admin',
+      role: 'admin',
+      permissions: ['sales.approve_credit_bypass', 'finance.create_fixed_asset', 'finance.update_fixed_asset', 'finance.delete_fixed_asset', 'finance.run_depreciation']
+    });
+  }),
 
   // Roles mock
   http.get('*/api/v1/accounts/roles/', () => {

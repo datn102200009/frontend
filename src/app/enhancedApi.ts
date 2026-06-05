@@ -127,6 +127,15 @@ purchasingApi.enhanceEndpoints({
     postPurchasingOrdersByPkApprove: {
       invalidatesTags: ['PurchaseOrders', 'Inventory', 'Invoices'],
     },
+    postPurchasingOrdersByPkCancel: {
+      invalidatesTags: ['PurchaseOrders', 'Invoices', 'Inventory', 'CashFlows'],
+    },
+    postPurchasingInvoicesByPkPay: {
+      invalidatesTags: ['Invoices', 'PurchaseOrders', 'CashFlows'],
+    },
+    postPurchasingInvoicesByPkVerify: {
+      invalidatesTags: ['Invoices', 'PurchaseOrders'],
+    },
   },
 });
 
@@ -158,6 +167,12 @@ salesApi.enhanceEndpoints({
     },
     postSalesOrdersByPkApprove: {
       invalidatesTags: ['SalesOrders', 'Inventory', 'Invoices'],
+    },
+    postSalesOrdersByPkApproveCreditBypass: {
+      invalidatesTags: ['SalesOrders', 'Inventory', 'Invoices'],
+    },
+    postSalesOrdersByPkCancel: {
+      invalidatesTags: ['SalesOrders', 'Invoices', 'Inventory', 'CashFlows'],
     },
   },
 });
@@ -295,4 +310,3 @@ hrmApi.enhanceEndpoints({
     },
   },
 });
-

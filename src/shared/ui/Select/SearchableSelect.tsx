@@ -17,6 +17,7 @@ interface Props {
   error?: string;
   disabled?: boolean;
   required?: boolean;
+  ariaLabel?: string;
 }
 
 export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
@@ -30,6 +31,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
       error,
       disabled,
       required,
+      ariaLabel,
     },
     ref
   ) => {
@@ -110,6 +112,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
           aria-haspopup="listbox"
           aria-controls={isOpen ? listboxId : undefined}
           aria-labelledby={label ? labelId : undefined}
+          aria-label={ariaLabel}
           aria-disabled={disabled}
           onKeyDown={handleKeyDown}
         >

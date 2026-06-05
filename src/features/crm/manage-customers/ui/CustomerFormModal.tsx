@@ -52,6 +52,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       contact_email: '',
       contact_phone: '',
       address: '',
+      credit_limit: 0,
+      payment_terms: 'NET30',
+      is_credit_locked: false,
     },
   });
 
@@ -64,6 +67,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         contact_email: customerData.contact_email || '',
         contact_phone: customerData.contact_phone || '',
         address: customerData.address || '',
+        credit_limit: customerData.credit_limit || 0,
+        payment_terms: customerData.payment_terms || 'NET30',
+        is_credit_locked: customerData.is_credit_locked || false,
       });
     } else {
       reset({
@@ -73,6 +79,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         contact_email: '',
         contact_phone: '',
         address: '',
+        credit_limit: 0,
+        payment_terms: 'NET30',
+        is_credit_locked: false,
       });
     }
   }, [customerData, reset]);
@@ -115,7 +124,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             <div>
               {customerId && (
                 <Button
-                  variant="outline"
+                  variant="danger"
                   onClick={() => setShowConfirmDelete(true)}
                   loading={isDeleting}
                   disabled={isWorking}
@@ -236,10 +245,62 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 id="address"
                 placeholder="VD: Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội"
                 className={styles.itemInput}
-                rows={3}
+                rows={2}
                 {...register('address')}
                 disabled={isWorking}
               />
+            </div>
+
+            <div style={{ marginTop: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--sp-4)' }}>
+              <h4 style={{ margin: '0 0 var(--sp-3) 0', fontSize: 'var(--fs-sm)', fontWeight: 600, color: 'var(--clr-text-primary)' }}>
+                Thông Tin Tín Dụng {"&"} Công Nợ
+              </h4>
+              <div className={styles.row}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
+                  <label htmlFor="credit_limit" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
+                    Hạn Mức Tín Dụng (VND)
+                  </label>
+                  <input
+                    id="credit_limit"
+                    type="number"
+                    min={0}
+                    placeholder="VD: 50000000"
+                    className={styles.itemInput}
+                    {...register('credit_limit', { valueAsNumber: true })}
+                    disabled={isWorking}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
+                  <label htmlFor="payment_terms" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
+                    Điều Khoản Thanh Toán
+                  </label>
+                  <select
+                    id="payment_terms"
+                    className={styles.itemInput}
+                    {...register('payment_terms')}
+                    disabled={isWorking}
+                  >
+                    <option value="NET15">Thanh toán trong 15 ngày (NET15)</option>
+                    <option value="NET30">Thanh toán trong 30 ngày (NET30)</option>
+                    <option value="NET45">Thanh toán trong 45 ngày (NET45)</option>
+                    <option value="NET60">Thanh toán trong 60 ngày (NET60)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginTop: 'var(--sp-3)' }}>
+                <input
+                  id="is_credit_locked"
+                  type="checkbox"
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  {...register('is_credit_locked')}
+                  disabled={isWorking}
+                />
+                <label htmlFor="is_credit_locked" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)', cursor: 'pointer' }}>
+                  Khóa tín dụng (Chặn tạo đơn hàng mới ngay lập tức)
+                </label>
+              </div>
             </div>
           </form>
         )}
@@ -252,6 +313,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           message="Bạn có chắc chắn muốn xóa khách hàng này khỏi hệ thống? Thao tác này không thể hoàn tác."
           onConfirm={handleDelete}
           onCancel={() => setShowConfirmDelete(false)}
+          confirmVariant="danger"
         />
       )}
     </>

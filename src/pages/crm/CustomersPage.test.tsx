@@ -74,6 +74,9 @@ describe('CustomersPage', () => {
     await user.type(screen.getByLabelText(/Email Liên Hệ/i), 'beta@test.com');
     await user.type(screen.getByLabelText(/Số Điện Thoại/i), '0987654321');
     await user.type(screen.getByLabelText(/Địa Chỉ/i), 'TP.HCM');
+    await user.type(screen.getByLabelText(/Hạn Mức Tín Dụng/i), '150000000');
+    await user.selectOptions(screen.getByLabelText(/Điều Khoản Thanh Toán/i), 'NET45');
+    await user.click(screen.getByLabelText(/Khóa tín dụng/i));
 
     // Submit successfully
     await user.click(submitBtn);
@@ -85,7 +88,10 @@ describe('CustomersPage', () => {
         customer_group: 'Individual',
         contact_email: 'beta@test.com',
         contact_phone: '0987654321',
-        address: 'TP.HCM'
+        address: 'TP.HCM',
+        credit_limit: 150000000,
+        payment_terms: 'NET45',
+        is_credit_locked: true,
       });
       // Modal should be closed
       expect(screen.queryByRole('heading', { name: /Thêm Khách Hàng Mới/i })).not.toBeInTheDocument();
@@ -117,7 +123,10 @@ describe('CustomersPage', () => {
           customer_group: 'Commercial',
           contact_email: 'alpha@test.com',
           contact_phone: '0123456789',
-          address: 'Hà Nội'
+          address: 'Hà Nội',
+          credit_limit: 50000000,
+          payment_terms: 'NET30',
+          is_credit_locked: false
         });
       }),
       http.put('*/api/v1/crm/customers/CUS01/', async ({ request }) => {
@@ -146,9 +155,23 @@ describe('CustomersPage', () => {
     const customerNameInput = screen.getByLabelText(/Tên Khách Hàng/i);
     expect(customerNameInput).toHaveValue('Công ty Alpha');
 
-    // Perform an edit
+    const creditLimitInput = screen.getByLabelText(/Hạn Mức Tín Dụng/i);
+    expect(creditLimitInput).toHaveValue(50000000);
+
+    const paymentTermsSelect = screen.getByLabelText(/Điều Khoản Thanh Toán/i);
+    expect(paymentTermsSelect).toHaveValue('NET30');
+
+    const isCreditLockedCheckbox = screen.getByLabelText(/Khóa tín dụng/i);
+    expect(isCreditLockedCheckbox).not.toBeChecked();
+
+    // Perform edits
     await user.clear(customerNameInput);
     await user.type(customerNameInput, 'Công ty Alpha Updated');
+    await user.clear(creditLimitInput);
+    await user.type(creditLimitInput, '75000000');
+    await user.selectOptions(paymentTermsSelect, 'NET60');
+    await user.click(isCreditLockedCheckbox);
+
     await user.click(screen.getByRole('button', { name: /Cập Nhật/i }));
 
     await waitFor(() => {
@@ -158,7 +181,10 @@ describe('CustomersPage', () => {
         customer_group: 'Commercial',
         contact_email: 'alpha@test.com',
         contact_phone: '0123456789',
-        address: 'Hà Nội'
+        address: 'Hà Nội',
+        credit_limit: 75000000,
+        payment_terms: 'NET60',
+        is_credit_locked: true,
       });
     });
   });

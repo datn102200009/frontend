@@ -4,6 +4,7 @@ import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { formatDateTime } from '@shared/lib/formatDate';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { Info } from 'lucide-react';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 import { 
   usePostInventoryStockEntryByStockEntryIdUpdateMutation,
@@ -34,6 +35,7 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
   draft: { label: 'Nháp', variant: 'neutral' },
   submitted: { label: 'Chờ duyệt', variant: 'warning' },
   posted: { label: 'Đã duyệt', variant: 'success' },
+  cancelled: { label: 'Đã hủy', variant: 'neutral' },
 };
 
 interface Props {
@@ -44,7 +46,7 @@ interface Props {
 
 export function StockEntryDetailModal({ open, entry, onClose }: Props) {
   const { data: warehousesData } = useGetMasterDataWarehousesListQuery();
-  const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({});
+  const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({ detailed: true });
   const [updateStockEntry, { isLoading: isUpdating }] = usePostInventoryStockEntryByStockEntryIdUpdateMutation();
   const [approveStockIn, { isLoading: isApprovingIn }] = usePostInventoryStockInByStockEntryIdApproveMutation();
   const [approveStockIssue, { isLoading: isApprovingIssue }] = usePostInventoryStockIssueByStockEntryIdApproveMutation();
@@ -165,6 +167,9 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
     }
   };
 
+  const isPurchaseReceipt = purposeType === 'receipt' && !!entry.purchase_order_id;
+  const isReceipt = purposeType === 'receipt';
+
   return (
     <Modal
       open={open}
@@ -174,7 +179,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
           <Button variant="ghost" onClick={onClose} disabled={isWorking}>Đóng</Button>
-          {isDraft && (
+          {isDraft && !isReceipt && (
             <>
               <Button variant="secondary" onClick={handleUpdateWarehouses} loading={isUpdating} disabled={isWorking}>
                 Cập nhật Kho
@@ -188,6 +193,23 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
+        {isDraft && isPurchaseReceipt && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            padding: '12px', 
+            background: 'rgba(59, 130, 246, 0.08)', 
+            border: '1px solid rgba(59, 130, 246, 0.2)', 
+            borderRadius: '8px',
+            color: 'var(--clr-primary)',
+            fontSize: '13px',
+            marginBottom: '4px'
+          }}>
+            <Info size={16} style={{ flexShrink: 0 }} />
+            <span>Phiếu nhập kho này thuộc chu trình mua hàng. Vui lòng thực hiện kiểm định QA/QC và gán kho nhận hàng tại tab <strong>Quản Lý Lô Hàng</strong>.</span>
+          </div>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>
           <div>
             <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Loại phiếu</div>
@@ -263,7 +285,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                       )}
                     </td>
                     <td style={{ padding: '8px 12px' }}>
-                      {isDraft && (purposeType === 'receipt' || purposeType === 'transfer') ? (
+                      {isDraft && (purposeType === 'receipt' || purposeType === 'transfer') && !isPurchaseReceipt ? (
                         <select
                           value={detail.target_warehouse_id || ''}
                           onChange={(e) => handleWarehouseChange(idx, 'target_warehouse_id', e.target.value)}

@@ -13,6 +13,7 @@ import {
   Users,
   Truck,
   Contact,
+  Briefcase,
 } from 'lucide-react';
 import type { RootState } from '@app/store';
 import { logout } from '@features/auth/model/authSlice';
@@ -62,6 +63,7 @@ const NAV_SECTIONS = [
     label: 'Tài Chính',
     items: [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền' },
+      { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định' },
     ],
   },
   {
@@ -89,7 +91,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         .toUpperCase()
     : '??';
 
-  const roleLabel = user?.role === 'admin' ? 'Quản trị viên' : user?.role === 'manager' ? 'Quản lý' : 'Nhân viên';
+  const roleLabel = user?.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : user?.role?.toLowerCase() === 'manager' ? 'Quản lý' : 'Nhân viên';
 
   return (
     <>
