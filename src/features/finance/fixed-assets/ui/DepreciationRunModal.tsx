@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@shared/ui/Button/Button';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { useToast } from '@shared/ui/Toast/Toast';
@@ -32,13 +32,15 @@ export function DepreciationRunModal({ open, onClose, onSuccess }: DepreciationR
     return list;
   }, [currentYear]);
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       const t = new Date();
       setRunMonth(String(t.getMonth() + 1).padStart(2, '0'));
       setRunYear(String(t.getFullYear()));
     }
-  }, [open]);
+  }
 
   const handleRun = async () => {
     if (!runPeriod) {
@@ -50,8 +52,9 @@ export function DepreciationRunModal({ open, onClose, onSuccess }: DepreciationR
         runDepreciationInput: { period: runPeriod },
       }).unwrap();
       onSuccess(result.length, runPeriod);
-    } catch (error: any) {
-      toast('error', error?.data?.error || error?.data?.detail || 'Lỗi khi chạy khấu hao');
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string; detail?: string } };
+      toast('error', err?.data?.error || err?.data?.detail || 'Lỗi khi chạy khấu hao');
     }
   };
 

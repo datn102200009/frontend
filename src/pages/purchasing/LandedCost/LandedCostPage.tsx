@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   useGetPurchasingShipmentsQuery, 
   usePostPurchasingShipmentsMutation, 
@@ -76,8 +76,9 @@ export const LandedCostPage: React.FC = () => {
     return shipments.find((s) => s.id === activeShipmentId);
   }, [shipments, activeShipmentId]);
 
-  // Synchronize localDetails and logisticFees when activeShipment changes
-  useEffect(() => {
+  const [prevActiveShipmentId, setPrevActiveShipmentId] = useState<string | null>(null);
+  if (activeShipmentId !== prevActiveShipmentId) {
+    setPrevActiveShipmentId(activeShipmentId);
     if (activeShipment) {
       if (activeShipment.stock_entries_details) {
         const initialDetails: Record<string, { quantity: number; target_warehouse_id: string | null }> = {};
@@ -94,20 +95,18 @@ export const LandedCostPage: React.FC = () => {
       setLocalDetails({});
       setLogisticFees('0');
     }
-  }, [activeShipment]);
+  }
 
-  // Auto-generate shipment code and name in creation modal
-  useEffect(() => {
+  const [prevIsCreateModalOpen, setPrevIsCreateModalOpen] = useState(false);
+  const [prevSelectedStockEntryIds, setPrevSelectedStockEntryIds] = useState<string[]>([]);
+  
+  const isSelectedChanged = selectedStockEntryIds.length !== prevSelectedStockEntryIds.length || 
+    selectedStockEntryIds.some((val, idx) => val !== prevSelectedStockEntryIds[idx]);
+
+  if (isCreateModalOpen !== prevIsCreateModalOpen || isSelectedChanged) {
+    setPrevIsCreateModalOpen(isCreateModalOpen);
+    setPrevSelectedStockEntryIds(selectedStockEntryIds);
     if (isCreateModalOpen) {
-      if (!shipmentNum) {
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const rand = Math.floor(1000 + Math.random() * 9000);
-        setShipmentNum(`LH-${yyyy}${mm}${dd}-${rand}`);
-      }
-
       if (!isNameUserEdited) {
         const today = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
@@ -135,7 +134,7 @@ export const LandedCostPage: React.FC = () => {
       setShipmentName('');
       setIsNameUserEdited(false);
     }
-  }, [isCreateModalOpen, selectedStockEntryIds, availableStockEntries, isNameUserEdited]);
+  }
 
   const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,8 +158,9 @@ export const LandedCostPage: React.FC = () => {
       setSelectedStockEntryIds([]);
       setIsCreateModalOpen(false);
       refetchShipments();
-    } catch (err: any) {
-      setCreateError(err?.data?.detail || 'Có lỗi xảy ra khi tạo lô hàng.');
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      setCreateError(error?.data?.detail || 'Có lỗi xảy ra khi tạo lô hàng.');
     }
   };
 
@@ -186,8 +186,9 @@ export const LandedCostPage: React.FC = () => {
       setQcItem(null);
       setQcRemarks('');
       refetchShipments();
-    } catch (err: any) {
-      setQcError(err?.data?.detail || 'Có lỗi xảy ra khi tạo chứng nhận QA/QC.');
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      setQcError(error?.data?.detail || 'Có lỗi xảy ra khi tạo chứng nhận QA/QC.');
     }
   };
 
@@ -199,8 +200,9 @@ export const LandedCostPage: React.FC = () => {
         body: { status: 'arrived' }
       }).unwrap();
       refetchShipments();
-    } catch (err: any) {
-      alert(err?.data?.detail || 'Không thể cập nhật trạng thái lô hàng sang Arrived.');
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      alert(error?.data?.detail || 'Không thể cập nhật trạng thái lô hàng sang Arrived.');
     }
   };
 
@@ -222,8 +224,9 @@ export const LandedCostPage: React.FC = () => {
         body: { status: 'inspected' }
       }).unwrap();
       refetchShipments();
-    } catch (err: any) {
-      alert(err?.data?.detail || 'Không thể hoàn tất kiểm định QA/QC.');
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      alert(error?.data?.detail || 'Không thể hoàn tất kiểm định QA/QC.');
     }
   };
 
@@ -292,8 +295,9 @@ export const LandedCostPage: React.FC = () => {
 
       setLogisticFees('');
       refetchShipments();
-    } catch (err: any) {
-      setReceiveError(err.message || err?.data?.detail || 'Có lỗi xảy ra khi xác nhận nhận hàng.');
+    } catch (err: unknown) {
+      const error = err as { message?: string; data?: { detail?: string } };
+      setReceiveError(error.message || error?.data?.detail || 'Có lỗi xảy ra khi xác nhận nhận hàng.');
     } finally {
       setIsReceiving(false);
     }
@@ -351,7 +355,15 @@ export const LandedCostPage: React.FC = () => {
             <Button 
               size="sm" 
               icon={<Plus size={14} />} 
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const rand = Math.floor(1000 + Math.random() * 9000);
+                setShipmentNum(`LH-${yyyy}${mm}${dd}-${rand}`);
+                setIsCreateModalOpen(true);
+              }}
             >
               Tạo Lô Hàng
             </Button>

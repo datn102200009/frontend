@@ -261,7 +261,7 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
                 try {
                   new URL(val);
                   return true;
-                } catch (_) {
+                } catch {
                   return 'Định dạng URL không hợp lệ';
                 }
               }

@@ -121,7 +121,10 @@ export function WorkOrderList() {
       { 
         accessorKey: 'bom_name', 
         header: 'Định mức (BOM)',
-        cell: ({ row }) => (row.original as any).bom?.name || (row.original as any).bom_name || '-'
+        cell: ({ row }) => {
+          const original = row.original as { bom?: { name?: string }; bom_name?: string };
+          return original.bom?.name || original.bom_name || '-';
+        }
       },
       {
         accessorKey: 'quantity',

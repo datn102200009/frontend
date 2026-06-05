@@ -20,8 +20,9 @@ export function AssetDeleteModal({ open, asset, onClose, onConfirm }: AssetDelet
       await deleteAsset({ pk: asset.id! }).unwrap();
       toast('success', `Xóa tài sản cố định ${asset.asset_code} thành công`);
       onConfirm();
-    } catch (error: any) {
-      toast('error', error?.data?.error || error?.data?.detail || 'Không thể xóa tài sản cố định');
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string; detail?: string } };
+      toast('error', err?.data?.error || err?.data?.detail || 'Không thể xóa tài sản cố định');
     }
   };
 

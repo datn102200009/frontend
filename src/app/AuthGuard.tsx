@@ -16,8 +16,7 @@ export function AuthGuard() {
 
   useEffect(() => {
     if (error) {
-      const err = error as any;
-      if (err.status === 401) {
+      if ('status' in error && error.status === 401) {
         dispatch(logout());
       }
     }

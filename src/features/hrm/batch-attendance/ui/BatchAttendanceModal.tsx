@@ -79,19 +79,25 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
   const [saveAttendance, { isLoading: isSaving }] = usePostHrmAttendancesBatchMutation();
 
-  // Đồng bộ ngày và lỗi khi mở/đóng modal hoặc thay đổi initialDate
-  React.useEffect(() => {
+  const [prevOpen, setPrevOpen] = React.useState(open);
+  const [prevInitialDate, setPrevInitialDate] = React.useState(initialDate);
+
+  if (open !== prevOpen || initialDate !== prevInitialDate) {
+    setPrevOpen(open);
+    setPrevInitialDate(initialDate);
     if (open) {
       setDate(initialDate || new Date().toISOString().split('T')[0]);
       setApiError(null);
     } else {
       setRecords([]);
     }
-  }, [open, initialDate]);
+  }
 
-  // Đồng bộ danh sách chấm công (records) khi nhân sự, thông tin nghỉ lễ, hoặc chấm công đã có thay đổi
-  React.useEffect(() => {
-    if (!open) return;
+  const dataKey = open ? `${employeeData?.results?.length || 0}-${existingAttendances?.length || 0}-${date}-${!!selectedHolidayInfo}` : '';
+  const [prevDataKey, setPrevDataKey] = React.useState('');
+
+  if (open && dataKey !== prevDataKey) {
+    setPrevDataKey(dataKey);
     if (employeeData?.results) {
       const isHoliday = !!selectedHolidayInfo;
       const defaultStatus = isHoliday ? 'holiday' : 'working';
@@ -122,7 +128,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
       });
       setRecords(initialRecords);
     }
-  }, [employeeData, selectedHolidayInfo, existingAttendances, open]);
+  }
 
   const handleStatusChange = (index: number, newStatus: AttendanceRecord['status']) => {
     setRecords((prev) => {

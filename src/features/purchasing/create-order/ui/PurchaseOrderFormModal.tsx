@@ -591,12 +591,14 @@ const CancelOrderConfirmModal: React.FC<CancelOrderConfirmModalProps> = ({
   const [refundDeposit, setRefundDeposit] = useState(true);
   const [keepGoods, setKeepGoods] = useState(true);
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setRefundDeposit(true);
       setKeepGoods(true);
     }
-  }, [open]);
+  }
 
   const handleConfirm = () => {
     onConfirm({

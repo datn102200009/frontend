@@ -110,8 +110,9 @@ export function AssetFormModal({ open, editingAsset, onClose, onSave }: AssetFor
         toast('success', 'Thêm mới tài sản cố định thành công');
       }
       onSave();
-    } catch (error: any) {
-      toast('error', error?.data?.error || error?.data?.detail || 'Có lỗi xảy ra');
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string; detail?: string } };
+      toast('error', err?.data?.error || err?.data?.detail || 'Có lỗi xảy ra');
     }
   };
 

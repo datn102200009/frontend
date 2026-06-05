@@ -72,8 +72,9 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
       }).unwrap();
       setShowPayment(false);
       refetch();
-    } catch (err: any) {
-      setPayError(err?.data?.detail || 'Giao dịch thất bại. Vui lòng kiểm tra lại.');
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      setPayError(error?.data?.detail || 'Giao dịch thất bại. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -255,7 +256,7 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
             <label className={styles.selectLabel}>Phương thức thanh toán</label>
             <select 
               value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as any)}
+              onChange={(e) => setPaymentMethod(e.target.value as 'cash' | 'bank_transfer')}
               className={styles.select}
             >
               <option value="bank_transfer">Chuyển khoản ngân hàng</option>

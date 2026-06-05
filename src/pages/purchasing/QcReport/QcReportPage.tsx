@@ -7,7 +7,7 @@ import styles from './QcReportPage.module.css';
 
 export const QcReportPage: React.FC = () => {
   const { data, isLoading } = useGetPurchasingCertificationsQuery({});
-  const certifications = (Array.isArray(data) ? data : (data as any)?.results || []) as TechnicalCertification[];
+  const certifications = (Array.isArray(data) ? data : (data as unknown as { results?: TechnicalCertification[] })?.results || []) as TechnicalCertification[];
 
   if (isLoading) {
     return <div className={styles.loading}>Đang tải danh sách kiểm định chất lượng...</div>;

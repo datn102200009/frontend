@@ -256,7 +256,7 @@ describe('PurchaseOrderFormModal', () => {
   });
 
   it('handles cancellation flow when no goods received but deposit exists', async () => {
-    let cancelPayload: any = null;
+    let cancelPayload: unknown = null;
     server.use(
       http.get('*/api/v1/purchasing/orders/PO-PENDING-DEPOSIT/', () => {
         return HttpResponse.json({
@@ -328,7 +328,7 @@ describe('PurchaseOrderFormModal', () => {
   });
 
   it('handles cancellation flow when goods are received', async () => {
-    let cancelPayload: any = null;
+    let cancelPayload: unknown = null;
     server.use(
       http.get('*/api/v1/purchasing/orders/PO-SHIPPED/', () => {
         return HttpResponse.json({
