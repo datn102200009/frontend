@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SalesOrderTable } from '@widgets/sales/SalesOrderTable';
 import { SalesInvoiceTable } from '@widgets/sales/SalesInvoiceTable';
 import { SalesOrderFormModal } from '@features/sales/create-order/ui/SalesOrderFormModal';
@@ -9,7 +10,8 @@ import styles from './SalesPage.module.css';
 import clsx from 'clsx';
 
 export const SalesPage = () => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'invoices'>('orders');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'invoices';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editOrderId, setEditOrderId] = useState<string | null>(null);
   const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export const SalesPage = () => {
           role="tab"
           aria-selected={activeTab === 'orders'}
           className={clsx(styles.tab, activeTab === 'orders' && styles.active)}
-          onClick={() => setActiveTab('orders')}
+          onClick={() => setSearchParams({ tab: 'orders' })}
         >
           Đơn Bán Hàng
         </button>
@@ -31,7 +33,7 @@ export const SalesPage = () => {
           role="tab"
           aria-selected={activeTab === 'invoices'}
           className={clsx(styles.tab, activeTab === 'invoices' && styles.active)}
-          onClick={() => setActiveTab('invoices')}
+          onClick={() => setSearchParams({ tab: 'invoices' })}
         >
           Hóa Đơn Bán
         </button>

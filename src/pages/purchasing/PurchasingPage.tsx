@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PurchaseOrderTable } from '@widgets/purchasing/PurchaseOrderTable';
 import { PurchaseInvoiceTable } from '@widgets/purchasing/PurchaseInvoiceTable';
 import { LandedCostPage } from './LandedCost/LandedCostPage';
@@ -12,7 +13,8 @@ import styles from './PurchasingPage.module.css';
 import clsx from 'clsx';
 
 export const PurchasingPage = () => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'invoices' | 'shipment' | 'qc' | 'ap-aging'>('orders');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'invoices' | 'shipment' | 'qc' | 'ap-aging';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editOrderId, setEditOrderId] = useState<string | null>(null);
   const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export const PurchasingPage = () => {
           role="tab"
           aria-selected={activeTab === 'orders'}
           className={clsx(styles.tab, activeTab === 'orders' && styles.active)}
-          onClick={() => setActiveTab('orders')}
+          onClick={() => setSearchParams({ tab: 'orders' })}
         >
           Đơn Mua Hàng
         </button>
@@ -34,7 +36,7 @@ export const PurchasingPage = () => {
           role="tab"
           aria-selected={activeTab === 'invoices'}
           className={clsx(styles.tab, activeTab === 'invoices' && styles.active)}
-          onClick={() => setActiveTab('invoices')}
+          onClick={() => setSearchParams({ tab: 'invoices' })}
         >
           Hóa Đơn Mua
         </button>
@@ -43,7 +45,7 @@ export const PurchasingPage = () => {
           role="tab"
           aria-selected={activeTab === 'shipment'}
           className={clsx(styles.tab, activeTab === 'shipment' && styles.active)}
-          onClick={() => setActiveTab('shipment')}
+          onClick={() => setSearchParams({ tab: 'shipment' })}
         >
           Quản Lý Lô Hàng
         </button>
@@ -52,7 +54,7 @@ export const PurchasingPage = () => {
           role="tab"
           aria-selected={activeTab === 'qc'}
           className={clsx(styles.tab, activeTab === 'qc' && styles.active)}
-          onClick={() => setActiveTab('qc')}
+          onClick={() => setSearchParams({ tab: 'qc' })}
         >
           Kiểm Định QA/QC
         </button>
@@ -61,7 +63,7 @@ export const PurchasingPage = () => {
           role="tab"
           aria-selected={activeTab === 'ap-aging'}
           className={clsx(styles.tab, activeTab === 'ap-aging' && styles.active)}
-          onClick={() => setActiveTab('ap-aging')}
+          onClick={() => setSearchParams({ tab: 'ap-aging' })}
         >
           Báo Cáo Công Nợ
         </button>

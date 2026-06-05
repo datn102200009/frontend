@@ -40,18 +40,26 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
   useEffect(() => {
     if (!open || !salarySlip.id || salarySlip.status !== 'draft') return;
 
-    calculateSalary({
+    const promise = calculateSalary({
       id: salarySlip.id,
-    })
-      .unwrap()
+    });
+
+    promise.unwrap()
       .then(() => {
         onCalculateSuccess?.();
       })
       .catch((err: unknown) => {
+        if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to auto calculate salary slip', err);
         const apiErr = err as { data?: { detail?: string } };
         setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi tính toán lương. Vui lòng kiểm tra lại.');
       });
+
+    return () => {
+      promise.abort();
+    };
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
   const handleApprove = () => {
