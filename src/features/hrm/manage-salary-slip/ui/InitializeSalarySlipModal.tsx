@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmSalarySlipsInitializeMutation } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { initializeSalarySlipSchema, type InitializeSalarySlipValues } from '../model/initialize-salary-slip.schema';
 import styles from './InitializeSalarySlipModal.module.css';
 
 interface InitializeSalarySlipModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-}
-
-interface FormValues {
-  salary_period: string;
 }
 
 export const InitializeSalarySlipModal: React.FC<InitializeSalarySlipModalProps> = ({
@@ -36,7 +34,8 @@ export const InitializeSalarySlipModal: React.FC<InitializeSalarySlipModalProps>
     reset,
     setValue,
     watch,
-  } = useForm<FormValues>({
+  } = useForm<InitializeSalarySlipValues>({
+    resolver: zodResolver(initializeSalarySlipSchema),
     defaultValues: {
       salary_period: getDefaultPeriod(),
     },
@@ -54,7 +53,7 @@ export const InitializeSalarySlipModal: React.FC<InitializeSalarySlipModalProps>
     }
   }, [open, reset]);
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: InitializeSalarySlipValues) => {
     setApiError(null);
     try {
       await initializeSalarySlips({

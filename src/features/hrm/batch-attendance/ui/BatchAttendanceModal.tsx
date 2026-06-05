@@ -8,6 +8,7 @@ import {
 } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { batchAttendanceSchema } from '../model/batch-attendance.schema';
 import styles from './BatchAttendanceModal.module.css';
 
 import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
@@ -159,24 +160,31 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
 
   const handleSubmit = async () => {
     setApiError(null);
-    if (!date) {
-      setApiError('Vui lòng chọn ngày chấm công.');
-      return;
-    }
+    const result = batchAttendanceSchema.safeParse({
+      date,
+      records: records.map(r => ({
+        employee_id: r.employee_id,
+        status: r.status,
+        work_hours: r.work_hours,
+        overtime_hours: r.overtime_hours,
+        remarks: r.remarks,
+      })),
+    });
 
-    if (records.length === 0) {
-      setApiError('Không có nhân sự nào để chấm công.');
+    if (!result.success) {
+      const firstError = result.error.issues[0];
+      setApiError(firstError.message);
       return;
     }
 
     try {
       const body = {
-        date,
-        records: records.map((r) => ({
+        date: result.data.date,
+        records: result.data.records.map((r) => ({
           employee_id: r.employee_id,
           status: r.status,
-          work_hours: Number(r.work_hours),
-          overtime_hours: Number(r.overtime_hours),
+          work_hours: r.work_hours,
+          overtime_hours: r.overtime_hours,
           remarks: r.remarks || undefined,
         })),
       };

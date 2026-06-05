@@ -128,6 +128,12 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/calculate/`, method: 'POST' }),
     }),
+    postHrmSalarySlipsByIdApprove: build.mutation<
+      PostHrmSalarySlipsByIdApproveApiResponse,
+      PostHrmSalarySlipsByIdApproveApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/approve/`, method: 'POST' }),
+    }),
     getHrmRewards: build.query<GetHrmRewardsApiResponse, GetHrmRewardsApiArg>({
       query: (queryArg) => ({
         url: `/hrm/rewards/`,
@@ -353,7 +359,7 @@ export type GetHrmSalarySlipsApiArg = {
   /** Lọc kỳ lương dạng YYYY-MM */
   salaryPeriod?: string
   employeeId?: string
-  status?: 'draft' | 'paid'
+  status?: 'draft' | 'calculated' | 'approved' | 'paid'
 }
 export type PostHrmSalarySlipsInitializeApiResponse =
   /** status 201 Khởi tạo thành công */ SalarySlip[]
@@ -366,6 +372,11 @@ export type PostHrmSalarySlipsInitializeApiArg = {
 export type PostHrmSalarySlipsByIdCalculateApiResponse =
   /** status 200 Tính toán thành công */ SalarySlip
 export type PostHrmSalarySlipsByIdCalculateApiArg = {
+  id: string
+}
+export type PostHrmSalarySlipsByIdApproveApiResponse =
+  /** status 200 Phê duyệt thành công */ SalarySlip
+export type PostHrmSalarySlipsByIdApproveApiArg = {
   id: string
 }
 export type GetHrmRewardsApiResponse = /** status 200 Thành công */ RewardRecord[]
@@ -602,7 +613,7 @@ export type SalarySlip = {
   deductions?: string
   net_pay?: string
   payment_method?: ('cash' | 'bank_transfer') | null
-  status?: 'draft' | 'paid'
+  status?: 'draft' | 'calculated' | 'approved' | 'paid'
   remarks?: string | null
   /** Chi tiết bảng lương bao gồm lương theo ngày công và phân loại các loại lương tăng ca ngoài giờ (OT ngày thường 1.5x, OT Chủ Nhật 2.0x, OT ngày Lễ 3.0x, OT ngày nghỉ bù theo cấu hình HRM_COMPENSATORY_OVERTIME_RATE). */
   breakdown?: {
@@ -645,6 +656,7 @@ export const {
   useGetHrmSalarySlipsQuery,
   usePostHrmSalarySlipsInitializeMutation,
   usePostHrmSalarySlipsByIdCalculateMutation,
+  usePostHrmSalarySlipsByIdApproveMutation,
   useGetHrmRewardsQuery,
   usePostHrmRewardsMutation,
   useGetHrmDisciplinesQuery,

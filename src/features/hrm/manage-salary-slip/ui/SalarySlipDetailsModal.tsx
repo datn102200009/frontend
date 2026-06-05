@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   usePostHrmSalarySlipsByIdCalculateMutation,
+  usePostHrmSalarySlipsByIdApproveMutation,
 } from '@entities/hrm/api/hrmApi';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalarySlipDetailsModal.module.css';
 
 interface SalarySlipDetailsModalProps {
@@ -16,8 +18,10 @@ interface SalarySlipDetailsModalProps {
 }
 
 export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (props) => {
-  const { open, onClose, onCalculateSuccess, salarySlip } = props;
+  const { open, onClose, onSuccess, onCalculateSuccess, salarySlip } = props;
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
+  const [approveSalary, { isLoading: isApproving }] = usePostHrmSalarySlipsByIdApproveMutation();
+  const canApprove = usePermission('hrm.payroll_approve');
 
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -50,8 +54,21 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       });
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
-
-
+  const handleApprove = () => {
+    if (!salarySlip.id) return;
+    approveSalary({
+      id: salarySlip.id,
+    })
+      .unwrap()
+      .then(() => {
+        onSuccess();
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to approve salary slip', err);
+        const apiErr = err as { data?: { detail?: string } };
+        setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi phê duyệt lương. Vui lòng kiểm tra lại.');
+      });
+  };
 
   const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
@@ -60,11 +77,31 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
   };
 
   const getStatusLabel = (status: string) => {
-    return status === 'paid' ? 'Đã thanh toán' : 'Bản nháp';
+    switch (status) {
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'approved':
+        return 'Đã phê duyệt';
+      case 'calculated':
+        return 'Đã tính toán';
+      case 'draft':
+      default:
+        return 'Bản nháp';
+    }
   };
 
   const getStatusClass = (status: string) => {
-    return status === 'paid' ? `${styles.badge} ${styles.paid}` : `${styles.badge} ${styles.draft}`;
+    switch (status) {
+      case 'paid':
+        return `${styles.badge} ${styles.paid}`;
+      case 'approved':
+        return `${styles.badge} ${styles.approved}`;
+      case 'calculated':
+        return `${styles.badge} ${styles.calculated}`;
+      case 'draft':
+      default:
+        return `${styles.badge} ${styles.draft}`;
+    }
   };
 
   const breakdownIncomes = salarySlip.breakdown?.incomes || [
@@ -86,8 +123,13 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       title="Chi Tiết Phiếu Lương"
       size="md"
       footer={
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
-          <Button variant="primary" onClick={onClose}>
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
+          {salarySlip.status === 'calculated' && canApprove && (
+            <Button variant="primary" onClick={handleApprove} loading={isApproving}>
+              Phê duyệt lương
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose}>
             Đóng
           </Button>
         </div>
