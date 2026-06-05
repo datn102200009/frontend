@@ -1,4 +1,4 @@
-import { baseApi as api } from '@shared/api/baseApi'
+import { baseApi as api } from '../../../shared/api/baseApi'
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
     postAccountsAuthLogin: build.mutation<
@@ -45,6 +45,8 @@ export type LoginResponse = {
   email?: string
   /** Tên role của user */
   role?: string | null
+  /** Họ và tên đầy đủ của user (lấy từ Employee) */
+  full_name?: string | null
   /** Danh sách mã quyền của user */
   permissions?: string[]
 }

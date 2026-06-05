@@ -17,6 +17,8 @@ import { Plus, Trash2, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
 import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { extractApiError } from '@shared/lib/extractApiError';
 import styles from './PurchaseOrderFormModal.module.css';
 
 
@@ -81,6 +83,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const [deleteOrder, { isLoading: isDeleting }] = useDeletePurchasingOrdersByPkMutation();
   const [approveOrder, { isLoading: isApproving }] = usePostPurchasingOrdersByPkApproveMutation();
   const [cancelOrder, { isLoading: isCancelling }] = usePostPurchasingOrdersByPkCancelMutation();
+  const { toast } = useToast();
 
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -197,12 +200,15 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     try {
       if (orderId) {
         await updateOrder({ pk: orderId, purchaseOrderInput: data }).unwrap();
+        toast('success', 'Cập nhật đơn mua hàng thành công');
       } else {
         await createOrder({ purchaseOrderInput: data }).unwrap();
+        toast('success', 'Tạo đơn mua hàng thành công');
       }
       onSuccess();
     } catch (err) {
       console.error('Failed to save purchase order', err);
+      toast('error', extractApiError(err, 'Không thể lưu đơn mua hàng'));
     }
   };
 
@@ -221,11 +227,13 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     try {
       if (confirmState.action === 'delete') {
         await deleteOrder({ pk: confirmState.orderId }).unwrap();
+        toast('success', 'Xóa đơn mua hàng thành công');
       }
       setConfirmState(null);
       onSuccess();
     } catch (err) {
       console.error('Failed action', err);
+      toast('error', extractApiError(err, 'Thao tác không thành công'));
     }
   };
 
@@ -239,10 +247,12 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
           keep_goods: options.keep_goods,
         }
       }).unwrap();
+      toast('success', 'Hủy đơn mua hàng thành công');
       setIsCancelModalOpen(false);
       onSuccess();
     } catch (err) {
       console.error('Failed to cancel purchase order', err);
+      toast('error', extractApiError(err, 'Không thể hủy đơn mua hàng'));
     }
   };
 
@@ -250,9 +260,11 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     if (!orderId || !orderData) return;
     try {
       await approveOrder({ pk: orderId }).unwrap();
+      toast('success', 'Duyệt đơn mua hàng thành công');
       onSuccess();
     } catch (err) {
       console.error('Failed to confirm', err);
+      toast('error', extractApiError(err, 'Không thể duyệt đơn mua hàng'));
     }
   };
 
@@ -546,6 +558,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
         }}
       />
       <CancelOrderConfirmModal
+        key={`cancel-order-${isCancelModalOpen}`}
         open={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         onConfirm={handleConfirmCancel}
@@ -590,15 +603,6 @@ const CancelOrderConfirmModal: React.FC<CancelOrderConfirmModalProps> = ({
 }) => {
   const [refundDeposit, setRefundDeposit] = useState(true);
   const [keepGoods, setKeepGoods] = useState(true);
-
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    if (open) {
-      setRefundDeposit(true);
-      setKeepGoods(true);
-    }
-  }
 
   const handleConfirm = () => {
     onConfirm({

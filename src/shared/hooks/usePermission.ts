@@ -1,8 +1,7 @@
-import { useSelector } from 'react-redux';
-import type { RootState } from '@app/store';
+import { useCurrentUser } from '../lib/permissionContext';
 
 export function usePermission(permissionCode: string): boolean {
-  const user = useSelector((s: RootState) => s.auth.user);
+  const user = useCurrentUser();
   if (!user) return false;
 
   return user.permissions?.includes(permissionCode) || false;
