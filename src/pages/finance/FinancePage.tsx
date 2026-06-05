@@ -4,24 +4,12 @@ import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashF
 import { Button } from '@shared/ui/Button/Button';
 import { Plus } from 'lucide-react';
 import styles from './FinancePage.module.css';
-import clsx from 'clsx';
 
 const FinancePage: React.FC = () => {
   const [createType, setCreateType] = useState<string | null>(null);
 
   return (
     <div className={styles.page}>
-      <div className={styles.tabs} role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={true}
-          className={clsx(styles.tab, styles.active)}
-        >
-          Giao Dịch Dòng Tiền
-        </button>
-      </div>
-
       <div className={styles.content}>
         <div className={styles.container}>
           <div className={styles.header}>

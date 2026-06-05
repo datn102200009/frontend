@@ -86,3 +86,25 @@
 .toggle:hover {
   color: var(--clr-text-secondary);
 }
+
+/* Disabled input and select fields */
+.input:disabled {
+  background-color: var(--clr-bg);
+  color: var(--clr-text-secondary);
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-color: var(--clr-border);
+}
+
+/* Native select element normalization */
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 32px;
+  background-image: none;
+}
+
+select.input::-ms-expand {
+  display: none;
+}

@@ -20,6 +20,74 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/finance/cash-flows/${queryArg.pk}/` }),
     }),
+    getFinanceFixedAssets: build.query<
+      GetFinanceFixedAssetsApiResponse,
+      GetFinanceFixedAssetsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/fixed-assets/`,
+        params: {
+          limit: queryArg.limit,
+          page: queryArg.page,
+        },
+      }),
+    }),
+    postFinanceFixedAssets: build.mutation<
+      PostFinanceFixedAssetsApiResponse,
+      PostFinanceFixedAssetsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/fixed-assets/`,
+        method: 'POST',
+        body: queryArg.fixedAssetInput,
+      }),
+    }),
+    getFinanceFixedAssetsByPk: build.query<
+      GetFinanceFixedAssetsByPkApiResponse,
+      GetFinanceFixedAssetsByPkApiArg
+    >({
+      query: (queryArg) => ({ url: `/finance/fixed-assets/${queryArg.pk}/` }),
+    }),
+    patchFinanceFixedAssetsByPk: build.mutation<
+      PatchFinanceFixedAssetsByPkApiResponse,
+      PatchFinanceFixedAssetsByPkApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/fixed-assets/${queryArg.pk}/`,
+        method: 'PATCH',
+        body: queryArg.fixedAssetUpdateInput,
+      }),
+    }),
+    deleteFinanceFixedAssetsByPk: build.mutation<
+      DeleteFinanceFixedAssetsByPkApiResponse,
+      DeleteFinanceFixedAssetsByPkApiArg
+    >({
+      query: (queryArg) => ({ url: `/finance/fixed-assets/${queryArg.pk}/`, method: 'DELETE' }),
+    }),
+    postFinanceFixedAssetsDepreciation: build.mutation<
+      PostFinanceFixedAssetsDepreciationApiResponse,
+      PostFinanceFixedAssetsDepreciationApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/fixed-assets/depreciation/`,
+        method: 'POST',
+        body: queryArg.runDepreciationInput,
+      }),
+    }),
+    getFinanceFixedAssetsDepreciationLogs: build.query<
+      GetFinanceFixedAssetsDepreciationLogsApiResponse,
+      GetFinanceFixedAssetsDepreciationLogsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/fixed-assets/depreciation-logs/`,
+        params: {
+          period: queryArg.period,
+          asset_id: queryArg.assetId,
+          limit: queryArg.limit,
+          page: queryArg.page,
+        },
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -36,6 +104,56 @@ export type GetFinanceCashFlowsByPkApiResponse =
   /** status 200 Cash flow details. */ CashFlowTransaction
 export type GetFinanceCashFlowsByPkApiArg = {
   pk: string
+}
+export type GetFinanceFixedAssetsApiResponse = /** status 200 A paginated list of fixed assets. */ {
+  count?: number
+  total_pages?: number
+  current_page?: number
+  results?: FixedAsset[]
+}
+export type GetFinanceFixedAssetsApiArg = {
+  limit?: number
+  page?: number
+}
+export type PostFinanceFixedAssetsApiResponse =
+  /** status 201 Fixed asset successfully created. */ FixedAsset
+export type PostFinanceFixedAssetsApiArg = {
+  fixedAssetInput: FixedAssetInput
+}
+export type GetFinanceFixedAssetsByPkApiResponse = /** status 200 Fixed asset details. */ FixedAsset
+export type GetFinanceFixedAssetsByPkApiArg = {
+  pk: string
+}
+export type PatchFinanceFixedAssetsByPkApiResponse =
+  /** status 200 Fixed asset successfully updated. */ FixedAsset
+export type PatchFinanceFixedAssetsByPkApiArg = {
+  pk: string
+  fixedAssetUpdateInput: FixedAssetUpdateInput
+}
+export type DeleteFinanceFixedAssetsByPkApiResponse =
+  /** status 200 Fixed asset successfully deleted. */ {
+    message?: string
+  }
+export type DeleteFinanceFixedAssetsByPkApiArg = {
+  pk: string
+}
+export type PostFinanceFixedAssetsDepreciationApiResponse =
+  /** status 201 Depreciation successfully processed. Returns logs generated. */ FixedAssetDepreciationLog[]
+export type PostFinanceFixedAssetsDepreciationApiArg = {
+  runDepreciationInput: RunDepreciationInput
+}
+export type GetFinanceFixedAssetsDepreciationLogsApiResponse =
+  /** status 200 A paginated list of depreciation logs. */ {
+    count?: number
+    total_pages?: number
+    current_page?: number
+    results?: FixedAssetDepreciationLog[]
+  }
+export type GetFinanceFixedAssetsDepreciationLogsApiArg = {
+  period?: string
+  assetId?: string
+  limit?: number
+  page?: number
 }
 export type CashFlowTransaction = {
   id?: string
@@ -64,8 +182,65 @@ export type CashFlowInput = {
   sales_invoice_id?: string | null
   remarks?: string
 }
+export type FixedAsset = {
+  id?: string
+  asset_code?: string
+  asset_name?: string
+  original_value?: number
+  salvage_value?: number
+  depreciation_method?: 'straight_line' | 'unit_of_production'
+  useful_life_months?: number
+  remaining_life_months?: number
+  designed_capacity?: number | null
+  accumulated_depreciation?: number
+  remaining_value?: number
+  department?: string | null
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
+}
+export type FixedAssetInput = {
+  asset_code: string
+  asset_name: string
+  original_value: number
+  salvage_value?: number
+  depreciation_method: 'straight_line' | 'unit_of_production'
+  useful_life_months: number
+  designed_capacity?: number | null
+  department?: string | null
+}
+export type FixedAssetUpdateInput = {
+  asset_name?: string
+  original_value?: number
+  salvage_value?: number
+  depreciation_method?: 'straight_line' | 'unit_of_production'
+  useful_life_months?: number
+  designed_capacity?: number | null
+  department?: string | null
+}
+export type FixedAssetDepreciationLog = {
+  id?: string
+  asset?: string
+  asset_code?: string
+  asset_name?: string
+  period?: string
+  depreciation_amount?: number
+  remarks?: string
+  created_at?: string
+  updated_at?: string
+}
+export type RunDepreciationInput = {
+  period: string
+}
 export const {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsMutation,
   useGetFinanceCashFlowsByPkQuery,
+  useGetFinanceFixedAssetsQuery,
+  usePostFinanceFixedAssetsMutation,
+  useGetFinanceFixedAssetsByPkQuery,
+  usePatchFinanceFixedAssetsByPkMutation,
+  useDeleteFinanceFixedAssetsByPkMutation,
+  usePostFinanceFixedAssetsDepreciationMutation,
+  useGetFinanceFixedAssetsDepreciationLogsQuery,
 } = injectedRtkApi
