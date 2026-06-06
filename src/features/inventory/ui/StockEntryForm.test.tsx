@@ -95,4 +95,40 @@ describe('StockEntryForm', () => {
       expect(defaultProps.onSuccess).not.toHaveBeenCalled();
     });
   });
+
+  it('shows error toast when API returns custom error structure', async () => {
+    const { server } = await import('@shared/lib/test/server');
+    const { http, HttpResponse } = await import('msw');
+    
+    server.use(
+      http.post('*/api/v1/inventory/stock-issue/create/', () => {
+        return HttpResponse.json(
+          { error: 'Lỗi đặc thù từ backend: Không đủ tồn kho thực tế' },
+          { status: 400 }
+        );
+      })
+    );
+
+    renderWithProviders(<StockEntryForm {...defaultProps} type="stock_issue" />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/^Tên phiếu/i), 'PX002');
+    await screen.findByRole('option', { name: /Kho 1/i });
+    await user.selectOptions(await screen.findByRole('combobox', { name: /^Kho nguồn/i }), 'KHO_01');
+    
+    await waitFor(async () => {
+      const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
+      expect(itemSelects.length).toBeGreaterThan(0);
+    });
+    
+    const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
+    await user.selectOptions(itemSelects[0], 'VT001');
+
+    await user.click(screen.getByRole('button', { name: 'Tạo mới' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Lỗi đặc thù từ backend: Không đủ tồn kho thực tế')).toBeInTheDocument();
+      expect(defaultProps.onSuccess).not.toHaveBeenCalled();
+    });
+  });
 });

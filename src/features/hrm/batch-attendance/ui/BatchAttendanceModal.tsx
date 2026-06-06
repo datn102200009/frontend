@@ -94,7 +94,8 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
     }
   }
 
-  const dataKey = open ? `${employeeData?.results?.length || 0}-${existingAttendances?.length || 0}-${date}-${!!selectedHolidayInfo}` : '';
+  const existingLength = Array.isArray(existingAttendances) ? existingAttendances.length : (existingAttendances as any)?.results?.length || 0;
+  const dataKey = open ? `${employeeData?.results?.length || 0}-${existingLength}-${date}-${!!selectedHolidayInfo}` : '';
   const [prevDataKey, setPrevDataKey] = React.useState('');
 
   if (open && dataKey !== prevDataKey) {
@@ -104,8 +105,10 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
       const defaultStatus = isHoliday ? 'holiday' : 'working';
       const defaultWorkHours = isHoliday ? 0 : 8;
 
+      const attendanceList = Array.isArray(existingAttendances) ? existingAttendances : (existingAttendances as any)?.results || [];
+
       const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => {
-        const existing = existingAttendances?.find((att) => att.employee_id === emp.id);
+        const existing = attendanceList.find((att: any) => att.employee_id === emp.id);
         if (existing) {
           return {
             employee_id: emp.id || '',

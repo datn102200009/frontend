@@ -3,9 +3,11 @@ import { z } from 'zod';
 export const batchAttendanceSchema = z.object({
   date: z.string().min(1, 'Ngày chấm công là bắt buộc').refine((val) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const selectedDate = new Date(val);
-    return selectedDate <= today;
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const localTodayStr = `${year}-${month}-${day}`;
+    return val <= localTodayStr;
   }, 'Không cho phép chọn ngày tương lai'),
   records: z.array(
     z.object({
