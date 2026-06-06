@@ -29,6 +29,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({ icon, variant = 'def
         type="button"
         className={`${styles.actionBtn} ${variant === 'danger' ? styles.deleteBtn : ''} ${className || ''}`}
         aria-label={props['aria-label'] || title}
+        title={title}
         {...props}
       >
         {icon}
