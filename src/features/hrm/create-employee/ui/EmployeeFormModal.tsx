@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmEmployeesCreateMutation } from '@entities/hrm/api/hrmApi';
 import { useGetAccountsRolesQuery } from '@features/accounts/api/accountsApi';
@@ -29,7 +29,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
     watch,
     setValue,
   } = useForm<EmployeeFormValues>({
-    resolver: zodResolver(employeeSchema) as any,
+    resolver: zodResolver(employeeSchema) as unknown as Resolver<EmployeeFormValues>,
     defaultValues: {
       employee_id: '',
       full_name: '',

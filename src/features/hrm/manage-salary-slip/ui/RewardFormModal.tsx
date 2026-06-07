@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmRewardsMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
@@ -48,7 +48,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     formState: { errors },
     reset,
   } = useForm<RewardFormValues>({
-    resolver: zodResolver(rewardSchema) as any,
+    resolver: zodResolver(rewardSchema) as unknown as Resolver<RewardFormValues>,
     defaultValues: {
       employee_id: employee?.id || '',
       reward_date: new Date().toISOString().split('T')[0],

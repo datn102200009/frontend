@@ -27,7 +27,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   const { data: attendancesData, isLoading } = useGetHrmAttendancesQuery({
     date: selectedDate,
   });
-  const attendancesList = Array.isArray(attendancesData) ? attendancesData : (attendancesData as any)?.results || [];
+  const attendancesList = attendancesData || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

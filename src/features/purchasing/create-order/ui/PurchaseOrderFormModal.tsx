@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   usePostPurchasingOrdersMutation, 
@@ -7,7 +7,8 @@ import {
   usePutPurchasingOrdersByPkMutation,
   useDeletePurchasingOrdersByPkMutation,
   usePostPurchasingOrdersByPkApproveMutation,
-  usePostPurchasingOrdersByPkCancelMutation
+  usePostPurchasingOrdersByPkCancelMutation,
+  type PurchaseOrderInput
 } from '@entities/purchasing/api/purchasingApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetProcurementSuppliersQuery } from '@entities/procurement/api/procurementApi';
@@ -116,7 +117,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   }, [suppliersData]);
 
   const { register, control, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<PurchaseOrderFormValues>({
-    resolver: zodResolver(purchaseOrderSchema) as any,
+    resolver: zodResolver(purchaseOrderSchema) as unknown as Resolver<PurchaseOrderFormValues>,
     defaultValues: {
       vendor_id: '',
       advance_paid_amount: 0,
@@ -200,7 +201,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
 
   const onSubmit = async (values: PurchaseOrderFormValues) => {
     try {
-      const payload = values as any;
+      const payload = values as unknown as PurchaseOrderInput;
       if (orderId) {
         await updateOrder({ pk: orderId, purchaseOrderInput: payload }).unwrap();
         toast('success', 'Cập nhật đơn mua hàng thành công');

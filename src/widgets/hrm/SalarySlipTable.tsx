@@ -174,7 +174,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
             <div className="filterSelectWrapper">
               <select
                 value={statusFilter}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as any)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'calculated' | 'approved' | 'paid')}
                 className="filterSelectInput"
                 aria-label="Lọc trạng thái phiếu lương"
               >
