@@ -15,9 +15,10 @@ interface LeaveRequestTableProps {
 export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDetails }) => {
   const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 
-  const { data: leaveRequests = [], isLoading } = useGetHrmLeaveRequestsQuery(
+  const { data: leaveRequestsData, isLoading } = useGetHrmLeaveRequestsQuery(
     statusFilter === 'all' ? {} : { status: statusFilter }
   );
+  const leaveRequestsList = Array.isArray(leaveRequestsData) ? leaveRequestsData : (leaveRequestsData as any)?.results || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -112,7 +113,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
 
       <DataTable
         columns={columns}
-        data={leaveRequests as LeaveRequest[]}
+        data={leaveRequestsList as LeaveRequest[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn phép theo mã hoặc tên..."
         emptyMessage="Không tìm thấy đơn nghỉ phép nào"

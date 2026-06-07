@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmLeaveRequestsCreateMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
-
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { leaveRequestSchema, type LeaveRequestFormValues } from '../model/leave-request.schema';
 import styles from './LeaveRequestFormModal.module.css';
 
 interface LeaveRequestFormModalProps {
@@ -13,16 +14,6 @@ interface LeaveRequestFormModalProps {
   onSuccess: () => void;
   employee?: Employee;
 }
-
-interface FormValues {
-  employee_id?: string;
-  leave_type: 'paid' | 'unpaid';
-  start_date: string;
-  end_date: string;
-  days: number;
-  reason?: string;
-}
-
 
 export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   open,
@@ -44,7 +35,8 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     reset,
     setValue,
     watch,
-  } = useForm<FormValues>({
+  } = useForm<LeaveRequestFormValues>({
+    resolver: zodResolver(leaveRequestSchema) as any,
     defaultValues: {
       employee_id: employee?.id || '',
       leave_type: 'paid',
@@ -54,7 +46,6 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
       reason: '',
     },
   });
-
 
   const startDate = watch('start_date');
   const endDate = watch('end_date');
@@ -88,22 +79,11 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     }
   }, [open, employee, reset]);
 
-
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: LeaveRequestFormValues) => {
     setApiError(null);
     const targetEmployeeId = employee?.id || values.employee_id;
     if (!targetEmployeeId) {
       setApiError('Vui lòng chọn nhân viên.');
-      return;
-    }
-
-    if (new Date(values.end_date) < new Date(values.start_date)) {
-      setApiError('Ngày kết thúc không được nhỏ hơn ngày bắt đầu.');
-      return;
-    }
-
-    if (Number(values.days) <= 0) {
-      setApiError('Số ngày nghỉ phải lớn hơn 0.');
       return;
     }
 
@@ -116,7 +96,6 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
         days: Number(values.days),
         reason: values.reason?.trim() || undefined,
       };
-
 
       await createLeaveRequest({ body }).unwrap();
       onSuccess();
@@ -138,7 +117,6 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
       onClose={onClose}
       title={employee ? `Tạo Đơn Xin Nghỉ Phép - ${employee.full_name}` : 'Tạo Đơn Xin Nghỉ Phép'}
       size="md"
-
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
           <Button variant="ghost" onClick={onClose} disabled={isLoading}>
@@ -165,7 +143,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
             <select
               id="employee_id"
               className={styles.select}
-              {...register('employee_id', { required: 'Vui lòng chọn nhân viên' })}
+              {...register('employee_id')}
               disabled={isLoading || isLoadingEmployees}
             >
               <option value="">-- Chọn nhân viên --</option>
@@ -180,14 +158,13 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
         )}
 
         <div className={styles.formGroup}>
-
           <label className={styles.label} htmlFor="leave_type">
             Loại nghỉ phép <span className={styles.required}>*</span>
           </label>
           <select
             id="leave_type"
             className={styles.select}
-            {...register('leave_type', { required: 'Loại nghỉ phép là bắt buộc' })}
+            {...register('leave_type')}
             disabled={isLoading}
           >
             <option value="paid">Nghỉ có lương</option>
@@ -204,7 +181,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
               id="start_date"
               type="date"
               className={styles.input}
-              {...register('start_date', { required: 'Ngày bắt đầu là bắt buộc' })}
+              {...register('start_date')}
               disabled={isLoading}
             />
             {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
@@ -218,7 +195,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
               id="end_date"
               type="date"
               className={styles.input}
-              {...register('end_date', { required: 'Ngày kết thúc là bắt buộc' })}
+              {...register('end_date')}
               disabled={isLoading}
             />
             {errors.end_date && <span className={styles.errorText}>{errors.end_date.message}</span>}
@@ -235,11 +212,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
             step={0.5}
             min={0.5}
             className={styles.input}
-            {...register('days', {
-              required: 'Số ngày nghỉ là bắt buộc',
-              valueAsNumber: true,
-              validate: (val) => !isNaN(val) || 'Số ngày nghỉ là bắt buộc',
-            })}
+            {...register('days')}
             disabled={isLoading}
           />
           {errors.days && <span className={styles.errorText}>{errors.days.message}</span>}

@@ -72,7 +72,7 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
       onSuccess();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra');
+      toast('error', error?.data?.error || error?.data?.detail || 'Có lỗi xảy ra');
     }
   };
 

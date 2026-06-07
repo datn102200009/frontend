@@ -64,7 +64,7 @@ export type SalarySlip = GenSalarySlip & {
   id: string;
   employee_id: string;
   salary_period: string;
-  status: 'draft' | 'paid';
+  status: 'draft' | 'calculated' | 'approved' | 'paid';
 };
 
 export type RewardRecord = GenRewardRecord & {

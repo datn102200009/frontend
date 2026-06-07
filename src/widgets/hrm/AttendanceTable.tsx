@@ -24,9 +24,10 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
   const selectedDate = propSelectedDate !== undefined ? propSelectedDate : localSelectedDate;
 
-  const { data: attendances = [], isLoading } = useGetHrmAttendancesQuery({
+  const { data: attendancesData, isLoading } = useGetHrmAttendancesQuery({
     date: selectedDate,
   });
+  const attendancesList = Array.isArray(attendancesData) ? attendancesData : (attendancesData as any)?.results || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -117,7 +118,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
       <DataTable
         columns={columns}
-        data={attendances as Attendance[]}
+        data={attendancesList as Attendance[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm bản ghi chấm công theo mã hoặc tên..."
         emptyMessage="Không tìm thấy bản ghi chấm công nào"

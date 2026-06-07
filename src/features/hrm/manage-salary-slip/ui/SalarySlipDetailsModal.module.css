@@ -44,6 +44,16 @@
   color: var(--clr-success);
 }
 
+.approved {
+  background-color: rgba(0, 82, 204, 0.1);
+  color: #0052cc;
+}
+
+.calculated {
+  background-color: var(--clr-warning-bg);
+  color: var(--clr-warning);
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

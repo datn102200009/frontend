@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmContractsMutation } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { contractSchema, type ContractFormValues } from '../model/contract.schema';
 import styles from './ContractFormModal.module.css';
 
 interface ContractFormModalProps {
@@ -11,15 +13,6 @@ interface ContractFormModalProps {
   onClose: () => void;
   onSuccess: () => void;
   employee: Employee;
-}
-
-interface FormValues {
-  contract_no: string;
-  contract_type: 'probation' | 'definite_term' | 'indefinite_term' | 'other';
-  start_date: string;
-  end_date?: string;
-  note?: string;
-  file_url?: string;
 }
 
 export const ContractFormModal: React.FC<ContractFormModalProps> = ({
@@ -37,7 +30,8 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
     formState: { errors },
     reset,
     watch,
-  } = useForm<FormValues>({
+  } = useForm<ContractFormValues>({
+    resolver: zodResolver(contractSchema),
     defaultValues: {
       contract_no: '',
       contract_type: 'definite_term',
@@ -64,15 +58,9 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
     }
   }, [open, employee, reset]);
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: ContractFormValues) => {
     setApiError(null);
     if (!employee.id) return;
-
-    // Validate dates
-    if (values.end_date && values.start_date && values.end_date <= values.start_date) {
-      setApiError('Ngày kết thúc phải sau ngày bắt đầu hợp đồng.');
-      return;
-    }
 
     try {
       const body = {
@@ -128,7 +116,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
               type="text"
               placeholder="VD: HĐLD-2026-099"
               className={styles.input}
-              {...register('contract_no', { required: 'Số hợp đồng là bắt buộc' })}
+              {...register('contract_no')}
               disabled={isLoading}
             />
             {errors.contract_no && <span className={styles.errorText}>{errors.contract_no.message}</span>}
@@ -141,7 +129,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
             <select
               id="contract_type"
               className={styles.select}
-              {...register('contract_type', { required: 'Loại hợp đồng là bắt buộc' })}
+              {...register('contract_type')}
               disabled={isLoading}
             >
               <option value="probation">Hợp đồng thử việc</option>
@@ -161,7 +149,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
               id="start_date"
               type="date"
               className={styles.input}
-              {...register('start_date', { required: 'Ngày bắt đầu là bắt buộc' })}
+              {...register('start_date')}
               disabled={isLoading}
             />
             {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
@@ -176,9 +164,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
                 id="end_date"
                 type="date"
                 className={styles.input}
-                {...register('end_date', {
-                  required: contractType !== 'other' ? 'Ngày kết thúc là bắt buộc' : false,
-                })}
+                {...register('end_date')}
                 disabled={isLoading}
               />
               {errors.end_date && <span className={styles.errorText}>{errors.end_date.message}</span>}

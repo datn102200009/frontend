@@ -7,12 +7,24 @@ import { setupStore } from '@app/store';
 import type { AppStore, RootState } from '@app/store';
 import { ToastProvider } from '@shared/ui/Toast/Toast';
 
+import { PermissionContext } from '../permissionContext';
+import { useSelector } from 'react-redux';
+
 // This type interface extends the default options for render from RTL, as well
 // as allows the user to specify other things such as initialState, store.
 interface ExtendedRenderOptions extends Omit<RenderOptions, 'queries'> {
   preloadedState?: Partial<RootState>;
   store?: AppStore;
   initialEntries?: string[];
+}
+
+function PermissionProvider({ children }: { children: React.ReactNode }) {
+  const user = useSelector((state: RootState) => state.auth.user);
+  return (
+    <PermissionContext.Provider value={user}>
+      {children}
+    </PermissionContext.Provider>
+  );
 }
 
 export function renderWithProviders(
@@ -29,9 +41,11 @@ export function renderWithProviders(
   function Wrapper({ children }: PropsWithChildren<{}>): React.ReactElement {
     return (
       <Provider store={store}>
-        <ToastProvider>
-          <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
-        </ToastProvider>
+        <PermissionProvider>
+          <ToastProvider>
+            <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+          </ToastProvider>
+        </PermissionProvider>
       </Provider>
     );
   }
