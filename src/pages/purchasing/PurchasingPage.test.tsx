@@ -245,7 +245,7 @@ describe('PurchasingPage', () => {
     );
 
     renderWithProviders(<PurchasingPage />, {
-      initialEntries: ['/purchasing?tab=orders&orderId=PO-001']
+      initialEntries: ['/purchasing?tab=orders&id=PO-001']
     });
 
     // Check if the order detail modal is auto-opened
@@ -288,7 +288,7 @@ describe('PurchasingPage', () => {
     );
 
     renderWithProviders(<PurchasingPage />, {
-      initialEntries: ['/purchasing?tab=invoices&invoiceId=PI-001']
+      initialEntries: ['/purchasing?tab=invoices&id=PI-001']
     });
 
     // Check if the invoice detail modal is auto-opened

@@ -35,7 +35,7 @@ describe('DashboardPage', () => {
     { code: 'finance_depreciation_status', title: 'Khấu hao tài sản cố định', type: 'list_summary', size: '1x2', quick_links: ['/finance/fixed-assets'] },
 
     // HRM
-    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương nhân sự', type: 'list_summary', size: '1x2', quick_links: ['/hrm/salary-slips'] },
+    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'list_summary', size: '1x2', quick_links: ['/hrm/salary-slips'] },
     { code: 'hrm_pending_leave_requests', title: 'Đơn xin nghỉ phép chờ duyệt', type: 'list_summary', size: '1x2', quick_links: ['/hrm/leave-requests'] },
     { code: 'hrm_expiring_contracts', title: 'Hợp đồng sắp hết hạn', type: 'list_summary', size: '1x2', quick_links: ['/hrm/contracts'] },
     { code: 'hrm_today_attendance_rate', title: 'Nhân viên vắng mặt hôm nay', type: 'list_summary', size: '1x2', quick_links: ['/hrm/attendance'] },
@@ -316,7 +316,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Máy ép nhựa')).toBeInTheDocument();
 
     // 5. HRM (4 widgets)
-    expect(screen.getByText('Bảng lương nhân sự')).toBeInTheDocument();
+    expect(screen.getByText('Bảng lương chờ duyệt & thanh toán')).toBeInTheDocument();
     expect(screen.getByText(/SLIP-PAY-1/)).toBeInTheDocument();
     expect(screen.getByText('Nguyễn Văn A')).toBeInTheDocument();
 

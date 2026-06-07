@@ -209,6 +209,14 @@ export const handlers = [
     return HttpResponse.json({ id: 'new-cf-123', ...data }, { status: 201 });
   }),
 
+  http.get('*/api/v1/finance/fixed-assets/', () => {
+    return HttpResponse.json({
+      results: [
+        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'active' }
+      ]
+    });
+  }),
+
   // HRM mocks
   http.get('*/api/v1/hrm/employees/', () => {
     return HttpResponse.json({

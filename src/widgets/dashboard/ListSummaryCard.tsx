@@ -16,6 +16,7 @@ export interface ListSummaryCardProps {
   icon?: ReactNode;
   data: any[];
   quickLinks?: string[];
+  totalCount?: number;
 }
 
 function formatDate(dateStr: string) {
@@ -33,7 +34,7 @@ function cleanPercent(val: string | null | undefined): string {
   return val.replace(/%%/g, '%');
 }
 
-export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSummaryCardProps) {
+export function ListSummaryCard({ title, code, icon, data, quickLinks, totalCount }: ListSummaryCardProps) {
   const items = Array.isArray(data) ? data : [];
   const [activeTab, setActiveTab] = useState<'all' | 'receipt' | 'issue' | 'transfer'>('all');
 
@@ -43,6 +44,10 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
     if (activeTab === 'all') return true;
     return item.purpose === activeTab;
   });
+
+  const totalToShow = typeof totalCount === 'number'
+    ? (code === 'inventory_pending_entries' && activeTab !== 'all' ? filteredItems.length : totalCount)
+    : filteredItems.length;
 
   const redirectUrl = quickLinks && quickLinks.length > 0 ? quickLinks[0] : null;
   const mappedUrl = redirectUrl ? mapRoute(redirectUrl, code) : null;
@@ -115,7 +120,7 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
             />
           )}
           <span className={styles.cardTitle}>{title}</span>
-          {filteredItems.length > 0 && (
+          {totalToShow > 0 && (
             <span className="shared-badge" style={{
               background: 'var(--clr-bg)',
               color: 'var(--clr-text-secondary)',
@@ -124,7 +129,7 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
               padding: '1px 6px',
               borderRadius: '10px'
             }}>
-              {filteredItems.length}
+              {totalToShow}
             </span>
           )}
         </div>
@@ -194,7 +199,7 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                       else if (code === 'sales_pending_credit_bypass') salesStatus = 'pending_credit_approval';
                       const statusQuery = salesStatus ? `&status=${salesStatus}` : '';
                       return (
-                        <Link to={`/sales?tab=orders${statusQuery}&orderId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/sales?tab=orders${statusQuery}&id=${item.id}`} className={styles.colBoldLink}>
                           SO-{shortId}
                         </Link>
                       );
@@ -211,28 +216,28 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                       if (code === 'purchasing_draft_orders') purStatus = 'draft';
                       const statusQuery = purStatus ? `&status=${purStatus}` : '';
                       return (
-                        <Link to={`/purchasing?tab=orders${statusQuery}&orderId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/purchasing?tab=orders${statusQuery}&id=${item.id}`} className={styles.colBoldLink}>
                           PO-{shortId}
                         </Link>
                       );
                     }
                     if (code === 'purchasing_pending_qc') {
                       return (
-                        <Link to={`/purchasing?tab=shipment&shipmentId=${item.shipment_num}`} className={styles.colBoldLink}>
+                        <Link to={`/purchasing?tab=shipment&id=${item.id}`} className={styles.colBoldLink}>
                           {item.shipment_num || 'QC'}
                         </Link>
                       );
                     }
                     if (code === 'purchasing_pending_logistic_fees') {
                       return (
-                        <Link to={`/purchasing?tab=shipment&shipmentId=${item.shipment_num}`} className={styles.colBoldLink}>
+                        <Link to={`/purchasing?tab=shipment&id=${item.id}`} className={styles.colBoldLink}>
                           {item.shipment_num || 'FEE'}
                         </Link>
                       );
                     }
                     if (code === 'purchasing_blocked_invoices') {
                       return (
-                        <Link to={`/purchasing?status=blocked&tab=invoices&invoiceId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/purchasing?status=blocked&tab=invoices&id=${item.id}`} className={styles.colBoldLink}>
                           INV-{shortId}
                         </Link>
                       );
@@ -246,7 +251,7 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                     }
                     if (code === 'inventory_pending_entry_count') {
                       return (
-                        <Link to={`/inventory?tab=entries&status=draft&entryId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/inventory?tab=entries&status=draft&id=${item.id}`} className={styles.colBoldLink}>
                           {item.name}
                         </Link>
                       );
@@ -254,7 +259,7 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                     if (code === 'inventory_pending_entries') {
                       const iconMap: Record<string, string> = { receipt: '📥', issue: '📤', transfer: '🔄' };
                       return (
-                        <Link to={`/inventory?tab=entries&status=draft&entryId=${item.id}`} className={styles.colBoldLink} style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                        <Link to={`/inventory?tab=entries&status=draft&id=${item.id}`} className={styles.colBoldLink} style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
                           <span>{iconMap[item.purpose] || '📦'}</span>
                           <span className={styles.colTextEllipsis} style={{ maxWidth: '65px' }}>{item.name}</span>
                         </Link>
@@ -269,14 +274,14 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                     }
                     if (code === 'finance_unpaid_purchase_invoices') {
                       return (
-                        <Link to={`/purchasing?status=unpaid&tab=invoices&invoiceId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/purchasing?status=unpaid&tab=invoices&id=${item.id}`} className={styles.colBoldLink}>
                           INV-{shortId}
                         </Link>
                       );
                     }
                     if (code === 'finance_unpaid_sales_invoices') {
                       return (
-                        <Link to={`/sales?status=unpaid&tab=invoices&invoiceId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/sales?status=unpaid&tab=invoices&id=${item.id}`} className={styles.colBoldLink}>
                           INV-{shortId}
                         </Link>
                       );
@@ -290,28 +295,28 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                     }
                     if (code === 'hrm_payroll_lifecycle_status') {
                       return (
-                        <Link to={`/hrm?tab=salary&slipId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/hrm?tab=salary&id=${item.id}`} className={styles.colBoldLink}>
                           SLIP-{shortId}
                         </Link>
                       );
                     }
                     if (code === 'hrm_pending_leave_requests') {
                       return (
-                        <Link to={`/hrm?tab=leave&requestId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/hrm?tab=leave&id=${item.id}`} className={styles.colBoldLink}>
                           {item.employee_name}
                         </Link>
                       );
                     }
                     if (code === 'hrm_expiring_contracts') {
                       return (
-                        <Link to={`/hrm?tab=employees&employeeId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/hrm?tab=employees&id=${item.id}`} className={styles.colBoldLink}>
                           {item.contract_no || `CON-${shortId}`}
                         </Link>
                       );
                     }
                     if (code === 'hrm_today_attendance_rate') {
                       return (
-                        <Link to={`/hrm?tab=attendance&employeeId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/hrm?tab=attendance&id=${item.id}`} className={styles.colBoldLink}>
                           {item.employee_id}
                         </Link>
                       );
@@ -319,7 +324,7 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks }: ListSum
                     if (code.startsWith('manufacturing_')) {
                       const mStatus = code === 'manufacturing_pending_wo_approval' ? 'pending_approval' : 'in_progress';
                       return (
-                        <Link to={`/bom?status=${mStatus}&tab=wo&workOrderId=${item.id}`} className={styles.colBoldLink}>
+                        <Link to={`/bom?status=${mStatus}&tab=wo&id=${item.id}`} className={styles.colBoldLink}>
                           {item.name || `WO-${shortId}`}
                         </Link>
                       );

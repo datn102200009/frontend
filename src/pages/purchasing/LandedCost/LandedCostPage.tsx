@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   useGetPurchasingShipmentsQuery, 
@@ -21,8 +21,8 @@ import { Plus, Package, Calendar, Info, CheckCircle2, ShieldCheck, Check, AlertT
 import styles from './LandedCostPage.module.css';
 
 export const LandedCostPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const queryShipmentId = searchParams.get('shipmentId');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryShipmentId = searchParams.get('id');
   const { data: shipments = [], isLoading: isLoadingShipments, refetch: refetchShipments } = useGetPurchasingShipmentsQuery();
   const { data: stockEntriesRes } = useGetInventoryStockEntryListQuery({ purpose: 'receipt' });
   const { data: warehouses = [] } = useGetMasterDataWarehousesListQuery();
@@ -34,7 +34,13 @@ export const LandedCostPage: React.FC = () => {
   const [approveStockIn] = usePostInventoryStockInByStockEntryIdApproveMutation();
   const [postQC] = usePostPurchasingCertificationsMutation();
 
-  const [activeShipmentId, setActiveShipmentId] = useState<string | null>(null);
+  const activeShipment = useMemo(() => {
+    if (!queryShipmentId || shipments.length === 0) return null;
+    return shipments.find((s) => s.id === queryShipmentId || s.shipment_num === queryShipmentId) || null;
+  }, [queryShipmentId, shipments]);
+
+  const activeShipmentId = activeShipment?.id || null;
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Form states for creating shipment
@@ -75,18 +81,7 @@ export const LandedCostPage: React.FC = () => {
     );
   }, [stockEntriesRes, shipments]);
 
-  const activeShipment = useMemo(() => {
-    return shipments.find((s) => s.id === activeShipmentId);
-  }, [shipments, activeShipmentId]);
 
-  useEffect(() => {
-    if (queryShipmentId && shipments.length > 0) {
-      const matched = shipments.find((s) => s.id === queryShipmentId || s.shipment_num === queryShipmentId);
-      if (matched && matched.id !== activeShipmentId) {
-        setActiveShipmentId(matched.id || null);
-      }
-    }
-  }, [queryShipmentId, shipments, activeShipmentId]);
 
   const [prevActiveShipmentId, setPrevActiveShipmentId] = useState<string | null>(null);
   if (activeShipmentId !== prevActiveShipmentId) {
@@ -391,7 +386,15 @@ export const LandedCostPage: React.FC = () => {
                 <div 
                   key={s.id} 
                   className={`${styles.shipmentCard} ${activeShipmentId === s.id ? styles.activeCard : ''}`}
-                  onClick={() => setActiveShipmentId(s.id || null)}
+                  onClick={() => {
+                    const params = new URLSearchParams(searchParams);
+                    if (s.id) {
+                      params.set('id', s.id);
+                    } else {
+                      params.delete('id');
+                    }
+                    setSearchParams(params);
+                  }}
                 >
                   <div className={styles.cardHeader}>
                     <span className={styles.shipmentNum}>{s.shipment_num}</span>

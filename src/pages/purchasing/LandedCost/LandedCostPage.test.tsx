@@ -82,6 +82,15 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     expect(screen.getByText('Chọn một lô hàng để làm việc')).toBeInTheDocument();
   });
 
+  it('automatically selects shipment when id query param is present in URL', async () => {
+    setupDefaultMocks();
+    renderWithProviders(<LandedCostPage />, {
+      initialEntries: ['/purchasing?tab=shipment&id=SHIP-001']
+    });
+
+    expect(await screen.findByText('Mã lô hàng: LH-20260604-001')).toBeInTheDocument();
+  });
+
   it('handles state transitions: Draft state (inputs and QC button are locked)', async () => {
     setupDefaultMocks();
     renderWithProviders(<LandedCostPage />);

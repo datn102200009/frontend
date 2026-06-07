@@ -185,7 +185,7 @@ describe('HrmPage', () => {
     );
 
     renderWithProviders(<HrmPage />, {
-      initialEntries: ['/hrm?tab=employees&employeeId=emp-1']
+      initialEntries: ['/hrm?tab=employees&id=emp-1']
     });
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
@@ -213,7 +213,7 @@ describe('HrmPage', () => {
     );
 
     renderWithProviders(<HrmPage />, {
-      initialEntries: ['/hrm?tab=leave&requestId=req-1']
+      initialEntries: ['/hrm?tab=leave&id=req-1']
     });
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();

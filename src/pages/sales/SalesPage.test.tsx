@@ -243,7 +243,7 @@ describe('SalesPage', () => {
     );
 
     renderWithProviders(<SalesPage />, {
-      initialEntries: ['/sales?tab=orders&orderId=SO-001']
+      initialEntries: ['/sales?tab=orders&id=SO-001']
     });
 
     // Check if the order detail modal is auto-opened
@@ -286,7 +286,7 @@ describe('SalesPage', () => {
     );
 
     renderWithProviders(<SalesPage />, {
-      initialEntries: ['/sales?tab=invoices&invoiceId=SI-001']
+      initialEntries: ['/sales?tab=invoices&id=SI-001']
     });
 
     // Check if the invoice detail modal is auto-opened

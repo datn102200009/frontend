@@ -19,7 +19,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   onChangeDate,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const queryEmployeeId = searchParams.get('employeeId');
+  const queryEmployeeId = searchParams.get('id');
 
   const [localSelectedDate, setLocalSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -138,7 +138,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           <button 
             onClick={() => {
               const params = new URLSearchParams(searchParams);
-              params.delete('employeeId');
+              params.delete('id');
               setSearchParams(params);
             }}
             style={{

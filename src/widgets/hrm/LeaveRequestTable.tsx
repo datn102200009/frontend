@@ -27,7 +27,9 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
   const { data: leaveRequestsData, isLoading } = useGetHrmLeaveRequestsQuery(
     statusFilter === 'all' ? {} : { status: statusFilter }
   );
-  const leaveRequestsList = leaveRequestsData || [];
+  const leaveRequestsList = Array.isArray(leaveRequestsData)
+    ? leaveRequestsData
+    : (leaveRequestsData as any)?.results || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

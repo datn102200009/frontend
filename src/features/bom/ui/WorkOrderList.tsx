@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
@@ -36,18 +36,24 @@ export function WorkOrderList() {
 
   const [search, setSearch] = useState('');
   const [declaringWo, setDeclaringWo] = useState<WorkOrder | null>(null);
-  const [viewingWo, setViewingWo] = useState<WorkOrder | null>(null);
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: WorkOrder, message: string } | null>(null);
 
-  const queryWorkOrderId = searchParams.get('workOrderId');
+  const queryId = searchParams.get('id');
   const { toast } = useToast();
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
     search: search || undefined,
     status: (urlStatus as any) || undefined,
   });
+
+  const workOrders = data?.results || [];
+
+  const viewingWo = useMemo(() => {
+    if (!queryId || workOrders.length === 0) return null;
+    return workOrders.find((w: WorkOrder) => w.id === queryId) || null;
+  }, [queryId, workOrders]);
 
   const [approveWo, { isLoading: isApproving }] = usePostManufacturingWorkOrderByWorkOrderIdApproveMutation();
   const [declareWo, { isLoading: isDeclaring }] = usePostManufacturingWorkOrderByWorkOrderIdDeclareMutation();
@@ -174,7 +180,15 @@ export function WorkOrderList() {
               <ActionButton
                 icon={<Eye size={18} />}
                 title="Chi tiết"
-                onClick={() => setViewingWo(row.original)}
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams);
+                  if (row.original.id) {
+                    params.set('id', row.original.id);
+                  } else {
+                    params.delete('id');
+                  }
+                  setSearchParams(params);
+                }}
               />
               {status === 'pending_approval' && (
                 <>
@@ -223,16 +237,7 @@ export function WorkOrderList() {
     [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting],
   );
 
-  const workOrders = data?.results || [];
 
-  useEffect(() => {
-    if (queryWorkOrderId && workOrders.length > 0) {
-      const matched = workOrders.find((w: WorkOrder) => w.id === queryWorkOrderId);
-      if (matched) {
-        setViewingWo(matched);
-      }
-    }
-  }, [queryWorkOrderId, workOrders]);
 
   return (
     <div className={styles.container}>
@@ -303,12 +308,11 @@ export function WorkOrderList() {
 
       {viewingWo && (
         <WorkOrderDetailModal
-          open
+          open={!!viewingWo}
           workOrder={viewingWo}
           onClose={() => {
-            setViewingWo(null);
             const params = new URLSearchParams(searchParams);
-            params.delete('workOrderId');
+            params.delete('id');
             setSearchParams(params);
           }}
         />

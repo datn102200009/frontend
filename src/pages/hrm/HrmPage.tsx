@@ -51,12 +51,13 @@ const HrmPage: React.FC = () => {
     setSearchParams({ tab: newTab });
   };
 
-  const queryEmployeeId = searchParams.get('employeeId');
-  const queryRequestId = searchParams.get('requestId');
+  const queryId = searchParams.get('id');
+  const queryEmployeeId = (activeTab === 'employees' || activeTab === 'attendance') ? queryId : null;
+  const queryRequestId = activeTab === 'leave' ? queryId : null;
 
   const { data: employeeDataResponse } = useGetHrmEmployeesQuery(
     { limit: 100 },
-    { skip: !queryEmployeeId || activeTab !== 'employees' }
+    { skip: !queryEmployeeId || (activeTab !== 'employees' && activeTab !== 'attendance') }
   );
 
   const { data: leaveRequestsResponse } = useGetHrmLeaveRequestsQuery(
@@ -64,28 +65,22 @@ const HrmPage: React.FC = () => {
     { skip: !queryRequestId || activeTab !== 'leave' }
   );
 
-  React.useEffect(() => {
-    if (queryEmployeeId && employeeDataResponse?.results) {
-      const matched = employeeDataResponse.results.find((e) => e.id === queryEmployeeId);
-      if (matched) {
-        setSelectedEmployeeForView(matched as Employee);
-      }
-    }
+  const selectedEmployeeForView = React.useMemo(() => {
+    if (!queryEmployeeId || !employeeDataResponse?.results) return null;
+    return (employeeDataResponse.results.find((e) => e.id === queryEmployeeId) || null) as Employee | null;
   }, [queryEmployeeId, employeeDataResponse]);
 
-  React.useEffect(() => {
-    if (queryRequestId && leaveRequestsResponse) {
-      const matched = leaveRequestsResponse.find((r) => r.id === queryRequestId);
-      if (matched) {
-        setSelectedLeaveRequestForDetails(matched as LeaveRequest);
-      }
-    }
+  const selectedLeaveRequestForDetails = React.useMemo(() => {
+    if (!queryRequestId || !leaveRequestsResponse) return null;
+    const list = Array.isArray(leaveRequestsResponse)
+      ? leaveRequestsResponse
+      : (leaveRequestsResponse as any).results || [];
+    return (list.find((r: LeaveRequest) => r.id === queryRequestId) || null) as LeaveRequest | null;
   }, [queryRequestId, leaveRequestsResponse]);
 
   // Employee Modals States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedEmployeeForUpdate, setSelectedEmployeeForUpdate] = useState<Employee | null>(null);
-  const [selectedEmployeeForView, setSelectedEmployeeForView] = useState<Employee | null>(null);
   const [selectedEmployeeForSalaryUpdate, setSelectedEmployeeForSalaryUpdate] = useState<Employee | null>(null);
   const [selectedEmployeeForContractCreate, setSelectedEmployeeForContractCreate] = useState<Employee | null>(null);
   const [selectedEmployeeForReward, setSelectedEmployeeForReward] = useState<Employee | null>(null);
@@ -99,7 +94,6 @@ const HrmPage: React.FC = () => {
   // Other Modals States
   const [isBatchAttendanceOpen, setIsBatchAttendanceOpen] = useState(false);
   const [isLeaveRequestFormOpen, setIsLeaveRequestFormOpen] = useState(false);
-  const [selectedLeaveRequestForDetails, setSelectedLeaveRequestForDetails] = useState<LeaveRequest | null>(null);
   const [isInitializeSalarySlipOpen, setIsInitializeSalarySlipOpen] = useState(false);
   const [isBulkPayOpen, setIsBulkPayOpen] = useState(false);
 
@@ -139,7 +133,9 @@ const HrmPage: React.FC = () => {
 
   // Actions
   const handleTerminateContractTrigger = (emp: Employee, contractId: string) => {
-    setSelectedEmployeeForView(null); // Close Details modal first to avoid overlay overlap
+    const params = new URLSearchParams(searchParams);
+    params.delete('id');
+    setSearchParams(params);
     setTerminationState({ employee: emp, contractId });
   };
 
@@ -218,7 +214,15 @@ const HrmPage: React.FC = () => {
                 </Button>
               </div>
               <EmployeeTable
-                onView={(emp) => setSelectedEmployeeForView(emp)}
+                onView={(emp) => {
+                  const params = new URLSearchParams(searchParams);
+                  if (emp.id) {
+                    params.set('id', emp.id);
+                  } else {
+                    params.delete('id');
+                  }
+                  setSearchParams(params);
+                }}
                 onEdit={(emp) => setSelectedEmployeeForUpdate(emp)}
                 onUpdateSalary={(emp) => setSelectedEmployeeForSalaryUpdate(emp)}
                 onCreateContract={(emp) => setSelectedEmployeeForContractCreate(emp)}
@@ -291,7 +295,15 @@ const HrmPage: React.FC = () => {
                   Tạo Đơn Phép
                 </Button>
               </div>
-              <LeaveRequestTable onViewDetails={(lr) => setSelectedLeaveRequestForDetails(lr)} />
+              <LeaveRequestTable onViewDetails={(lr) => {
+                const params = new URLSearchParams(searchParams);
+                if (lr.id) {
+                  params.set('id', lr.id);
+                } else {
+                  params.delete('id');
+                }
+                setSearchParams(params);
+              }} />
             </>
           )}
 
@@ -369,9 +381,8 @@ const HrmPage: React.FC = () => {
         <EmployeeDetailsModal
           open={!!selectedEmployeeForView}
           onClose={() => {
-            setSelectedEmployeeForView(null);
             const params = new URLSearchParams(searchParams);
-            params.delete('employeeId');
+            params.delete('id');
             setSearchParams(params);
           }}
           employee={selectedEmployeeForView}
@@ -448,15 +459,13 @@ const HrmPage: React.FC = () => {
         <LeaveRequestDetailsModal
           open={!!selectedLeaveRequestForDetails}
           onClose={() => {
-            setSelectedLeaveRequestForDetails(null);
             const params = new URLSearchParams(searchParams);
-            params.delete('requestId');
+            params.delete('id');
             setSearchParams(params);
           }}
           onSuccess={() => {
-            setSelectedLeaveRequestForDetails(null);
             const params = new URLSearchParams(searchParams);
-            params.delete('requestId');
+            params.delete('id');
             setSearchParams(params);
           }}
           leaveRequest={selectedLeaveRequestForDetails}

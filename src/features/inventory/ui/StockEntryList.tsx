@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
   useGetInventoryStockEntryListQuery, 
@@ -67,23 +67,18 @@ export function StockEntryList() {
   const [approving, setApproving] = useState<StockEntry | null>(null);
   const [prevApprovingId, setPrevApprovingId] = useState<string | null>(null);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
-  const [viewingEntry, setViewingEntry] = useState<StockEntry | null>(null);
   const [showCreate, setShowCreate] = useState<'stock_in' | 'stock_issue' | 'internal_transfer' | null>(null);
   const { toast } = useToast();
   
   const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer || isUpdating;
 
-  const queryEntryId = searchParams.get('entryId');
+  const queryId = searchParams.get('id');
   const searchQuery = searchParams.get('search') || '';
 
-  useEffect(() => {
-    if (queryEntryId && entries.length > 0) {
-      const matched = entries.find((e: StockEntry) => e.id === queryEntryId);
-      if (matched) {
-        setViewingEntry(matched);
-      }
-    }
-  }, [queryEntryId, entries]);
+  const viewingEntry = useMemo(() => {
+    if (!queryId || entries.length === 0) return null;
+    return entries.find((e: StockEntry) => e.id === queryId) || null;
+  }, [queryId, entries]);
 
   if (approving && approving.id !== prevApprovingId) {
     setPrevApprovingId(approving.id || null);
@@ -198,7 +193,15 @@ export function StockEntryList() {
             <ActionButton
               icon={<Eye size={18} />}
               title="Chi tiết"
-              onClick={() => setViewingEntry(row.original)}
+              onClick={() => {
+                const params = new URLSearchParams(searchParams);
+                if (row.original.id) {
+                  params.set('id', row.original.id);
+                } else {
+                  params.delete('id');
+                }
+                setSearchParams(params);
+              }}
             />
             {row.original.status === 'draft' && (
               <ActionButton
@@ -403,12 +406,11 @@ export function StockEntryList() {
 
       {viewingEntry && (
         <StockEntryDetailModal
-          open
+          open={!!viewingEntry}
           entry={viewingEntry}
           onClose={() => {
-            setViewingEntry(null);
             const params = new URLSearchParams(searchParams);
-            params.delete('entryId');
+            params.delete('id');
             setSearchParams(params);
           }}
         />

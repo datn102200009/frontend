@@ -210,6 +210,7 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          totalCount={hasRetried && detailData ? detailData.total_count : batchResult?.total_count}
         />
       )}
 

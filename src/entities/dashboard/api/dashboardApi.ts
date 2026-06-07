@@ -237,6 +237,8 @@ export type ManufacturingPendingCompletionLine = {
 }
 export type WidgetBatchDataResult = {
   success?: boolean
+  /** Total count of items matching the criteria (which can be more than the 5 items returned). */
+  total_count?: number
   data?:
     | (
         | (
