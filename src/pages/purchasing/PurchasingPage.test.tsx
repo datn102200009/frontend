@@ -27,19 +27,24 @@ describe('PurchasingPage', () => {
         ]);
       }),
       http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'PI-001',
-            order: 'PO-001',
-            vendor: 'SUP01',
-            vendor_name: 'Tech Component',
-            total_amount: 15000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'SUP01',
+              vendor_name: 'Tech Component',
+              total_amount: 15000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       })
     );
 
@@ -140,19 +145,24 @@ describe('PurchasingPage', () => {
         return HttpResponse.json([]);
       }),
       http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'PI-001',
-            order: 'PO-001',
-            vendor: 'SUP01',
-            vendor_name: 'Tech Component',
-            total_amount: 15000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'SUP01',
+              vendor_name: 'Tech Component',
+              total_amount: 15000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       }),
       http.get('*/api/v1/purchasing/invoices/PI-001/', () => {
         return HttpResponse.json({
@@ -258,19 +268,24 @@ describe('PurchasingPage', () => {
         return HttpResponse.json([]);
       }),
       http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'PI-001',
-            order: 'PO-001',
-            vendor: 'SUP01',
-            vendor_name: 'Tech Component',
-            total_amount: 15000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'SUP01',
+              vendor_name: 'Tech Component',
+              total_amount: 15000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       }),
       http.get('*/api/v1/purchasing/invoices/PI-001/', () => {
         return HttpResponse.json({

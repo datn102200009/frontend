@@ -38,7 +38,7 @@ describe('PurchaseInvoiceDetailsModal', () => {
     ]
   };
 
-  it('renders blocked warning alert and disables payment button when status is blocked_for_payment', async () => {
+  it('renders blocked warning alert and verify payment and matching buttons are not present when status is blocked_for_payment', async () => {
     server.use(
       http.get('*/api/v1/purchasing/invoices/PI-BLOCKED/', () => {
         return HttpResponse.json(mockInvoice);
@@ -58,16 +58,15 @@ describe('PurchaseInvoiceDetailsModal', () => {
     expect(screen.getByText(/Lưu ý: Chênh lệch số lượng nhận hàng/i)).toBeInTheDocument();
     expect(screen.getAllByText('95.5%').length).toBeGreaterThan(0);
 
-    // Check that payment button is disabled
-    const payBtn = screen.getByRole('button', { name: /Thanh Toán Hóa Đơn/i });
-    expect(payBtn).toBeDisabled();
+    // Verify payment and matching buttons are NOT present
+    expect(screen.queryByRole('button', { name: /Thanh Toán Hóa Đơn/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Chạy lại Đối soát/i })).not.toBeInTheDocument();
 
     // Check the "Tỷ lệ nhận" column displays
     expect(screen.getByText('Tỷ lệ nhận')).toBeInTheDocument();
   });
 
-  it('allows payment submission when invoice is not blocked', async () => {
-    let payPayload: any = null;
+  it('renders normal details for unpaid invoice and does not show payment buttons', async () => {
     const unpaidInvoice = {
       ...mockInvoice,
       id: 'PI-UNPAID',
@@ -85,10 +84,6 @@ describe('PurchaseInvoiceDetailsModal', () => {
     server.use(
       http.get('*/api/v1/purchasing/invoices/PI-UNPAID/', () => {
         return HttpResponse.json(unpaidInvoice);
-      }),
-      http.post('*/api/v1/purchasing/invoices/PI-UNPAID/pay/', async ({ request }) => {
-        payPayload = await request.json();
-        return HttpResponse.json({ ...unpaidInvoice, status: 'paid', paid_amount: 15000000 });
       })
     );
 
@@ -102,25 +97,8 @@ describe('PurchaseInvoiceDetailsModal', () => {
     expect(screen.queryByText(/Hóa đơn bị chặn thanh toán/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Lưu ý: Chênh lệch số lượng nhận hàng/i)).not.toBeInTheDocument();
 
-    // Click pay button
-    const user = userEvent.setup();
-    const payBtn = screen.getByRole('button', { name: /Thanh Toán Hóa Đơn/i });
-    expect(payBtn).toBeEnabled();
-    await user.click(payBtn);
-
-    // Form inputs modal should appear
-    expect(await screen.findByText('Thanh Toán Hóa Đơn Mua')).toBeInTheDocument();
-
-    // Submit payment
-    const confirmBtn = screen.getByRole('button', { name: /Xác nhận thanh toán/i });
-    await user.click(confirmBtn);
-
-    // Verify POST pay API is called
-    await waitFor(() => {
-      expect(payPayload).toEqual({
-        amount: 15000000,
-        payment_method: 'bank_transfer'
-      });
-    });
+    // Verify buttons are not present
+    expect(screen.queryByRole('button', { name: /Thanh Toán Hóa Đơn/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Chạy lại Đối soát/i })).not.toBeInTheDocument();
   });
 });

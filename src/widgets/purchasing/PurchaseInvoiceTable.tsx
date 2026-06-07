@@ -13,7 +13,8 @@ interface PurchaseInvoiceTableProps {
 }
 
 export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onView }) => {
-  const { data: invoices = [], isLoading } = useGetPurchasingInvoicesQuery();
+  const { data, isLoading } = useGetPurchasingInvoicesQuery({});
+  const invoices = data?.results || [];
   const [searchParams] = useSearchParams();
   const statusFilter = searchParams.get('status');
 

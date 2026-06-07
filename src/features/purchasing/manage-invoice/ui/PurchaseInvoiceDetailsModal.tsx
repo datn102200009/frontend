@@ -1,14 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
-  useGetPurchasingInvoicesByPkQuery,
-  usePostPurchasingInvoicesByPkPayMutation,
-  usePostPurchasingInvoicesByPkVerifyMutation
+  useGetPurchasingInvoicesByPkQuery
 } from '@entities/purchasing/api/purchasingApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { Input } from '@shared/ui/Input/Input';
-import { CreditCard, Printer, FileText, AlertTriangle, ShieldCheck, Check } from 'lucide-react';
+import { Printer, FileText, AlertTriangle } from 'lucide-react';
 import styles from './InvoiceDetailsModal.module.css';
 
 interface PurchaseInvoiceDetailsModalProps {
@@ -17,14 +14,7 @@ interface PurchaseInvoiceDetailsModalProps {
 }
 
 export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalProps> = ({ invoiceId, onClose }) => {
-  const { data: invoice, isLoading, refetch } = useGetPurchasingInvoicesByPkQuery({ pk: invoiceId });
-  const [payInvoice, { isLoading: isPaying }] = usePostPurchasingInvoicesByPkPayMutation();
-  const [verifyMatching, { isLoading: isVerifying }] = usePostPurchasingInvoicesByPkVerifyMutation();
-
-  const [showPayment, setShowPayment] = useState(false);
-  const [payAmount, setPayAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank_transfer'>('bank_transfer');
-  const [payError, setPayError] = useState('');
+  const { data: invoice, isLoading } = useGetPurchasingInvoicesByPkQuery({ pk: invoiceId });
 
   if (isLoading || !invoice) {
     return (
@@ -38,85 +28,21 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   };
 
-  const isPaid = invoice.status === 'paid';
   const totalAmount = invoice.total_amount || 0;
   const paidAmount = invoice.paid_amount || 0;
   const remainingAmount = totalAmount - paidAmount;
 
-  const handleOpenPayment = () => {
-    setPayAmount(remainingAmount);
-    setPayError('');
-    setShowPayment(true);
-  };
-
-  const handlePaySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPayError('');
-
-    if (payAmount <= 0) {
-      setPayError('Số tiền thanh toán phải lớn hơn 0.');
-      return;
-    }
-    if (payAmount > remainingAmount) {
-      setPayError(`Số tiền thanh toán vượt quá số tiền còn nợ (${formatCurrency(remainingAmount)}).`);
-      return;
-    }
-
-    try {
-      await payInvoice({
-        pk: invoiceId,
-        payInvoiceInput: {
-          amount: payAmount,
-          payment_method: paymentMethod,
-        }
-      }).unwrap();
-      setShowPayment(false);
-      refetch();
-    } catch (err: unknown) {
-      const error = err as { data?: { detail?: string } };
-      setPayError(error?.data?.detail || 'Giao dịch thất bại. Vui lòng kiểm tra lại.');
-    }
-  };
-
-  const handleVerify = async () => {
-    try {
-      await verifyMatching({ pk: invoiceId }).unwrap();
-      refetch();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   return (
     <>
       <Modal 
-        open={!showPayment} 
+        open={true} 
         onClose={onClose} 
         title={`Hóa Đơn ${(invoice.id || '').slice(0, 8).toUpperCase()}`}
         size="lg"
         footer={
           <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
             <Button variant="ghost" onClick={onClose}>Đóng</Button>
-            {invoice.block_reason && (
-              <Button 
-                variant="outline" 
-                onClick={handleVerify} 
-                loading={isVerifying}
-                icon={<ShieldCheck size={16} />}
-              >
-                Chạy lại Đối soát
-              </Button>
-            )}
             <Button variant="outline" icon={<Printer size={16} />}>In Hóa Đơn</Button>
-            {!isPaid && (
-              <Button 
-                onClick={handleOpenPayment} 
-                icon={<CreditCard size={16} />}
-                disabled={invoice.status === 'blocked_for_payment'}
-              >
-                Thanh Toán Hóa Đơn
-              </Button>
-            )}
           </div>
         }
       >
@@ -229,47 +155,6 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
         </div>
       </Modal>
 
-      {/* Payment Processing Modal Overlay */}
-      <Modal 
-        open={showPayment} 
-        onClose={() => setShowPayment(false)} 
-        title="Thanh Toán Hóa Đơn Mua"
-        size="md"
-      >
-        <form onSubmit={handlePaySubmit} className={styles.payForm}>
-          {payError && <div className={styles.errorAlert}>{payError}</div>}
-          
-          <div className={styles.paymentSum}>
-            <span>Số tiền còn nợ:</span>
-            <strong>{formatCurrency(remainingAmount)}</strong>
-          </div>
-
-          <Input 
-            label="Số tiền thanh toán (VND)" 
-            type="number"
-            value={payAmount}
-            onChange={(e) => setPayAmount(Number(e.target.value))}
-            required
-          />
-
-          <div className={styles.selectWrap}>
-            <label className={styles.selectLabel}>Phương thức thanh toán</label>
-            <select 
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as 'cash' | 'bank_transfer')}
-              className={styles.select}
-            >
-              <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-              <option value="cash">Tiền mặt</option>
-            </select>
-          </div>
-
-          <div className={styles.payFooter}>
-            <Button type="button" variant="secondary" onClick={() => setShowPayment(false)}>Hủy</Button>
-            <Button type="submit" loading={isPaying} icon={<Check size={16} />}>Xác nhận thanh toán</Button>
-          </div>
-        </form>
-      </Modal>
     </>
   );
 };

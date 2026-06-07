@@ -88,6 +88,16 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    postFinanceInvoicesPurchaseByPkPay: build.mutation<
+      PostFinanceInvoicesPurchaseByPkPayApiResponse,
+      PostFinanceInvoicesPurchaseByPkPayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/invoices/purchase/${queryArg.pk}/pay/`,
+        method: 'POST',
+        body: queryArg.payInvoiceInput,
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -154,6 +164,12 @@ export type GetFinanceFixedAssetsDepreciationLogsApiArg = {
   assetId?: string
   limit?: number
   page?: number
+}
+export type PostFinanceInvoicesPurchaseByPkPayApiResponse =
+  /** status 200 Thanh toán thành công, trả về hóa đơn đã cập nhật. */ PurchaseInvoice
+export type PostFinanceInvoicesPurchaseByPkPayApiArg = {
+  pk: string
+  payInvoiceInput: PayInvoiceInput
 }
 export type CashFlowTransaction = {
   id?: string
@@ -232,6 +248,20 @@ export type FixedAssetDepreciationLog = {
 export type RunDepreciationInput = {
   period: string
 }
+export type PurchaseInvoice = {
+  id?: string
+  order?: string
+  vendor?: string
+  vendor_name?: string
+  status?: 'unpaid' | 'partial' | 'paid' | 'blocked_for_payment' | 'cancelled'
+  total_amount?: number
+  paid_amount?: number
+  due_date?: string | null
+}
+export type PayInvoiceInput = {
+  amount: number
+  payment_method?: 'cash' | 'bank_transfer'
+}
 export const {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsMutation,
@@ -243,4 +273,5 @@ export const {
   useDeleteFinanceFixedAssetsByPkMutation,
   usePostFinanceFixedAssetsDepreciationMutation,
   useGetFinanceFixedAssetsDepreciationLogsQuery,
+  usePostFinanceInvoicesPurchaseByPkPayMutation,
 } = injectedRtkApi

@@ -84,7 +84,14 @@ const injectedRtkApi = api.injectEndpoints({
       GetPurchasingInvoicesApiResponse,
       GetPurchasingInvoicesApiArg
     >({
-      query: () => ({ url: `/purchasing/invoices/` }),
+      query: (queryArg) => ({
+        url: `/purchasing/invoices/`,
+        params: {
+          status: queryArg.status,
+          limit: queryArg.limit,
+          page: queryArg.page,
+        },
+      }),
     }),
     getPurchasingInvoicesByPk: build.query<
       GetPurchasingInvoicesByPkApiResponse,
@@ -97,16 +104,6 @@ const injectedRtkApi = api.injectEndpoints({
       PostPurchasingInvoicesByPkVerifyApiArg
     >({
       query: (queryArg) => ({ url: `/purchasing/invoices/${queryArg.pk}/verify/`, method: 'POST' }),
-    }),
-    postPurchasingInvoicesByPkPay: build.mutation<
-      PostPurchasingInvoicesByPkPayApiResponse,
-      PostPurchasingInvoicesByPkPayApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/purchasing/invoices/${queryArg.pk}/pay/`,
-        method: 'POST',
-        body: queryArg.payInvoiceInput,
-      }),
     }),
     getPurchasingShipments: build.query<
       GetPurchasingShipmentsApiResponse,
@@ -215,8 +212,17 @@ export type PostPurchasingOrdersByPkCancelApiArg = {
   purchaseOrderCancelInput: PurchaseOrderCancelInput
 }
 export type GetPurchasingInvoicesApiResponse =
-  /** status 200 A list of purchase invoices. */ PurchaseInvoice[]
-export type GetPurchasingInvoicesApiArg = void
+  /** status 200 A paginated list of purchase invoices. */ {
+    count?: number
+    total_pages?: number
+    current_page?: number
+    results?: PurchaseInvoice[]
+  }
+export type GetPurchasingInvoicesApiArg = {
+  status?: string
+  limit?: number
+  page?: number
+}
 export type GetPurchasingInvoicesByPkApiResponse =
   /** status 200 Purchase invoice details. */ PurchaseInvoice
 export type GetPurchasingInvoicesByPkApiArg = {
@@ -226,12 +232,6 @@ export type PostPurchasingInvoicesByPkVerifyApiResponse =
   /** status 200 Kết quả đối soát cập nhật trên Hóa đơn. */ PurchaseInvoice
 export type PostPurchasingInvoicesByPkVerifyApiArg = {
   pk: string
-}
-export type PostPurchasingInvoicesByPkPayApiResponse =
-  /** status 200 Thanh toán thành công, trả về hóa đơn đã cập nhật. */ PurchaseInvoice
-export type PostPurchasingInvoicesByPkPayApiArg = {
-  pk: string
-  payInvoiceInput: PayInvoiceInput
 }
 export type GetPurchasingShipmentsApiResponse = /** status 200 Danh sách lô hàng. */ Shipment[]
 export type GetPurchasingShipmentsApiArg = void
@@ -375,10 +375,6 @@ export type PurchaseInvoice = {
   updated_at?: string
   lines?: PurchaseInvoiceLine[]
 }
-export type PayInvoiceInput = {
-  amount: number
-  payment_method?: 'cash' | 'bank_transfer'
-}
 export type Shipment = {
   id?: string
   shipment_num?: string
@@ -445,7 +441,6 @@ export const {
   useGetPurchasingInvoicesQuery,
   useGetPurchasingInvoicesByPkQuery,
   usePostPurchasingInvoicesByPkVerifyMutation,
-  usePostPurchasingInvoicesByPkPayMutation,
   useGetPurchasingShipmentsQuery,
   usePostPurchasingShipmentsMutation,
   useGetPurchasingShipmentsByPkQuery,

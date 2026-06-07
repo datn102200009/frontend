@@ -27,19 +27,24 @@ describe('SalesPage', () => {
         ]);
       }),
       http.get('*/api/v1/sales/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'SI-001',
-            order: 'SO-001',
-            customer: 'CUS01',
-            customer_name: 'Công ty Alpha',
-            total_amount: 8000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'SI-001',
+              order: 'SO-001',
+              customer: 'CUS01',
+              customer_name: 'Công ty Alpha',
+              total_amount: 8000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       })
     );
 
@@ -139,19 +144,24 @@ describe('SalesPage', () => {
         return HttpResponse.json([]);
       }),
       http.get('*/api/v1/sales/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'SI-001',
-            order: 'SO-001',
-            customer: 'CUS01',
-            customer_name: 'Công ty Alpha',
-            total_amount: 8000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'SI-001',
+              order: 'SO-001',
+              customer: 'CUS01',
+              customer_name: 'Công ty Alpha',
+              total_amount: 8000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       }),
       http.get('*/api/v1/sales/invoices/SI-001/', () => {
         return HttpResponse.json({
@@ -256,19 +266,24 @@ describe('SalesPage', () => {
         return HttpResponse.json([]);
       }),
       http.get('*/api/v1/sales/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'SI-001',
-            order: 'SO-001',
-            customer: 'CUS01',
-            customer_name: 'Công ty Alpha',
-            total_amount: 8000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'SI-001',
+              order: 'SO-001',
+              customer: 'CUS01',
+              customer_name: 'Công ty Alpha',
+              total_amount: 8000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       }),
       http.get('*/api/v1/sales/invoices/SI-001/', () => {
         return HttpResponse.json({

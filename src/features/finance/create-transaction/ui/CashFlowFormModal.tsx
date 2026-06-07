@@ -36,8 +36,10 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
   const paymentType = defaultValues?.payment_type || 'receive';
   const isDirect = !!defaultValues?.sales_order_id || !!defaultValues?.purchase_order_id || !!defaultValues?.sales_invoice_id || !!defaultValues?.purchase_invoice_id;
 
-  const { data: salesInvoices, isLoading: isLoadingSales } = useGetSalesInvoicesQuery(undefined, { skip: paymentType !== 'receive' || isDirect });
-  const { data: purchaseInvoices, isLoading: isLoadingPurchasing } = useGetPurchasingInvoicesQuery(undefined, { skip: paymentType !== 'pay' || isDirect });
+  const { data: salesInvoices, isLoading: isLoadingSales } = useGetSalesInvoicesQuery({}, { skip: paymentType !== 'receive' || isDirect });
+  const { data: purchaseInvoices, isLoading: isLoadingPurchasing } = useGetPurchasingInvoicesQuery({}, { skip: paymentType !== 'pay' || isDirect });
+  const salesInvoicesList = salesInvoices?.results || [];
+  const purchaseInvoicesList = purchaseInvoices?.results || [];
 
   const hasInitialized = useRef(false);
 
@@ -66,12 +68,12 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     if (isDirect) return;
 
     if (!hasInitialized.current) {
-      if (paymentType === 'receive' && salesInvoices && salesInvoices.length > 0) {
+      if (paymentType === 'receive' && salesInvoicesList.length > 0) {
         reset({
           payment_type: 'receive',
           amount: Number(defaultValues?.amount) || 0,
           payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
-          sales_invoice_id: salesInvoices[0].id || '',
+          sales_invoice_id: salesInvoicesList[0].id || '',
           purchase_invoice_id: null,
           sales_order_id: null,
           purchase_order_id: null,
@@ -80,13 +82,13 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           remarks: defaultValues?.remarks || ''
         });
         hasInitialized.current = true;
-      } else if (paymentType === 'pay' && purchaseInvoices && purchaseInvoices.length > 0) {
+      } else if (paymentType === 'pay' && purchaseInvoicesList.length > 0) {
         reset({
           payment_type: 'pay',
           amount: Number(defaultValues?.amount) || 0,
           payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
           sales_invoice_id: null,
-          purchase_invoice_id: purchaseInvoices[0].id || '',
+          purchase_invoice_id: purchaseInvoicesList[0].id || '',
           sales_order_id: null,
           purchase_order_id: null,
           category: defaultValues?.category || '',
@@ -96,7 +98,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
         hasInitialized.current = true;
       }
     }
-  }, [salesInvoices, purchaseInvoices, paymentType, reset, defaultValues, isDirect]);
+  }, [salesInvoicesList, purchaseInvoicesList, paymentType, reset, defaultValues, isDirect]);
 
   const onSubmit = async (data: CashFlowFormState) => {
     try {
@@ -165,13 +167,13 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
               ) : defaultValues?.purchase_invoice_id ? (
                 <option value={defaultValues.purchase_invoice_id}>{defaultValues.purchase_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Mua)</option>
               ) : paymentType === 'receive' ? (
-                salesInvoices?.map(inv => inv.id ? (
+                salesInvoicesList.map(inv => inv.id ? (
                   <option key={inv.id} value={inv.id}>
                     {inv.id.slice(0,8).toUpperCase()} - {inv.customer_name || 'N/A'} ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.total_amount || 0)})
                   </option>
                 ) : null)
               ) : (
-                purchaseInvoices?.map(inv => inv.id ? (
+                purchaseInvoicesList.map(inv => inv.id ? (
                   <option key={inv.id} value={inv.id}>
                     {inv.id.slice(0,8).toUpperCase()} - {inv.vendor_name || 'N/A'} ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.total_amount || 0)})
                   </option>

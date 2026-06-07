@@ -13,7 +13,8 @@ interface SalesInvoiceTableProps {
 }
 
 export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({ onView }) => {
-  const { data: invoices = [], isLoading } = useGetSalesInvoicesQuery();
+  const { data, isLoading } = useGetSalesInvoicesQuery({});
+  const invoices = data?.results || [];
   const [searchParams] = useSearchParams();
   const statusFilter = searchParams.get('status');
 
