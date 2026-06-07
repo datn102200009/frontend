@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BulkConfirmSalarySlipModal } from './BulkConfirmSalarySlipModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -36,11 +36,22 @@ describe('BulkConfirmSalarySlipModal', () => {
     const cashRadio = screen.getByLabelText(/Tiền mặt/i) as HTMLInputElement;
     expect(cashRadio.checked).toBe(true);
 
+    // Input confirmation text
+    const confirmInput = screen.getByLabelText(/Nhập chữ/i);
+    await user.type(confirmInput, 'XÁC NHẬN');
+
+    // Wait 3.1 seconds to clear the button cooldown
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3100));
+    });
+
     // Submit payment
     await user.click(screen.getByRole('button', { name: 'Xác nhận thanh toán' }));
 
     await waitFor(() => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
-  });
+  }, 10000);
 });
+
+

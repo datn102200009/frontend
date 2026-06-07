@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmDisciplinesMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { disciplineSchema, type DisciplineFormValues } from '../model/reward-discipline.schema';
 import styles from './DisciplineFormModal.module.css';
 
 interface DisciplineFormModalProps {
@@ -12,16 +14,6 @@ interface DisciplineFormModalProps {
   onSuccess: () => void;
   employee?: Employee;
   salarySlipId?: string;
-}
-
-interface FormValues {
-  employee_id?: string;
-  incident_date: string;
-  discipline_date: string;
-  discipline_type: 'reprimand' | 'warning' | 'salary_deduction' | 'termination' | 'other';
-  description: string;
-  penalty_amount: number;
-  file_url?: string;
 }
 
 export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
@@ -45,7 +37,8 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     formState: { errors },
     reset,
     watch,
-  } = useForm<FormValues>({
+  } = useForm<DisciplineFormValues>({
+    resolver: zodResolver(disciplineSchema) as any,
     defaultValues: {
       employee_id: employee?.id || '',
       incident_date: new Date().toISOString().split('T')[0],
@@ -74,16 +67,11 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     }
   }, [open, employee, reset]);
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: DisciplineFormValues) => {
     setApiError(null);
     const targetEmployeeId = employee?.id || values.employee_id;
     if (!targetEmployeeId) {
       setApiError('Vui lòng chọn nhân viên.');
-      return;
-    }
-
-    if (values.discipline_type === 'salary_deduction' && Number(values.penalty_amount) <= 0) {
-      setApiError('Số tiền phạt khấu trừ phải lớn hơn 0.');
       return;
     }
 
@@ -140,7 +128,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
             <select
               id="employee_id"
               className={styles.select}
-              {...register('employee_id', { required: 'Nhân viên là bắt buộc' })}
+              {...register('employee_id')}
               disabled={isLoading || isEmployeesLoading}
             >
               <option value="">-- Chọn nhân viên --</option>
@@ -163,7 +151,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
               id="incident_date"
               type="date"
               className={styles.input}
-              {...register('incident_date', { required: 'Ngày sự việc là bắt buộc' })}
+              {...register('incident_date')}
               disabled={isLoading}
             />
             {errors.incident_date && <span className={styles.errorText}>{errors.incident_date.message}</span>}
@@ -177,7 +165,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
               id="discipline_date"
               type="date"
               className={styles.input}
-              {...register('discipline_date', { required: 'Ngày quyết định là bắt buộc' })}
+              {...register('discipline_date')}
               disabled={isLoading}
             />
             {errors.discipline_date && <span className={styles.errorText}>{errors.discipline_date.message}</span>}
@@ -192,7 +180,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
             <select
               id="discipline_type"
               className={styles.select}
-              {...register('discipline_type', { required: 'Hình thức kỷ luật là bắt buộc' })}
+              {...register('discipline_type')}
               disabled={isLoading}
             >
               <option value="reprimand">Phê bình/Nhắc nhở</option>
@@ -214,14 +202,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
                 min={0}
                 step={10000}
                 className={styles.input}
-                {...register('penalty_amount', {
-                  required: disciplineType === 'salary_deduction' ? 'Số tiền phạt là bắt buộc' : false,
-                  valueAsNumber: true,
-                  validate: (val) => {
-                    if (disciplineType !== 'salary_deduction') return true;
-                    return (val !== undefined && val !== null && !isNaN(val)) || 'Số tiền phạt là bắt buộc';
-                  }
-                })}
+                {...register('penalty_amount')}
                 disabled={isLoading}
               />
               {errors.penalty_amount && <span className={styles.errorText}>{errors.penalty_amount.message}</span>}
@@ -251,7 +232,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
             id="description"
             placeholder="Mô tả chi tiết hành vi vi phạm kỷ luật..."
             className={styles.textarea}
-            {...register('description', { required: 'Nội dung vi phạm là bắt buộc' })}
+            {...register('description')}
             disabled={isLoading}
           />
           {errors.description && <span className={styles.errorText}>{errors.description.message}</span>}

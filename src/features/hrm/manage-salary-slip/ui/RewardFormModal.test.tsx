@@ -30,7 +30,7 @@ describe('RewardFormModal', () => {
     expect(screen.getByLabelText(/Loại khen thưởng/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Số tiền thưởng/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Lý do\/Mô tả thành tích/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Nhân viên/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Nhân viên$/i)).not.toBeInTheDocument();
   });
 
   it('renders employee selection dropdown when employee is not provided', () => {

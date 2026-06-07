@@ -1,41 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmEmployeesCreateMutation } from '@entities/hrm/api/hrmApi';
 import { useGetAccountsRolesQuery } from '@features/accounts/api/accountsApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { UserCheck } from 'lucide-react';
+import { employeeSchema, type EmployeeFormValues } from '../model/employee.schema';
 import styles from './EmployeeFormModal.module.css';
-
 
 interface EmployeeFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
-
-// Form values type matching the API body definition
-interface EmployeeFormValues {
-  employee_id: string;
-  full_name: string;
-  department: string;
-  position_title: string;
-  salary_base: number;
-  is_union_member: boolean;
-  email: string;
-  phone: string;
-  gender: 'male' | 'female' | 'other';
-  date_of_birth: string;
-  address: string;
-  join_date: string;
-  create_user: boolean;
-  username?: string;
-  password?: string;
-  role_id?: string;
-}
-
-
-
 
 export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onClose, onSuccess }) => {
   const [createEmployee, { isLoading }] = usePostHrmEmployeesCreateMutation();
@@ -51,6 +29,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
     watch,
     setValue,
   } = useForm<EmployeeFormValues>({
+    resolver: zodResolver(employeeSchema) as any,
     defaultValues: {
       employee_id: '',
       full_name: '',
@@ -66,6 +45,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
       join_date: new Date().toISOString().split('T')[0],
       create_user: false,
       role_id: '',
+      username: '',
+      password: '',
     },
   });
 
@@ -77,7 +58,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
       setValue('role_id', defaultRoleId);
     }
   }, [roles, setValue]);
-
 
   const watchCreateUser = watch('create_user');
 
@@ -100,7 +80,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
         full_name: values.full_name,
         department: values.department || undefined,
         position_title: values.position_title || undefined,
-        salary_base: Number(values.salary_base) || undefined,
+        salary_base: typeof values.salary_base === 'number' && !isNaN(values.salary_base) ? values.salary_base : undefined,
         is_union_member: values.is_union_member,
         email: values.email || undefined,
         phone: values.phone || undefined,
@@ -157,7 +137,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
               type="text"
               placeholder="VD: NV001"
               className={styles.input}
-              {...register('employee_id', { required: 'Mã nhân viên là bắt buộc' })}
+              {...register('employee_id')}
               disabled={isLoading}
             />
             {errors.employee_id && <span className={styles.errorText}>{errors.employee_id.message}</span>}
@@ -172,7 +152,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
               type="text"
               placeholder="VD: Nguyễn Văn A"
               className={styles.input}
-              {...register('full_name', { required: 'Họ tên là bắt buộc' })}
+              {...register('full_name')}
               disabled={isLoading}
             />
             {errors.full_name && <span className={styles.errorText}>{errors.full_name.message}</span>}
@@ -215,9 +195,10 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
               step={100000}
               placeholder="VD: 10000000"
               className={styles.input}
-              {...register('salary_base', { valueAsNumber: true })}
+              {...register('salary_base')}
               disabled={isLoading}
             />
+            {errors.salary_base && <span className={styles.errorText}>{errors.salary_base.message}</span>}
           </div>
 
           <div className={styles.formGroup}>
@@ -235,15 +216,10 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
             <label className={styles.label} htmlFor="email">Email</label>
             <input
               id="email"
-              type="email"
+              type="text"
               placeholder="VD: name@company.com"
               className={styles.input}
-              {...register('email', {
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Địa chỉ email không hợp lệ',
-                },
-              })}
+              {...register('email')}
               disabled={isLoading}
             />
             {errors.email && <span className={styles.errorText}>{errors.email.message}</span>}
@@ -342,9 +318,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                   type="text"
                   placeholder="VD: nguyenvanan"
                   className={styles.input}
-                  {...register('username', {
-                    required: watchCreateUser ? 'Tên đăng nhập là bắt buộc' : false,
-                  })}
+                  {...register('username')}
                   disabled={isLoading}
                 />
                 {errors.username && <span className={styles.errorText}>{errors.username.message}</span>}
@@ -359,23 +333,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                   type="password"
                   placeholder="Nhập mật khẩu tài khoản"
                   className={styles.input}
-                  {...register('password', {
-                    required: watchCreateUser ? 'Mật khẩu là bắt buộc' : false,
-                    minLength: {
-                      value: 8,
-                      message: 'Mật khẩu phải chứa ít nhất 8 ký tự',
-                    },
-                    validate: {
-                      hasUppercase: (value) =>
-                        !watchCreateUser || /[A-Z]/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 chữ hoa',
-                      hasLowercase: (value) =>
-                        !watchCreateUser || /[a-z]/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 chữ thường',
-                      hasNumber: (value) =>
-                        !watchCreateUser || /\d/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 chữ số',
-                      hasSpecialChar: (value) =>
-                        !watchCreateUser || /[!@#$%^&*(),.?":{}|<>]/.test(value || '') || 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt',
-                    }
-                  })}
+                  {...register('password')}
                   disabled={isLoading}
                 />
                 {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
@@ -389,9 +347,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
               <select
                 id="role_id"
                 className={styles.select}
-                {...register('role_id', {
-                  required: watchCreateUser ? 'Vai trò là bắt buộc' : false,
-                })}
+                {...register('role_id')}
                 disabled={isLoading || isLoadingRoles}
               >
                 {roles.map((role) => (
@@ -400,7 +356,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                   </option>
                 ))}
               </select>
-
+              {errors.role_id && <span className={styles.errorText}>{errors.role_id.message}</span>}
             </div>
           </div>
         )}

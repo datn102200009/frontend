@@ -135,7 +135,9 @@ export const router = createBrowserRouter([
         path: 'customers',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <CustomersPage />
+            <PermissionGuard requiredPermission="crm.customer_view" fallback={<ForbiddenPage />}>
+              <CustomersPage />
+            </PermissionGuard>
           </Suspense>
         ),
       },
@@ -143,7 +145,9 @@ export const router = createBrowserRouter([
         path: 'suppliers',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <SuppliersPage />
+            <PermissionGuard requiredPermission="procurement.supplier_view" fallback={<ForbiddenPage />}>
+              <SuppliersPage />
+            </PermissionGuard>
           </Suspense>
         ),
       },

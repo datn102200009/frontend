@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   usePostPurchasingOrdersMutation, 
   useGetPurchasingOrdersByPkQuery,
@@ -10,13 +11,15 @@ import {
 } from '@entities/purchasing/api/purchasingApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
 import { useGetProcurementSuppliersQuery } from '@entities/procurement/api/procurementApi';
-import type { PurchaseOrderInput } from '@entities/purchasing/model/types';
+import { purchaseOrderSchema, type PurchaseOrderFormValues } from '../model/purchase-order.schema';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
 import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { extractApiError } from '@shared/lib/extractApiError';
 import styles from './PurchaseOrderFormModal.module.css';
 
 
@@ -81,6 +84,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const [deleteOrder, { isLoading: isDeleting }] = useDeletePurchasingOrdersByPkMutation();
   const [approveOrder, { isLoading: isApproving }] = usePostPurchasingOrdersByPkApproveMutation();
   const [cancelOrder, { isLoading: isCancelling }] = usePostPurchasingOrdersByPkCancelMutation();
+  const { toast } = useToast();
 
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -111,7 +115,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     return map;
   }, [suppliersData]);
 
-  const { register, control, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<PurchaseOrderInput>({
+  const { register, control, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<PurchaseOrderFormValues>({
+    resolver: zodResolver(purchaseOrderSchema) as any,
     defaultValues: {
       vendor_id: '',
       advance_paid_amount: 0,
@@ -193,16 +198,20 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     return list;
   };
 
-  const onSubmit = async (data: PurchaseOrderInput) => {
+  const onSubmit = async (values: PurchaseOrderFormValues) => {
     try {
+      const payload = values as any;
       if (orderId) {
-        await updateOrder({ pk: orderId, purchaseOrderInput: data }).unwrap();
+        await updateOrder({ pk: orderId, purchaseOrderInput: payload }).unwrap();
+        toast('success', 'Cập nhật đơn mua hàng thành công');
       } else {
-        await createOrder({ purchaseOrderInput: data }).unwrap();
+        await createOrder({ purchaseOrderInput: payload }).unwrap();
+        toast('success', 'Tạo đơn mua hàng thành công');
       }
       onSuccess();
     } catch (err) {
       console.error('Failed to save purchase order', err);
+      toast('error', extractApiError(err, 'Không thể lưu đơn mua hàng'));
     }
   };
 
@@ -221,11 +230,13 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     try {
       if (confirmState.action === 'delete') {
         await deleteOrder({ pk: confirmState.orderId }).unwrap();
+        toast('success', 'Xóa đơn mua hàng thành công');
       }
       setConfirmState(null);
       onSuccess();
     } catch (err) {
       console.error('Failed action', err);
+      toast('error', extractApiError(err, 'Thao tác không thành công'));
     }
   };
 
@@ -239,10 +250,12 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
           keep_goods: options.keep_goods,
         }
       }).unwrap();
+      toast('success', 'Hủy đơn mua hàng thành công');
       setIsCancelModalOpen(false);
       onSuccess();
     } catch (err) {
       console.error('Failed to cancel purchase order', err);
+      toast('error', extractApiError(err, 'Không thể hủy đơn mua hàng'));
     }
   };
 
@@ -250,9 +263,11 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     if (!orderId || !orderData) return;
     try {
       await approveOrder({ pk: orderId }).unwrap();
+      toast('success', 'Duyệt đơn mua hàng thành công');
       onSuccess();
     } catch (err) {
       console.error('Failed to confirm', err);
+      toast('error', extractApiError(err, 'Không thể duyệt đơn mua hàng'));
     }
   };
 
@@ -333,7 +348,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                     {vendorName}
                   </div>
                 ) : (
-                  <select id="vendor_id" className={styles.itemInput} {...register('vendor_id', { required: 'Bắt buộc' })} disabled={isWorking}>
+                  <select id="vendor_id" className={styles.itemInput} {...register('vendor_id')} disabled={isWorking}>
                     {getSelectableSuppliers(orderData?.vendor).map(supplier => (
                       <option key={supplier.id} value={supplier.id}>
                         {supplier.supplier_name} ({supplier.name})
@@ -430,15 +445,24 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                         </>
                       ) : (
                         <>
-                          <select className={styles.itemInput} {...register(`lines.${index}.item_id` as const, { required: 'Bắt buộc' })} disabled={isWorking}>
-                            {getSelectableItems(field.item_id).map(item => (
-                              <option key={item.id} value={item.id}>
-                                {item.item_name} ({item.item_code})
-                              </option>
-                            ))}
-                          </select>
-                          <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0.01, message: 'Số lượng tối thiểu là 0.01' }, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking} />
-                          <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0, message: 'Đơn giá tối thiểu là 0' }, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking} />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <select className={styles.itemInput} {...register(`lines.${index}.item_id` as const)} disabled={isWorking}>
+                              {getSelectableItems(field.item_id).map(item => (
+                                <option key={item.id} value={item.id}>
+                                  {item.item_name} ({item.item_code})
+                                </option>
+                              ))}
+                            </select>
+                            {errors.lines?.[index]?.item_id && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>{errors.lines[index]?.item_id?.message}</span>}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true })} disabled={isWorking} />
+                            {errors.lines?.[index]?.quantity && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>{errors.lines[index]?.quantity?.message}</span>}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true })} disabled={isWorking} />
+                            {errors.lines?.[index]?.unit_price && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>{errors.lines[index]?.unit_price?.message}</span>}
+                          </div>
                           <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa linh kiện"
                             disabled={fields.length <= 1 || isWorking} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Trash2 size={16} />
@@ -473,15 +497,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                       step={1000}
                       className={styles.itemInput}
                       style={{ width: '180px', textAlign: 'right' }}
-                      {...register('advance_paid_amount', {
-                        valueAsNumber: true,
-                        min: { value: 0, message: 'Tiền cọc không được âm' },
-                        validate: v => {
-                          if (v === undefined || isNaN(v)) return 'Bắt buộc';
-                          if (v > calculatedTotal) return 'Tiền cọc không vượt quá tổng giá trị đơn hàng';
-                          return true;
-                        }
-                      })}
+                      {...register('advance_paid_amount', { valueAsNumber: true })}
                       disabled={isWorking}
                     />
                   )}
@@ -546,6 +562,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
         }}
       />
       <CancelOrderConfirmModal
+        key={`cancel-order-${isCancelModalOpen}`}
         open={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         onConfirm={handleConfirmCancel}
@@ -590,15 +607,6 @@ const CancelOrderConfirmModal: React.FC<CancelOrderConfirmModalProps> = ({
 }) => {
   const [refundDeposit, setRefundDeposit] = useState(true);
   const [keepGoods, setKeepGoods] = useState(true);
-
-  const [prevOpen, setPrevOpen] = useState(open);
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    if (open) {
-      setRefundDeposit(true);
-      setKeepGoods(true);
-    }
-  }
 
   const handleConfirm = () => {
     onConfirm({

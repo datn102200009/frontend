@@ -19,7 +19,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
   selectedPeriod,
   onChangePeriod,
 }) => {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'paid'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'calculated' | 'approved' | 'paid'>('all');
   const [selectedSlipId, setSelectedSlipId] = useState<string | null>(null);
 
   const { data: salarySlips = [], isLoading, refetch } = useGetHrmSalarySlipsQuery({
@@ -42,11 +42,17 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
   };
 
   const getStatusBadge = (status: string) => {
-    return status === 'paid' ? (
-      <Badge variant="success">Đã thanh toán</Badge>
-    ) : (
-      <Badge variant="warning">Bản nháp</Badge>
-    );
+    switch (status) {
+      case 'paid':
+        return <Badge variant="success">Đã thanh toán</Badge>;
+      case 'approved':
+        return <Badge variant="info">Đã phê duyệt</Badge>;
+      case 'calculated':
+        return <Badge variant="warning">Đã tính toán</Badge>;
+      case 'draft':
+      default:
+        return <Badge variant="neutral">Bản nháp</Badge>;
+    }
   };
 
   const columns = useMemo(() => {
@@ -168,12 +174,14 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
             <div className="filterSelectWrapper">
               <select
                 value={statusFilter}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'paid')}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as any)}
                 className="filterSelectInput"
                 aria-label="Lọc trạng thái phiếu lương"
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="draft">Bản nháp</option>
+                <option value="calculated">Đã tính toán</option>
+                <option value="approved">Đã phê duyệt</option>
                 <option value="paid">Đã thanh toán</option>
               </select>
               <ChevronDown size={14} className="filterSelectIcon" />

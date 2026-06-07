@@ -140,3 +140,19 @@
   color: var(--clr-error);
   font-size: var(--fs-sm);
 }
+
+.textInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  outline: none;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  transition: border-color var(--duration-fast) ease-in-out;
+}
+
+.textInput:focus {
+  border-color: var(--clr-primary-500);
+}

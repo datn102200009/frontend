@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmRewardsMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { rewardSchema, type RewardFormValues } from '../model/reward-discipline.schema';
 import styles from './RewardFormModal.module.css';
 
 interface RewardFormModalProps {
@@ -12,14 +14,6 @@ interface RewardFormModalProps {
   onSuccess: () => void;
   employee?: Employee;
   salarySlipId?: string;
-}
-
-interface FormValues {
-  employee_id?: string;
-  reward_date: string;
-  reward_type: 'performance_bonus' | 'initiative' | 'holiday_bonus' | 'other';
-  amount: number;
-  description: string;
 }
 
 export const RewardFormModal: React.FC<RewardFormModalProps> = ({
@@ -53,7 +47,8 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<FormValues>({
+  } = useForm<RewardFormValues>({
+    resolver: zodResolver(rewardSchema) as any,
     defaultValues: {
       employee_id: employee?.id || '',
       reward_date: new Date().toISOString().split('T')[0],
@@ -75,16 +70,11 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     }
   }, [open, employee, reset]);
 
-  const onSubmit = async (values: FormValues) => {
+  const onSubmit = async (values: RewardFormValues) => {
     setApiError(null);
     const targetEmployeeId = employee?.id || values.employee_id;
     if (!targetEmployeeId) {
       setApiError('Vui lòng chọn nhân viên.');
-      return;
-    }
-
-    if (Number(values.amount) <= 0) {
-      setApiError('Số tiền thưởng phải lớn hơn 0.');
       return;
     }
 
@@ -139,7 +129,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             <select
               id="employee_id"
               className={styles.select}
-              {...register('employee_id', { required: 'Nhân viên là bắt buộc' })}
+              {...register('employee_id')}
               disabled={isLoading || isEmployeesLoading}
             >
               <option value="">-- Chọn nhân viên --</option>
@@ -162,7 +152,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
               id="reward_date"
               type="date"
               className={styles.input}
-              {...register('reward_date', { required: 'Ngày quyết định là bắt buộc' })}
+              {...register('reward_date')}
               disabled={isLoading}
             />
             {errors.reward_date && <span className={styles.errorText}>{errors.reward_date.message}</span>}
@@ -175,7 +165,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             <select
               id="reward_type"
               className={styles.select}
-              {...register('reward_type', { required: 'Loại khen thưởng là bắt buộc' })}
+              {...register('reward_type')}
               disabled={isLoading}
             >
               <option value="performance_bonus">Thưởng hiệu quả công việc</option>
@@ -196,11 +186,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             min={0}
             step={50000}
             className={styles.input}
-            {...register('amount', {
-              required: 'Số tiền thưởng là bắt buộc',
-              valueAsNumber: true,
-              validate: (val) => !isNaN(val) || 'Số tiền thưởng là bắt buộc',
-            })}
+            {...register('amount')}
             disabled={isLoading}
           />
           {errors.amount && <span className={styles.errorText}>{errors.amount.message}</span>}
@@ -214,7 +200,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             id="description"
             placeholder="Mô tả lý do khen thưởng hoặc thành tích chi tiết..."
             className={styles.textarea}
-            {...register('description', { required: 'Mô tả khen thưởng là bắt buộc' })}
+            {...register('description')}
             disabled={isLoading}
           />
           {errors.description && <span className={styles.errorText}>{errors.description.message}</span>}

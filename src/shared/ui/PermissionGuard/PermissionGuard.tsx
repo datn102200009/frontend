@@ -1,6 +1,5 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../../../app/store';
+import { useCurrentUser } from '../../lib/permissionContext';
 
 export interface PermissionGuardProps {
   requiredPermission?: string;
@@ -17,7 +16,7 @@ export function PermissionGuard({
   fallback = null,
   children,
 }: PermissionGuardProps) {
-  const user = useSelector((s: RootState) => s.auth.user);
+  const user = useCurrentUser();
 
   if (!user) {
     return <>{fallback}</>;

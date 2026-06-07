@@ -12,6 +12,7 @@ describe('WorkOrderFormModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(window, 'confirm').mockImplementation(() => true);
   });
 
   const selectOption = async (user: ReturnType<typeof userEvent.setup>, label: RegExp, optionText: RegExp) => {

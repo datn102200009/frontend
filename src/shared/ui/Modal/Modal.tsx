@@ -36,7 +36,7 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
   if (!open) return null;
 
   return (
-    <div role="dialog" aria-modal="true" className={styles.dialog} onClick={handleBackdropClick}>
+    <div role="dialog" aria-modal="true" aria-label={title} className={styles.dialog} onClick={handleBackdropClick}>
       <div ref={contentRef} className={clsx(styles.content, styles[size])}>
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>

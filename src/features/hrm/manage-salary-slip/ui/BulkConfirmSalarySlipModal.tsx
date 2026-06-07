@@ -24,6 +24,9 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
 }) => {
   const [bulkConfirmPay, { isLoading }] = usePostHrmSalarySlipsBulkConfirmPayMutation();
   const [apiError, setApiError] = useState<string | null>(null);
+  const [confirmText, setConfirmText] = useState('');
+  const [cooldown, setCooldown] = useState(true);
+  const expectedText = 'XÁC NHẬN';
 
   const {
     register,
@@ -45,6 +48,10 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
         payment_method: 'bank_transfer',
       });
       setApiError(null);
+      setConfirmText('');
+      setCooldown(true);
+      const timer = setTimeout(() => setCooldown(false), 3000);
+      return () => clearTimeout(timer);
     }
   }, [open, reset]);
 
@@ -85,8 +92,13 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
           <Button variant="ghost" onClick={onClose} disabled={isLoading}>
             Hủy
           </Button>
-          <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={isLoading}>
-            Xác nhận thanh toán
+          <Button 
+            variant="primary" 
+            onClick={handleSubmit(onSubmit)} 
+            loading={isLoading}
+            disabled={confirmText !== expectedText || cooldown}
+          >
+            {cooldown ? 'Vui lòng đợi...' : 'Xác nhận thanh toán'}
           </Button>
         </div>
       }
@@ -166,6 +178,21 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
           <p>
             Trạng thái của các phiếu lương này sẽ chuyển sang <strong>Đã thanh toán (Paid)</strong> và hệ thống tự động sinh các bút toán chi quỹ tương ứng. Hành động này không thể hoàn tác.
           </p>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label} htmlFor="confirm_input">
+            Nhập chữ "<strong>{expectedText}</strong>" để xác nhận hành động này <span className={styles.required}>*</span>
+          </label>
+          <input
+            id="confirm_input"
+            type="text"
+            className={styles.textInput}
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder='Nhập "XÁC NHẬN" vào đây'
+            autoComplete="off"
+          />
         </div>
       </form>
     </Modal>
