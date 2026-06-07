@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -14,6 +15,13 @@ interface PurchaseOrderTableProps {
 
 export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, onEdit }) => {
   const { data: orders = [], isLoading } = useGetPurchasingOrdersQuery();
+  const [searchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status');
+
+  const filteredOrders = useMemo(() => {
+    if (!statusFilter) return orders;
+    return orders.filter((o) => o.status === statusFilter);
+  }, [orders, statusFilter]);
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<PurchaseOrder>();
@@ -123,7 +131,7 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
       <DataTable 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any} 
-        data={orders} 
+        data={filteredOrders} 
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn mua hàng..."
         emptyMessage="Không tìm thấy đơn mua hàng nào"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { Plus, CheckSquare, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@shared/ui/Button/Button';
@@ -38,7 +39,12 @@ import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/
 type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
 
 const HrmPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('employees');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') || 'employees') as ActiveTab;
+
+  const setActiveTab = (newTab: ActiveTab) => {
+    setSearchParams({ tab: newTab });
+  };
 
   // Employee Modals States
   const [isCreateOpen, setIsCreateOpen] = useState(false);

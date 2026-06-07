@@ -1,187 +1,78 @@
-/* DashboardPage */
+/* DashboardPage Bento Grid Styles */
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-8);
+  gap: var(--sp-6);
+  padding: var(--sp-4);
+  animation: fadeIn 0.4s var(--ease-out) both;
 }
 
-/* KPI Grid */
-.kpiGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--sp-5);
-}
-
-.kpiCard {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-4);
-  padding: var(--sp-5);
-  background: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius-lg);
-  animation: slideUp 0.4s var(--ease-out) both;
-  transition: box-shadow var(--duration-fast) ease, transform var(--duration-fast) ease;
-}
-.kpiCard:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
-
-.kpiIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
-}
-
-.kpiIcon.primary {
-  background: var(--clr-primary-100);
-  color: var(--clr-primary);
-}
-.kpiIcon.secondary {
-  background: var(--clr-secondary-100);
-  color: var(--clr-secondary-600);
-}
-.kpiIcon.info {
-  background: var(--clr-info-bg);
-  color: var(--clr-info);
-}
-.kpiIcon.warning {
-  background: var(--clr-warning-bg);
-  color: var(--clr-warning);
-}
-
-.kpiBody {
+.header {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sp-1);
 }
 
-.kpiTitle {
-  font-size: var(--fs-xs);
-  color: var(--clr-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: var(--fw-medium);
-}
-
-.kpiValue {
+.title {
   font-family: var(--font-heading);
   font-size: var(--fs-2xl);
   font-weight: var(--fw-bold);
   color: var(--clr-text);
-  font-variant-numeric: tabular-nums;
 }
 
-.kpiChange {
-  display: inline-flex;
+.subtitle {
+  font-size: var(--fs-sm);
+  color: var(--clr-text-secondary);
+}
+
+/* Bento Grid */
+.bentoGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(140px, auto);
+  gap: var(--sp-4);
+}
+
+/* Page states */
+.loadingContainer, .errorContainer {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: var(--clr-success);
-  font-weight: var(--fw-medium);
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  gap: var(--sp-4);
 }
 
-/* Section */
-.section {
-  animation: slideUp 0.4s var(--ease-out) 0.2s both;
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--clr-primary);
 }
 
-.sectionTitle {
+.errorTitle {
   font-family: var(--font-heading);
   font-size: var(--fs-lg);
   font-weight: var(--fw-semibold);
-  margin: 0 0 var(--sp-4);
+  color: var(--clr-error);
 }
 
-.activityCard {
-  background: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.activityRow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-5);
-  border-bottom: 1px solid var(--clr-border);
-  transition: background-color var(--duration-fast) ease;
-}
-.activityRow:last-child { border-bottom: none; }
-.activityRow:hover { background: var(--clr-primary-50); }
-
-.activityDot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--clr-primary-400);
-  flex-shrink: 0;
-}
-
-.activityContent {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.activityAction {
+.errorSubtext {
   font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  color: var(--clr-text);
-}
-
-.activityTarget {
-  font-size: var(--fs-xs);
-  color: var(--clr-text-muted);
-}
-
-.activityMeta {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.activityUser {
-  font-size: var(--fs-xs);
   color: var(--clr-text-secondary);
-  font-weight: var(--fw-medium);
+  max-width: 400px;
 }
 
-.activityTime {
-  font-size: 11px;
-  color: var(--clr-text-muted);
-}
-
-/* ── Responsive ── */
+/* Responsive Grid Adapters */
 @media (max-width: 1024px) {
-  .kpiGrid {
+  .bentoGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .kpiGrid {
+  .bentoGrid {
     grid-template-columns: 1fr;
-  }
-
-  .activityRow {
-    flex-wrap: wrap;
-  }
-
-  .activityMeta {
-    width: 100%;
-    flex-direction: row;
-    gap: var(--sp-2);
-    text-align: left;
-    padding-left: calc(8px + var(--sp-4));
+    grid-auto-rows: auto;
   }
 }

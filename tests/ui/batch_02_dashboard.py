@@ -31,53 +31,45 @@ def run():
                 runner.log("WF-02", 1, "FAIL", "Đăng nhập thành công và chuyển hướng đến /dashboard", str(e), "BLOCKER", url=page.url)
                 raise e
 
-            # ── Step 2: Kiểm tra thẻ KPI "Định mức BOM" ──
+            # ── Step 2: Kiểm tra thẻ KPI "Doanh thu hôm nay" ──
             try:
-                expect(page.get_by_text("Định mức BOM")).to_be_visible()
-                runner.log("WF-02", 2, "PASS", "KPI card 'Định mức BOM' hiển thị thành công", url=page.url)
+                expect(page.get_by_text("Doanh thu hôm nay")).to_be_visible()
+                runner.log("WF-02", 2, "PASS", "KPI card 'Doanh thu hôm nay' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s2")
-                runner.log("WF-02", 2, "FAIL", "KPI card 'Định mức BOM' hiển thị thành công", str(e), url=page.url)
+                runner.log("WF-02", 2, "FAIL", "KPI card 'Doanh thu hôm nay' hiển thị thành công", str(e), url=page.url)
 
-            # ── Step 3: Kiểm tra thẻ KPI "Lệnh sản xuất" ──
+            # ── Step 3: Kiểm tra thẻ KPI "Lệnh sản xuất chờ duyệt" ──
             try:
-                expect(page.get_by_text("Lệnh sản xuất")).to_be_visible()
-                runner.log("WF-02", 3, "PASS", "KPI card 'Lệnh sản xuất' hiển thị thành công", url=page.url)
+                expect(page.get_by_text("Lệnh sản xuất chờ duyệt")).to_be_visible()
+                runner.log("WF-02", 3, "PASS", "KPI card 'Lệnh sản xuất chờ duyệt' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s3")
-                runner.log("WF-02", 3, "FAIL", "KPI card 'Lệnh sản xuất' hiển thị thành công", str(e), url=page.url)
+                runner.log("WF-02", 3, "FAIL", "KPI card 'Lệnh sản xuất chờ duyệt' hiển thị thành công", str(e), url=page.url)
 
-            # ── Step 4: Kiểm tra thẻ KPI "Sản phẩm" ──
+            # ── Step 4: Kiểm tra thẻ KPI "Trạng thái bảng lương tháng" ──
             try:
-                expect(page.get_by_text("Sản phẩm").first).to_be_visible()
-                runner.log("WF-02", 4, "PASS", "KPI card 'Sản phẩm' hiển thị thành công", url=page.url)
+                expect(page.get_by_text("Trạng thái bảng lương tháng")).to_be_visible()
+                runner.log("WF-02", 4, "PASS", "KPI card 'Trạng thái bảng lương tháng' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s4")
-                runner.log("WF-02", 4, "FAIL", "KPI card 'Sản phẩm' hiển thị thành công", str(e), url=page.url)
+                runner.log("WF-02", 4, "FAIL", "KPI card 'Trạng thái bảng lương tháng' hiển thị thành công", str(e), url=page.url)
 
-            # ── Step 5: Kiểm tra thẻ KPI "Tồn kho thấp (<50)" ──
+            # ── Step 5: Kiểm tra thẻ KPI "Cảnh báo tồn kho thấp" ──
             try:
-                expect(page.get_by_text("Tồn kho thấp (<50)")).to_be_visible()
-                runner.log("WF-02", 5, "PASS", "KPI card 'Tồn kho thấp (<50)' hiển thị thành công", url=page.url)
+                expect(page.get_by_text("Cảnh báo tồn kho thấp")).to_be_visible()
+                runner.log("WF-02", 5, "PASS", "KPI card 'Cảnh báo tồn kho thấp' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s5")
-                runner.log("WF-02", 5, "FAIL", "KPI card 'Tồn kho thấp (<50)' hiển thị thành công", str(e), url=page.url)
+                runner.log("WF-02", 5, "FAIL", "KPI card 'Cảnh báo tồn kho thấp' hiển thị thành công", str(e), url=page.url)
 
-            # ── Step 6: Kiểm tra section "Hoạt Động Gần Đây" (5 items) ──
+            # ── Step 6: Kiểm tra thẻ KPI "Biểu đồ dòng tiền tuần" ──
             try:
-                expect(page.get_by_role("heading", name="Hoạt Động Gần Đây")).to_be_visible()
-                
-                # Verify specific activity actions are visible
-                expect(page.get_by_text("Tạo BOM mới")).to_be_visible()
-                expect(page.get_by_text("Nhập kho")).to_be_visible()
-                expect(page.get_by_text("Hoàn thành lệnh SX")).to_be_visible()
-                expect(page.get_by_text("Xuất kho cho SX")).to_be_visible()
-                expect(page.get_by_text("Tạo sản phẩm mới")).to_be_visible()
-                
-                runner.log("WF-02", 6, "PASS", "Section 'Hoạt Động Gần Đây' hiển thị đầy đủ 5 hoạt động", url=page.url)
+                expect(page.get_by_text("Biểu đồ dòng tiền tuần")).to_be_visible()
+                runner.log("WF-02", 6, "PASS", "KPI card 'Biểu đồ dòng tiền tuần' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s6")
-                runner.log("WF-02", 6, "FAIL", "Section 'Hoạt Động Gần Đây' hiển thị đầy đủ 5 hoạt động", str(e), url=page.url)
+                runner.log("WF-02", 6, "FAIL", "KPI card 'Biểu đồ dòng tiền tuần' hiển thị thành công", str(e), url=page.url)
 
             # ── Step 7: Click sidebar "Dashboard" -> verify URL ──
             try:

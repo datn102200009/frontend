@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
@@ -30,6 +31,9 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 };
 
 export function WorkOrderList() {
+  const [searchParams] = useSearchParams();
+  const urlStatus = searchParams.get('status');
+
   const [search, setSearch] = useState('');
   const [declaringWo, setDeclaringWo] = useState<WorkOrder | null>(null);
   const [viewingWo, setViewingWo] = useState<WorkOrder | null>(null);
@@ -40,6 +44,7 @@ export function WorkOrderList() {
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
     search: search || undefined,
+    status: (urlStatus as any) || undefined,
   });
 
   const [approveWo, { isLoading: isApproving }] = usePostManufacturingWorkOrderByWorkOrderIdApproveMutation();

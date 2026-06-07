@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -13,6 +14,14 @@ interface PurchaseInvoiceTableProps {
 
 export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onView }) => {
   const { data: invoices = [], isLoading } = useGetPurchasingInvoicesQuery();
+  const [searchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status');
+
+  const filteredInvoices = useMemo(() => {
+    if (!statusFilter) return invoices;
+    const mappedStatus = statusFilter === 'blocked' ? 'blocked_for_payment' : statusFilter;
+    return invoices.filter((i) => i.status === mappedStatus);
+  }, [invoices, statusFilter]);
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<PurchaseInvoice>();
@@ -81,7 +90,7 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onVi
       <DataTable 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any} 
-        data={invoices} 
+        data={filteredInvoices} 
         loading={isLoading}
         searchPlaceholder="Tìm kiếm hóa đơn..."
         emptyMessage="Không tìm thấy hóa đơn nào"
