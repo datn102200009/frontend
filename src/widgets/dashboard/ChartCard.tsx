@@ -156,7 +156,7 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
                     x={plotLeft - 10}
                     y={line.y + 4}
                     textAnchor="end"
-                    fill="var(--clr-text-muted)"
+                    fill="var(--clr-text-secondary)"
                     fontSize="11"
                     fontFamily="var(--font-heading)"
                     style={{ fontVariantNumeric: 'tabular-nums' }}
@@ -230,7 +230,7 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
                       x={groupX + groupWidth / 2}
                       y={zeroY + 18}
                       textAnchor="middle"
-                      fill={isHovered ? 'var(--clr-text-secondary)' : 'var(--clr-text-muted)'}
+                      fill={isHovered ? 'var(--clr-text)' : 'var(--clr-text-secondary)'}
                       fontWeight={isHovered ? 'semibold' : 'normal'}
                       fontSize="11"
                     >

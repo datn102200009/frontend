@@ -207,4 +207,89 @@ describe('SalesPage', () => {
       expect(screen.queryByRole('heading', { name: /Hóa Đơn SI-001|Chi Tiết Hóa Đơn/i })).not.toBeInTheDocument();
     });
   });
+
+  it('automatically opens order modal when orderId is present in URL query params', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/', () => {
+        return HttpResponse.json([
+          {
+            id: 'SO-001',
+            customer: 'CUS01',
+            customer_name: 'Công ty Alpha',
+            total_amount: 8000000,
+            status: 'draft',
+            created_at: '2026-05-20',
+            lines: []
+          }
+        ]);
+      }),
+      http.get('*/api/v1/sales/orders/SO-001/', () => {
+        return HttpResponse.json({
+          id: 'SO-001',
+          customer: 'CUS01',
+          customer_name: 'Công ty Alpha',
+          total_amount: 8000000,
+          status: 'draft',
+          created_at: '2026-05-20',
+          lines: []
+        });
+      }),
+      http.get('*/api/v1/master-data/items/list/', () => {
+        return HttpResponse.json({ results: [] });
+      }),
+      http.get('*/api/v1/crm/customers/', () => {
+        return HttpResponse.json([]);
+      })
+    );
+
+    renderWithProviders(<SalesPage />, {
+      initialEntries: ['/sales?tab=orders&orderId=SO-001']
+    });
+
+    // Check if the order detail modal is auto-opened
+    expect(await screen.findByRole('heading', { name: /Chi Tiết Đơn Bán/i })).toBeInTheDocument();
+  });
+
+  it('automatically opens invoice modal when invoiceId is present in URL query params', async () => {
+    server.use(
+      http.get('*/api/v1/sales/orders/', () => {
+        return HttpResponse.json([]);
+      }),
+      http.get('*/api/v1/sales/invoices/', () => {
+        return HttpResponse.json([
+          {
+            id: 'SI-001',
+            order: 'SO-001',
+            customer: 'CUS01',
+            customer_name: 'Công ty Alpha',
+            total_amount: 8000000,
+            paid_amount: 0,
+            status: 'unpaid',
+            created_at: '2026-05-20',
+            lines: []
+          }
+        ]);
+      }),
+      http.get('*/api/v1/sales/invoices/SI-001/', () => {
+        return HttpResponse.json({
+          id: 'SI-001',
+          order: 'SO-001',
+          customer: 'CUS01',
+          customer_name: 'Công ty Alpha',
+          status: 'unpaid',
+          total_amount: 8000000,
+          paid_amount: 0,
+          created_at: '2026-05-20',
+          lines: []
+        });
+      })
+    );
+
+    renderWithProviders(<SalesPage />, {
+      initialEntries: ['/sales?tab=invoices&invoiceId=SI-001']
+    });
+
+    // Check if the invoice detail modal is auto-opened
+    expect(await screen.findByRole('heading', { name: /Hóa Đơn SI-001|Chi Tiết Hóa Đơn/i })).toBeInTheDocument();
+  });
 });

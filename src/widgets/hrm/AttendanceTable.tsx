@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -17,6 +18,9 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   selectedDate: propSelectedDate,
   onChangeDate,
 }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryEmployeeId = searchParams.get('employeeId');
+
   const [localSelectedDate, setLocalSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -26,6 +30,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
 
   const { data: attendancesData, isLoading } = useGetHrmAttendancesQuery({
     date: selectedDate,
+    employeeId: queryEmployeeId || undefined,
   });
   const attendancesList = attendancesData || [];
 
@@ -115,6 +120,40 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           </div>
         </div>
       </div>
+
+      {queryEmployeeId && attendancesList.length > 0 && (
+        <div style={{
+          padding: '8px 12px',
+          background: 'var(--clr-bg-alt)',
+          color: 'var(--clr-text-secondary)',
+          fontSize: 'var(--fs-xs)',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '12px',
+          border: '1px solid var(--clr-border)'
+        }}>
+          <span>Đang lọc lịch sử chấm công của nhân viên: <strong>{attendancesList[0]?.employee_name}</strong></span>
+          <button 
+            onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              params.delete('employeeId');
+              setSearchParams(params);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--clr-border-focus)',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontWeight: 600
+            }}
+          >
+            Bỏ lọc
+          </button>
+        </div>
+      )}
 
       <DataTable
         columns={columns}

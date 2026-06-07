@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
@@ -31,7 +31,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 };
 
 export function WorkOrderList() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const urlStatus = searchParams.get('status');
 
   const [search, setSearch] = useState('');
@@ -40,6 +40,8 @@ export function WorkOrderList() {
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: WorkOrder, message: string } | null>(null);
+
+  const queryWorkOrderId = searchParams.get('workOrderId');
   const { toast } = useToast();
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
@@ -223,6 +225,15 @@ export function WorkOrderList() {
 
   const workOrders = data?.results || [];
 
+  useEffect(() => {
+    if (queryWorkOrderId && workOrders.length > 0) {
+      const matched = workOrders.find((w: WorkOrder) => w.id === queryWorkOrderId);
+      if (matched) {
+        setViewingWo(matched);
+      }
+    }
+  }, [queryWorkOrderId, workOrders]);
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -294,7 +305,12 @@ export function WorkOrderList() {
         <WorkOrderDetailModal
           open
           workOrder={viewingWo}
-          onClose={() => setViewingWo(null)}
+          onClose={() => {
+            setViewingWo(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('workOrderId');
+            setSearchParams(params);
+          }}
         />
       )}
 

@@ -26,7 +26,6 @@ import {
 } from 'lucide-react';
 import { dashboardApi, type WidgetMetadata } from '../../entities/dashboard/api/dashboardApi';
 import { SkeletonShimmerCard } from './SkeletonShimmerCard';
-import { MetricCard } from './MetricCard';
 import { ListSummaryCard } from './ListSummaryCard';
 import { ChartCard } from './ChartCard';
 import styles from './DashboardWidgets.module.css';
@@ -91,8 +90,6 @@ function getWidgetIcon(code: string): ReactNode {
       return <CalendarRange size={16} />;
     case 'hrm_expiring_contracts':
       return <FileText size={16} />;
-    case 'hrm_employees_without_contract':
-      return <UserCheck size={16} />;
     case 'hrm_today_attendance_rate':
       return <UserCheck size={16} />;
 
@@ -149,7 +146,7 @@ export function DashboardWidgetWrapper({
   const gridStyle: Record<string, string> = {};
   if (size === '1x2') {
     gridStyle.gridColumn = 'span 2';
-    gridStyle.gridRow = 'span 1';
+    gridStyle.gridRow = 'span 2';
   } else if (size === '2x2') {
     gridStyle.gridColumn = 'span 2';
     gridStyle.gridRow = 'span 2';
@@ -206,15 +203,6 @@ export function DashboardWidgetWrapper({
   // Render appropriate widget based on visual type
   return (
     <div style={{ ...gridStyle, position: 'relative' }}>
-      {type === 'metric' && (
-        <MetricCard
-          title={title}
-          code={code}
-          icon={getWidgetIcon(code)}
-          data={activeData}
-        />
-      )}
-
       {type === 'list_summary' && (
         <ListSummaryCard
           title={title}

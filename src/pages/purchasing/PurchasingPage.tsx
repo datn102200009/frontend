@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PurchaseOrderTable } from '@widgets/purchasing/PurchaseOrderTable';
 import { PurchaseInvoiceTable } from '@widgets/purchasing/PurchaseInvoiceTable';
@@ -18,6 +18,21 @@ export const PurchasingPage = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editOrderId, setEditOrderId] = useState<string | null>(null);
   const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
+
+  const queryOrderId = searchParams.get('orderId');
+  const queryInvoiceId = searchParams.get('invoiceId');
+
+  useEffect(() => {
+    if (queryOrderId) {
+      setEditOrderId(queryOrderId);
+    }
+  }, [queryOrderId]);
+
+  useEffect(() => {
+    if (queryInvoiceId) {
+      setViewInvoiceId(queryInvoiceId);
+    }
+  }, [queryInvoiceId]);
 
   return (
     <div className={styles.page}>
@@ -123,16 +138,30 @@ export const PurchasingPage = () => {
           onClose={() => {
             setIsCreateOpen(false);
             setEditOrderId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('orderId');
+            setSearchParams(params);
           }} 
           onSuccess={() => {
             setIsCreateOpen(false);
             setEditOrderId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('orderId');
+            setSearchParams(params);
           }} 
         />
       )}
 
       {viewInvoiceId && (
-        <PurchaseInvoiceDetailsModal invoiceId={viewInvoiceId} onClose={() => setViewInvoiceId(null)} />
+        <PurchaseInvoiceDetailsModal 
+          invoiceId={viewInvoiceId} 
+          onClose={() => {
+            setViewInvoiceId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('invoiceId');
+            setSearchParams(params);
+          }} 
+        />
       )}
     </div>
   );

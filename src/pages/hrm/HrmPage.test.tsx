@@ -147,4 +147,76 @@ describe('HrmPage', () => {
     expect(compBanner).toBeInTheDocument();
     expect(compBanner).toHaveTextContent('Thông báo nghỉ bù: Ngày 03/06/2026 là ngày nghỉ bù cho ngày lễ Nghỉ Lễ Dài Ngày');
   });
+
+  it('automatically opens employee details modal when employeeId is in URL query params', async () => {
+    server.use(
+      http.get('*/api/v1/hrm/employees/', () => {
+        return HttpResponse.json({
+          count: 1,
+          results: [
+            {
+              id: 'emp-1',
+              employee_id: 'NV001',
+              full_name: 'Nguyễn Văn A',
+              department: 'IT',
+              position_title: 'Developer',
+              salary_base: '10000000',
+              employment_status: 'active'
+            }
+          ]
+        });
+      }),
+      http.get('*/api/v1/hrm/employees/emp-1/', () => {
+        return HttpResponse.json({
+          id: 'emp-1',
+          employee_id: 'NV001',
+          full_name: 'Nguyễn Văn A',
+          department: 'IT',
+          position_title: 'Developer',
+          salary_base: '10000000',
+          employment_status: 'active',
+          contracts: [],
+          employment_histories: [],
+          documents: [],
+          rewards: [],
+          disciplines: []
+        });
+      })
+    );
+
+    renderWithProviders(<HrmPage />, {
+      initialEntries: ['/hrm?tab=employees&employeeId=emp-1']
+    });
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Hồ Sơ Nhân Sự Chi Tiết/i)).toBeInTheDocument();
+  });
+
+  it('automatically opens leave request details modal when requestId is in URL query params', async () => {
+    server.use(
+      http.get('*/api/v1/hrm/leave-requests/', () => {
+        return HttpResponse.json([
+          {
+            id: 'req-1',
+            employee_id: 'emp-1',
+            employee_code: 'NV001',
+            employee_name: 'Nguyễn Văn A',
+            leave_type: 'paid',
+            start_date: '2026-06-01',
+            end_date: '2026-06-03',
+            days: '3',
+            status: 'pending',
+            reason: 'Nghỉ phép năm'
+          }
+        ]);
+      })
+    );
+
+    renderWithProviders(<HrmPage />, {
+      initialEntries: ['/hrm?tab=leave&requestId=req-1']
+    });
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText(/Chi Tiết Đơn Xin Nghỉ Phép/i)).toBeInTheDocument();
+  });
 });

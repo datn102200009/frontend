@@ -50,36 +50,11 @@ export type WidgetMetadata = {
 export type ErrorResponse = {
   detail?: string
 }
-export type SalesTodayRevenueData = {
-  revenue?: number
-  order_count?: number
-}
-export type FinanceCashflowSummaryData = {
-  receive_total?: number
-  pay_total?: number
-  net_cashflow?: number
-}
-export type HrmAttendanceRateData = {
-  attendance_rate?: number
-  present_count?: number
-  absent_count?: number
-  total_active_employees?: number
-}
-export type HrmPayrollStatusData = {
-  status?: string
-  salary_period?: string
-  net_pay_total?: number
-  calculated_slips_count?: number
-}
-export type FinanceDepreciationStatusData = {
-  depreciated_assets_count?: number
-  total_depreciation_amount?: number
-}
-export type ActivePoCountData = {
-  active_po_count?: number
-}
-export type InventoryEntryCountData = {
-  pending_entry_count?: number
+export type SalesTodayRevenueLine = {
+  id?: string
+  customer_name?: string
+  total_amount?: number
+  created_at?: string
 }
 export type SalesDraftOrderLine = {
   id?: string
@@ -97,6 +72,12 @@ export type SalesCreditBypassLine = {
 export type SalesPendingFulfillmentLine = {
   id?: string
   customer_name?: string
+  total_amount?: number
+  created_at?: string
+}
+export type ActivePoCountLine = {
+  id?: string
+  supplier_name?: string
   total_amount?: number
   created_at?: string
 }
@@ -155,6 +136,14 @@ export type InventoryPendingEntryLine = {
   posting_date?: string
   created_at?: string
 }
+export type FinanceCashflowSummaryLine = {
+  id?: string
+  name?: string
+  category?: string
+  payment_type?: string
+  amount?: number
+  payment_date?: string
+}
 export type FinanceUnpaidApLine = {
   id?: string
   supplier_name?: string
@@ -169,6 +158,19 @@ export type FinanceUnpaidArLine = {
   total_amount?: number
   remaining_amount?: number
   created_at?: string
+}
+export type FinanceDepreciationStatusLine = {
+  asset_code?: string
+  asset_name?: string
+  depreciation_amount?: number
+  status?: string
+}
+export type HrmPayrollStatusLine = {
+  id?: string
+  employee_name?: string
+  salary_period?: string
+  net_pay?: number
+  status?: string
 }
 export type HrmLeaveRequestLine = {
   id?: string
@@ -187,12 +189,12 @@ export type HrmExpiringContractLine = {
   end_date?: string
   created_at?: string
 }
-export type HrmEmployeeNoContractLine = {
+export type HrmTodayAbsentLine = {
   id?: string
   employee_id?: string
   full_name?: string
-  join_date?: string | null
-  department?: string | null
+  department?: string
+  status?: string
 }
 export type ManufacturingPendingWoApprovalLine = {
   id?: string
@@ -218,6 +220,9 @@ export type ManufacturingPendingDeclarationLine = {
   quantity?: number
   produced_qty?: number
   planned_start_date?: string
+  planned_end_date?: string
+  status?: string
+  days_left?: number | null
   created_at?: string
 }
 export type ManufacturingPendingCompletionLine = {
@@ -234,18 +239,13 @@ export type WidgetBatchDataResult = {
   success?: boolean
   data?:
     | (
-        | SalesTodayRevenueData
-        | FinanceCashflowSummaryData
-        | HrmAttendanceRateData
-        | HrmPayrollStatusData
-        | FinanceDepreciationStatusData
-        | ActivePoCountData
-        | InventoryEntryCountData
         | (
             | (
+                | SalesTodayRevenueLine
                 | SalesDraftOrderLine
                 | SalesCreditBypassLine
                 | SalesPendingFulfillmentLine
+                | ActivePoCountLine
                 | PurchasingDraftOrderLine
                 | PurchasingPendingDeliveryLine
                 | PurchasingPendingQcLine
@@ -253,11 +253,14 @@ export type WidgetBatchDataResult = {
                 | PurchasingBlockedInvoiceLine
                 | InventoryLowStockLine
                 | InventoryPendingEntryLine
+                | FinanceCashflowSummaryLine
                 | FinanceUnpaidApLine
                 | FinanceUnpaidArLine
+                | FinanceDepreciationStatusLine
+                | HrmPayrollStatusLine
                 | HrmLeaveRequestLine
                 | HrmExpiringContractLine
-                | HrmEmployeeNoContractLine
+                | HrmTodayAbsentLine
                 | ManufacturingPendingWoApprovalLine
                 | ManufacturingActiveWoLine
                 | ManufacturingPendingDeclarationLine

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   useGetInventoryStockEntryListQuery, 
   usePostInventoryStockInByStockEntryIdApproveMutation, 
@@ -46,7 +47,10 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 };
 
 export function StockEntryList() {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get('status');
+  const initialStatus = statusParam === 'draft' ? 'draft' : statusParam === 'posted' ? 'posted' : 'all';
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>(initialStatus);
   const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({
     status: statusFilter === 'all' ? undefined : statusFilter,
     limit: 100
@@ -68,6 +72,18 @@ export function StockEntryList() {
   const { toast } = useToast();
   
   const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer || isUpdating;
+
+  const queryEntryId = searchParams.get('entryId');
+  const searchQuery = searchParams.get('search') || '';
+
+  useEffect(() => {
+    if (queryEntryId && entries.length > 0) {
+      const matched = entries.find((e: StockEntry) => e.id === queryEntryId);
+      if (matched) {
+        setViewingEntry(matched);
+      }
+    }
+  }, [queryEntryId, entries]);
 
   if (approving && approving.id !== prevApprovingId) {
     setPrevApprovingId(approving.id || null);
@@ -247,7 +263,7 @@ export function StockEntryList() {
         </div>
       </div>
 
-      <DataTable columns={columns} data={entries} searchPlaceholder="Tìm mã phiếu..." loading={isLoading} />
+      <DataTable columns={columns} data={entries} searchPlaceholder="Tìm mã phiếu..." loading={isLoading} initialSearch={searchQuery} />
 
       {approving && (
         <Modal
@@ -389,7 +405,12 @@ export function StockEntryList() {
         <StockEntryDetailModal
           open
           entry={viewingEntry}
-          onClose={() => setViewingEntry(null)}
+          onClose={() => {
+            setViewingEntry(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('entryId');
+            setSearchParams(params);
+          }}
         />
       )}
     </div>

@@ -250,7 +250,7 @@ def run():
 
                 # Verify shipment appears in list and has badge "Nháp (Đang đi đường)"
                 expect(page.get_by_text(created_shipment_num)).to_be_visible()
-                expect(page.get_by_text("Nháp (Đang đi đường)")).to_be_visible()
+                expect(page.get_by_text("Nháp (Đang đi đường)").first).to_be_visible()
 
                 runner.log("WF-06", 7, "PASS", f"Tạo lô hàng mới {created_shipment_num} liên kết phiếu kho nháp thành công", url=page.url)
             except Exception as e:
@@ -266,7 +266,7 @@ def run():
                 page.get_by_role("button", name="Xác nhận hàng về (Arrived)").click()
                 time.sleep(1.5)
 
-                expect(page.get_by_text("Đã cập bến (Chờ QC)")).to_be_visible()
+                expect(page.get_by_text("Đã cập bến (Chờ QC)").first).to_be_visible()
                 expect(page.get_by_role("button", name="Đánh giá QC").first).to_be_visible()
 
                 runner.log("WF-06", 8, "PASS", "Cập nhật trạng thái lô hàng sang Arrived và hiển thị nút QC thành công", url=page.url)
@@ -300,7 +300,7 @@ def run():
             try:
                 page.get_by_role("button", name="Hoàn tất Kiểm định QC").click()
                 time.sleep(1.5)
-                expect(page.get_by_text("Đã QC (Chờ nhận hàng)")).to_be_visible()
+                expect(page.get_by_text("Đã QC (Chờ nhận hàng)").first).to_be_visible()
 
                 # Select destination warehouse
                 page.locator("select").first.select_option(label="Kho Nguyên Vật Liệu")

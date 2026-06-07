@@ -30,7 +30,12 @@ import { PublicHolidayFormModal } from '@features/hrm/manage-public-holiday/ui/P
 
 import { formatDateVN } from '@shared/lib/formatDate';
 // Hooks & Types
-import { useGetHrmPublicHolidaysQuery, useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
+import { 
+  useGetHrmPublicHolidaysQuery, 
+  useGetHrmSalarySlipsQuery,
+  useGetHrmEmployeesQuery,
+  useGetHrmLeaveRequestsQuery,
+} from '@entities/hrm/api/hrmApi';
 import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
@@ -45,6 +50,37 @@ const HrmPage: React.FC = () => {
   const setActiveTab = (newTab: ActiveTab) => {
     setSearchParams({ tab: newTab });
   };
+
+  const queryEmployeeId = searchParams.get('employeeId');
+  const queryRequestId = searchParams.get('requestId');
+
+  const { data: employeeDataResponse } = useGetHrmEmployeesQuery(
+    { limit: 100 },
+    { skip: !queryEmployeeId || activeTab !== 'employees' }
+  );
+
+  const { data: leaveRequestsResponse } = useGetHrmLeaveRequestsQuery(
+    {},
+    { skip: !queryRequestId || activeTab !== 'leave' }
+  );
+
+  React.useEffect(() => {
+    if (queryEmployeeId && employeeDataResponse?.results) {
+      const matched = employeeDataResponse.results.find((e) => e.id === queryEmployeeId);
+      if (matched) {
+        setSelectedEmployeeForView(matched as Employee);
+      }
+    }
+  }, [queryEmployeeId, employeeDataResponse]);
+
+  React.useEffect(() => {
+    if (queryRequestId && leaveRequestsResponse) {
+      const matched = leaveRequestsResponse.find((r) => r.id === queryRequestId);
+      if (matched) {
+        setSelectedLeaveRequestForDetails(matched as LeaveRequest);
+      }
+    }
+  }, [queryRequestId, leaveRequestsResponse]);
 
   // Employee Modals States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -332,7 +368,12 @@ const HrmPage: React.FC = () => {
       {selectedEmployeeForView && (
         <EmployeeDetailsModal
           open={!!selectedEmployeeForView}
-          onClose={() => setSelectedEmployeeForView(null)}
+          onClose={() => {
+            setSelectedEmployeeForView(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('employeeId');
+            setSearchParams(params);
+          }}
           employee={selectedEmployeeForView}
           onTerminateContract={handleTerminateContractTrigger}
         />
@@ -406,8 +447,18 @@ const HrmPage: React.FC = () => {
       {selectedLeaveRequestForDetails && (
         <LeaveRequestDetailsModal
           open={!!selectedLeaveRequestForDetails}
-          onClose={() => setSelectedLeaveRequestForDetails(null)}
-          onSuccess={() => setSelectedLeaveRequestForDetails(null)}
+          onClose={() => {
+            setSelectedLeaveRequestForDetails(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('requestId');
+            setSearchParams(params);
+          }}
+          onSuccess={() => {
+            setSelectedLeaveRequestForDetails(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('requestId');
+            setSearchParams(params);
+          }}
           leaveRequest={selectedLeaveRequestForDetails}
         />
       )}

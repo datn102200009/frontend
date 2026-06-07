@@ -34,3 +34,8 @@ dist-ssr
 .env.production
 .env.local
 .env.*.local
+
+# UI Test outputs
+report/
+tests/ui/screenshots/
+tests/ui/__pycache__/

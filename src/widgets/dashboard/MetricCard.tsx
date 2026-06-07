@@ -10,12 +10,6 @@ export interface MetricCardProps {
 
 export function formatVND(value: number) {
   if (value === undefined || value === null) return '0 ₫';
-  if (Math.abs(value) >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} tỷ ₫`;
-  }
-  if (Math.abs(value) >= 1_000_000) {
-    return `${(value / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr ₫`;
-  }
   return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 

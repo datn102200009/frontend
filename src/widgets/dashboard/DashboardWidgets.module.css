@@ -39,9 +39,9 @@
 
 .cardTitle {
   font-family: var(--font-heading);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--clr-text-secondary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--clr-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -97,67 +97,7 @@
   min-height: 0;
 }
 
-/* Metric Layout */
-.metricContent {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100%;
-}
 
-.metricValue {
-  font-family: var(--font-heading);
-  font-size: var(--fs-2xl);
-  font-weight: var(--fw-bold);
-  color: var(--clr-text);
-  line-height: var(--lh-tight);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: var(--sp-1);
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-1);
-}
-
-.metricUnit {
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  color: var(--clr-text-secondary);
-}
-
-.metricFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  margin-top: auto;
-  font-size: var(--fs-xs);
-}
-
-.metricSubtext {
-  color: var(--clr-text-muted);
-  font-weight: var(--fw-regular);
-}
-
-.trendIndicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-weight: var(--fw-semibold);
-  font-size: var(--fs-xs);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-}
-
-.trendUp {
-  color: var(--clr-success);
-  background: var(--clr-success-bg);
-}
-
-.trendDown {
-  color: var(--clr-error);
-  background: var(--clr-error-bg);
-}
 
 /* List Summary Layout */
 .listContainer {
@@ -495,11 +435,30 @@
 
 /* Specific Bento Grid Layout borders */
 .warningBorder {
-  border-left: 4px solid var(--clr-warning-500) !important;
+  border-left: 4px solid var(--clr-warning) !important;
 }
 
 .dangerBorder {
-  border-left: 4px solid var(--clr-error-500) !important;
+  border-left: 4px solid var(--clr-error) !important;
+}
+
+/* Task warning & danger dot indicator */
+.taskIndicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.warningDot {
+  background-color: var(--clr-warning);
+  box-shadow: 0 0 6px var(--clr-warning);
+}
+
+.dangerDot {
+  background-color: var(--clr-error);
+  box-shadow: 0 0 6px var(--clr-error);
 }
 
 /* Grid-based Table layouts */
@@ -529,6 +488,10 @@
   color: var(--clr-primary-600);
   text-decoration: none;
   font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .colBoldLink:hover {
@@ -543,21 +506,56 @@
   color: var(--clr-text);
 }
 
+.rowMainText {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .colRightAlign {
   text-align: right;
   justify-self: end;
   font-family: var(--font-heading);
   font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+}
+
+.rowSubText {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .colOrangeText {
   color: var(--clr-warning-600);
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 
 .colRedText {
   color: var(--clr-error-600);
-  font-size: 11px;
+  font-size: var(--fs-xs);
+}
+
+.colGreenText {
+  color: var(--clr-success-600);
+  font-size: var(--fs-xs);
+}
+
+.textRed {
+  color: var(--clr-error-600);
+}
+
+.textOrange {
+  color: var(--clr-warning-600);
+}
+
+.textGreen {
+  color: var(--clr-success-600);
 }
 
 /* Stacked progress bar styles */

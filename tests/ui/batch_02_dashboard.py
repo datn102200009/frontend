@@ -31,13 +31,13 @@ def run():
                 runner.log("WF-02", 1, "FAIL", "Đăng nhập thành công và chuyển hướng đến /dashboard", str(e), "BLOCKER", url=page.url)
                 raise e
 
-            # ── Step 2: Kiểm tra thẻ KPI "Doanh thu hôm nay" ──
+            # ── Step 2: Kiểm tra thẻ KPI "Đơn bán hàng hôm nay" ──
             try:
-                expect(page.get_by_text("Doanh thu hôm nay")).to_be_visible()
-                runner.log("WF-02", 2, "PASS", "KPI card 'Doanh thu hôm nay' hiển thị thành công", url=page.url)
+                expect(page.get_by_text("Đơn bán hàng hôm nay")).to_be_visible()
+                runner.log("WF-02", 2, "PASS", "KPI card 'Đơn bán hàng hôm nay' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s2")
-                runner.log("WF-02", 2, "FAIL", "KPI card 'Doanh thu hôm nay' hiển thị thành công", str(e), url=page.url)
+                runner.log("WF-02", 2, "FAIL", "KPI card 'Đơn bán hàng hôm nay' hiển thị thành công", str(e), url=page.url)
 
             # ── Step 3: Kiểm tra thẻ KPI "Lệnh sản xuất chờ duyệt" ──
             try:
@@ -47,13 +47,13 @@ def run():
                 runner.screenshot(page, "wf02_s3")
                 runner.log("WF-02", 3, "FAIL", "KPI card 'Lệnh sản xuất chờ duyệt' hiển thị thành công", str(e), url=page.url)
 
-            # ── Step 4: Kiểm tra thẻ KPI "Trạng thái bảng lương tháng" ──
+            # ── Step 4: Kiểm tra thẻ KPI "Bảng lương nhân sự" ──
             try:
-                expect(page.get_by_text("Trạng thái bảng lương tháng")).to_be_visible()
-                runner.log("WF-02", 4, "PASS", "KPI card 'Trạng thái bảng lương tháng' hiển thị thành công", url=page.url)
+                expect(page.get_by_text("Bảng lương nhân sự")).to_be_visible()
+                runner.log("WF-02", 4, "PASS", "KPI card 'Bảng lương nhân sự' hiển thị thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf02_s4")
-                runner.log("WF-02", 4, "FAIL", "KPI card 'Trạng thái bảng lương tháng' hiển thị thành công", str(e), url=page.url)
+                runner.log("WF-02", 4, "FAIL", "KPI card 'Bảng lương nhân sự' hiển thị thành công", str(e), url=page.url)
 
             # ── Step 5: Kiểm tra thẻ KPI "Cảnh báo tồn kho thấp" ──
             try:

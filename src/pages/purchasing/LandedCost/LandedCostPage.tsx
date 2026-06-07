@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   useGetPurchasingShipmentsQuery, 
   usePostPurchasingShipmentsMutation, 
@@ -20,6 +21,8 @@ import { Plus, Package, Calendar, Info, CheckCircle2, ShieldCheck, Check, AlertT
 import styles from './LandedCostPage.module.css';
 
 export const LandedCostPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const queryShipmentId = searchParams.get('shipmentId');
   const { data: shipments = [], isLoading: isLoadingShipments, refetch: refetchShipments } = useGetPurchasingShipmentsQuery();
   const { data: stockEntriesRes } = useGetInventoryStockEntryListQuery({ purpose: 'receipt' });
   const { data: warehouses = [] } = useGetMasterDataWarehousesListQuery();
@@ -75,6 +78,15 @@ export const LandedCostPage: React.FC = () => {
   const activeShipment = useMemo(() => {
     return shipments.find((s) => s.id === activeShipmentId);
   }, [shipments, activeShipmentId]);
+
+  useEffect(() => {
+    if (queryShipmentId && shipments.length > 0) {
+      const matched = shipments.find((s) => s.id === queryShipmentId || s.shipment_num === queryShipmentId);
+      if (matched && matched.id !== activeShipmentId) {
+        setActiveShipmentId(matched.id || null);
+      }
+    }
+  }, [queryShipmentId, shipments, activeShipmentId]);
 
   const [prevActiveShipmentId, setPrevActiveShipmentId] = useState<string | null>(null);
   if (activeShipmentId !== prevActiveShipmentId) {
