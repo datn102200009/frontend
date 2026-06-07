@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmDisciplinesMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
@@ -38,7 +38,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     reset,
     watch,
   } = useForm<DisciplineFormValues>({
-    resolver: zodResolver(disciplineSchema) as any,
+    resolver: zodResolver(disciplineSchema) as unknown as Resolver<DisciplineFormValues>,
     defaultValues: {
       employee_id: employee?.id || '',
       incident_date: new Date().toISOString().split('T')[0],

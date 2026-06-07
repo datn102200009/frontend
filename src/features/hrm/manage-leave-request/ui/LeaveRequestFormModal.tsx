@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmLeaveRequestsCreateMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
@@ -36,7 +36,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     setValue,
     watch,
   } = useForm<LeaveRequestFormValues>({
-    resolver: zodResolver(leaveRequestSchema) as any,
+    resolver: zodResolver(leaveRequestSchema) as unknown as Resolver<LeaveRequestFormValues>,
     defaultValues: {
       employee_id: employee?.id || '',
       leave_type: 'paid',
