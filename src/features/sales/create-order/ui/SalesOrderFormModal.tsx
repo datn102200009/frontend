@@ -76,6 +76,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
 
   const canBypass = usePermission('sales.approve_credit_bypass');
   const canCancel = usePermission('sales.cancel_order');
+  const canApprove = usePermission('sales.update_order');
   const { toast } = useToast();
 
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
@@ -305,7 +306,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                   {orderId ? 'Cập Nhật' : 'Tạo Đơn Hàng'}
                 </Button>
               )}
-              {orderId && isDraft && (
+              {orderId && isDraft && canApprove && (
                 <Button variant="primary" onClick={handleConfirm} loading={isUpdating} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt Đơn
                 </Button>

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { PurchaseInvoiceDetailsModal } from './PurchaseInvoiceDetailsModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 import { server } from '@shared/lib/test/server';

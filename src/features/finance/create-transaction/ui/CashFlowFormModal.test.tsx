@@ -8,12 +8,18 @@ describe('CashFlowFormModal', () => {
     open: true,
     onClose: vi.fn(),
     onSuccess: vi.fn(),
-    defaultValues: { payment_type: 'receive' as const },
+    defaultValues: {
+      payment_type: 'receive' as const,
+      sales_invoice_id: '66666666-6666-6666-6666-666666666666',
+    },
   };
 
   const defaultPropsOut = {
     ...defaultPropsIn,
-    defaultValues: { payment_type: 'pay' as const },
+    defaultValues: {
+      payment_type: 'pay' as const,
+      purchase_invoice_id: '77777777-7777-7777-7777-777777777777',
+    },
   };
 
   beforeEach(() => {

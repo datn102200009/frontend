@@ -5,6 +5,10 @@ import { renderWithProviders } from '@shared/lib/test/test-utils';
 import { http, HttpResponse } from 'msw';
 import { server } from '@shared/lib/test/server';
 
+vi.mock('@shared/hooks/usePermission', () => ({
+  usePermission: () => true,
+}));
+
 const mockWorkOrders = [
   {
     id: 'wo-1',

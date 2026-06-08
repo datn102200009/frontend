@@ -9,11 +9,16 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { BomFormModal } from './BomFormModal';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { usePermission } from '@shared/hooks/usePermission';
 import { type Bom } from '@features/manufacturing/api/manufacturingApi';
 import { formatDateTime } from '@shared/lib/formatDate';
 import styles from './BomList.module.css';
 
 export function BomList() {
+  const canCreate = usePermission('manufacturing.bom_create');
+  const canUpdate = usePermission('manufacturing.bom_update');
+  const canDelete = usePermission('manufacturing.bom_delete');
+
   const { data: bomsData, isLoading, refetch } = useGetManufacturingBomListQuery({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const boms = (bomsData as any)?.results || (Array.isArray(bomsData) ? bomsData : []);
@@ -88,15 +93,19 @@ export function BomList() {
         cell: ({ row }) => (
           <TableActions>
             <ActionButton icon={<Eye size={18} />} title="Xem chi tiết" />
-            <ActionButton icon={<Pencil size={18} />} title="Chỉnh sửa"
-              onClick={() => setEditingBom(row.original)} />
-            <ActionButton icon={<Trash2 size={18} />} title="Xóa" variant="danger"
-              onClick={() => handleDelete(row.original)} />
+            {canUpdate && (
+              <ActionButton icon={<Pencil size={18} />} title="Chỉnh sửa"
+                onClick={() => setEditingBom(row.original)} />
+            )}
+            {canDelete && (
+              <ActionButton icon={<Trash2 size={18} />} title="Xóa" variant="danger"
+                onClick={() => handleDelete(row.original)} />
+            )}
           </TableActions>
         ),
       },
     ],
-    [],
+    [canUpdate, canDelete],
   );
 
   return (
@@ -106,9 +115,11 @@ export function BomList() {
           <h2 className={styles.title}>Danh Sách Định Mức (BOM)</h2>
           <p className={styles.subtitle}>{boms.length} định mức</p>
         </div>
-        <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
-          Thêm BOM
-        </Button>
+        {canCreate && (
+          <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
+            Thêm BOM
+          </Button>
+        )}
       </div>
       <DataTable columns={columns} data={boms} searchPlaceholder="Tìm theo mã hoặc tên sản phẩm..." loading={isLoading} />
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { CashFlowTable } from '@widgets/finance/CashFlowTable';
 import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
 import { Button } from '@shared/ui/Button/Button';
@@ -6,16 +6,26 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
 import { useToast } from '@shared/ui/Toast/Toast';
-import { CreditCard, ChevronLeft, ChevronRight, DollarSign, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { CreditCard, ChevronLeft, ChevronRight, DollarSign, Check } from 'lucide-react';
 import { useGetPurchasingInvoicesQuery } from '@entities/purchasing/api/purchasingApi';
 import { useGetSalesInvoicesQuery } from '@entities/sales/api/salesApi';
-import { usePostFinanceInvoicesPurchaseByPkPayMutation } from '@entities/finance/api/financeApi';
+import {
+  usePostFinanceInvoicesPurchaseByPkPayMutation,
+  useGetFinanceCashFlowsQuery,
+  usePostFinanceCashFlowsByPkApproveMutation
+} from '@entities/finance/api/financeApi';
+import { usePermission } from '@shared/hooks/usePermission';
+import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { createColumnHelper } from '@tanstack/react-table';
+import type { CashFlowTransaction } from '@entities/finance/api/financeApi';
 import styles from './FinancePage.module.css';
 
 const FinancePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cashflow' | 'ap' | 'ar'>('cashflow');
-  const [createType, setCreateType] = useState<'income' | 'expense' | null>(null);
+  const [activeTab, setActiveTab] = useState<'cashflow' | 'ap' | 'ar' | 'approvals'>('cashflow');
   
+  // Permissions
+  const hasApprovePermission = usePermission('finance.approve_cash_flow');
+
   // Pagination & query state for AP
   const [pageAP, setPageAP] = useState(1);
   const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetPurchasingInvoicesQuery(
@@ -30,6 +40,13 @@ const FinancePage: React.FC = () => {
     { skip: activeTab !== 'ar' }
   );
 
+  // Pagination & query state for Approvals
+  const [pageApprovals, setPageApprovals] = useState(1);
+  const { data: approvalsData, isLoading: isLoadingApprovals, refetch: refetchApprovals } = useGetFinanceCashFlowsQuery(
+    { status: 'pending_approval', page: pageApprovals, limit: 10 },
+    { skip: activeTab !== 'approvals' || !hasApprovePermission }
+  );
+
   // AR collection modal state
   const [selectedARInvoice, setSelectedARInvoice] = useState<{ id: string; amount: number; name?: string } | null>(null);
 
@@ -40,6 +57,7 @@ const FinancePage: React.FC = () => {
   const [payError, setPayError] = useState('');
   
   const [payPurchaseInvoice, { isLoading: isPayingAP }] = usePostFinanceInvoicesPurchaseByPkPayMutation();
+  const [approveCashFlow, { isLoading: isApproving }] = usePostFinanceCashFlowsByPkApproveMutation();
   const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
@@ -86,28 +104,214 @@ const FinancePage: React.FC = () => {
     }
   };
 
+  const handleApproveCashFlow = async (id: string) => {
+    try {
+      await approveCashFlow({ pk: id }).unwrap();
+      toast('success', 'Phê duyệt giao dịch dòng tiền thành công');
+      refetchApprovals();
+      refetchAP();
+      refetchAR();
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      toast('error', error?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
+    }
+  };
+
+  // Columns definitions using createColumnHelper
+  const apColumnHelper = createColumnHelper<any>();
+  const apColumns = useMemo(() => [
+    apColumnHelper.accessor('id', {
+      header: 'Mã Hóa Đơn',
+      cell: (info) => <span style={{ fontWeight: 500 }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+    }),
+    apColumnHelper.accessor('order', {
+      header: 'Đơn Hàng Gốc',
+      cell: (info) => (
+        <span style={{ color: 'var(--clr-text-secondary)' }}>
+          {info.getValue() ? (info.getValue() || '').slice(0, 8).toUpperCase() : 'N/A'}
+        </span>
+      ),
+    }),
+    apColumnHelper.accessor('vendor_name', {
+      header: 'Nhà Cung Cấp',
+      cell: (info) => info.getValue() || 'N/A',
+    }),
+    apColumnHelper.accessor('total_amount', {
+      header: 'Tổng Tiền',
+      cell: (info) => <span style={{ fontWeight: 500 }}>{formatCurrency(info.getValue() || 0)}</span>,
+    }),
+    apColumnHelper.accessor('paid_amount', {
+      header: 'Đã Trả',
+      cell: (info) => <span style={{ color: 'var(--clr-success)' }}>{formatCurrency(info.getValue() || 0)}</span>,
+    }),
+    apColumnHelper.display({
+      id: 'remaining',
+      header: 'Còn Nợ',
+      cell: (info) => {
+        const inv = info.row.original;
+        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
+        return <span style={{ color: 'var(--clr-danger)', fontWeight: 500 }}>{formatCurrency(remaining)}</span>;
+      },
+    }),
+    apColumnHelper.accessor('due_date', {
+      header: 'Hạn Thanh Toán',
+      cell: (info) => info.getValue() ? new Date(info.getValue()).toLocaleDateString('vi-VN') : 'Không có',
+    }),
+    apColumnHelper.accessor('status', {
+      header: 'Trạng Thái',
+      cell: (info) => (
+        <Badge variant={info.getValue() === 'partial' ? 'warning' : 'error'}>
+          {info.getValue() === 'partial' ? 'Trả một phần' : 'Chưa thanh toán'}
+        </Badge>
+      ),
+    }),
+    apColumnHelper.display({
+      id: 'actions',
+      header: 'Thao Tác',
+      cell: (info) => {
+        const inv = info.row.original;
+        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
+        return (
+          <Button 
+            size="sm"
+            icon={<CreditCard size={14} />}
+            onClick={() => handleOpenAPPayment(inv.id!, remaining)}
+          >
+            Thanh Toán
+          </Button>
+        );
+      },
+    }),
+  ], []);
+
+  const arColumnHelper = createColumnHelper<any>();
+  const arColumns = useMemo(() => [
+    arColumnHelper.accessor('id', {
+      header: 'Mã Hóa Đơn',
+      cell: (info) => <span style={{ fontWeight: 500 }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+    }),
+    arColumnHelper.accessor('order', {
+      header: 'Đơn Hàng Gốc',
+      cell: (info) => (
+        <span style={{ color: 'var(--clr-text-secondary)' }}>
+          {info.getValue() ? (info.getValue() || '').slice(0, 8).toUpperCase() : 'N/A'}
+        </span>
+      ),
+    }),
+    arColumnHelper.accessor('customer_name', {
+      header: 'Khách Hàng',
+      cell: (info) => info.getValue() || 'N/A',
+    }),
+    arColumnHelper.accessor('total_amount', {
+      header: 'Tổng Tiền',
+      cell: (info) => <span style={{ fontWeight: 500 }}>{formatCurrency(info.getValue() || 0)}</span>,
+    }),
+    arColumnHelper.accessor('paid_amount', {
+      header: 'Đã Thu',
+      cell: (info) => <span style={{ color: 'var(--clr-success)' }}>{formatCurrency(info.getValue() || 0)}</span>,
+    }),
+    arColumnHelper.display({
+      id: 'remaining',
+      header: 'Còn Nợ',
+      cell: (info) => {
+        const inv = info.row.original;
+        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
+        return <span style={{ color: 'var(--clr-danger)', fontWeight: 500 }}>{formatCurrency(remaining)}</span>;
+      },
+    }),
+    arColumnHelper.accessor('created_at', {
+      header: 'Ngày Tạo',
+      cell: (info) => info.getValue() ? new Date(info.getValue()).toLocaleDateString('vi-VN') : 'Không có',
+    }),
+    arColumnHelper.accessor('status', {
+      header: 'Trạng Thái',
+      cell: (info) => (
+        <Badge variant={info.getValue() === 'partial' ? 'warning' : 'error'}>
+          {info.getValue() === 'partial' ? 'Thu một phần' : 'Chưa thu tiền'}
+        </Badge>
+      ),
+    }),
+    arColumnHelper.display({
+      id: 'actions',
+      header: 'Thao Tác',
+      cell: (info) => {
+        const inv = info.row.original;
+        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
+        return (
+          <Button 
+            size="sm"
+            icon={<DollarSign size={14} />}
+            onClick={() => setSelectedARInvoice({ id: inv.id!, amount: remaining, name: inv.customer_name })}
+          >
+            Thu Tiền
+          </Button>
+        );
+      },
+    }),
+  ], []);
+
+  const approvalColumnHelper = createColumnHelper<CashFlowTransaction>();
+  const approvalColumns = useMemo(() => [
+    approvalColumnHelper.accessor('id', {
+      header: 'Mã Giao Dịch',
+      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+    }),
+    approvalColumnHelper.accessor('payment_type', {
+      header: 'Loại',
+      cell: (info) => {
+        const type = info.getValue();
+        return type === 'receive' ? (
+          <Badge variant="success">Thu Tiền</Badge>
+        ) : (
+          <Badge variant="error">Chi Tiền</Badge>
+        );
+      },
+    }),
+    approvalColumnHelper.accessor('amount', {
+      header: 'Số Tiền',
+      cell: (info) => {
+        const amt = Number(info.getValue() || 0);
+        const type = info.row.original.payment_type;
+        return <span style={{ fontWeight: 500, color: type === 'receive' ? 'var(--clr-success)' : 'var(--clr-danger)' }}>{formatCurrency(amt)}</span>;
+      },
+    }),
+    approvalColumnHelper.accessor('category', {
+      header: 'Phân Loại',
+      cell: (info) => <Badge variant="neutral">{info.getValue() || 'Chưa phân loại'}</Badge>,
+    }),
+    approvalColumnHelper.accessor('remarks', {
+      header: 'Ghi Chú',
+      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{info.getValue() || '-'}</span>,
+    }),
+    approvalColumnHelper.accessor('payment_date', {
+      header: 'Ngày',
+      cell: (info) => {
+        const val = info.getValue();
+        return val ? new Date(val).toLocaleDateString('vi-VN') : '-';
+      },
+    }),
+    approvalColumnHelper.display({
+      id: 'actions',
+      header: 'Thao Tác',
+      cell: (info) => (
+        <Button 
+          size="sm"
+          icon={<Check size={14} />}
+          onClick={() => handleApproveCashFlow(info.row.original.id!)}
+          disabled={isApproving}
+        >
+          Duyệt
+        </Button>
+      ),
+    }),
+  ], [isApproving]);
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Quản Lý Tài Chính & Dòng Tiền</h2>
-          <p className={styles.subtitle}>Ghi nhận các khoản thu chi, quản lý nợ phải trả (AP) và nợ phải thu (AR)</p>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button 
-            variant="outline"
-            icon={<ArrowDownRight size={16} style={{ color: 'var(--clr-success)' }} />} 
-            onClick={() => setCreateType('income')}
-          >
-            Ghi Nhận Thu Tiền
-          </Button>
-          <Button 
-            variant="outline"
-            icon={<ArrowUpRight size={16} style={{ color: 'var(--clr-danger)' }} />} 
-            onClick={() => setCreateType('expense')}
-          >
-            Ghi Nhận Chi Tiền
-          </Button>
+          <p className={styles.subtitle}>Quản lý phê duyệt dòng tiền, nợ phải trả (AP) và nợ phải thu (AR)</p>
         </div>
       </div>
 
@@ -130,6 +334,14 @@ const FinancePage: React.FC = () => {
         >
           Phải Thu (AR)
         </button>
+        {hasApprovePermission && (
+          <button 
+            className={`${styles.tab} ${activeTab === 'approvals' ? styles.active : ''}`}
+            onClick={() => setActiveTab('approvals')}
+          >
+            Duyệt Giao Dịch
+          </button>
+        )}
       </div>
 
       <div className={styles.content}>
@@ -141,67 +353,13 @@ const FinancePage: React.FC = () => {
 
         {activeTab === 'ap' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 'var(--fs-sm)' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--clr-border)', backgroundColor: '#f8fafc', color: 'var(--clr-text-secondary)', fontWeight: 600 }}>
-                    <th style={{ padding: 'var(--sp-4)' }}>Mã Hóa Đơn</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Đơn Hàng Gốc</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Nhà Cung Cấp</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'right' }}>Tổng Tiền</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'right' }}>Đã Trả</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'right' }}>Còn Nợ</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Hạn Thanh Toán</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Trạng Thái</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>Thao Tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoadingAP ? (
-                    <tr>
-                      <td colSpan={9} style={{ padding: 'var(--sp-8)', textAlign: 'center', color: 'var(--clr-text-muted)' }}>Đang tải dữ liệu...</td>
-                    </tr>
-                  ) : !apData?.results || apData.results.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} style={{ padding: 'var(--sp-8)', textAlign: 'center', color: 'var(--clr-text-muted)' }}>Không có hóa đơn mua hàng nào chưa thanh toán.</td>
-                    </tr>
-                  ) : (
-                    apData.results.map((inv) => {
-                      const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
-                      return (
-                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--clr-border)' }}>
-                          <td style={{ padding: 'var(--sp-4)', fontWeight: 500 }}>{(inv.id || '').slice(0, 8).toUpperCase()}</td>
-                          <td style={{ padding: 'var(--sp-4)', color: 'var(--clr-text-secondary)' }}>
-                            {inv.order ? (inv.order || '').slice(0, 8).toUpperCase() : 'N/A'}
-                          </td>
-                          <td style={{ padding: 'var(--sp-4)' }}>{inv.vendor_name || 'N/A'}</td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'right', fontWeight: 500 }}>{formatCurrency(inv.total_amount || 0)}</td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'right', color: 'var(--clr-success)' }}>{formatCurrency(inv.paid_amount || 0)}</td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'right', color: 'var(--clr-danger)', fontWeight: 500 }}>{formatCurrency(remaining)}</td>
-                          <td style={{ padding: 'var(--sp-4)' }}>
-                            {inv.due_date ? new Date(inv.due_date).toLocaleDateString('vi-VN') : 'Không có'}
-                          </td>
-                          <td style={{ padding: 'var(--sp-4)' }}>
-                            <Badge variant={inv.status === 'partial' ? 'warning' : 'error'}>
-                              {inv.status === 'partial' ? 'Trả một phần' : 'Chưa thanh toán'}
-                            </Badge>
-                          </td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>
-                            <Button 
-                              size="sm"
-                              icon={<CreditCard size={14} />}
-                              onClick={() => handleOpenAPPayment(inv.id!, remaining)}
-                            >
-                              Thanh Toán
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable 
+              columns={apColumns as any} 
+              data={apData?.results || []} 
+              loading={isLoadingAP}
+              searchPlaceholder="Tìm kiếm hóa đơn mua..."
+              emptyMessage="Không có hóa đơn mua hàng nào chưa thanh toán."
+            />
 
             {/* Pagination for AP */}
             {apData && apData.total_pages && apData.total_pages > 1 && (
@@ -236,67 +394,13 @@ const FinancePage: React.FC = () => {
 
         {activeTab === 'ar' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 'var(--fs-sm)' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--clr-border)', backgroundColor: '#f8fafc', color: 'var(--clr-text-secondary)', fontWeight: 600 }}>
-                    <th style={{ padding: 'var(--sp-4)' }}>Mã Hóa Đơn</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Đơn Hàng Gốc</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Khách Hàng</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'right' }}>Tổng Tiền</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'right' }}>Đã Thu</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'right' }}>Còn Nợ</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Ngày Tạo</th>
-                    <th style={{ padding: 'var(--sp-4)' }}>Trạng Thái</th>
-                    <th style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>Thao Tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoadingAR ? (
-                    <tr>
-                      <td colSpan={9} style={{ padding: 'var(--sp-8)', textAlign: 'center', color: 'var(--clr-text-muted)' }}>Đang tải dữ liệu...</td>
-                    </tr>
-                  ) : !arData?.results || arData.results.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} style={{ padding: 'var(--sp-8)', textAlign: 'center', color: 'var(--clr-text-muted)' }}>Không có hóa đơn bán hàng nào chưa thu tiền.</td>
-                    </tr>
-                  ) : (
-                    arData.results.map((inv) => {
-                      const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
-                      return (
-                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--clr-border)' }}>
-                          <td style={{ padding: 'var(--sp-4)', fontWeight: 500 }}>{(inv.id || '').slice(0, 8).toUpperCase()}</td>
-                          <td style={{ padding: 'var(--sp-4)', color: 'var(--clr-text-secondary)' }}>
-                            {inv.order ? (inv.order || '').slice(0, 8).toUpperCase() : 'N/A'}
-                          </td>
-                          <td style={{ padding: 'var(--sp-4)' }}>{inv.customer_name || 'N/A'}</td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'right', fontWeight: 500 }}>{formatCurrency(inv.total_amount || 0)}</td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'right', color: 'var(--clr-success)' }}>{formatCurrency(inv.paid_amount || 0)}</td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'right', color: 'var(--clr-danger)', fontWeight: 500 }}>{formatCurrency(remaining)}</td>
-                          <td style={{ padding: 'var(--sp-4)' }}>
-                            {inv.created_at ? new Date(inv.created_at).toLocaleDateString('vi-VN') : 'Không có'}
-                          </td>
-                          <td style={{ padding: 'var(--sp-4)' }}>
-                            <Badge variant={inv.status === 'partial' ? 'warning' : 'error'}>
-                              {inv.status === 'partial' ? 'Thu một phần' : 'Chưa thu tiền'}
-                            </Badge>
-                          </td>
-                          <td style={{ padding: 'var(--sp-4)', textAlign: 'center' }}>
-                            <Button 
-                              size="sm"
-                              icon={<DollarSign size={14} />}
-                              onClick={() => setSelectedARInvoice({ id: inv.id!, amount: remaining, name: inv.customer_name })}
-                            >
-                              Thu Tiền
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <DataTable 
+              columns={arColumns as any} 
+              data={arData?.results || []} 
+              loading={isLoadingAR}
+              searchPlaceholder="Tìm kiếm hóa đơn bán..."
+              emptyMessage="Không có hóa đơn bán hàng nào chưa thu tiền."
+            />
 
             {/* Pagination for AR */}
             {arData && arData.total_pages && arData.total_pages > 1 && (
@@ -328,17 +432,48 @@ const FinancePage: React.FC = () => {
             )}
           </div>
         )}
-      </div>
 
-      {/* Cash Flow Form Modal (Universal) */}
-      {createType && (
-        <CashFlowFormModal 
-          open={!!createType} 
-          onClose={() => setCreateType(null)} 
-          onSuccess={() => setCreateType(null)} 
-          defaultValues={{ payment_type: createType === 'income' ? 'receive' : 'pay' }} 
-        />
-      )}
+        {activeTab === 'approvals' && hasApprovePermission && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
+            <DataTable 
+              columns={approvalColumns as any} 
+              data={approvalsData?.results || []} 
+              loading={isLoadingApprovals}
+              searchPlaceholder="Tìm kiếm giao dịch chờ duyệt..."
+              emptyMessage="Không có giao dịch nào chờ phê duyệt."
+            />
+
+            {/* Pagination for approvals */}
+            {approvalsData && approvalsData.total_pages && approvalsData.total_pages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', padding: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)' }}>
+                <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
+                  Trang {pageApprovals} / {approvalsData.total_pages} (Tổng {approvalsData.count} giao dịch)
+                </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    icon={<ChevronLeft size={16} />} 
+                    disabled={pageApprovals <= 1}
+                    onClick={() => setPageApprovals(p => p - 1)}
+                  >
+                    {""}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    icon={<ChevronRight size={16} />} 
+                    disabled={pageApprovals >= (approvalsData.total_pages || 1)}
+                    onClick={() => setPageApprovals(p => p + 1)}
+                  >
+                    {""}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* AR invoice collection modal overlay using CashFlowFormModal */}
       {selectedARInvoice && (
@@ -352,7 +487,7 @@ const FinancePage: React.FC = () => {
           defaultValues={{
             payment_type: 'receive',
             sales_invoice_id: selectedARInvoice.id,
-            amount: selectedARInvoice.amount,
+            amount: selectedARInvoice.amount.toString(),
             category: 'Thanh toán hóa đơn',
             remarks: `Thu tiền thanh toán hóa đơn bán ${selectedARInvoice.id.slice(0, 8).toUpperCase()} (Khách hàng: ${selectedARInvoice.name || 'N/A'}, Số tiền: ${formatCurrency(selectedARInvoice.amount)}).`
           }}

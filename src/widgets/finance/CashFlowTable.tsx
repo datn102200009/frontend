@@ -7,7 +7,8 @@ import type { CashFlowTransaction } from '@entities/finance/model/types';
 
 
 export const CashFlowTable: React.FC = () => {
-  const { data: flows = [], isLoading } = useGetFinanceCashFlowsQuery();
+  const { data: flowsData, isLoading } = useGetFinanceCashFlowsQuery({});
+  const flows = Array.isArray(flowsData) ? flowsData : (flowsData as any)?.results || [];
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<CashFlowTransaction>();
@@ -58,7 +59,10 @@ export const CashFlowTable: React.FC = () => {
       }),
       helper.accessor('payment_date', {
         header: 'Ngày',
-        cell: (info) => new Date(info.getValue()).toLocaleDateString('vi-VN'),
+        cell: (info) => {
+          const val = info.getValue();
+          return val ? new Date(val).toLocaleDateString('vi-VN') : '-';
+        },
       }),
     ];
   }, []);

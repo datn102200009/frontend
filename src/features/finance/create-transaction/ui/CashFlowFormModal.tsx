@@ -2,8 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { usePostFinanceCashFlowsMutation } from '@entities/finance/api/financeApi';
-import { useGetSalesInvoicesQuery } from '@entities/sales/api/salesApi';
-import { useGetPurchasingInvoicesQuery } from '@entities/purchasing/api/purchasingApi';
 import type { CashFlowInput } from '@entities/finance/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -34,12 +32,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
   const [createTx, { isLoading }] = usePostFinanceCashFlowsMutation();
   const { toast } = useToast();
   const paymentType = defaultValues?.payment_type || 'receive';
+  
   const isDirect = !!defaultValues?.sales_order_id || !!defaultValues?.purchase_order_id || !!defaultValues?.sales_invoice_id || !!defaultValues?.purchase_invoice_id;
-
-  const { data: salesInvoices, isLoading: isLoadingSales } = useGetSalesInvoicesQuery({}, { skip: paymentType !== 'receive' || isDirect });
-  const { data: purchaseInvoices, isLoading: isLoadingPurchasing } = useGetPurchasingInvoicesQuery({}, { skip: paymentType !== 'pay' || isDirect });
-  const salesInvoicesList = salesInvoices?.results || [];
-  const purchaseInvoicesList = purchaseInvoices?.results || [];
 
   const hasInitialized = useRef(false);
 
@@ -49,7 +43,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     }
   }, [open]);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CashFlowFormState>({
+  const { register, handleSubmit, formState: { errors } } = useForm<CashFlowFormState>({
     defaultValues: {
       payment_type: paymentType,
       amount: Number(defaultValues?.amount) || 0,
@@ -64,43 +58,12 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     }
   });
 
-  useEffect(() => {
-    if (isDirect) return;
-
-    if (!hasInitialized.current) {
-      if (paymentType === 'receive' && salesInvoicesList.length > 0) {
-        reset({
-          payment_type: 'receive',
-          amount: Number(defaultValues?.amount) || 0,
-          payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
-          sales_invoice_id: salesInvoicesList[0].id || '',
-          purchase_invoice_id: null,
-          sales_order_id: null,
-          purchase_order_id: null,
-          category: defaultValues?.category || '',
-          payment_method: defaultValues?.payment_method || 'bank_transfer',
-          remarks: defaultValues?.remarks || ''
-        });
-        hasInitialized.current = true;
-      } else if (paymentType === 'pay' && purchaseInvoicesList.length > 0) {
-        reset({
-          payment_type: 'pay',
-          amount: Number(defaultValues?.amount) || 0,
-          payment_date: defaultValues?.payment_date || new Date().toISOString().split('T')[0],
-          sales_invoice_id: null,
-          purchase_invoice_id: purchaseInvoicesList[0].id || '',
-          sales_order_id: null,
-          purchase_order_id: null,
-          category: defaultValues?.category || '',
-          payment_method: defaultValues?.payment_method || 'bank_transfer',
-          remarks: defaultValues?.remarks || ''
-        });
-        hasInitialized.current = true;
-      }
-    }
-  }, [salesInvoicesList, purchaseInvoicesList, paymentType, reset, defaultValues, isDirect]);
-
   const onSubmit = async (data: CashFlowFormState) => {
+    if (!isDirect) {
+      toast('error', 'Yêu cầu mã chứng từ tham chiếu hợp lệ.');
+      return;
+    }
+
     try {
       let inferredCategory = data.category || defaultValues?.category;
       if (!inferredCategory) {
@@ -132,8 +95,6 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
     }
   };
 
-  const isWorking = isLoading || isLoadingSales || isLoadingPurchasing;
-
   return (
     <Modal 
       open={open} 
@@ -142,8 +103,8 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
       size="md"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={isWorking}>Hủy</Button>
-          <Button onClick={handleSubmit(onSubmit)} loading={isLoading} disabled={isWorking}>Xác nhận</Button>
+          <Button variant="ghost" onClick={onClose} disabled={isLoading}>Hủy</Button>
+          <Button onClick={handleSubmit(onSubmit)} loading={isLoading} disabled={isLoading}>Xác nhận</Button>
         </>
       }
     >
@@ -157,7 +118,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
               defaultValues?.sales_invoice_id ? 'sales_invoice_id' :
               defaultValues?.purchase_invoice_id ? 'purchase_invoice_id' :
               paymentType === 'receive' ? 'sales_invoice_id' : 'purchase_invoice_id'
-            , { required: 'Bắt buộc' })} disabled={isWorking || isDirect}>
+            , { required: 'Bắt buộc' })} disabled={true}>
               {defaultValues?.sales_order_id ? (
                 <option value={defaultValues.sales_order_id}>{defaultValues.sales_order_id.slice(0,8).toUpperCase()} (Đặt Cọc Bán)</option>
               ) : defaultValues?.purchase_order_id ? (
@@ -166,25 +127,15 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
                 <option value={defaultValues.sales_invoice_id}>{defaultValues.sales_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Bán)</option>
               ) : defaultValues?.purchase_invoice_id ? (
                 <option value={defaultValues.purchase_invoice_id}>{defaultValues.purchase_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Mua)</option>
-              ) : paymentType === 'receive' ? (
-                salesInvoicesList.map(inv => inv.id ? (
-                  <option key={inv.id} value={inv.id}>
-                    {inv.id.slice(0,8).toUpperCase()} - {inv.customer_name || 'N/A'} ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.total_amount || 0)})
-                  </option>
-                ) : null)
               ) : (
-                purchaseInvoicesList.map(inv => inv.id ? (
-                  <option key={inv.id} value={inv.id}>
-                    {inv.id.slice(0,8).toUpperCase()} - {inv.vendor_name || 'N/A'} ({new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.total_amount || 0)})
-                  </option>
-                ) : null)
+                <option value="">Không tìm thấy mã chứng từ hợp lệ</option>
               )}
             </select>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', flex: 1 }}>
             <label htmlFor="payment_method" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>Phương Thức <span style={{ color: 'var(--clr-danger)' }}>*</span></label>
-            <select id="payment_method" className={styles.itemInput} {...register('payment_method', { required: 'Bắt buộc' })} disabled={isWorking}>
+            <select id="payment_method" className={styles.itemInput} {...register('payment_method', { required: 'Bắt buộc' })} disabled={isLoading}>
               <option value="cash">Tiền mặt</option>
               <option value="bank_transfer">Chuyển khoản</option>
               <option value="credit_card">Thẻ tín dụng</option>
@@ -198,13 +149,13 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
           min="0"
           {...register('amount', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số tiền tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
           error={errors.amount?.message}
-          disabled={isWorking}
+          disabled={isLoading}
         />
 
         <Input 
           label="Ghi Chú" 
           {...register('remarks')}
-          disabled={isWorking}
+          disabled={isLoading}
         />
       </form>
     </Modal>

@@ -12,6 +12,7 @@ import { WorkOrderFormModal } from './WorkOrderFormModal';
 import { WorkOrderDetailModal } from './WorkOrderDetailModal';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { usePermission } from '@shared/hooks/usePermission';
 import { formatDateShort } from '@shared/lib/formatDate';
 import {
   useGetManufacturingWorkOrderListQuery,
@@ -31,6 +32,12 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 };
 
 export function WorkOrderList() {
+  const canCreate = usePermission('manufacturing.work_order_create');
+  const canApprove = usePermission('manufacturing.work_order_approve');
+  const canCancel = usePermission('manufacturing.work_order_cancel');
+  const canDeclare = usePermission('manufacturing.work_order_declare');
+  const canComplete = usePermission('manufacturing.work_order_complete');
+
   const [searchParams, setSearchParams] = useSearchParams();
   const urlStatus = searchParams.get('status');
 
@@ -192,24 +199,28 @@ export function WorkOrderList() {
               />
               {status === 'pending_approval' && (
                 <>
-                  <ActionButton
-                    icon={<PlayCircle size={18} />}
-                    title="Phê duyệt"
-                    onClick={() => handleApprove(row.original)}
-                    disabled={isApproving}
-                  />
-                  <ActionButton
-                    icon={<XCircle size={18} />}
-                    title="Hủy"
-                    variant="danger"
-                    onClick={() => handleCancel(row.original)}
-                    disabled={isCanceling}
-                  />
+                  {canApprove && (
+                    <ActionButton
+                      icon={<PlayCircle size={18} />}
+                      title="Phê duyệt"
+                      onClick={() => handleApprove(row.original)}
+                      disabled={isApproving}
+                    />
+                  )}
+                  {canCancel && (
+                    <ActionButton
+                      icon={<XCircle size={18} />}
+                      title="Hủy"
+                      variant="danger"
+                      onClick={() => handleCancel(row.original)}
+                      disabled={isCanceling}
+                    />
+                  )}
                 </>
               )}
               {status === 'in_progress' && (
                 <>
-                  {(row.original.produced_qty || 0) < (row.original.quantity || 0) && (
+                  {(row.original.produced_qty || 0) < (row.original.quantity || 0) && canDeclare && (
                     <ActionButton
                       icon={<ArrowRightCircle size={18} />}
                       title="Nhập liệu"
@@ -219,7 +230,7 @@ export function WorkOrderList() {
                       }}
                     />
                   )}
-                  {(row.original.produced_qty || 0) >= (row.original.quantity || 0) && (
+                  {(row.original.produced_qty || 0) >= (row.original.quantity || 0) && canComplete && (
                     <ActionButton
                       icon={<CheckCircle size={18} />}
                       title="Hoàn thành"
@@ -234,7 +245,7 @@ export function WorkOrderList() {
         }
       },
     ],
-    [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting],
+    [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting, canApprove, canCancel, canDeclare, canComplete],
   );
 
 
@@ -246,9 +257,11 @@ export function WorkOrderList() {
           <h2 className={styles.title}>Lệnh Sản Xuất</h2>
           <p className={styles.subtitle}>{data?.count ?? 0} lệnh</p>
         </div>
-        <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
-          Tạo lệnh
-        </Button>
+        {canCreate && (
+          <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
+            Tạo lệnh
+          </Button>
+        )}
       </div>
 
       <DataTable 

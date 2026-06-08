@@ -11,6 +11,7 @@ import { LeaveRequestTable } from '@widgets/hrm/LeaveRequestTable';
 import { SalarySlipTable } from '@widgets/hrm/SalarySlipTable';
 import { RewardDisciplineTable } from '@widgets/hrm/RewardDisciplineTable';
 import { PublicHolidayTable } from '@widgets/hrm/PublicHolidayTable';
+import { EmploymentHistoryApprovalTable } from '@widgets/hrm/EmploymentHistoryApprovalTable';
 
 // Modals
 import { EmployeeFormModal } from '@features/hrm/create-employee/ui/EmployeeFormModal';
@@ -41,7 +42,7 @@ import styles from './HrmPage.module.css';
 
 import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
-type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
+type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays' | 'proposals';
 
 const HrmPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -196,6 +197,15 @@ const HrmPage: React.FC = () => {
           onClick={() => setActiveTab('public_holidays')}
         >
           Ngày Nghỉ Lễ
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'proposals'}
+          className={clsx(styles.tab, activeTab === 'proposals' && styles.active)}
+          onClick={() => setActiveTab('proposals')}
+        >
+          Phê Duyệt Đề Xuất
         </button>
       </div>
 
@@ -354,6 +364,18 @@ const HrmPage: React.FC = () => {
                 </Button>
               </div>
               <PublicHolidayTable onEdit={(holiday) => setSelectedHolidayForEdit(holiday)} />
+            </>
+          )}
+
+          {activeTab === 'proposals' && (
+            <>
+              <div className={styles.header}>
+                <div>
+                  <h2 className={styles.title}>Phê Duyệt Đề Xuất</h2>
+                  <p className={styles.subtitle}>Phê duyệt các thay đổi thông tin nhân sự (lương, chức vụ, phòng ban)</p>
+                </div>
+              </div>
+              <EmploymentHistoryApprovalTable />
             </>
           )}
         </div>
