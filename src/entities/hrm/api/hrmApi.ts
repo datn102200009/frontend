@@ -364,7 +364,10 @@ export type PostHrmContractsByIdTerminateApiArg = {
     unnotified_days?: number
   }
 }
-export type GetHrmAttendancesApiResponse = /** status 200 Thành công */ Attendance[]
+export type GetHrmAttendancesApiResponse = /** status 200 Thành công */ {
+  count?: number
+  results?: Attendance[]
+}
 export type GetHrmAttendancesApiArg = {
   /** Lọc chấm công theo ngày cụ thể (YYYY-MM-DD). */
   date?: string

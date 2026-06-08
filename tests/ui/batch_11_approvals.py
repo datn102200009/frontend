@@ -27,7 +27,7 @@ def run():
                 login(page)
                 page.goto(f"{BASE_URL}/finance")
                 wait_for_page_ready(page)
-                expect(page.locator("h2:has-text('Quản Lý Dòng Tiền')")).to_be_visible()
+                expect(page.locator("h2:has-text('Quản Lý Tài Chính & Dòng Tiền')")).to_be_visible()
                 runner.log("WF-12", 1, "PASS", "Đăng nhập thành công và chuyển hướng đến Quản Lý Tài Chính /finance", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf12_s1")
@@ -173,7 +173,7 @@ def run():
                 runner.log("WF-12", 9, "PASS", f"Happy Case: Tạo đề xuất điều chỉnh lương thành công cho nhân viên {emp_code}", url=page.url)
                 
                 # Chuyển sang Tab Phê Duyệt Đề Xuất
-                page.get_by_role("button", name="Phê Duyệt Đề Xuất").click()
+                page.get_by_role("tab", name="Phê Duyệt Đề Xuất").click()
                 time.sleep(0.5)
                 
                 # Tìm dòng đề xuất tương ứng với nhân viên vừa được đổi (cột Mã NV)
@@ -198,7 +198,7 @@ def run():
 
             # ── Step 5: Đề xuất và Duyệt Khen thưởng (Reward Flow) ──
             try:
-                page.get_by_role("button", name="Nhân Viên").click()
+                page.get_by_role("tab", name="Nhân Viên").click()
                 time.sleep(0.5)
                 
                 # Click Khen thưởng cho nhân viên đầu tiên
@@ -218,8 +218,10 @@ def run():
                 page.locator("role=dialog").wait_for(state="hidden", timeout=5000)
                 runner.log("WF-12", 12, "PASS", f"Happy Case: Tạo quyết định khen thưởng chờ duyệt cho nhân viên {emp_code} thành công", url=page.url)
                 
-                # Chuyển sang Tab Khen Thưởng & Kỷ Luật
-                page.get_by_role("button", name="Khen Thưởng & Kỷ Luật").click()
+                # Chuyển sang Tab Khen Thưởng & Kỷ Luật và chọn sub-tab Khen Thưởng
+                page.get_by_role("tab", name="Khen Thưởng & Kỷ Luật").click()
+                time.sleep(0.5)
+                page.get_by_role("button", name="Danh sách Khen Thưởng").click()
                 time.sleep(0.5)
                 
                 # Tìm dòng khen thưởng tương ứng với nhân viên
@@ -248,7 +250,7 @@ def run():
 
             # ── Step 6: Đề xuất và Duyệt Kỷ luật (Discipline Flow) ──
             try:
-                page.get_by_role("button", name="Nhân Viên").click()
+                page.get_by_role("tab", name="Nhân Viên").click()
                 time.sleep(0.5)
                 
                 # Click Kỷ luật cho nhân viên đầu tiên
@@ -271,7 +273,7 @@ def run():
                 runner.log("WF-12", 15, "PASS", f"Happy Case: Tạo quyết định kỷ luật chờ duyệt cho nhân viên {emp_code} thành công", url=page.url)
                 
                 # Chuyển sang Tab Khen Thưởng & Kỷ Luật và chuyển sang sub-tab Kỷ luật
-                page.get_by_role("button", name="Khen Thưởng & Kỷ Luật").click()
+                page.get_by_role("tab", name="Khen Thưởng & Kỷ Luật").click()
                 time.sleep(0.5)
                 page.get_by_role("button", name="Danh sách Kỷ Luật").click()
                 time.sleep(0.5)

@@ -32,7 +32,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     date: selectedDate,
     employeeId: queryEmployeeId || undefined,
   });
-  const attendancesList = attendancesData || [];
+  const attendancesList = attendancesData?.results || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

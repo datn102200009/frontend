@@ -138,7 +138,6 @@ def run():
                 # Chuyển qua tab Hóa Đơn Bán
                 page.get_by_role("tab", name="Hóa Đơn Bán").click()
                 time.sleep(0.5)
-                wait_for_page_ready(page)
                 
                 # Tìm dòng hóa đơn mới của Siêu thị GreenMart
                 row_invoice = page.get_by_role("row").filter(has_text="GreenMart").first

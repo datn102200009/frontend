@@ -309,11 +309,12 @@ export const handlers = [
     ];
     if (dateParam) {
       if (dateParam === '2026-05-23' || dateParam === todayStr) {
-        return HttpResponse.json(mockData.map(d => ({ ...d, date: dateParam })));
+        const results = mockData.map(d => ({ ...d, date: dateParam }));
+        return HttpResponse.json({ count: results.length, results });
       }
-      return HttpResponse.json([]);
+      return HttpResponse.json({ count: 0, results: [] });
     }
-    return HttpResponse.json(mockData);
+    return HttpResponse.json({ count: mockData.length, results: mockData });
   }),
 
   http.post('*/api/v1/hrm/attendances/batch/', async ({ request }) => {

@@ -108,7 +108,7 @@ export function WorkOrderList() {
       refetch();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Lỗi khi thực hiện thao tác');
+      toast('error', error?.data?.detail || error?.data?.error || 'Lỗi khi thực hiện thao tác');
     } finally {
       setConfirmState(null);
     }
@@ -131,7 +131,7 @@ export function WorkOrderList() {
       refetch();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi nhập liệu');
+      toast('error', error?.data?.detail || error?.data?.error || 'Có lỗi xảy ra khi nhập liệu');
     }
   };
 

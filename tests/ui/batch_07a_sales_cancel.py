@@ -45,13 +45,22 @@ def run():
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
                 # Open the draft SO (first in the list)
-                page.get_by_title("Xem chi tiết").first.click()
+                page.get_by_role("row").filter(has_text="Minh Anh").filter(has_text="Nháp").first.get_by_title("Xem chi tiết").click()
                 time.sleep(0.5)
 
                 # Approve it
                 page.get_by_role("button", name="Duyệt Đơn").click()
                 time.sleep(1.5)
                 dismiss_all_toasts(page)
+
+                # Kiểm tra xem có bị khóa tín dụng hay không (do công nợ vượt hạn mức)
+                row = page.get_by_role("row").filter(has_text="Minh Anh").first
+                if row.get_by_text("Chờ duyệt tín dụng").is_visible():
+                    row.get_by_title("Xem chi tiết").click()
+                    time.sleep(0.5)
+                    page.get_by_role("button", name="Duyệt tín dụng đặc cách").click()
+                    time.sleep(1.5)
+                    dismiss_all_toasts(page)
 
                 # Verify status is active
                 row = page.get_by_role("row").filter(has_text="Minh Anh").first

@@ -167,4 +167,27 @@ describe('WorkOrderList', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText(/Chi Tiết Lệnh Sản Xuất/i)).toBeInTheDocument();
   });
+
+  it('handles approve failure and displays custom error message', async () => {
+    server.use(
+      http.post('*/api/v1/manufacturing/work-order/:id/approve/', () => {
+        return HttpResponse.json({ error: 'Không đủ tồn kho nguyên liệu' }, { status: 400 });
+      })
+    );
+
+    renderWithProviders(<WorkOrderList />);
+    const user = userEvent.setup();
+
+    expect(await screen.findByText('WO-PENDING')).toBeInTheDocument();
+
+    const approveButton = screen.getByRole('button', { name: /phê duyệt/i });
+    await user.click(approveButton);
+
+    const confirmButton = screen.getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/không đủ tồn kho nguyên liệu/i)).toBeInTheDocument();
+    });
+  });
 });

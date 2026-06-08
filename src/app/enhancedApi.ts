@@ -284,11 +284,23 @@ hrmApi.enhanceEndpoints({
     postHrmSalarySlipsBulkConfirmPay: {
       invalidatesTags: ['SalarySlips', 'CashFlows'],
     },
+    getHrmRewards: {
+      providesTags: ['Rewards'],
+    },
+    getHrmDisciplines: {
+      providesTags: ['Disciplines'],
+    },
     postHrmRewards: {
-      invalidatesTags: ['Employees', 'SalarySlips'],
+      invalidatesTags: ['Rewards', 'Employees', 'SalarySlips'],
+    },
+    postHrmRewardsByIdApprove: {
+      invalidatesTags: ['Rewards', 'Employees', 'SalarySlips'],
     },
     postHrmDisciplines: {
-      invalidatesTags: ['Employees', 'SalarySlips'],
+      invalidatesTags: ['Disciplines', 'Employees', 'SalarySlips'],
+    },
+    postHrmDisciplinesByIdApprove: {
+      invalidatesTags: ['Disciplines', 'Employees', 'SalarySlips'],
     },
     getHrmPublicHolidays: {
       providesTags: ['PublicHolidays'],
