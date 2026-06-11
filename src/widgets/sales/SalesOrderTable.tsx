@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -13,6 +14,13 @@ interface SalesOrderTableProps {
 
 export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
   const { data: orders = [], isLoading } = useGetSalesOrdersQuery();
+  const [searchParams] = useSearchParams();
+  const statusFilter = searchParams.get('status');
+
+  const filteredOrders = useMemo(() => {
+    if (!statusFilter) return orders;
+    return orders.filter((o) => o.status === statusFilter);
+  }, [orders, statusFilter]);
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<SalesOrder>();
@@ -78,7 +86,7 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
       <DataTable 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any} 
-        data={orders} 
+        data={filteredOrders} 
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn bán hàng..."
         emptyMessage="Không tìm thấy đơn bán hàng nào"

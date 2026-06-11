@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -13,12 +14,22 @@ interface LeaveRequestTableProps {
 }
 
 export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDetails }) => {
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = (searchParams.get('status') || 'pending') as 'pending' | 'approved' | 'rejected' | 'all';
+
+  const setStatusFilter = (val: 'pending' | 'approved' | 'rejected' | 'all') => {
+    setSearchParams((prev) => {
+      prev.set('status', val);
+      return prev;
+    });
+  };
 
   const { data: leaveRequestsData, isLoading } = useGetHrmLeaveRequestsQuery(
     statusFilter === 'all' ? {} : { status: statusFilter }
   );
-  const leaveRequestsList = leaveRequestsData || [];
+  const leaveRequestsList = Array.isArray(leaveRequestsData)
+    ? leaveRequestsData
+    : (leaveRequestsData as any)?.results || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

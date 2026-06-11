@@ -20,6 +20,8 @@ def run():
     username = f"nv_test_{rand_id}"
     email = f"nv_test_{rand_id}@xuanhoa.com"
     contract_no = f"HĐLD-2026-TEST_{rand_id}"
+    test_month = f"{(rand_id % 12) + 1:02d}"
+    test_year = str(2025 + (rand_id % 5))
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -27,9 +29,9 @@ def run():
         page = context.new_page()
         page.set_default_timeout(10000)
 
-        # Dynamic holiday date helper (10 days in the future to avoid past holiday validation errors)
+        # Dynamic holiday date helper (10 days + random offset in the future to avoid duplicate validation errors)
         today = datetime.date.today()
-        holiday_date = today + datetime.timedelta(days=10)
+        holiday_date = today + datetime.timedelta(days=10 + (rand_id % 100))
 
         try:
             # ── Login & Navigate to /hrm ──
@@ -151,6 +153,21 @@ def run():
                 page.get_by_role("button", name="Xác nhận").click()
                 time.sleep(1)
 
+                # Nếu chưa có dữ liệu chấm công (lần đầu chạy sau reset DB), tự động tạo chấm công trước
+                rows = page.locator("tbody tr")
+                if rows.count() < 10:
+                    page.get_by_role("button", name="Chấm Công").click()
+                    time.sleep(0.5)
+                    page.locator("#attendance_date").fill("2026-05-15")
+                    time.sleep(0.3)
+                    page.get_by_role("button", name="Lưu chấm công").click()
+                    time.sleep(1.5)
+                    # Lọc lại ngày 15/05/2026
+                    page.locator("#attendance-date-filter").click()
+                    time.sleep(0.5)
+                    page.get_by_role("button", name="Xác nhận").click()
+                    time.sleep(1)
+
                 # Expect to see 10 records
                 rows = page.locator("tbody tr")
                 count = rows.count()
@@ -160,7 +177,7 @@ def run():
                     raise AssertionError(f"Chỉ tìm thấy {count} bản ghi chấm công.")
             except Exception as e:
                 runner.screenshot(page, "wf11_s6")
-                runner.log("WF-11", 6, "FAIL", "Xác nhận chấm công ngày 15/01/2026 hiển thị đầy đủ", str(e), url=page.url)
+                runner.log("WF-11", 6, "FAIL", "Xác nhận chấm công ngày 15/05/2026 hiển thị đầy đủ", str(e), url=page.url)
 
             # ── Tab 2: Batch attendance (test future date and invalid hours) ──
             try:
@@ -266,7 +283,7 @@ def run():
                 expect(page.get_by_role("dialog")).to_be_visible()
 
                 # Click Approve
-                page.get_by_role("button", name="Duyệt đơn").click()
+                page.get_by_role("dialog").get_by_role("button", name="Duyệt đơn", exact=True).click()
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
                 runner.log("WF-11", 12, "PASS", "Phê duyệt đơn xin nghỉ phép thành công", url=page.url)
@@ -283,36 +300,41 @@ def run():
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 
-                # Set period 2026-01
-                page.get_by_role("combobox", name="Chọn tháng").select_option("01")
-                page.get_by_role("combobox", name="Chọn năm").select_option("2026")
+                # Set period
+                dialog = page.get_by_role("dialog")
+                dialog.get_by_role("combobox", name="Chọn tháng").select_option(test_month)
+                dialog.get_by_role("combobox", name="Chọn năm").select_option(test_year)
                 
-                page.get_by_role("button", name="Khởi tạo").click()
+                dialog.get_by_role("button", name="Khởi tạo").click()
                 time.sleep(2)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
-                runner.log("WF-11", 13, "PASS", "Khởi tạo kỳ lương Tháng 01/2026 thành công", url=page.url)
+                runner.log("WF-11", 13, "PASS", f"Khởi tạo kỳ lương Tháng {test_month}/{test_year} thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf11_s13")
-                runner.log("WF-11", 13, "FAIL", "Khởi tạo kỳ lương Tháng 01/2026 thành công", str(e), url=page.url)
+                runner.log("WF-11", 13, "FAIL", f"Khởi tạo kỳ lương Tháng {test_month}/{test_year} thành công", str(e), url=page.url)
 
             # ── Tab 5: Calculate salary ──
             try:
-                # Select filters to see period 2026-01
-                page.get_by_label("Chọn tháng kỳ lương").select_option("01")
-                page.get_by_label("Chọn năm kỳ lương").select_option("2026")
-                page.get_by_label("Lọc trạng thái phiếu lương").select_option("draft")
-                time.sleep(0.5)
+                # Select filters to see period
+                page.get_by_label("Chọn tháng kỳ lương").select_option(test_month)
+                page.get_by_label("Chọn năm kỳ lương").select_option(test_year)
+                page.get_by_label("Lọc trạng thái phiếu lương").select_option("all")
+                time.sleep(2.0)
 
                 # Calculate first salary slip
                 page.get_by_role("button", name="Xem & Tính lương").first.click()
+                
+                # Wait for the calculation dialog to open
+                dialog = page.get_by_role("dialog")
+                dialog.wait_for(state="visible", timeout=5000)
                 time.sleep(2) # Auto calculation starts on open
                 
-                # Check that Approve button is now visible and click it
-                approve_btn = page.get_by_role("button", name="Phê duyệt lương")
+                # Check that Approve button is now visible inside the dialog and click it
+                approve_btn = dialog.get_by_role("button", name="Phê duyệt lương")
                 approve_btn.wait_for(state="visible", timeout=5000)
                 approve_btn.click()
                 time.sleep(1)
-                expect(page.get_by_role("dialog")).not_to_be_visible()
+                expect(dialog).not_to_be_visible()
                 runner.log("WF-11", 14, "PASS", "Tính toán và phê duyệt phiếu lương nháp thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf11_s14")
@@ -343,12 +365,13 @@ def run():
 
                 page.get_by_role("button", name="Thêm Ngày Nghỉ Lễ").click()
                 time.sleep(0.5)
-                expect(page.get_by_role("dialog")).to_be_visible()
+                dialog = page.get_by_role("dialog")
+                expect(dialog).to_be_visible()
 
-                page.get_by_label("Tên ngày nghỉ lễ").fill("Tết Nguyên Đán")
+                dialog.get_by_label("Tên ngày nghỉ lễ").fill(f"Tết Nguyên Đán {rand_id}")
                 
                 # Start date picker
-                page.locator("#start_date_display").click()
+                dialog.locator("#start_date_display").click()
                 time.sleep(0.5)
                 page.get_by_role("combobox", name="Chọn năm").select_option(str(holiday_date.year))
                 page.get_by_role("combobox", name="Chọn tháng").select_option(str(holiday_date.month - 1))
@@ -358,11 +381,11 @@ def run():
                 page.get_by_role("button", name="Xác nhận").click()
                 time.sleep(0.5)
 
-                page.get_by_label("Số ngày nghỉ").fill("10")
-                page.get_by_label("Mô tả").fill("Nghỉ tết cổ truyền")
-                page.get_by_role("button", name="Lưu").click()
+                dialog.get_by_label("Số ngày nghỉ").fill("10")
+                dialog.get_by_label("Mô tả").fill("Nghỉ tết cổ truyền")
+                dialog.get_by_role("button", name="Lưu").click()
                 time.sleep(1)
-                expect(page.get_by_role("dialog")).not_to_be_visible()
+                expect(dialog).not_to_be_visible()
                 runner.log("WF-11", 16, "PASS", f"Khai báo ngày nghỉ lễ Tết Nguyên Đán bắt đầu từ {holiday_date} thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf11_s16")

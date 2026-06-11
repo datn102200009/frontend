@@ -3,10 +3,17 @@ import { authReducer } from '@features/auth/model/authSlice';
 import { baseApi } from '@shared/api/baseApi';
 import './enhancedApi';
 
-const rootReducer = combineReducers({
+const appReducer = combineReducers({
   auth: authReducer,
   [baseApi.reducerPath]: baseApi.reducer,
 });
+
+const rootReducer = (state: any, action: any) => {
+  if (action.type === 'auth/logout') {
+    state = undefined;
+  }
+  return appReducer(state, action);
+};
 
 export const setupStore = (preloadedState?: Partial<RootState>) => {
   return configureStore({

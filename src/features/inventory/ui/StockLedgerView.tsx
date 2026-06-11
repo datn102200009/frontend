@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -6,6 +7,8 @@ import { useGetInventoryStockLedgerBalanceQuery } from '@features/inventory/api/
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 
 export function StockLedgerView() {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
   const [filterWarehouse, setFilterWarehouse] = useState('');
 
   const { data: warehouses = [] } = useGetMasterDataWarehousesListQuery();
@@ -72,7 +75,7 @@ export function StockLedgerView() {
           ))}
         </select>
       </div>
-      <DataTable columns={columns} data={stockBalances} searchPlaceholder="Tìm theo mã hoặc tên sản phẩm..." />
+      <DataTable columns={columns} data={stockBalances} searchPlaceholder="Tìm theo mã hoặc tên sản phẩm..." initialSearch={searchQuery} />
     </div>
   );
 }

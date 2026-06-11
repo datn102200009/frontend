@@ -30,8 +30,6 @@ interface AttendanceRecord {
   remarks: string;
 }
 
-const EMPTY_ARRAY: never[] = [];
-
 export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   open,
   onClose,
@@ -73,7 +71,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   );
 
   // Fetch existing attendance records for the selected date
-  const { data: existingAttendances = EMPTY_ARRAY, isLoading: isLoadingAttendances } = useGetHrmAttendancesQuery(
+  const { data: existingAttendances, isLoading: isLoadingAttendances } = useGetHrmAttendancesQuery(
     { date },
     { skip: !date || !open }
   );
@@ -94,7 +92,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
     }
   }
 
-  const existingLength = existingAttendances?.length || 0;
+  const existingLength = existingAttendances?.results?.length || 0;
   const dataKey = open ? `${employeeData?.results?.length || 0}-${existingLength}-${date}-${!!selectedHolidayInfo}` : '';
   const [prevDataKey, setPrevDataKey] = React.useState('');
 
@@ -105,7 +103,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
       const defaultStatus = isHoliday ? 'holiday' : 'working';
       const defaultWorkHours = isHoliday ? 0 : 8;
 
-      const attendanceList = existingAttendances || [];
+      const attendanceList = existingAttendances?.results || [];
 
       const initialRecords: AttendanceRecord[] = employeeData.results.map((emp) => {
         const existing = attendanceList.find((att) => att.employee_id === emp.id);

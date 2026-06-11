@@ -5,6 +5,7 @@ import os
 import time
 import datetime
 import random
+import re
 
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.insert(0, os.path.dirname(__file__))
@@ -57,10 +58,14 @@ def run():
 
                 # Open PO and approve it
                 page.get_by_role("button", name="Chỉnh sửa").first.click()
-                time.sleep(0.5)
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
                 
-                # Store order ID
-                modal_title = page.locator("h2").first.text_content()
+                # Chờ tiêu đề modal cập nhật xong mã đơn hàng
+                h3_locator = page.get_by_role("dialog").locator("h3").first
+                expect(h3_locator).to_have_text(re.compile(r" - [A-F0-9]{8}$"), timeout=5000)
+                
+                # Store order ID (Modal title uses h3 tag)
+                modal_title = h3_locator.text_content()
                 po_with_dep_id = modal_title.split(" - ")[-1] if " - " in modal_title else str(rand_id)
 
                 page.get_by_role("button", name="Duyệt Đơn").click()
@@ -74,7 +79,16 @@ def run():
                 
                 # Check that a payment/expense transaction with advance deposit category is listed
                 expect(page.get_by_text("Đặt cọc đơn hàng")).to_be_visible()
-                runner.log("WF-06", 1, "PASS", f"Tạo và duyệt PO {po_with_dep_id} có đặt cọc thành công, phát sinh phiếu chi đặt cọc", url=page.url)
+
+                # Duyệt giao dịch đặt cọc này để đánh dấu đã thanh toán đặt cọc
+                page.get_by_role("button", name="Duyệt Giao Dịch").click()
+                time.sleep(0.5)
+                deposit_row = page.locator("table tbody tr").filter(has_text="Đặt cọc đơn hàng").first
+                expect(deposit_row).to_be_visible()
+                deposit_row.get_by_role("button", name="Duyệt").click()
+                time.sleep(1.5)
+
+                runner.log("WF-06", 1, "PASS", f"Tạo và duyệt PO {po_with_dep_id} có đặt cọc thành công, phát sinh và phê duyệt phiếu chi đặt cọc", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step1_fail")
                 runner.log("WF-06", 1, "FAIL", "Tạo và duyệt PO có đặt cọc thành công", str(e), url=page.url)
@@ -86,8 +100,11 @@ def run():
             # ── Step 2: Duyệt PO không ở trạng thái Nháp (Fail Case) ──
             try:
                 # Open the approved PO
-                page.get_by_role("button", name="Xem chi tiết").first.click()
+                po_short_id = po_with_dep_id[:8].upper()
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill(po_short_id)
                 time.sleep(0.5)
+                page.locator(f"tr:has-text('{po_short_id}')").first.get_by_title("Xem chi tiết").click()
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
 
                 # Expect "Duyệt Đơn" button not to be visible
                 btn = page.get_by_role("button", name="Duyệt Đơn")
@@ -98,20 +115,25 @@ def run():
                 runner.log("WF-06", 2, "FAIL", "Không hiển thị nút Duyệt Đơn cho đơn mua hàng đã duyệt", str(e), url=page.url)
             finally:
                 page.get_by_role("button", name="Đóng").last.click()
+                time.sleep(0.3)
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill("")
                 time.sleep(0.5)
 
             # ── Step 3: Hủy PO chưa nhập kho + hoàn tiền cọc ──
             try:
-                # Find the PO with deposit created in Step 1 (should be first in details list)
-                page.get_by_role("button", name="Xem chi tiết").first.click()
+                # Find the PO with deposit created in Step 1
+                po_short_id = po_with_dep_id[:8].upper()
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill(po_short_id)
                 time.sleep(0.5)
+                page.locator(f"tr:has-text('{po_short_id}')").first.get_by_title("Xem chi tiết").click()
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
 
                 page.get_by_role("button", name="Hủy Đơn").click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog", name="Xác Nhận Hủy Đơn Mua Hàng")).to_be_visible()
 
                 # Check "Nhận lại tiền đặt cọc" checkbox
-                checkbox = page.get_by_role("checkbox", name="Nhận lại tiền đặt cọc")
+                checkbox = page.get_by_role("checkbox", name=re.compile("Nhận lại tiền đặt cọc"))
                 if not checkbox.is_checked():
                     checkbox.check()
 
@@ -119,6 +141,8 @@ def run():
                 time.sleep(1.5)
                 expect(page.get_by_text("Hủy đơn mua hàng thành công")).to_be_visible()
                 dismiss_all_toasts(page)
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill("")
+                time.sleep(0.5)
 
                 runner.log("WF-06", 3, "PASS", "Hủy PO chưa nhập kho và tạo phiếu thu hoàn cọc thành công", url=page.url)
             except Exception as e:
@@ -144,18 +168,44 @@ def run():
 
                 # Approve it
                 page.get_by_role("button", name="Chỉnh sửa").first.click()
-                time.sleep(0.5)
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
+                
+                # Chờ tiêu đề modal cập nhật xong mã đơn hàng
+                h3_locator = page.get_by_role("dialog").locator("h3").first
+                expect(h3_locator).to_have_text(re.compile(r" - [A-F0-9]{8}$"), timeout=5000)
+                
+                # Store order ID (Modal title uses h3 tag)
+                modal_title = h3_locator.text_content()
+                po_with_dep_id_2 = modal_title.split(" - ")[-1] if " - " in modal_title else None
+                
                 page.get_by_role("button", name="Duyệt Đơn").click()
                 time.sleep(1.5)
                 dismiss_all_toasts(page)
 
-                # Cancel PO, but uncheck refund deposit
-                page.get_by_role("button", name="Xem chi tiết").first.click()
+                # Duyệt giao dịch đặt cọc thứ 2 này để đánh dấu đã thanh toán đặt cọc
+                page.goto(f"{BASE_URL}/finance")
+                wait_for_page_ready(page)
+                page.get_by_role("button", name="Duyệt Giao Dịch").click()
                 time.sleep(0.5)
+                deposit_row = page.locator("table tbody tr").filter(has_text="Đặt cọc đơn hàng").first
+                expect(deposit_row).to_be_visible()
+                deposit_row.get_by_role("button", name="Duyệt").click()
+                time.sleep(1.5)
+
+                # Quay lại trang purchasing để thực hiện hủy
+                page.goto(f"{BASE_URL}/purchasing")
+                wait_for_page_ready(page)
+
+                # Cancel PO, but uncheck refund deposit
+                po_short_id_2 = po_with_dep_id_2[:8].upper()
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill(po_short_id_2)
+                time.sleep(0.5)
+                page.locator(f"tr:has-text('{po_short_id_2}')").first.get_by_title("Xem chi tiết").click()
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
                 page.get_by_role("button", name="Hủy Đơn").click()
                 time.sleep(0.5)
 
-                checkbox = page.get_by_role("checkbox", name="Nhận lại tiền đặt cọc")
+                checkbox = page.get_by_role("checkbox", name=re.compile("Nhận lại tiền đặt cọc"))
                 if checkbox.is_checked():
                     checkbox.uncheck()
 
@@ -166,6 +216,8 @@ def run():
                 time.sleep(1.5)
                 expect(page.get_by_text("Hủy đơn mua hàng thành công")).to_be_visible()
                 dismiss_all_toasts(page)
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill("")
+                time.sleep(0.5)
 
                 runner.log("WF-06", 4, "PASS", "Hủy PO chưa nhập kho và giữ lại tiền cọc thành công", url=page.url)
             except Exception as e:
@@ -174,9 +226,12 @@ def run():
 
             # ── Step 5: Hủy PO đã hủy (Fail Case) ──
             try:
-                # Find a cancelled PO (the one we just cancelled is at the top)
-                page.get_by_role("button", name="Xem chi tiết").first.click()
+                # Find a cancelled PO
+                po_short_id_2 = po_with_dep_id_2[:8].upper()
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill(po_short_id_2)
                 time.sleep(0.5)
+                page.locator(f"tr:has-text('{po_short_id_2}')").first.get_by_title("Xem chi tiết").click()
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
 
                 # Verify button "Hủy Đơn" is NOT visible
                 btn = page.get_by_role("button", name="Hủy Đơn")
@@ -187,6 +242,8 @@ def run():
                 runner.log("WF-06", 5, "FAIL", "Không hiển thị nút Hủy Đơn cho đơn mua hàng đã hủy", str(e), url=page.url)
             finally:
                 page.get_by_role("button", name="Đóng").last.click()
+                time.sleep(0.3)
+                page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill("")
                 time.sleep(0.5)
 
             # ── Step 6: Hủy PO ở trạng thái Nháp (Fail Case) ──
@@ -207,7 +264,7 @@ def run():
 
                 # Open the draft PO details (by clicking Chỉnh sửa, as Xem chi tiết is only for non-drafts)
                 page.get_by_role("button", name="Chỉnh sửa").first.click()
-                time.sleep(0.5)
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
 
                 # Verify button "Hủy Đơn" is NOT visible
                 btn = page.get_by_role("button", name="Hủy Đơn")
@@ -224,7 +281,7 @@ def run():
             try:
                 # Approve the draft PO we just created to generate a draft GRN
                 page.get_by_role("button", name="Chỉnh sửa").first.click()
-                time.sleep(0.5)
+                page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
                 page.get_by_role("button", name="Duyệt Đơn").click()
                 time.sleep(1.5)
                 dismiss_all_toasts(page)
@@ -242,7 +299,7 @@ def run():
                 page.get_by_label("Ghi Chú").fill("Hàng nhập đường bộ")
 
                 # Select a draft stock entry checkbox
-                page.locator("input[type='checkbox']").first.check()
+                page.locator("div[class*='selectionItem']").filter(has_text="Sunrise").first.locator("input[type='checkbox']").check()
 
                 page.get_by_role("button", name="Khởi tạo lô hàng").click()
                 time.sleep(1.5)
@@ -250,7 +307,7 @@ def run():
 
                 # Verify shipment appears in list and has badge "Nháp (Đang đi đường)"
                 expect(page.get_by_text(created_shipment_num)).to_be_visible()
-                expect(page.get_by_text("Nháp (Đang đi đường)")).to_be_visible()
+                expect(page.get_by_text("Nháp (Đang đi đường)").first).to_be_visible()
 
                 runner.log("WF-06", 7, "PASS", f"Tạo lô hàng mới {created_shipment_num} liên kết phiếu kho nháp thành công", url=page.url)
             except Exception as e:
@@ -266,7 +323,7 @@ def run():
                 page.get_by_role("button", name="Xác nhận hàng về (Arrived)").click()
                 time.sleep(1.5)
 
-                expect(page.get_by_text("Đã cập bến (Chờ QC)")).to_be_visible()
+                expect(page.get_by_text("Đã cập bến (Chờ QC)").first).to_be_visible()
                 expect(page.get_by_role("button", name="Đánh giá QC").first).to_be_visible()
 
                 runner.log("WF-06", 8, "PASS", "Cập nhật trạng thái lô hàng sang Arrived và hiển thị nút QC thành công", url=page.url)
@@ -300,7 +357,7 @@ def run():
             try:
                 page.get_by_role("button", name="Hoàn tất Kiểm định QC").click()
                 time.sleep(1.5)
-                expect(page.get_by_text("Đã QC (Chờ nhận hàng)")).to_be_visible()
+                expect(page.get_by_text("Đã QC (Chờ nhận hàng)").first).to_be_visible()
 
                 # Select destination warehouse
                 page.locator("select").first.select_option(label="Kho Nguyên Vật Liệu")

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { useGetHrmEmployeesByIdQuery } from '@entities/hrm/api/hrmApi';
+import { useGetHrmEmployeesByIdQuery, usePostHrmEmploymentHistoriesByIdApproveMutation } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { Badge } from '@shared/ui/Badge/Badge';
+import { usePermission } from '@shared/hooks/usePermission';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { Check } from 'lucide-react';
 import styles from './EmployeeDetailsModal.module.css';
 
 interface EmployeeDetailsModalProps {
@@ -22,10 +26,37 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
-  const { data: detail, isLoading } = useGetHrmEmployeesByIdQuery(
+  const { data: detail, isLoading, refetch } = useGetHrmEmployeesByIdQuery(
     { id: employee.id },
     { skip: !open }
   );
+
+  const hasHrmApprovePermission = usePermission('hrm.change_employee');
+  const { toast } = useToast();
+  const [approveHistory, { isLoading: isApproving }] = usePostHrmEmploymentHistoriesByIdApproveMutation();
+
+  const handleApproveHistory = async (id: string) => {
+    try {
+      await approveHistory({ id }).unwrap();
+      toast('success', 'Phê duyệt đề xuất thay đổi nhân sự thành công');
+      refetch();
+    } catch (err: any) {
+      toast('error', err?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
+    }
+  };
+
+  const getApprovalStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'pending_approval':
+        return <Badge variant="warning">Chờ duyệt</Badge>;
+      case 'approved':
+        return <Badge variant="success">Đã duyệt</Badge>;
+      case 'rejected':
+        return <Badge variant="error">Từ chối</Badge>;
+      default:
+        return <Badge variant="neutral">{status || 'N/A'}</Badge>;
+    }
+  };
 
   const getInitials = (name: string) => {
     if (!name) return 'NV';
@@ -280,6 +311,21 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                           </div>
                         )}
                         {hist.reason && <div className={styles.itemMeta}>Lý do: {hist.reason}</div>}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                        {getApprovalStatusBadge(hist.status)}
+                        {hist.status === 'pending_approval' && hasHrmApprovePermission && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Check size={12} />}
+                            onClick={() => handleApproveHistory(hist.id!)}
+                            disabled={isApproving}
+                            style={{ padding: '4px 8px', fontSize: '11px' }}
+                          >
+                            Duyệt
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))

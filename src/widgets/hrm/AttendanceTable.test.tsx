@@ -43,19 +43,22 @@ describe('AttendanceTable', () => {
     // Override the attendance API query to return a holiday record
     server.use(
       http.get('*/api/v1/hrm/attendances/', () => {
-        return HttpResponse.json([
-          {
-            id: 'attendance-holiday',
-            employee: 'emp-holiday-id',
-            employee_name: 'Lê Văn Lễ',
-            employee_code: 'EMP999',
-            date: '2026-05-01',
-            status: 'holiday',
-            work_hours: 0,
-            overtime_hours: 0,
-            remarks: 'Nghỉ lễ Quốc tế Lao động',
-          },
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          results: [
+            {
+              id: 'attendance-holiday',
+              employee: 'emp-holiday-id',
+              employee_name: 'Lê Văn Lễ',
+              employee_code: 'EMP999',
+              date: '2026-05-01',
+              status: 'holiday',
+              work_hours: 0,
+              overtime_hours: 0,
+              remarks: 'Nghỉ lễ Quốc tế Lao động',
+            },
+          ]
+        });
       })
     );
 

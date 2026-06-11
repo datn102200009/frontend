@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BomList } from '@features/bom/ui/BomList';
 import { WorkOrderList } from '@features/bom/ui/WorkOrderList';
 import styles from './BomPage.module.css';
@@ -7,7 +7,12 @@ import clsx from 'clsx';
 type Tab = 'bom' | 'wo';
 
 export default function BomPage() {
-  const [tab, setTab] = useState<Tab>('bom');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') || 'bom') as Tab;
+
+  const setTab = (newTab: Tab) => {
+    setSearchParams({ tab: newTab });
+  };
 
   return (
     <div className={styles.page}>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { Plus, CheckSquare, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@shared/ui/Button/Button';
@@ -10,6 +11,7 @@ import { LeaveRequestTable } from '@widgets/hrm/LeaveRequestTable';
 import { SalarySlipTable } from '@widgets/hrm/SalarySlipTable';
 import { RewardDisciplineTable } from '@widgets/hrm/RewardDisciplineTable';
 import { PublicHolidayTable } from '@widgets/hrm/PublicHolidayTable';
+import { EmploymentHistoryApprovalTable } from '@widgets/hrm/EmploymentHistoryApprovalTable';
 
 // Modals
 import { EmployeeFormModal } from '@features/hrm/create-employee/ui/EmployeeFormModal';
@@ -29,21 +31,57 @@ import { PublicHolidayFormModal } from '@features/hrm/manage-public-holiday/ui/P
 
 import { formatDateVN } from '@shared/lib/formatDate';
 // Hooks & Types
-import { useGetHrmPublicHolidaysQuery, useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
+import { 
+  useGetHrmPublicHolidaysQuery, 
+  useGetHrmSalarySlipsQuery,
+  useGetHrmEmployeesQuery,
+  useGetHrmLeaveRequestsQuery,
+} from '@entities/hrm/api/hrmApi';
 import type { Employee, LeaveRequest, PublicHoliday } from '@entities/hrm/model/types';
 import styles from './HrmPage.module.css';
 
 import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
-type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays';
+type ActiveTab = 'employees' | 'attendance' | 'leave' | 'salary' | 'rewards_disciplines' | 'public_holidays' | 'proposals';
 
 const HrmPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('employees');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') || 'employees') as ActiveTab;
+
+  const setActiveTab = (newTab: ActiveTab) => {
+    setSearchParams({ tab: newTab });
+  };
+
+  const queryId = searchParams.get('id');
+  const queryEmployeeId = (activeTab === 'employees' || activeTab === 'attendance') ? queryId : null;
+  const queryRequestId = activeTab === 'leave' ? queryId : null;
+
+  const { data: employeeDataResponse } = useGetHrmEmployeesQuery(
+    { limit: 100 },
+    { skip: !queryEmployeeId || (activeTab !== 'employees' && activeTab !== 'attendance') }
+  );
+
+  const { data: leaveRequestsResponse } = useGetHrmLeaveRequestsQuery(
+    {},
+    { skip: !queryRequestId || activeTab !== 'leave' }
+  );
+
+  const selectedEmployeeForView = React.useMemo(() => {
+    if (!queryEmployeeId || !employeeDataResponse?.results) return null;
+    return (employeeDataResponse.results.find((e) => e.id === queryEmployeeId) || null) as Employee | null;
+  }, [queryEmployeeId, employeeDataResponse]);
+
+  const selectedLeaveRequestForDetails = React.useMemo(() => {
+    if (!queryRequestId || !leaveRequestsResponse) return null;
+    const list = Array.isArray(leaveRequestsResponse)
+      ? leaveRequestsResponse
+      : (leaveRequestsResponse as any).results || [];
+    return (list.find((r: LeaveRequest) => r.id === queryRequestId) || null) as LeaveRequest | null;
+  }, [queryRequestId, leaveRequestsResponse]);
 
   // Employee Modals States
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedEmployeeForUpdate, setSelectedEmployeeForUpdate] = useState<Employee | null>(null);
-  const [selectedEmployeeForView, setSelectedEmployeeForView] = useState<Employee | null>(null);
   const [selectedEmployeeForSalaryUpdate, setSelectedEmployeeForSalaryUpdate] = useState<Employee | null>(null);
   const [selectedEmployeeForContractCreate, setSelectedEmployeeForContractCreate] = useState<Employee | null>(null);
   const [selectedEmployeeForReward, setSelectedEmployeeForReward] = useState<Employee | null>(null);
@@ -57,7 +95,6 @@ const HrmPage: React.FC = () => {
   // Other Modals States
   const [isBatchAttendanceOpen, setIsBatchAttendanceOpen] = useState(false);
   const [isLeaveRequestFormOpen, setIsLeaveRequestFormOpen] = useState(false);
-  const [selectedLeaveRequestForDetails, setSelectedLeaveRequestForDetails] = useState<LeaveRequest | null>(null);
   const [isInitializeSalarySlipOpen, setIsInitializeSalarySlipOpen] = useState(false);
   const [isBulkPayOpen, setIsBulkPayOpen] = useState(false);
 
@@ -97,7 +134,9 @@ const HrmPage: React.FC = () => {
 
   // Actions
   const handleTerminateContractTrigger = (emp: Employee, contractId: string) => {
-    setSelectedEmployeeForView(null); // Close Details modal first to avoid overlay overlap
+    const params = new URLSearchParams(searchParams);
+    params.delete('id');
+    setSearchParams(params);
     setTerminationState({ employee: emp, contractId });
   };
 
@@ -159,6 +198,15 @@ const HrmPage: React.FC = () => {
         >
           Ngày Nghỉ Lễ
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'proposals'}
+          className={clsx(styles.tab, activeTab === 'proposals' && styles.active)}
+          onClick={() => setActiveTab('proposals')}
+        >
+          Phê Duyệt Đề Xuất
+        </button>
       </div>
 
       <div className={styles.content}>
@@ -176,7 +224,15 @@ const HrmPage: React.FC = () => {
                 </Button>
               </div>
               <EmployeeTable
-                onView={(emp) => setSelectedEmployeeForView(emp)}
+                onView={(emp) => {
+                  const params = new URLSearchParams(searchParams);
+                  if (emp.id) {
+                    params.set('id', emp.id);
+                  } else {
+                    params.delete('id');
+                  }
+                  setSearchParams(params);
+                }}
                 onEdit={(emp) => setSelectedEmployeeForUpdate(emp)}
                 onUpdateSalary={(emp) => setSelectedEmployeeForSalaryUpdate(emp)}
                 onCreateContract={(emp) => setSelectedEmployeeForContractCreate(emp)}
@@ -249,7 +305,15 @@ const HrmPage: React.FC = () => {
                   Tạo Đơn Phép
                 </Button>
               </div>
-              <LeaveRequestTable onViewDetails={(lr) => setSelectedLeaveRequestForDetails(lr)} />
+              <LeaveRequestTable onViewDetails={(lr) => {
+                const params = new URLSearchParams(searchParams);
+                if (lr.id) {
+                  params.set('id', lr.id);
+                } else {
+                  params.delete('id');
+                }
+                setSearchParams(params);
+              }} />
             </>
           )}
 
@@ -302,6 +366,18 @@ const HrmPage: React.FC = () => {
               <PublicHolidayTable onEdit={(holiday) => setSelectedHolidayForEdit(holiday)} />
             </>
           )}
+
+          {activeTab === 'proposals' && (
+            <>
+              <div className={styles.header}>
+                <div>
+                  <h2 className={styles.title}>Phê Duyệt Đề Xuất</h2>
+                  <p className={styles.subtitle}>Phê duyệt các thay đổi thông tin nhân sự (lương, chức vụ, phòng ban)</p>
+                </div>
+              </div>
+              <EmploymentHistoryApprovalTable />
+            </>
+          )}
         </div>
       </div>
 
@@ -326,7 +402,11 @@ const HrmPage: React.FC = () => {
       {selectedEmployeeForView && (
         <EmployeeDetailsModal
           open={!!selectedEmployeeForView}
-          onClose={() => setSelectedEmployeeForView(null)}
+          onClose={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }}
           employee={selectedEmployeeForView}
           onTerminateContract={handleTerminateContractTrigger}
         />
@@ -400,8 +480,16 @@ const HrmPage: React.FC = () => {
       {selectedLeaveRequestForDetails && (
         <LeaveRequestDetailsModal
           open={!!selectedLeaveRequestForDetails}
-          onClose={() => setSelectedLeaveRequestForDetails(null)}
-          onSuccess={() => setSelectedLeaveRequestForDetails(null)}
+          onClose={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }}
+          onSuccess={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }}
           leaveRequest={selectedLeaveRequestForDetails}
         />
       )}

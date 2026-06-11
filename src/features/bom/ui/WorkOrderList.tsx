@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Plus, CheckCircle, ArrowRightCircle, PlayCircle, Eye, XCircle } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
@@ -11,6 +12,7 @@ import { WorkOrderFormModal } from './WorkOrderFormModal';
 import { WorkOrderDetailModal } from './WorkOrderDetailModal';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { usePermission } from '@shared/hooks/usePermission';
 import { formatDateShort } from '@shared/lib/formatDate';
 import {
   useGetManufacturingWorkOrderListQuery,
@@ -30,17 +32,35 @@ const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning'
 };
 
 export function WorkOrderList() {
+  const canCreate = usePermission('manufacturing.work_order_create');
+  const canApprove = usePermission('manufacturing.work_order_approve');
+  const canCancel = usePermission('manufacturing.work_order_cancel');
+  const canDeclare = usePermission('manufacturing.work_order_declare');
+  const canComplete = usePermission('manufacturing.work_order_complete');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlStatus = searchParams.get('status');
+
   const [search, setSearch] = useState('');
   const [declaringWo, setDeclaringWo] = useState<WorkOrder | null>(null);
-  const [viewingWo, setViewingWo] = useState<WorkOrder | null>(null);
   const [producedQty, setProducedQty] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [confirmState, setConfirmState] = useState<{ action: 'approve' | 'complete' | 'cancel', wo: WorkOrder, message: string } | null>(null);
+
+  const queryId = searchParams.get('id');
   const { toast } = useToast();
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
     search: search || undefined,
+    status: (urlStatus as WorkOrder['status']) || undefined,
   });
+
+  const workOrders = data?.results || [];
+
+  const viewingWo = useMemo(() => {
+    if (!queryId || workOrders.length === 0) return null;
+    return workOrders.find((w: WorkOrder) => w.id === queryId) || null;
+  }, [queryId, workOrders]);
 
   const [approveWo, { isLoading: isApproving }] = usePostManufacturingWorkOrderByWorkOrderIdApproveMutation();
   const [declareWo, { isLoading: isDeclaring }] = usePostManufacturingWorkOrderByWorkOrderIdDeclareMutation();
@@ -88,7 +108,7 @@ export function WorkOrderList() {
       refetch();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Lỗi khi thực hiện thao tác');
+      toast('error', error?.data?.detail || error?.data?.error || 'Lỗi khi thực hiện thao tác');
     } finally {
       setConfirmState(null);
     }
@@ -111,7 +131,7 @@ export function WorkOrderList() {
       refetch();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi nhập liệu');
+      toast('error', error?.data?.detail || error?.data?.error || 'Có lỗi xảy ra khi nhập liệu');
     }
   };
 
@@ -167,28 +187,40 @@ export function WorkOrderList() {
               <ActionButton
                 icon={<Eye size={18} />}
                 title="Chi tiết"
-                onClick={() => setViewingWo(row.original)}
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams);
+                  if (row.original.id) {
+                    params.set('id', row.original.id);
+                  } else {
+                    params.delete('id');
+                  }
+                  setSearchParams(params);
+                }}
               />
               {status === 'pending_approval' && (
                 <>
-                  <ActionButton
-                    icon={<PlayCircle size={18} />}
-                    title="Phê duyệt"
-                    onClick={() => handleApprove(row.original)}
-                    disabled={isApproving}
-                  />
-                  <ActionButton
-                    icon={<XCircle size={18} />}
-                    title="Hủy"
-                    variant="danger"
-                    onClick={() => handleCancel(row.original)}
-                    disabled={isCanceling}
-                  />
+                  {canApprove && (
+                    <ActionButton
+                      icon={<PlayCircle size={18} />}
+                      title="Phê duyệt"
+                      onClick={() => handleApprove(row.original)}
+                      disabled={isApproving}
+                    />
+                  )}
+                  {canCancel && (
+                    <ActionButton
+                      icon={<XCircle size={18} />}
+                      title="Hủy"
+                      variant="danger"
+                      onClick={() => handleCancel(row.original)}
+                      disabled={isCanceling}
+                    />
+                  )}
                 </>
               )}
               {status === 'in_progress' && (
                 <>
-                  {(row.original.produced_qty || 0) < (row.original.quantity || 0) && (
+                  {(row.original.produced_qty || 0) < (row.original.quantity || 0) && canDeclare && (
                     <ActionButton
                       icon={<ArrowRightCircle size={18} />}
                       title="Nhập liệu"
@@ -198,7 +230,7 @@ export function WorkOrderList() {
                       }}
                     />
                   )}
-                  {(row.original.produced_qty || 0) >= (row.original.quantity || 0) && (
+                  {(row.original.produced_qty || 0) >= (row.original.quantity || 0) && canComplete && (
                     <ActionButton
                       icon={<CheckCircle size={18} />}
                       title="Hoàn thành"
@@ -213,10 +245,10 @@ export function WorkOrderList() {
         }
       },
     ],
-    [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting],
+    [handleApprove, handleCancel, handleComplete, isApproving, isCanceling, isCompleting, canApprove, canCancel, canDeclare, canComplete],
   );
 
-  const workOrders = data?.results || [];
+
 
   return (
     <div className={styles.container}>
@@ -225,9 +257,11 @@ export function WorkOrderList() {
           <h2 className={styles.title}>Lệnh Sản Xuất</h2>
           <p className={styles.subtitle}>{data?.count ?? 0} lệnh</p>
         </div>
-        <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
-          Tạo lệnh
-        </Button>
+        {canCreate && (
+          <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>
+            Tạo lệnh
+          </Button>
+        )}
       </div>
 
       <DataTable 
@@ -287,9 +321,13 @@ export function WorkOrderList() {
 
       {viewingWo && (
         <WorkOrderDetailModal
-          open
+          open={!!viewingWo}
           workOrder={viewingWo}
-          onClose={() => setViewingWo(null)}
+          onClose={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }}
         />
       )}
 
