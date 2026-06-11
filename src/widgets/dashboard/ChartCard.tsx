@@ -5,7 +5,13 @@ export interface ChartCardProps {
   title: string;
   code: string;
   icon?: ReactNode;
-  data: any;
+  data: {
+    weeks?: {
+      week_label: string;
+      receive: number;
+      pay: number;
+    }[];
+  } | null | undefined;
 }
 
 interface WeekData {

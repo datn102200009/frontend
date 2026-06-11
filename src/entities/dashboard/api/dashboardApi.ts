@@ -271,7 +271,7 @@ export type WidgetBatchDataResult = {
             | null
           )
         | ({
-            [key: string]: any
+            [key: string]: unknown
           } | null)
       )
     | null

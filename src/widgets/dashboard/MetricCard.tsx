@@ -1,18 +1,13 @@
 import type { ReactNode } from 'react';
+import { formatVND } from '@shared/lib/formatVND';
 import styles from './DashboardWidgets.module.css';
 
 export interface MetricCardProps {
   title: string;
   code: string;
   icon?: ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
-}
-
-export function formatVND(value: number | string) {
-  if (value === undefined || value === null) return '0 ₫';
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num)) return '0 ₫';
-  return num.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 
 export function MetricCard({ title, code, icon, data }: MetricCardProps) {

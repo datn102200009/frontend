@@ -15,6 +15,7 @@ import { RewardFormModal } from '@features/hrm/manage-salary-slip/ui/RewardFormM
 import { DisciplineFormModal } from '@features/hrm/manage-salary-slip/ui/DisciplineFormModal';
 import { usePermission } from '@shared/hooks/usePermission';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { extractApiError } from '@shared/lib/extractApiError';
 import styles from './RewardDisciplineTable.module.css';
 
 export const RewardDisciplineTable: React.FC = () => {
@@ -46,8 +47,8 @@ export const RewardDisciplineTable: React.FC = () => {
       await approveReward({ id }).unwrap();
       toast('success', 'Phê duyệt khen thưởng thành công');
       refetchRewards();
-    } catch (err: any) {
-      toast('error', err?.data?.detail || 'Phê duyệt thất bại');
+    } catch (err) {
+      toast('error', extractApiError(err, 'Phê duyệt thất bại'));
     }
   };
 
@@ -56,8 +57,8 @@ export const RewardDisciplineTable: React.FC = () => {
       await approveDiscipline({ id }).unwrap();
       toast('success', 'Phê duyệt kỷ luật thành công');
       refetchDisciplines();
-    } catch (err: any) {
-      toast('error', err?.data?.detail || 'Phê duyệt thất bại');
+    } catch (err) {
+      toast('error', extractApiError(err, 'Phê duyệt thất bại'));
     }
   };
 

@@ -11,6 +11,7 @@ import {
 import type { EmploymentHistory } from '@entities/hrm/model/types';
 import { usePermission } from '@shared/hooks/usePermission';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { extractApiError } from '@shared/lib/extractApiError';
 
 export const EmploymentHistoryApprovalTable: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -39,8 +40,8 @@ export const EmploymentHistoryApprovalTable: React.FC = () => {
       await approveHistory({ id }).unwrap();
       toast('success', 'Phê duyệt đề xuất thay đổi nhân sự thành công');
       refetch();
-    } catch (err: any) {
-      toast('error', err?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
+    } catch (err) {
+      toast('error', extractApiError(err, 'Phê duyệt thất bại. Vui lòng kiểm tra lại.'));
     }
   };
 
@@ -145,7 +146,9 @@ export const EmploymentHistoryApprovalTable: React.FC = () => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
       <DataTable
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data={historiesList as any}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đề xuất nhân sự..."

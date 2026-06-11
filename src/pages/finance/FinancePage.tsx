@@ -118,6 +118,7 @@ const FinancePage: React.FC = () => {
   };
 
   // Columns definitions using createColumnHelper
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const apColumnHelper = createColumnHelper<any>();
   const apColumns = useMemo(() => [
     apColumnHelper.accessor('id', {
@@ -184,6 +185,7 @@ const FinancePage: React.FC = () => {
     }),
   ], []);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const arColumnHelper = createColumnHelper<any>();
   const arColumns = useMemo(() => [
     arColumnHelper.accessor('id', {
@@ -354,6 +356,7 @@ const FinancePage: React.FC = () => {
         {activeTab === 'ap' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
             <DataTable 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               columns={apColumns as any} 
               data={apData?.results || []} 
               loading={isLoadingAP}
@@ -395,6 +398,7 @@ const FinancePage: React.FC = () => {
         {activeTab === 'ar' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
             <DataTable 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               columns={arColumns as any} 
               data={arData?.results || []} 
               loading={isLoadingAR}
@@ -436,6 +440,7 @@ const FinancePage: React.FC = () => {
         {activeTab === 'approvals' && hasApprovePermission && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
             <DataTable 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               columns={approvalColumns as any} 
               data={approvalsData?.results || []} 
               loading={isLoadingApprovals}

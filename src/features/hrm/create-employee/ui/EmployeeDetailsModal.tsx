@@ -8,6 +8,7 @@ import { usePermission } from '@shared/hooks/usePermission';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { Check } from 'lucide-react';
 import styles from './EmployeeDetailsModal.module.css';
+import { extractApiError } from '@shared/lib/extractApiError';
 
 interface EmployeeDetailsModalProps {
   open: boolean;
@@ -40,8 +41,8 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
       await approveHistory({ id }).unwrap();
       toast('success', 'Phê duyệt đề xuất thay đổi nhân sự thành công');
       refetch();
-    } catch (err: any) {
-      toast('error', err?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
+    } catch (err) {
+      toast('error', extractApiError(err, 'Phê duyệt thất bại. Vui lòng kiểm tra lại.'));
     }
   };
 

@@ -8,7 +8,7 @@ import type { CashFlowTransaction } from '@entities/finance/model/types';
 
 export const CashFlowTable: React.FC = () => {
   const { data: flowsData, isLoading } = useGetFinanceCashFlowsQuery({});
-  const flows = Array.isArray(flowsData) ? flowsData : (flowsData as any)?.results || [];
+  const flows = Array.isArray(flowsData) ? flowsData : (flowsData as { results?: CashFlowTransaction[] })?.results || [];
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<CashFlowTransaction>();

@@ -2,8 +2,9 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Inbox } from 'lucide-react';
 import styles from './DashboardWidgets.module.css';
-import { formatVND } from './MetricCard';
+import { formatVND } from '@shared/lib/formatVND';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function mapRoute(url: string, _code: string): string {
   return url;
 }
@@ -14,6 +15,7 @@ export interface ListSummaryCardProps {
   title: string;
   code: string;
   icon?: ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   quickLinks?: string[];
   totalCount?: number;
@@ -658,16 +660,21 @@ export function ListSummaryCard({ title, code, icon, data, quickLinks, totalCoun
                     }
                     if (code === 'manufacturing_pending_declarations') {
                       const daysLeft = item.days_left;
-                      let badgeText = '';
-                      let badgeClass = '';
-                      if (daysLeft < 0) {
-                        badgeText = `Trễ ${Math.abs(daysLeft)} ngày`;
-                        badgeClass = 'error';
-                      } else if (daysLeft === 0) {
-                        badgeText = 'Hạn hôm nay';
-                        badgeClass = 'warning';
+                      let badgeText: string;
+                      let badgeClass: string;
+                      if (daysLeft !== undefined && daysLeft !== null) {
+                        if (daysLeft < 0) {
+                          badgeText = `Trễ ${Math.abs(daysLeft)} ngày`;
+                          badgeClass = 'error';
+                        } else if (daysLeft === 0) {
+                          badgeText = 'Hạn hôm nay';
+                          badgeClass = 'warning';
+                        } else {
+                          badgeText = `Còn ${daysLeft} ngày`;
+                          badgeClass = 'neutral';
+                        }
                       } else {
-                        badgeText = `Còn ${daysLeft} ngày`;
+                        badgeText = 'Không rõ hạn';
                         badgeClass = 'neutral';
                       }
                       const bgMap: Record<string, string> = {

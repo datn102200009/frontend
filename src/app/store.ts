@@ -8,6 +8,7 @@ const appReducer = combineReducers({
   [baseApi.reducerPath]: baseApi.reducer,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rootReducer = (state: any, action: any) => {
   if (action.type === 'auth/logout') {
     state = undefined;

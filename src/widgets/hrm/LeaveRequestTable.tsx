@@ -29,7 +29,8 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
   );
   const leaveRequestsList = Array.isArray(leaveRequestsData)
     ? leaveRequestsData
-    : (leaveRequestsData as any)?.results || [];
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (leaveRequestsData as any)?.results || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {

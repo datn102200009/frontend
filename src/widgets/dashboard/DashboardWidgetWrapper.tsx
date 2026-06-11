@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import {
   TrendingUp,
   Receipt,
@@ -32,8 +32,10 @@ import styles from './DashboardWidgets.module.css';
 
 export interface DashboardWidgetWrapperProps {
   widget: WidgetMetadata;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   batchData: any;
   batchLoading: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   batchError: any;
 }
 
@@ -121,13 +123,14 @@ export function DashboardWidgetWrapper({
     dashboardApi.useLazyGetDashboardWidgetsByWidgetCodeQuery();
 
   const [hasRetried, setHasRetried] = useState(false);
+  const [prevBatchLoading, setPrevBatchLoading] = useState(batchLoading);
 
-  // Reset retry state when batch is loading (meaning a global refresh happened)
-  useEffect(() => {
+  if (batchLoading !== prevBatchLoading) {
+    setPrevBatchLoading(batchLoading);
     if (batchLoading) {
       setHasRetried(false);
     }
-  }, [batchLoading]);
+  }
 
   // Extract result from batch or detail query
   const batchResult = batchData?.[code];
@@ -159,7 +162,7 @@ export function DashboardWidgetWrapper({
   if (batchLoading && !hasRetried) {
     return (
       <div style={gridStyle}>
-        <SkeletonShimmerCard type={type as any} />
+        <SkeletonShimmerCard type={type as 'metric' | 'list_summary' | 'mini_chart'} />
       </div>
     );
   }
