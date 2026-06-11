@@ -52,7 +52,7 @@ export function WorkOrderList() {
 
   const { data, isLoading, isFetching, refetch } = useGetManufacturingWorkOrderListQuery({
     search: search || undefined,
-    status: (urlStatus as any) || undefined,
+    status: (urlStatus as WorkOrder['status']) || undefined,
   });
 
   const workOrders = data?.results || [];

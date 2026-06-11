@@ -8,9 +8,11 @@ export interface MetricCardProps {
   data: any;
 }
 
-export function formatVND(value: number) {
+export function formatVND(value: number | string) {
   if (value === undefined || value === null) return '0 ₫';
-  return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '0 ₫';
+  return num.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 
 export function MetricCard({ title, code, icon, data }: MetricCardProps) {

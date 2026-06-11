@@ -379,4 +379,41 @@ describe('DashboardPage', () => {
     expect(screen.getByText('SE-001')).toBeInTheDocument();
     expect(screen.queryByText('SE-002')).not.toBeInTheDocument();
   });
+
+  it('renders empty state when no widgets are returned', async () => {
+    server.use(
+      http.get('*/api/v1/dashboard/widgets/', () => {
+        return HttpResponse.json([]);
+      }),
+      http.get('*/api/v1/dashboard/widgets/batch-data/', () => {
+        return HttpResponse.json({});
+      })
+    );
+
+    renderWithProviders(<DashboardPage />);
+
+    // Should show the empty state message
+    await waitFor(() => {
+      expect(screen.getByText('Không có dữ liệu hiển thị')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error state when batch-data API fails', async () => {
+    server.use(
+      http.get('*/api/v1/dashboard/widgets/', () => {
+        return HttpResponse.json(mockWidgetsMetadata);
+      }),
+      http.get('*/api/v1/dashboard/widgets/batch-data/', () => {
+        return HttpResponse.error();
+      })
+    );
+
+    renderWithProviders(<DashboardPage />);
+
+    // Should show page title and widget error states
+    await waitFor(() => {
+      expect(screen.getByText('Trang Tổng Quan')).toBeInTheDocument();
+      expect(screen.getAllByText('Lỗi nạp dữ liệu').length).toBeGreaterThan(0);
+    });
+  });
 });
