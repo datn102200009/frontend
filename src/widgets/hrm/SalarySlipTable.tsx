@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -20,7 +21,9 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
   onChangePeriod,
 }) => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'calculated' | 'approved' | 'paid'>('all');
-  const [selectedSlipId, setSelectedSlipId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const querySlipId = searchParams.get('id');
+  const selectedSlipId = querySlipId || null;
 
   const { data: salarySlips = [], isLoading, refetch } = useGetHrmSalarySlipsQuery({
     salaryPeriod: selectedPeriod || undefined,
@@ -102,7 +105,13 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
                 icon={<Eye size={15} />}
                 title={slip.status === 'draft' ? 'Xem & Tính lương' : 'Xem phiếu lương'}
                 onClick={() => {
-                  setSelectedSlipId(slip.id || null);
+                  const params = new URLSearchParams(searchParams);
+                  if (slip.id) {
+                    params.set('id', slip.id);
+                  } else {
+                    params.delete('id');
+                  }
+                  setSearchParams(params);
                   onViewDetails?.(slip as SalarySlip);
                 }}
               />
@@ -201,10 +210,16 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
       {selectedSlip && (
         <SalarySlipDetailsModal
           open={!!selectedSlipId}
-          onClose={() => setSelectedSlipId(null)}
+          onClose={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }}
           onSuccess={() => {
             refetch();
-            setSelectedSlipId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
           }}
           onCalculateSuccess={refetch}
           salarySlip={selectedSlip as SalarySlip}

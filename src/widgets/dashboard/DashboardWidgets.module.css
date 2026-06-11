@@ -1,0 +1,692 @@
+/* Bento Grid Dashboard Widgets Style Sheets — Industrial Precision Style */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--duration-base) var(--ease-out);
+  overflow: hidden;
+  height: 100%;
+  min-height: 100px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--clr-primary-400);
+  box-shadow: var(--shadow-md);
+}
+
+/* Header */
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+  gap: var(--sp-2);
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cardTitle {
+  font-family: var(--font-heading);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-primary-600);
+  background: var(--clr-primary-50);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--clr-text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) ease;
+}
+
+.actionBtn:hover {
+  background: var(--clr-bg);
+  color: var(--clr-text-secondary);
+}
+
+.actionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Card Body & Content */
+.cardBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+
+
+/* List Summary Layout */
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  height: 100%;
+}
+
+.listRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--clr-border);
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.listRow:last-child {
+  border-bottom: none;
+}
+
+.listItemMain {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.listItemTitle {
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listItemSubtitle {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.listItemMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.listItemValue {
+  font-family: var(--font-heading);
+  font-weight: var(--fw-bold);
+  color: var(--clr-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.listItemTime {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-text-muted);
+  height: 100%;
+  min-height: 120px;
+  padding: var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-sm);
+  gap: var(--sp-2);
+}
+
+.emptyStateIcon {
+  color: var(--clr-border-focus);
+}
+
+.viewAllLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-primary-600);
+  margin-top: auto;
+  padding-top: var(--sp-2);
+  align-self: flex-start;
+  transition: color var(--duration-fast) ease;
+}
+
+.viewAllLink:hover {
+  color: var(--clr-primary-500);
+}
+
+/* Chart Layout */
+.chartContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 180px;
+}
+
+.chartWrapper {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+}
+
+.radialGaugeWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.radialGaugeText {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.radialGaugeValue {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--clr-text);
+}
+
+.radialGaugeLabel {
+  font-size: 10px;
+  color: var(--clr-text-muted);
+}
+
+/* Skeleton Loading & Shimmer */
+.shimmerCard {
+  background: var(--clr-surface);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--sp-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmerCard::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 20%,
+    rgba(255, 255, 255, 0.9) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.8s infinite;
+  content: '';
+}
+
+.shimmerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shimmerCircle {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--clr-bg);
+}
+
+.shimmerTitle {
+  width: 45%;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-bg);
+}
+
+.shimmerBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  justify-content: center;
+}
+
+.shimmerValue {
+  width: 70%;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-bg);
+}
+
+.shimmerSubtext {
+  width: 40%;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-bg);
+}
+
+.shimmerRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 1px solid var(--clr-border);
+  padding-bottom: 8px;
+}
+
+.shimmerRow:last-child {
+  border-bottom: none;
+}
+
+.shimmerRowHeader {
+  display: flex;
+  justify-content: space-between;
+}
+
+.shimmerLineLong {
+  width: 60%;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-bg);
+}
+
+.shimmerLineShort {
+  width: 20%;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-bg);
+}
+
+/* Error boundary & Retry State */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 120px;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--clr-error-bg);
+  border: 1px dashed var(--clr-error);
+  border-radius: var(--radius-md);
+  color: var(--clr-error);
+}
+
+.errorTitle {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.errorText {
+  font-size: 11px;
+  opacity: 0.9;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.retryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 4px 10px;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-error);
+  color: var(--clr-error);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.retryBtn:hover {
+  background: var(--clr-error);
+  color: var(--clr-surface);
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-dropdown);
+  backdrop-filter: blur(1px);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--clr-primary);
+}
+
+/* Low Stock specific status colors */
+.criticalText {
+  color: var(--clr-error);
+}
+
+.warningText {
+  color: var(--clr-warning);
+}
+
+.normalText {
+  color: var(--clr-success);
+}
+
+/* Specific Bento Grid Layout borders */
+.warningBorder {
+  border-left: 4px solid var(--clr-warning) !important;
+}
+
+.dangerBorder {
+  border-left: 4px solid var(--clr-error) !important;
+}
+
+/* Task warning & danger dot indicator */
+.taskIndicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.warningDot {
+  background-color: var(--clr-warning);
+  box-shadow: 0 0 6px var(--clr-warning);
+}
+
+.dangerDot {
+  background-color: var(--clr-error);
+  box-shadow: 0 0 6px var(--clr-error);
+}
+
+/* Grid-based Table layouts */
+.gridTable {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  width: 100%;
+}
+
+.gridRow {
+  display: grid;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--clr-border);
+  font-size: var(--fs-xs);
+}
+
+.gridRow:last-child {
+  border-bottom: none;
+}
+
+/* Custom columns style */
+.colBoldLink {
+  font-weight: var(--fw-bold);
+  color: var(--clr-primary-600);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colBoldLink:hover {
+  text-decoration: underline;
+  color: var(--clr-primary-700);
+}
+
+.colTextEllipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--clr-text);
+}
+
+.rowMainText {
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colRightAlign {
+  text-align: right;
+  justify-self: end;
+  font-family: var(--font-heading);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+}
+
+.rowSubText {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.colOrangeText {
+  color: var(--clr-warning-600);
+  font-size: var(--fs-xs);
+}
+
+.colRedText {
+  color: var(--clr-error-600);
+  font-size: var(--fs-xs);
+}
+
+.colGreenText {
+  color: var(--clr-success-600);
+  font-size: var(--fs-xs);
+}
+
+.textRed {
+  color: var(--clr-error-600);
+}
+
+.textOrange {
+  color: var(--clr-warning-600);
+}
+
+.textGreen {
+  color: var(--clr-success-600);
+}
+
+/* Stacked progress bar styles */
+.progressStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.progressTrack {
+  height: 6px;
+  width: 100%;
+  background: var(--clr-bg);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.barBlue {
+  height: 100%;
+  background: var(--clr-primary-500);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.barOrange {
+  height: 100%;
+  background: var(--clr-warning-500);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Tab filter layout */
+.tabHeader {
+  display: flex;
+  gap: var(--sp-2);
+  border-bottom: 1px solid var(--clr-border);
+  margin-bottom: var(--sp-2);
+}
+
+.tabBtn {
+  padding: var(--sp-1) var(--sp-3);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--clr-text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all var(--duration-fast) ease;
+}
+
+.tabBtnActive {
+  color: var(--clr-primary-600);
+  border-bottom-color: var(--clr-primary-600);
+  font-weight: var(--fw-semibold);
+}
+
+/* Radial Gauge SVG Layout */
+.radialGaugeWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 110px;
+}
+
+.gaugeSvg {
+  width: 100px;
+  height: 100px;
+  transform: rotate(-90deg);
+}
+
+.gaugeBg {
+  fill: none;
+  stroke: var(--clr-bg);
+  stroke-width: 6;
+}
+
+.gaugeProgress {
+  fill: none;
+  stroke: var(--clr-violet-600);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.radialGaugeText {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radialGaugeValue {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--clr-text);
+  font-family: var(--font-heading);
+}
+
+/* Metric specific status states */
+.statusDone {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--clr-success-600);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-md);
+  margin-bottom: var(--sp-2);
+}
+
+.statusPending {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--clr-warning-600);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-md);
+  margin-bottom: var(--sp-2);
+}
+
+.statusIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  color: white;
+  font-size: 11px;
+}
+

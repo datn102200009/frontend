@@ -45,6 +45,8 @@ export const baseApi = createApi({
     'LeaveRequests',
     'SalarySlips',
     'PublicHolidays',
+    'Rewards',
+    'Disciplines',
   ],
   endpoints: () => ({}),
 });

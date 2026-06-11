@@ -8,7 +8,7 @@ import {
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Search, PackageOpen } from 'lucide-react';
 import styles from './DataTable.module.css';
 
@@ -22,6 +22,7 @@ interface DataTableProps<TData> {
   emptyMessage?: string;
   emptyDescription?: string;
   onSearch?: (value: string) => void;
+  initialSearch?: string;
 }
 
 export function DataTable<TData>({
@@ -33,9 +34,16 @@ export function DataTable<TData>({
   emptyMessage = 'Không có dữ liệu',
   emptyDescription = 'Chưa có bản ghi nào được tạo.',
   onSearch,
+  initialSearch = '',
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState(initialSearch);
+
+  useEffect(() => {
+    if (initialSearch !== undefined) {
+      setGlobalFilter(initialSearch);
+    }
+  }, [initialSearch]);
 
   const table = useReactTable({
     data,

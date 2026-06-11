@@ -2,7 +2,14 @@ import { baseApi as api } from '../../../shared/api/baseApi'
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
     getFinanceCashFlows: build.query<GetFinanceCashFlowsApiResponse, GetFinanceCashFlowsApiArg>({
-      query: () => ({ url: `/finance/cash-flows/` }),
+      query: (queryArg) => ({
+        url: `/finance/cash-flows/`,
+        params: {
+          limit: queryArg.limit,
+          page: queryArg.page,
+          status: queryArg.status,
+        },
+      }),
     }),
     postFinanceCashFlows: build.mutation<
       PostFinanceCashFlowsApiResponse,
@@ -19,6 +26,12 @@ const injectedRtkApi = api.injectEndpoints({
       GetFinanceCashFlowsByPkApiArg
     >({
       query: (queryArg) => ({ url: `/finance/cash-flows/${queryArg.pk}/` }),
+    }),
+    postFinanceCashFlowsByPkApprove: build.mutation<
+      PostFinanceCashFlowsByPkApproveApiResponse,
+      PostFinanceCashFlowsByPkApproveApiArg
+    >({
+      query: (queryArg) => ({ url: `/finance/cash-flows/${queryArg.pk}/approve/`, method: 'POST' }),
     }),
     getFinanceFixedAssets: build.query<
       GetFinanceFixedAssetsApiResponse,
@@ -88,13 +101,31 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    postFinanceInvoicesPurchaseByPkPay: build.mutation<
+      PostFinanceInvoicesPurchaseByPkPayApiResponse,
+      PostFinanceInvoicesPurchaseByPkPayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/invoices/purchase/${queryArg.pk}/pay/`,
+        method: 'POST',
+        body: queryArg.payInvoiceInput,
+      }),
+    }),
   }),
   overrideExisting: false,
 })
 export { injectedRtkApi as financeApi }
-export type GetFinanceCashFlowsApiResponse =
-  /** status 200 A list of cash flows. */ CashFlowTransaction[]
-export type GetFinanceCashFlowsApiArg = void
+export type GetFinanceCashFlowsApiResponse = /** status 200 A paginated list of cash flows. */ {
+  count?: number
+  total_pages?: number
+  current_page?: number
+  results?: CashFlowTransaction[]
+}
+export type GetFinanceCashFlowsApiArg = {
+  limit?: number
+  page?: number
+  status?: string
+}
 export type PostFinanceCashFlowsApiResponse =
   /** status 201 Cash flow successfully created and cross-updated. */ CashFlowTransaction
 export type PostFinanceCashFlowsApiArg = {
@@ -103,6 +134,11 @@ export type PostFinanceCashFlowsApiArg = {
 export type GetFinanceCashFlowsByPkApiResponse =
   /** status 200 Cash flow details. */ CashFlowTransaction
 export type GetFinanceCashFlowsByPkApiArg = {
+  pk: string
+}
+export type PostFinanceCashFlowsByPkApproveApiResponse =
+  /** status 200 Cash flow transaction successfully approved. */ CashFlowTransaction
+export type PostFinanceCashFlowsByPkApproveApiArg = {
   pk: string
 }
 export type GetFinanceFixedAssetsApiResponse = /** status 200 A paginated list of fixed assets. */ {
@@ -155,6 +191,12 @@ export type GetFinanceFixedAssetsDepreciationLogsApiArg = {
   limit?: number
   page?: number
 }
+export type PostFinanceInvoicesPurchaseByPkPayApiResponse =
+  /** status 200 Thanh toán thành công, trả về hóa đơn đã cập nhật. */ PurchaseInvoice
+export type PostFinanceInvoicesPurchaseByPkPayApiArg = {
+  pk: string
+  payInvoiceInput: PayInvoiceInput
+}
 export type CashFlowTransaction = {
   id?: string
   name?: string
@@ -167,6 +209,10 @@ export type CashFlowTransaction = {
   sales_order?: string | null
   purchase_invoice?: string | null
   sales_invoice?: string | null
+  status?: 'draft' | 'pending_approval' | 'posted' | 'rejected'
+  approved_by?: string | null
+  approved_by_username?: string | null
+  approved_at?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -232,10 +278,25 @@ export type FixedAssetDepreciationLog = {
 export type RunDepreciationInput = {
   period: string
 }
+export type PurchaseInvoice = {
+  id?: string
+  order?: string
+  vendor?: string
+  vendor_name?: string
+  status?: 'unpaid' | 'partial' | 'paid' | 'blocked_for_payment' | 'cancelled'
+  total_amount?: number
+  paid_amount?: number
+  due_date?: string | null
+}
+export type PayInvoiceInput = {
+  amount: number
+  payment_method?: 'cash' | 'bank_transfer'
+}
 export const {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsMutation,
   useGetFinanceCashFlowsByPkQuery,
+  usePostFinanceCashFlowsByPkApproveMutation,
   useGetFinanceFixedAssetsQuery,
   usePostFinanceFixedAssetsMutation,
   useGetFinanceFixedAssetsByPkQuery,
@@ -243,4 +304,5 @@ export const {
   useDeleteFinanceFixedAssetsByPkMutation,
   usePostFinanceFixedAssetsDepreciationMutation,
   useGetFinanceFixedAssetsDepreciationLogsQuery,
+  usePostFinanceInvoicesPurchaseByPkPayMutation,
 } = injectedRtkApi

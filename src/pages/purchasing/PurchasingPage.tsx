@@ -16,8 +16,9 @@ export const PurchasingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'invoices' | 'shipment' | 'qc' | 'ap-aging';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editOrderId, setEditOrderId] = useState<string | null>(null);
-  const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
+  const queryId = searchParams.get('id');
+  const editOrderId = activeTab === 'orders' ? queryId : null;
+  const viewInvoiceId = activeTab === 'invoices' ? queryId : null;
 
   return (
     <div className={styles.page}>
@@ -103,12 +104,24 @@ export const PurchasingPage = () => {
             <div style={{ marginTop: '8px' }}>
               {activeTab === 'orders' ? (
                 <PurchaseOrderTable 
-                  onEdit={(order) => setEditOrderId(order.id)}
-                  onView={(id) => setEditOrderId(id)}
+                  onEdit={(order) => {
+                    const params = new URLSearchParams(searchParams);
+                    params.set('id', order.id);
+                    setSearchParams(params);
+                  }}
+                  onView={(id) => {
+                    const params = new URLSearchParams(searchParams);
+                    params.set('id', id);
+                    setSearchParams(params);
+                  }}
                 />
               ) : (
                 <PurchaseInvoiceTable 
-                  onView={(id) => setViewInvoiceId(id)}
+                  onView={(id) => {
+                    const params = new URLSearchParams(searchParams);
+                    params.set('id', id);
+                    setSearchParams(params);
+                  }}
                 />
               )}
             </div>
@@ -122,17 +135,28 @@ export const PurchasingPage = () => {
           orderId={editOrderId}
           onClose={() => {
             setIsCreateOpen(false);
-            setEditOrderId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
           }} 
           onSuccess={() => {
             setIsCreateOpen(false);
-            setEditOrderId(null);
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
           }} 
         />
       )}
 
       {viewInvoiceId && (
-        <PurchaseInvoiceDetailsModal invoiceId={viewInvoiceId} onClose={() => setViewInvoiceId(null)} />
+        <PurchaseInvoiceDetailsModal 
+          invoiceId={viewInvoiceId} 
+          onClose={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }} 
+        />
       )}
     </div>
   );

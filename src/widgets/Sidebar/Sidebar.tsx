@@ -18,6 +18,7 @@ import {
 import type { RootState } from '@app/store';
 import { logout } from '@features/auth/model/authSlice';
 import { Tooltip } from '@shared/ui/Tooltip/Tooltip';
+import { useCurrentUser } from '@shared/lib/permissionContext';
 import styles from './Sidebar.module.css';
 import clsx from 'clsx';
 
@@ -26,7 +27,19 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const NAV_SECTIONS = [
+interface NavItem {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  permission?: string;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Tổng Quan',
     items: [
@@ -36,46 +49,47 @@ const NAV_SECTIONS = [
   {
     label: 'Sản Xuất',
     items: [
-      { to: '/bom', icon: <Boxes size={20} />, label: 'BOM' },
+      { to: '/bom', icon: <Boxes size={20} />, label: 'BOM', permission: 'manufacturing.bom_view' },
     ],
   },
   {
     label: 'Kho Bãi',
     items: [
-      { to: '/inventory', icon: <Warehouse size={20} />, label: 'Kho' },
+      { to: '/inventory', icon: <Warehouse size={20} />, label: 'Kho', permission: 'inventory.view' },
     ],
   },
   {
     label: 'Thương Mại',
     items: [
-      { to: '/purchasing', icon: <ShoppingCart size={20} />, label: 'Mua Hàng' },
-      { to: '/sales', icon: <ShoppingBag size={20} />, label: 'Bán Hàng' },
+      { to: '/purchasing', icon: <ShoppingCart size={20} />, label: 'Mua Hàng', permission: 'purchasing.view_order' },
+      { to: '/sales', icon: <ShoppingBag size={20} />, label: 'Bán Hàng', permission: 'sales.view_order' },
     ],
   },
   {
     label: 'Đối Tác',
     items: [
-      { to: '/customers', icon: <Users size={20} />, label: 'Khách Hàng' },
-      { to: '/suppliers', icon: <Truck size={20} />, label: 'Nhà Cung Cấp' },
+      { to: '/customers', icon: <Users size={20} />, label: 'Khách Hàng', permission: 'crm.customer_view' },
+      { to: '/suppliers', icon: <Truck size={20} />, label: 'Nhà Cung Cấp', permission: 'procurement.supplier_view' },
     ],
   },
   {
     label: 'Tài Chính',
     items: [
-      { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền' },
-      { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định' },
+      { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền', permission: 'finance.view_cash_flow' },
+      { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định', permission: 'finance.view_fixed_asset' },
     ],
   },
   {
     label: 'Nhân Sự',
     items: [
-      { to: '/hrm', icon: <Contact size={20} />, label: 'Quản Lý HR' },
+      { to: '/hrm', icon: <Contact size={20} />, label: 'Quản Lý HR', permission: 'hrm.view_employee' },
     ],
   },
 ];
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const user = useSelector((s: RootState) => s.auth.user);
+  const currentUser = useCurrentUser();
   const dispatch = useDispatch();
 
   const handleLogout = () => {
@@ -92,6 +106,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     : '??';
 
   const roleLabel = user?.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : user?.role?.toLowerCase() === 'manager' ? 'Quản lý' : 'Nhân viên';
+
+  // Filter navigation sections based on user permissions
+  const filteredSections = NAV_SECTIONS.map((section) => {
+    const allowedItems = section.items.filter(
+      (item) => !item.permission || currentUser?.permissions?.includes(item.permission)
+    );
+    return { ...section, items: allowedItems };
+  }).filter((section) => section.items.length > 0);
 
   return (
     <>
@@ -113,7 +135,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className={styles.nav}>
-          {NAV_SECTIONS.map((section) => (
+          {filteredSections.map((section) => (
             <div key={section.label} className={styles.section}>
               <span className={styles.sectionLabel}>{section.label}</span>
               {section.items.map((item) => (

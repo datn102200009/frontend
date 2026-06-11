@@ -92,6 +92,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   const canCancel = usePermission('purchasing.cancel_order');
+  const canApprove = usePermission('purchasing.update_order');
   const isDraft = orderData ? orderData.status === 'draft' : true;
   const isReadOnly = !isDraft; // Only editable if draft or creating
   const isWorking = isCreating || isUpdating || isDeleting || isApproving || isCancelling || isLoadingOrder;
@@ -324,7 +325,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                   {orderId ? 'Cập Nhật' : 'Tạo Đơn Hàng'}
                 </Button>
               )}
-              {orderId && isDraft && (
+              {orderId && isDraft && canApprove && (
                 <Button variant="primary" onClick={handleConfirm} loading={isApproving} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt Đơn
                 </Button>

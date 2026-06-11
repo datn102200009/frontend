@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   useGetInventoryStockEntryListQuery, 
   usePostInventoryStockInByStockEntryIdApproveMutation, 
@@ -46,7 +47,10 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 };
 
 export function StockEntryList() {
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusParam = searchParams.get('status');
+  const initialStatus = statusParam === 'draft' ? 'draft' : statusParam === 'posted' ? 'posted' : 'all';
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>(initialStatus);
   const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({
     status: statusFilter === 'all' ? undefined : statusFilter,
     limit: 100
@@ -63,11 +67,18 @@ export function StockEntryList() {
   const [approving, setApproving] = useState<StockEntry | null>(null);
   const [prevApprovingId, setPrevApprovingId] = useState<string | null>(null);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
-  const [viewingEntry, setViewingEntry] = useState<StockEntry | null>(null);
   const [showCreate, setShowCreate] = useState<'stock_in' | 'stock_issue' | 'internal_transfer' | null>(null);
   const { toast } = useToast();
   
   const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer || isUpdating;
+
+  const queryId = searchParams.get('id');
+  const searchQuery = searchParams.get('search') || '';
+
+  const viewingEntry = useMemo(() => {
+    if (!queryId || entries.length === 0) return null;
+    return entries.find((e: StockEntry) => e.id === queryId) || null;
+  }, [queryId, entries]);
 
   if (approving && approving.id !== prevApprovingId) {
     setPrevApprovingId(approving.id || null);
@@ -182,7 +193,15 @@ export function StockEntryList() {
             <ActionButton
               icon={<Eye size={18} />}
               title="Chi tiết"
-              onClick={() => setViewingEntry(row.original)}
+              onClick={() => {
+                const params = new URLSearchParams(searchParams);
+                if (row.original.id) {
+                  params.set('id', row.original.id);
+                } else {
+                  params.delete('id');
+                }
+                setSearchParams(params);
+              }}
             />
             {row.original.status === 'draft' && (
               <ActionButton
@@ -247,7 +266,7 @@ export function StockEntryList() {
         </div>
       </div>
 
-      <DataTable columns={columns} data={entries} searchPlaceholder="Tìm mã phiếu..." loading={isLoading} />
+      <DataTable columns={columns} data={entries} searchPlaceholder="Tìm mã phiếu..." loading={isLoading} initialSearch={searchQuery} />
 
       {approving && (
         <Modal
@@ -387,9 +406,13 @@ export function StockEntryList() {
 
       {viewingEntry && (
         <StockEntryDetailModal
-          open
+          open={!!viewingEntry}
           entry={viewingEntry}
-          onClose={() => setViewingEntry(null)}
+          onClose={() => {
+            const params = new URLSearchParams(searchParams);
+            params.delete('id');
+            setSearchParams(params);
+          }}
         />
       )}
     </div>

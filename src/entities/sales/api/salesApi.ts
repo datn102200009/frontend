@@ -55,7 +55,14 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({ url: `/sales/orders/${queryArg.pk}/cancel/`, method: 'POST' }),
     }),
     getSalesInvoices: build.query<GetSalesInvoicesApiResponse, GetSalesInvoicesApiArg>({
-      query: () => ({ url: `/sales/invoices/` }),
+      query: (queryArg) => ({
+        url: `/sales/invoices/`,
+        params: {
+          status: queryArg.status,
+          limit: queryArg.limit,
+          page: queryArg.page,
+        },
+      }),
     }),
     getSalesInvoicesByPk: build.query<GetSalesInvoicesByPkApiResponse, GetSalesInvoicesByPkApiArg>({
       query: (queryArg) => ({ url: `/sales/invoices/${queryArg.pk}/` }),
@@ -104,8 +111,17 @@ export type PostSalesOrdersByPkCancelApiResponse =
 export type PostSalesOrdersByPkCancelApiArg = {
   pk: string
 }
-export type GetSalesInvoicesApiResponse = /** status 200 A list of sales invoices. */ SalesInvoice[]
-export type GetSalesInvoicesApiArg = void
+export type GetSalesInvoicesApiResponse = /** status 200 A paginated list of sales invoices. */ {
+  count?: number
+  total_pages?: number
+  current_page?: number
+  results?: SalesInvoice[]
+}
+export type GetSalesInvoicesApiArg = {
+  status?: string
+  limit?: number
+  page?: number
+}
 export type GetSalesInvoicesByPkApiResponse = /** status 200 Sales invoice details. */ SalesInvoice
 export type GetSalesInvoicesByPkApiArg = {
   pk: string

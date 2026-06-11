@@ -193,20 +193,38 @@ export const handlers = [
 
   // Sales & Purchasing Invoices mocks
   http.get('*/api/v1/sales/invoices/', () => {
-    return HttpResponse.json([
-      { id: '66666666-6666-6666-6666-666666666666', order: '99999999-9999-9999-9999-999999999999', customer: '44444444-4444-4444-4444-444444444444', customer_name: 'Alpha', total_amount: 5000000, paid_amount: 0, status: 'unpaid', created_at: '2026-05-20', updated_at: '2026-05-20', lines: [] }
-    ]);
+    return HttpResponse.json({
+      count: 1,
+      total_pages: 1,
+      current_page: 1,
+      results: [
+        { id: '66666666-6666-6666-6666-666666666666', order: '99999999-9999-9999-9999-999999999999', customer: '44444444-4444-4444-4444-444444444444', customer_name: 'Alpha', total_amount: 5000000, paid_amount: 0, status: 'unpaid', created_at: '2026-05-20', updated_at: '2026-05-20', lines: [] }
+      ]
+    });
   }),
   http.get('*/api/v1/purchasing/invoices/', () => {
-    return HttpResponse.json([
-      { id: '77777777-7777-7777-7777-777777777777', order: '88888888-8888-8888-8888-888888888888', vendor: '33333333-3333-3333-3333-333333333333', vendor_name: 'Tech Component', total_amount: 10000000, paid_amount: 0, status: 'unpaid', created_at: '2026-05-20', updated_at: '2026-05-20', lines: [] }
-    ]);
+    return HttpResponse.json({
+      count: 1,
+      total_pages: 1,
+      current_page: 1,
+      results: [
+        { id: '77777777-7777-7777-7777-777777777777', order: '88888888-8888-8888-8888-888888888888', vendor: '33333333-3333-3333-3333-333333333333', vendor_name: 'Tech Component', total_amount: 10000000, paid_amount: 0, status: 'unpaid', created_at: '2026-05-20', updated_at: '2026-05-20', lines: [] }
+      ]
+    });
   }),
 
   // Finance mocks
   http.post('*/api/v1/finance/cash-flows/', async ({ request }) => {
     const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: 'new-cf-123', ...data }, { status: 201 });
+  }),
+
+  http.get('*/api/v1/finance/fixed-assets/', () => {
+    return HttpResponse.json({
+      results: [
+        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'active' }
+      ]
+    });
   }),
 
   // HRM mocks
@@ -291,11 +309,12 @@ export const handlers = [
     ];
     if (dateParam) {
       if (dateParam === '2026-05-23' || dateParam === todayStr) {
-        return HttpResponse.json(mockData.map(d => ({ ...d, date: dateParam })));
+        const results = mockData.map(d => ({ ...d, date: dateParam }));
+        return HttpResponse.json({ count: results.length, results });
       }
-      return HttpResponse.json([]);
+      return HttpResponse.json({ count: 0, results: [] });
     }
-    return HttpResponse.json(mockData);
+    return HttpResponse.json({ count: mockData.length, results: mockData });
   }),
 
   http.post('*/api/v1/hrm/attendances/batch/', async ({ request }) => {

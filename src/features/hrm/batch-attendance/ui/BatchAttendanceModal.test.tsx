@@ -257,30 +257,33 @@ describe('BatchAttendanceModal', () => {
     // Mock the attendances endpoint to return custom values
     server.use(
       http.get('*/api/v1/hrm/attendances/', () => {
-        return HttpResponse.json([
-          {
-            id: 'att-1',
-            employee_id: 'emp-1',
-            employee_code: 'NV001',
-            employee_name: 'Nguyễn Văn An',
-            date: '2026-05-15',
-            status: 'paid_leave',
-            work_hours: '0.00',
-            overtime_hours: '0.00',
-            remarks: 'Nghỉ phép năm đã duyệt',
-          },
-          {
-            id: 'att-2',
-            employee_id: 'emp-2',
-            employee_code: 'NV002',
-            employee_name: 'Trần Thị Bình',
-            date: '2026-05-15',
-            status: 'working',
-            work_hours: '8.00',
-            overtime_hours: '2.50',
-            remarks: 'Đi làm đầy đủ và OT',
-          },
-        ]);
+        return HttpResponse.json({
+          count: 2,
+          results: [
+            {
+              id: 'att-1',
+              employee_id: 'emp-1',
+              employee_code: 'NV001',
+              employee_name: 'Nguyễn Văn An',
+              date: '2026-05-15',
+              status: 'paid_leave',
+              work_hours: '0.00',
+              overtime_hours: '0.00',
+              remarks: 'Nghỉ phép năm đã duyệt',
+            },
+            {
+              id: 'att-2',
+              employee_id: 'emp-2',
+              employee_code: 'NV002',
+              employee_name: 'Trần Thị Bình',
+              date: '2026-05-15',
+              status: 'working',
+              work_hours: '8.00',
+              overtime_hours: '2.50',
+              remarks: 'Đi làm đầy đủ và OT',
+            },
+          ]
+        });
       })
     );
 

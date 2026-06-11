@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useGetSalesInvoicesByPkQuery } from '@entities/sales/api/salesApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { CreditCard, Printer, FileText } from 'lucide-react';
-import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
+import { Printer, FileText } from 'lucide-react';
 import styles from './InvoiceDetailsModal.module.css';
 
 interface SalesInvoiceDetailsModalProps {
@@ -14,7 +13,6 @@ interface SalesInvoiceDetailsModalProps {
 
 export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> = ({ invoiceId, onClose }) => {
   const { data: invoice, isLoading } = useGetSalesInvoicesByPkQuery({ pk: invoiceId });
-  const [showPayment, setShowPayment] = useState(false);
 
   if (isLoading || !invoice) {
     return (
@@ -28,7 +26,6 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
   };
 
-  const isPaid = invoice.status === 'paid';
   const totalAmount = invoice.total_amount || 0;
   const paidAmount = invoice.paid_amount || 0;
   const remainingAmount = totalAmount - paidAmount;
@@ -36,7 +33,7 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
   return (
     <>
       <Modal 
-        open={!showPayment} 
+        open={true} 
         onClose={onClose} 
         title={`Hóa Đơn ${(invoice.id || '').slice(0, 8).toUpperCase()}`}
         size="lg"
@@ -44,11 +41,6 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
           <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
             <Button variant="ghost" onClick={onClose}>Đóng</Button>
             <Button variant="outline" icon={<Printer size={16} />}>In Hóa Đơn</Button>
-            {!isPaid && (
-              <Button onClick={() => setShowPayment(true)} icon={<CreditCard size={16} />}>
-                Ghi Nhận Thu Tiền
-              </Button>
-            )}
           </div>
         }
       >
@@ -122,23 +114,6 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
         </div>
       </Modal>
 
-      {showPayment && (
-        <CashFlowFormModal 
-          open={showPayment} 
-          onClose={() => setShowPayment(false)} 
-          onSuccess={() => {
-            setShowPayment(false);
-            onClose();
-          }} 
-          defaultValues={{ 
-            payment_type: 'receive', 
-            sales_invoice_id: invoiceId, 
-            amount: remainingAmount,
-            category: 'Thanh toán hóa đơn',
-            remarks: `Thu tiền thanh toán hóa đơn bán ${invoice.id?.slice(0, 8).toUpperCase()} (Khách hàng: ${invoice.customer_name || 'N/A'}, Số tiền: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remainingAmount)}).`
-          }} 
-        />
-      )}
     </>
   );
 };

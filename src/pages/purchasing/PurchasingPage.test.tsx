@@ -27,19 +27,24 @@ describe('PurchasingPage', () => {
         ]);
       }),
       http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'PI-001',
-            order: 'PO-001',
-            vendor: 'SUP01',
-            vendor_name: 'Tech Component',
-            total_amount: 15000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'SUP01',
+              vendor_name: 'Tech Component',
+              total_amount: 15000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       })
     );
 
@@ -140,19 +145,24 @@ describe('PurchasingPage', () => {
         return HttpResponse.json([]);
       }),
       http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json([
-          {
-            id: 'PI-001',
-            order: 'PO-001',
-            vendor: 'SUP01',
-            vendor_name: 'Tech Component',
-            total_amount: 15000000,
-            paid_amount: 0,
-            status: 'unpaid',
-            created_at: '2026-05-20',
-            lines: []
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'SUP01',
+              vendor_name: 'Tech Component',
+              total_amount: 15000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
       }),
       http.get('*/api/v1/purchasing/invoices/PI-001/', () => {
         return HttpResponse.json({
@@ -208,5 +218,95 @@ describe('PurchasingPage', () => {
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: /Chi Tiết Hóa Đơn Mua Hàng/i })).not.toBeInTheDocument();
     });
+  });
+
+  it('automatically opens order modal when orderId is present in URL query params', async () => {
+    server.use(
+      http.get('*/api/v1/purchasing/orders/', () => {
+        return HttpResponse.json([
+          {
+            id: 'PO-001',
+            vendor: 'SUP01',
+            vendor_name: 'Tech Component',
+            total_amount: 15000000,
+            status: 'draft',
+            created_at: '2026-05-20',
+            lines: []
+          }
+        ]);
+      }),
+      http.get('*/api/v1/purchasing/orders/PO-001/', () => {
+        return HttpResponse.json({
+          id: 'PO-001',
+          vendor: 'SUP01',
+          vendor_name: 'Tech Component',
+          total_amount: 15000000,
+          status: 'draft',
+          created_at: '2026-05-20',
+          lines: []
+        });
+      }),
+      http.get('*/api/v1/master-data/items/list/', () => {
+        return HttpResponse.json({ results: [] });
+      }),
+      http.get('*/api/v1/procurement/suppliers/', () => {
+        return HttpResponse.json([]);
+      })
+    );
+
+    renderWithProviders(<PurchasingPage />, {
+      initialEntries: ['/purchasing?tab=orders&id=PO-001']
+    });
+
+    // Check if the order detail modal is auto-opened
+    expect(await screen.findByRole('heading', { name: /Chi Tiết Đơn Mua/i })).toBeInTheDocument();
+  });
+
+  it('automatically opens invoice modal when invoiceId is present in URL query params', async () => {
+    server.use(
+      http.get('*/api/v1/purchasing/orders/', () => {
+        return HttpResponse.json([]);
+      }),
+      http.get('*/api/v1/purchasing/invoices/', () => {
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'SUP01',
+              vendor_name: 'Tech Component',
+              total_amount: 15000000,
+              paid_amount: 0,
+              status: 'unpaid',
+              created_at: '2026-05-20',
+              lines: []
+            }
+          ]
+        });
+      }),
+      http.get('*/api/v1/purchasing/invoices/PI-001/', () => {
+        return HttpResponse.json({
+          id: 'PI-001',
+          order: 'PO-001',
+          vendor: 'SUP01',
+          vendor_name: 'Tech Component',
+          status: 'unpaid',
+          total_amount: 15000000,
+          paid_amount: 0,
+          created_at: '2026-05-20',
+          lines: []
+        });
+      })
+    );
+
+    renderWithProviders(<PurchasingPage />, {
+      initialEntries: ['/purchasing?tab=invoices&id=PI-001']
+    });
+
+    // Check if the invoice detail modal is auto-opened
+    expect(await screen.findByRole('heading', { name: /Hóa Đơn PI-001|Chi Tiết Hóa Đơn/i })).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ProductList } from '@features/inventory/ui/ProductList';
 import { StockEntryList } from '@features/inventory/ui/StockEntryList';
 import { StockLedgerView } from '@features/inventory/ui/StockLedgerView';
@@ -8,7 +8,12 @@ import clsx from 'clsx';
 type Tab = 'products' | 'entries' | 'ledger';
 
 export default function InventoryPage() {
-  const [tab, setTab] = useState<Tab>('products');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = (searchParams.get('tab') || 'products') as Tab;
+
+  const setTab = (newTab: Tab) => {
+    setSearchParams({ tab: newTab });
+  };
 
   return (
     <div className={styles.page}>

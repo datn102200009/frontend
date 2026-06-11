@@ -4,10 +4,18 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Plus, Gift, AlertTriangle } from 'lucide-react';
-import { useGetHrmRewardsQuery, useGetHrmDisciplinesQuery } from '@entities/hrm/api/hrmApi';
+import {
+  useGetHrmRewardsQuery,
+  useGetHrmDisciplinesQuery,
+  usePostHrmRewardsByIdApproveMutation,
+  usePostHrmDisciplinesByIdApproveMutation
+} from '@entities/hrm/api/hrmApi';
 import type { RewardRecord, DisciplineRecord } from '@entities/hrm/model/types';
 import { RewardFormModal } from '@features/hrm/manage-salary-slip/ui/RewardFormModal';
 import { DisciplineFormModal } from '@features/hrm/manage-salary-slip/ui/DisciplineFormModal';
+import { usePermission } from '@shared/hooks/usePermission';
+import { useToast } from '@shared/ui/Toast/Toast';
+import { extractApiError } from '@shared/lib/extractApiError';
 import styles from './RewardDisciplineTable.module.css';
 
 export const RewardDisciplineTable: React.FC = () => {
@@ -26,6 +34,33 @@ export const RewardDisciplineTable: React.FC = () => {
     isLoading: isDisciplinesLoading,
     refetch: refetchDisciplines,
   } = useGetHrmDisciplinesQuery({});
+
+  const [approveReward, { isLoading: isApprovingReward }] = usePostHrmRewardsByIdApproveMutation();
+  const [approveDiscipline, { isLoading: isApprovingDiscipline }] = usePostHrmDisciplinesByIdApproveMutation();
+  
+  const hasRewardApprovePermission = usePermission('hrm.change_rewardrecord');
+  const hasDisciplineApprovePermission = usePermission('hrm.change_disciplinerecord');
+  const { toast } = useToast();
+
+  const handleApproveReward = async (id: string) => {
+    try {
+      await approveReward({ id }).unwrap();
+      toast('success', 'Phê duyệt khen thưởng thành công');
+      refetchRewards();
+    } catch (err) {
+      toast('error', extractApiError(err, 'Phê duyệt thất bại'));
+    }
+  };
+
+  const handleApproveDiscipline = async (id: string) => {
+    try {
+      await approveDiscipline({ id }).unwrap();
+      toast('success', 'Phê duyệt kỷ luật thành công');
+      refetchDisciplines();
+    } catch (err) {
+      toast('error', extractApiError(err, 'Phê duyệt thất bại'));
+    }
+  };
 
   const formatVND = (value?: string | number | null) => {
     if (value === undefined || value === null) return '0 đ';
@@ -61,6 +96,19 @@ export const RewardDisciplineTable: React.FC = () => {
     }
   };
 
+  const getApprovalStatusBadge = (status?: string) => {
+    switch (status) {
+      case 'pending_approval':
+        return <Badge variant="warning">Chờ duyệt</Badge>;
+      case 'approved':
+        return <Badge variant="success">Đã duyệt</Badge>;
+      case 'rejected':
+        return <Badge variant="error">Từ chối</Badge>;
+      default:
+        return <Badge variant="neutral">{status || 'N/A'}</Badge>;
+    }
+  };
+
   const rewardColumns = useMemo(() => {
     const helper = createColumnHelper<RewardRecord>();
     return [
@@ -88,8 +136,31 @@ export const RewardDisciplineTable: React.FC = () => {
         header: 'Lý do/Mô tả',
         cell: (info) => <span className="text-slate-600">{info.getValue() || '-'}</span>,
       }),
+      helper.accessor('status', {
+        header: 'Trạng thái',
+        cell: (info) => getApprovalStatusBadge(info.getValue()),
+      }),
+      helper.display({
+        id: 'actions',
+        header: 'Thao Tác',
+        cell: (info) => {
+          const record = info.row.original;
+          if (record.status === 'pending_approval' && hasRewardApprovePermission) {
+            return (
+              <Button
+                size="sm"
+                onClick={() => handleApproveReward(record.id!)}
+                disabled={isApprovingReward}
+              >
+                Duyệt
+              </Button>
+            );
+          }
+          return <span className="text-slate-400">-</span>;
+        },
+      }),
     ];
-  }, []);
+  }, [hasRewardApprovePermission, isApprovingReward]);
 
   const disciplineColumns = useMemo(() => {
     const helper = createColumnHelper<DisciplineRecord>();
@@ -147,8 +218,31 @@ export const RewardDisciplineTable: React.FC = () => {
           );
         },
       }),
+      helper.accessor('status', {
+        header: 'Trạng thái',
+        cell: (info) => getApprovalStatusBadge(info.getValue()),
+      }),
+      helper.display({
+        id: 'actions',
+        header: 'Thao Tác',
+        cell: (info) => {
+          const record = info.row.original;
+          if (record.status === 'pending_approval' && hasDisciplineApprovePermission) {
+            return (
+              <Button
+                size="sm"
+                onClick={() => handleApproveDiscipline(record.id!)}
+                disabled={isApprovingDiscipline}
+              >
+                Duyệt
+              </Button>
+            );
+          }
+          return <span className="text-slate-400">-</span>;
+        },
+      }),
     ];
-  }, []);
+  }, [hasDisciplineApprovePermission, isApprovingDiscipline]);
 
   return (
     <div className={styles.container}>

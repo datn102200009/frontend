@@ -41,6 +41,21 @@ def run():
 
                 time.sleep(1)
 
+                # Nếu chưa có dữ liệu chấm công (lần đầu chạy sau reset DB), tự động tạo chấm công trước
+                rows = page.locator("tbody tr")
+                if rows.count() < 10:
+                    page.get_by_role("button", name="Chấm Công").click()
+                    time.sleep(0.5)
+                    page.locator("#attendance_date").fill("2026-05-15")
+                    time.sleep(0.3)
+                    page.get_by_role("button", name="Lưu chấm công").click()
+                    time.sleep(1.5)
+                    # Lọc lại ngày 15/05/2026
+                    page.locator("#attendance-date-filter").click()
+                    time.sleep(0.5)
+                    page.get_by_role("button", name="Xác nhận").click()
+                    time.sleep(1)
+
                 # Expect to see 10 records
                 rows = page.locator("tbody tr")
                 count = rows.count()
@@ -50,7 +65,7 @@ def run():
                     raise AssertionError(f"Chỉ tìm thấy {count} bản ghi chấm công.")
             except Exception as e:
                 runner.screenshot(page, "wf11_s6")
-                runner.log("WF-11", 6, "FAIL", "Xác nhận chấm công ngày 15/01/2026 hiển thị đầy đủ", str(e), url=page.url)
+                runner.log("WF-11", 6, "FAIL", "Xác nhận chấm công ngày 15/05/2026 hiển thị đầy đủ", str(e), url=page.url)
 
             # ── Tab 2: Batch attendance (test future date and invalid hours) ──
             try:
@@ -166,7 +181,7 @@ def run():
                 expect(page.get_by_role("dialog")).to_be_visible()
 
                 # Click Approve
-                page.get_by_role("button", name="Duyệt đơn").click()
+                page.get_by_role("dialog").get_by_role("button", name="Duyệt đơn", exact=True).click()
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
                 runner.log("WF-11", 12, "PASS", "Phê duyệt đơn xin nghỉ phép thành công", url=page.url)

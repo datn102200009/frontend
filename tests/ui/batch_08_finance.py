@@ -28,7 +28,7 @@ def run():
             wait_for_page_ready(page)
             try:
                 # Expect to see heading
-                expect(page.locator("h2:has-text('Quản Lý Dòng Tiền')")).to_be_visible()
+                expect(page.locator("h2:has-text('Quản Lý Tài Chính & Dòng Tiền')")).to_be_visible()
                 runner.log("WF-10", 1, "PASS", "Truy cập /finance thành công và thấy tiêu đề trang", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf10_s1")
@@ -122,10 +122,15 @@ def run():
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 
-                # Get current month/year and fill selects
+                # Get next month/year instead of current to avoid duplicate period error (from seed data)
                 today = datetime.date.today()
-                month_str = today.strftime("%m")
-                year_str = today.strftime("%Y")
+                next_month = today.month + 1
+                next_year = today.year
+                if next_month > 12:
+                    next_month = 1
+                    next_year += 1
+                month_str = f"{next_month:02d}"
+                year_str = str(next_year)
 
                 page.locator("#run-month-select").select_option(month_str)
                 page.locator("#run-year-select").select_option(year_str)

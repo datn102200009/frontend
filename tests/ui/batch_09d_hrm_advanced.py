@@ -329,7 +329,7 @@ def run():
                 expect(page.get_by_role("dialog", name="Chi Tiết Đơn Xin Nghỉ Phép")).to_be_visible()
 
                 # Click Reject button
-                page.get_by_role("button", name="Từ chối").click()
+                page.get_by_role("dialog", name="Chi Tiết Đơn Xin Nghỉ Phép").get_by_role("button", name="Từ chối").click()
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
@@ -340,6 +340,29 @@ def run():
 
             # ── Step 11: Duyệt/từ chối đơn nghỉ phép đã xử lý (Fail Case) ──
             try:
+                # Đầu tiên, tạo một đơn phép và duyệt nó để có dữ liệu "Đã phê duyệt"
+                # Lọc trạng thái "Chờ phê duyệt"
+                page.get_by_label("Lọc trạng thái đơn nghỉ phép").select_option("pending")
+                time.sleep(0.5)
+
+                if page.get_by_text("Không tìm thấy đơn nghỉ phép nào").is_visible() or page.locator("tbody tr").count() == 0:
+                    page.get_by_role("button", name="Tạo Đơn Phép").click()
+                    time.sleep(0.5)
+                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (NV001)")
+                    page.get_by_label("Loại nghỉ phép").select_option("paid")
+                    page.get_by_label("Từ ngày").fill("2026-05-15")
+                    page.get_by_label("Đến ngày").fill("2026-05-16")
+                    page.get_by_label("Số ngày nghỉ thực tế").fill("2")
+                    page.get_by_label("Lý do xin nghỉ phép").fill("Nghỉ phép cá nhân mẫu")
+                    page.get_by_role("button", name="Gửi đơn phép").click()
+                    time.sleep(1.5)
+
+                # Duyệt đơn phép này
+                page.get_by_title("Xem & Duyệt đơn").first.click()
+                time.sleep(0.5)
+                page.get_by_role("dialog", name="Chi Tiết Đơn Xin Nghỉ Phép").get_by_role("button", name="Duyệt đơn").click()
+                time.sleep(1.5)
+
                 # Filter status to "Đã duyệt"
                 page.get_by_label("Lọc trạng thái đơn nghỉ phép").select_option("approved")
                 time.sleep(0.5)
@@ -349,8 +372,8 @@ def run():
                 expect(page.get_by_role("dialog", name="Chi Tiết Đơn Xin Nghỉ Phép")).to_be_visible()
 
                 # Verify buttons Duyệt đơn / Từ chối are NOT visible
-                expect(page.get_by_role("button", name="Duyệt đơn")).not_to_be_visible()
-                expect(page.get_by_role("button", name="Từ chối")).not_to_be_visible()
+                expect(page.get_by_role("dialog", name="Chi Tiết Đơn Xin Nghỉ Phép").get_by_role("button", name="Duyệt đơn")).not_to_be_visible()
+                expect(page.get_by_role("dialog", name="Chi Tiết Đơn Xin Nghỉ Phép").get_by_role("button", name="Từ chối")).not_to_be_visible()
 
                 runner.log("WF-11", 11, "PASS", "Không hiển thị nút phê duyệt/từ chối cho đơn phép đã xử lý", url=page.url)
             except Exception as e:
@@ -448,6 +471,7 @@ def run():
                 time.sleep(0.5)
                 page.get_by_label("Số hợp đồng").fill(contract_unlawful_no)
                 page.get_by_label("Loại hợp đồng").select_option("definite_term")
+                page.locator("#end_date").fill("2027-01-15")
                 page.get_by_role("button", name="Tạo hợp đồng").click()
                 time.sleep(1.5)
 
