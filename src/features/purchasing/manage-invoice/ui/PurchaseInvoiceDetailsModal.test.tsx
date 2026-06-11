@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { screen } from '@testing-library/react';
 import { PurchaseInvoiceDetailsModal } from './PurchaseInvoiceDetailsModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';

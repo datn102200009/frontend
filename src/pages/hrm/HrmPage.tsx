@@ -73,12 +73,10 @@ const HrmPage: React.FC = () => {
 
   const selectedLeaveRequestForDetails = React.useMemo(() => {
     if (!queryRequestId || !leaveRequestsResponse) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const list = Array.isArray(leaveRequestsResponse)
       ? leaveRequestsResponse
-      : (leaveRequestsResponse as any).results || [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (list.find((r: any) => r.id === queryRequestId) || null) as LeaveRequest | null;
+      : ((leaveRequestsResponse as unknown) as { results?: LeaveRequest[] }).results || [];
+    return (list.find((r) => r.id === queryRequestId) || null) as LeaveRequest | null;
   }, [queryRequestId, leaveRequestsResponse]);
 
   // Employee Modals States
