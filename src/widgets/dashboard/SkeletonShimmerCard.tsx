@@ -1,10 +1,28 @@
 import styles from './DashboardWidgets.module.css';
 
+export type SkeletonType =
+  | 'kpi'
+  | 'kpi_list'
+  | 'donut_chart'
+  | 'aging_bar'
+  | 'gauge'
+  | 'stacked_progress'
+  | 'mini_chart'
+  | 'list_mini'
+  | 'list_summary'
+  | 'metric'
+  | 'line_chart'
+  | 'cashflow_overview';
+
 export interface SkeletonShimmerCardProps {
-  type?: 'metric' | 'list_summary' | 'mini_chart';
+  type?: SkeletonType;
 }
 
-export function SkeletonShimmerCard({ type = 'metric' }: SkeletonShimmerCardProps) {
+export function SkeletonShimmerCard({ type = 'kpi' }: SkeletonShimmerCardProps) {
+  const isList = type === 'list_mini' || type === 'list_summary' || type === 'stacked_progress' || type === 'kpi_list';
+  const isChart = type === 'mini_chart' || type === 'donut_chart' || type === 'aging_bar' || type === 'line_chart' || type === 'cashflow_overview';
+  const isGauge = type === 'gauge';
+
   return (
     <div className={styles.shimmerCard}>
       <div className={styles.shimmerHeader}>
@@ -13,14 +31,37 @@ export function SkeletonShimmerCard({ type = 'metric' }: SkeletonShimmerCardProp
       </div>
 
       <div className={styles.shimmerBody}>
-        {type === 'metric' && (
+        {(type === 'kpi' || type === 'metric' || type === 'kpi_list') && (
           <>
             <div className={styles.shimmerValue} />
             <div className={styles.shimmerSubtext} />
           </>
         )}
 
-        {type === 'list_summary' && (
+        {isGauge && (
+          <div
+            style={{
+              width: '120px',
+              height: '80px',
+              borderRadius: '50%',
+              background: 'var(--clr-bg)',
+              margin: '0 auto',
+            }}
+          />
+        )}
+
+        {isChart && (
+          <div
+            style={{
+              width: '100%',
+              height: '120px',
+              borderRadius: '4px',
+              background: 'var(--clr-bg)',
+            }}
+          />
+        )}
+
+        {isList && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[1, 2, 3].map((i) => (
               <div key={i} className={styles.shimmerRow}>
@@ -35,10 +76,6 @@ export function SkeletonShimmerCard({ type = 'metric' }: SkeletonShimmerCardProp
               </div>
             ))}
           </div>
-        )}
-
-        {type === 'mini_chart' && (
-          <div style={{ width: '100%', height: '120px', borderRadius: '4px', background: 'var(--clr-bg)' }} />
         )}
       </div>
     </div>

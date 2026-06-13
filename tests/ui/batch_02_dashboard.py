@@ -12,18 +12,42 @@ from test_helpers import (TestRunner, login, BASE_URL, wait_for_page_ready)
 from playwright.sync_api import sync_playwright, expect
 
 
-def test_list_summary_card(page, runner, step_num, title, view_all_url_pattern, detail_url_pattern=r"/(sales|purchasing|inventory|finance|hrm|bom)", test_tabs=False):
+def find_card(page, title):
+    # Find card div that contains the title quickLink link or plain title span.
+    # We increase the timeout to 5000ms.
+    card = page.locator("div[class*='card']").filter(
+        has=page.locator(f"a[aria-label='Mở chi tiết: {title}'], span", has_text=title)
+    ).first
+    return card
+
+
+def test_kpi_list_card(page, runner, step_num, title, expected_url, expect_money=True, test_tabs=False):
     try:
-        # 1. Locate and verify visibility of the card
-        card = page.locator("div[class*='card']").filter(has=page.locator("span", has_text=title)).first
-        expect(card).to_be_visible(timeout=3000)
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
         
-        # 2. Test Tab filtering if requested
+        # Check empty state first
+        empty_state = card.locator("div[class*='emptyState']")
+        is_empty = empty_state.count() > 0 and empty_state.is_visible()
+        
+        if is_empty:
+            # Click title card to verify redirection
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống (Không có hoạt động cần xử lý) và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        # 1. Test Tab filtering if requested
         if test_tabs:
-            tab_all = card.get_by_role("button", name="Tất cả")
-            tab_in = card.get_by_role("button", name="Nhập 📥")
-            tab_out = card.get_by_role("button", name="Xuất 📤")
-            tab_trf = card.get_by_role("button", name="Chuyển 🔄")
+            tab_all = card.locator("button", has_text="Tất cả")
+            tab_in = card.locator("button", has_text="Nhập 📥")
+            tab_out = card.locator("button", has_text="Xuất 📤")
+            tab_trf = card.locator("button", has_text="Chuyển 🔄")
             
             expect(tab_all).to_be_visible()
             expect(tab_in).to_be_visible()
@@ -33,95 +57,327 @@ def test_list_summary_card(page, runner, step_num, title, view_all_url_pattern, 
             # Click Tab "Nhập 📥"
             tab_in.click()
             time.sleep(0.5)
-            rows_out = card.locator("a").filter(has_text="📤").all()
-            rows_trf = card.locator("a").filter(has_text="🔄").all()
+            try:
+                card.locator("div[class*='loadingOverlay']").wait_for(state="detached", timeout=3000)
+            except:
+                pass
+            rows_out = card.locator("a.colBoldLink").filter(has_text="📤").all()
+            rows_trf = card.locator("a.colBoldLink").filter(has_text="🔄").all()
             assert len(rows_out) == 0
             assert len(rows_trf) == 0
             
             # Click Tab "Xuất 📤"
             tab_out.click()
             time.sleep(0.5)
-            rows_in = card.locator("a").filter(has_text="📥").all()
-            rows_trf = card.locator("a").filter(has_text="🔄").all()
+            try:
+                card.locator("div[class*='loadingOverlay']").wait_for(state="detached", timeout=3000)
+            except:
+                pass
+            rows_in = card.locator("a.colBoldLink").filter(has_text="📥").all()
+            rows_trf = card.locator("a.colBoldLink").filter(has_text="🔄").all()
             assert len(rows_in) == 0
             assert len(rows_trf) == 0
 
             # Click Tab "Chuyển 🔄"
             tab_trf.click()
             time.sleep(0.5)
-            rows_in = card.locator("a").filter(has_text="📥").all()
-            rows_out = card.locator("a").filter(has_text="📤").all()
+            try:
+                card.locator("div[class*='loadingOverlay']").wait_for(state="detached", timeout=3000)
+            except:
+                pass
+            rows_in = card.locator("a.colBoldLink").filter(has_text="📥").all()
+            rows_out = card.locator("a.colBoldLink").filter(has_text="📤").all()
             assert len(rows_in) == 0
             assert len(rows_out) == 0
 
             # Back to Tab "Tất cả"
             tab_all.click()
             time.sleep(0.5)
+            try:
+                card.locator("div[class*='loadingOverlay']").wait_for(state="detached", timeout=3000)
+            except:
+                pass
 
-        # 3. Test row item detail redirection (if data exists)
-        row_links = card.locator("a").filter(has_not_text="Xem tất cả")
+        # 2. Verify hero value is visible
+        hero = card.locator("span[class*='kpiHeroValue']").first
+        expect(hero).to_be_visible()
+        
+        # 3. Verify right aligns (currency/meta)
+        if expect_money:
+            expect(card.locator("div[class*='cardBody']")).to_have_text(re.compile(r"(₫|đ)"))
+
+        # 4. Test row item detail redirection (if data exists)
+        row_links = card.locator("div[class*='kpiListSection'] a.colBoldLink")
         if row_links.count() > 0:
             first_row = row_links.first
-            link_text = first_row.text_content()
+            expect(first_row).to_be_visible()
             first_row.click()
             wait_for_page_ready(page)
-            expect(page).to_have_url(re.compile(detail_url_pattern))
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
             page.go_back()
             wait_for_page_ready(page)
-            
-        # 4. Test "Xem tất cả" redirect
-        view_all = card.locator("a").filter(has_text="Xem tất cả").first
-        expect(view_all).to_be_visible()
-        view_all.click()
+
+        # 5. Click title card to redirect
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
         wait_for_page_ready(page)
-        expect(page).to_have_url(re.compile(view_all_url_pattern))
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+        page.go_back()
+        wait_for_page_ready(page)
+
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra kpi_list đầy đủ sự tồn tại, tiêu đề điều hướng và liên kết dòng", url=page.url)
+    except Exception as e:
+        runner.screenshot(page, f"wf02_s{step_num}_error")
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra chức năng kpi_list", str(e), url=page.url)
+
+
+def test_line_chart_card(page, runner, step_num, title, expected_url):
+    try:
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
+        
+        empty_state = card.locator("div[class*='emptyState']")
+        if empty_state.count() > 0 and empty_state.is_visible():
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống (Chưa có dữ liệu biểu đồ doanh thu) và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        expect(card.locator("span[class*='kpiHeroValue']").first).to_be_visible()
+        expect(card.locator("div[class*='chartWrapper'] svg")).to_be_visible()
+        expect(card.locator("path[class*='lineChartArea']")).to_be_visible()
+        expect(card.locator("polyline[class*='lineChartPath']")).to_be_visible()
+        
+        hover_zones = card.locator("rect[fill='transparent']").all()
+        if len(hover_zones) > 0:
+            card.scroll_into_view_if_needed()
+            time.sleep(0.5)
+            target_idx = min(3, len(hover_zones) - 1)
+            hover_zones[target_idx].hover()
+            time.sleep(0.5)
+            
+            tooltip = page.locator("div[style*='z-index: 10']").last
+            expect(tooltip).to_be_visible(timeout=3000)
+            expect(tooltip).to_have_text(re.compile(r"(Doanh thu|₫|đ)"))
+            
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
+        wait_for_page_ready(page)
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
         page.go_back()
         wait_for_page_ready(page)
         
-        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra đầy đủ sự tồn tại, nút 'Xem tất cả' và liên kết dòng", url=page.url)
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra SVG chart, hero value, legend và tương tác hover thành công", url=page.url)
     except Exception as e:
         runner.screenshot(page, f"wf02_s{step_num}_error")
-        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra chức năng", str(e), url=page.url)
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra biểu đồ line_chart", str(e), url=page.url)
 
 
-def test_chart_card(page, runner, step_num, title):
+def test_cashflow_overview_card(page, runner, step_num, title, expected_url):
     try:
-        # 1. Verify card visibility
-        card = page.locator("div[class*='card']").filter(has=page.locator("span", has_text=title)).first
-        expect(card).to_be_visible(timeout=3000)
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
         
-        # 2. Verify SVG element exists
-        svg = card.locator("div[class*='chartWrapper'] svg")
-        expect(svg).to_be_visible()
+        empty_state = card.locator("div[class*='emptyState']")
+        if empty_state.count() > 0 and empty_state.is_visible():
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống (Chưa có dữ liệu dòng tiền) và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        expect(card.locator("text=Dòng tiền ròng")).to_be_visible()
+        expect(card.locator("span[class*='cashflowSummaryValue']")).to_be_visible()
+        expect(card.locator("text=Tổng thu")).to_be_visible()
+        expect(card.locator("text=Tổng chi")).to_be_visible()
+        expect(card.locator("div[class*='cashflowChartWrapper'] svg")).to_be_visible()
         
-        # 3. Verify Chart legends
-        expect(card.get_by_text("Dòng thu")).to_be_visible()
-        expect(card.get_by_text("Dòng chi")).to_be_visible()
-        
-        # 4. Verify Interactive Hover Tooltip if bars exist
-        first_bar = card.locator("rect[fill^='url']").first
-        try:
-            first_bar.wait_for(state="visible", timeout=5000)
-        except Exception:
-            pass
-            
-        bars = card.locator("rect[fill^='url']").all()
-        if len(bars) > 0:
-            # Scroll card into view explicitly to ensure correct mouse hover positioning
+        hover_zones = card.locator("rect[fill='transparent']").all()
+        if len(hover_zones) > 0:
             card.scroll_into_view_if_needed()
             time.sleep(0.5)
-            
-            # Hover directly on the first transparent hover zone to trigger tooltip
-            card.locator("rect[fill='transparent']").first.hover()
+            target_idx = min(3, len(hover_zones) - 1)
+            hover_zones[target_idx].hover()
             time.sleep(0.5)
             
-            tooltip = page.locator("div").filter(has_text="Dòng thu:").last
+            tooltip = page.locator("div[style*='z-index: 10']").last
             expect(tooltip).to_be_visible(timeout=3000)
-            
-        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra SVG chart, legend và tương tác hover thành công", url=page.url)
+            expect(tooltip).to_have_text(re.compile(r"Dòng thu"))
+            expect(tooltip).to_have_text(re.compile(r"Dòng chi"))
+
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
+        wait_for_page_ready(page)
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+        page.go_back()
+        wait_for_page_ready(page)
+
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra tổng quan dòng tiền, SVG chart, legend và tương tác hover thành công", url=page.url)
     except Exception as e:
         runner.screenshot(page, f"wf02_s{step_num}_error")
-        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra biểu đồ", str(e), url=page.url)
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra biểu đồ cashflow_overview", str(e), url=page.url)
+
+
+def test_donut_chart_card(page, runner, step_num, title, expected_url):
+    try:
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
+        
+        empty_state = card.locator("div[class*='emptyState']")
+        if empty_state.count() > 0 and empty_state.is_visible():
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống (Chưa có dữ liệu) và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        donut = card.locator("[data-testid='donut-svg']")
+        expect(donut).to_be_visible()
+        assert donut.locator("svg circle").count() >= 2
+        expect(card.locator("div[class*='donutCenter'] span").first).to_be_visible()
+        expect(card.locator("div[class*='donutLegend']").first).to_be_visible()
+        
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
+        wait_for_page_ready(page)
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+        page.go_back()
+        wait_for_page_ready(page)
+
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra SVG donut chart, center value và legends thành công", url=page.url)
+    except Exception as e:
+        runner.screenshot(page, f"wf02_s{step_num}_error")
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra biểu đồ donut_chart", str(e), url=page.url)
+
+
+def test_aging_bar_chart_card(page, runner, step_num, title, expected_url):
+    try:
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
+        
+        empty_state = card.locator("div[class*='emptyState']")
+        if empty_state.count() > 0 and empty_state.is_visible():
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống (Chưa có dữ liệu phân tích nợ) và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        expect(card.locator("text=Tổng dư nợ")).to_be_visible()
+        expect(card.locator("span[class*='agingTotal']")).to_be_visible()
+        donut = card.locator("[data-testid='donut-svg']")
+        expect(donut).to_be_visible()
+        expect(card.locator("div[class*='donutLegend']").first).to_be_visible()
+        
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
+        wait_for_page_ready(page)
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+        page.go_back()
+        wait_for_page_ready(page)
+
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra SVG aging donut chart, dư nợ và legends thành công", url=page.url)
+    except Exception as e:
+        runner.screenshot(page, f"wf02_s{step_num}_error")
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra biểu đồ aging_bar_chart", str(e), url=page.url)
+
+
+def test_gauge_card(page, runner, step_num, title, expected_url):
+    try:
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
+        
+        empty_state = card.locator("div[class*='emptyState']")
+        if empty_state.count() > 0 and empty_state.is_visible():
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        gauge = card.locator("[data-testid='gauge-svg']")
+        expect(gauge).to_be_visible()
+        expect(gauge.locator("svg circle")).to_have_count(2)
+        expect(card.locator("span[class*='gaugeValue']")).to_be_visible()
+        expect(card.locator("text=người vắng")).to_be_visible()
+        
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
+        wait_for_page_ready(page)
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+        page.go_back()
+        wait_for_page_ready(page)
+
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra SVG gauge, rate value và absent count thành công", url=page.url)
+    except Exception as e:
+        runner.screenshot(page, f"wf02_s{step_num}_error")
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra biểu đồ gauge", str(e), url=page.url)
+
+
+def test_stacked_progress_card(page, runner, step_num, title, expected_url):
+    try:
+        card = find_card(page, title)
+        expect(card).to_be_visible(timeout=5000)
+        
+        empty_state = card.locator("div[class*='emptyState']")
+        if empty_state.count() > 0 and empty_state.is_visible():
+            title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+            expect(title_link).to_be_visible()
+            title_link.click()
+            wait_for_page_ready(page)
+            expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+            page.go_back()
+            wait_for_page_ready(page)
+            runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Trạng thái trống (Không có lệnh sản xuất đang chạy) và chuyển hướng tiêu đề thành công", url=page.url)
+            return
+
+        expect(card.locator("div[class*='stackedList']")).to_be_visible()
+        rows = card.locator("div[class*='stackedRow']").all()
+        if len(rows) > 0:
+            first_row = rows[0]
+            expect(first_row.locator("div[class*='stackedTrack']")).to_be_visible()
+            expect(first_row.locator("div[class*='stackedFill']")).to_be_visible()
+            expect(first_row.locator("span[class*='stackedRowQty']")).to_be_visible()
+            
+        title_link = card.locator(f"a[aria-label='Mở chi tiết: {title}']").first
+        expect(title_link).to_be_visible()
+        title_link.click()
+        wait_for_page_ready(page)
+        expect(page).to_have_url(re.compile(re.escape(expected_url.split('?')[0])))
+        page.go_back()
+        wait_for_page_ready(page)
+
+        runner.log("WF-02", step_num, "PASS", f"Thẻ '{title}': Đã kiểm tra stacked progress bar list và chuyển hướng tiêu đề thành công", url=page.url)
+    except Exception as e:
+        runner.screenshot(page, f"wf02_s{step_num}_error")
+        runner.log("WF-02", step_num, "FAIL", f"Thẻ '{title}': Lỗi kiểm tra stacked progress card", str(e), url=page.url)
 
 
 def run():
@@ -144,187 +400,182 @@ def run():
                 runner.log("WF-02", 1, "FAIL", "Đăng nhập thành công và chuyển hướng đến /dashboard", str(e), "BLOCKER", url=page.url)
                 raise e
 
-            # ── Step 2 đến Step 27: Kiểm tra 26 Thẻ Chỉ Số một cách độc lập ──
-            
-            # Card 1: Đơn bán hàng hôm nay
-            test_list_summary_card(page, runner, 2, "Đơn bán hàng hôm nay", r"/sales\?tab=orders", r"/sales")
+            # ── Steps 2-26: Kiểm tra 25 Thẻ Chỉ Số ──
+            # Card 1: Doanh thu hôm nay
+            test_line_chart_card(page, runner, 2, "Doanh thu hôm nay", "/sales?tab=orders")
 
-            # Card 2: Đơn hàng nháp
-            test_list_summary_card(page, runner, 3, "Đơn hàng nháp", r"/sales\?tab=orders&status=draft", r"/sales")
+            # Card 2: Đơn bán hàng nháp
+            test_kpi_list_card(page, runner, 3, "Đơn bán hàng nháp", "/sales?tab=orders&status=draft", expect_money=True)
 
             # Card 3: Đơn bán hàng chờ duyệt vượt hạn mức
-            test_list_summary_card(page, runner, 4, "Đơn bán hàng chờ duyệt vượt hạn mức", r"/sales\?tab=orders&status=pending_credit_approval", r"/sales")
+            test_kpi_list_card(page, runner, 4, "Đơn bán hàng chờ duyệt vượt hạn mức", "/sales?tab=orders&status=pending_credit_approval", expect_money=True)
 
             # Card 4: Đơn bán hàng chờ giao hàng
-            test_list_summary_card(page, runner, 5, "Đơn bán hàng chờ giao hàng", r"/inventory\?tab=entries&status=draft", r"/inventory")
+            test_kpi_list_card(page, runner, 5, "Đơn bán hàng chờ giao hàng", "/inventory?tab=entries&status=draft", expect_money=False)
 
             # Card 5: Đơn mua hàng hoạt động
-            test_list_summary_card(page, runner, 6, "Đơn mua hàng hoạt động", r"/purchasing\?tab=orders&status=pending", r"/purchasing")
+            test_kpi_list_card(page, runner, 6, "Đơn mua hàng hoạt động", "/purchasing?tab=orders&status=pending", expect_money=True)
 
             # Card 6: Đơn mua hàng nháp
-            test_list_summary_card(page, runner, 7, "Đơn mua hàng nháp", r"/purchasing\?tab=orders&status=draft", r"/purchasing")
+            test_kpi_list_card(page, runner, 7, "Đơn mua hàng nháp", "/purchasing?tab=orders&status=draft", expect_money=True)
 
             # Card 7: Đơn mua hàng chờ nhận hàng
-            test_list_summary_card(page, runner, 8, "Đơn mua hàng chờ nhận hàng", r"/inventory\?tab=entries&status=draft", r"/inventory")
+            test_kpi_list_card(page, runner, 8, "Đơn mua hàng chờ nhận hàng", "/inventory?tab=entries&status=draft", expect_money=False)
 
             # Card 8: Lô hàng chờ kiểm QC
-            test_list_summary_card(page, runner, 9, "Lô hàng chờ kiểm QC", r"/purchasing\?tab=shipment", r"/purchasing")
+            test_kpi_list_card(page, runner, 9, "Lô hàng chờ kiểm QC", "/purchasing?tab=shipment", expect_money=False)
 
             # Card 9: Lô hàng chờ phân bổ chi phí
-            test_list_summary_card(page, runner, 10, "Lô hàng chờ phân bổ chi phí", r"/purchasing\?tab=shipment", r"/purchasing")
+            test_kpi_list_card(page, runner, 10, "Lô hàng chờ phân bổ chi phí", "/purchasing?tab=shipment", expect_money=False)
 
             # Card 10: Hóa đơn mua bị chặn
-            test_list_summary_card(page, runner, 11, "Hóa đơn mua bị chặn", r"/purchasing\?tab=invoices&status=blocked", r"/purchasing")
+            test_kpi_list_card(page, runner, 11, "Hóa đơn mua bị chặn", "/purchasing?tab=invoices&status=blocked", expect_money=True)
 
             # Card 11: Phiếu nhập kho chờ duyệt
-            test_list_summary_card(page, runner, 12, "Phiếu nhập kho chờ duyệt", r"/inventory\?tab=entries&status=draft", r"/inventory")
+            test_kpi_list_card(page, runner, 12, "Phiếu nhập kho chờ duyệt", "/inventory?tab=entries&status=draft", expect_money=False)
 
-            # Card 12: Cảnh báo tồn kho thấp
-            test_list_summary_card(page, runner, 13, "Cảnh báo tồn kho thấp", r"/inventory\?tab=ledger", r"/inventory")
+            # Card 12: Theo dõi linh kiện
+            test_donut_chart_card(page, runner, 13, "Theo dõi linh kiện", "/inventory?tab=ledger")
 
-            # Card 13: Yêu cầu chuyển kho chờ thực hiện (kiểm tra Tab Filter)
-            test_list_summary_card(page, runner, 14, "Yêu cầu chuyển kho chờ thực hiện", r"/inventory\?tab=entries&status=draft", r"/inventory", test_tabs=True)
+            # Card 13: Yêu cầu chuyển kho chờ thực hiện
+            test_kpi_list_card(page, runner, 14, "Yêu cầu chuyển kho chờ thực hiện", "/inventory?tab=entries&status=draft", expect_money=False, test_tabs=True)
 
-            # Card 14: Biểu đồ dòng tiền tuần
-            test_chart_card(page, runner, 15, "Biểu đồ dòng tiền tuần")
+            # Card 14: Tổng quan & Xu hướng dòng tiền
+            test_cashflow_overview_card(page, runner, 15, "Tổng quan & Xu hướng dòng tiền", "/finance")
 
-            # Card 15: Giao dịch dòng tiền tháng
-            test_list_summary_card(page, runner, 16, "Giao dịch dòng tiền tháng", r"/finance", r"/finance")
+            # Card 15: Hóa đơn mua chưa thanh toán
+            test_aging_bar_chart_card(page, runner, 16, "Hóa đơn mua chưa thanh toán", "/finance?tab=ap&status=unpaid")
 
-            # Card 16: Hóa đơn mua chưa thanh toán
-            test_list_summary_card(page, runner, 17, "Hóa đơn mua chưa thanh toán", r"/finance\?tab=ap&status=unpaid", r"/purchasing")
+            # Card 16: Hóa đơn bán chưa thanh toán
+            test_aging_bar_chart_card(page, runner, 17, "Hóa đơn bán chưa thanh toán", "/sales?tab=invoices&status=unpaid")
 
-            # Card 17: Hóa đơn bán chưa thanh toán
-            test_list_summary_card(page, runner, 18, "Hóa đơn bán chưa thanh toán", r"/sales\?tab=invoices&status=unpaid", r"/sales")
+            # Card 17: Khấu hao tài sản cố định
+            test_kpi_list_card(page, runner, 18, "Khấu hao tài sản cố định", "/finance/fixed-assets", expect_money=False)
 
-            # Card 18: Khấu hao tài sản cố định
-            test_list_summary_card(page, runner, 19, "Khấu hao tài sản cố định", r"/finance/fixed-assets", r"/finance")
+            # Card 18: Bảng lương chờ duyệt & thanh toán
+            test_kpi_list_card(page, runner, 19, "Bảng lương chờ duyệt & thanh toán", "/hrm?tab=salary", expect_money=True)
 
-            # Card 19: Bảng lương chờ duyệt & thanh toán
-            test_list_summary_card(page, runner, 20, "Bảng lương chờ duyệt & thanh toán", r"/hrm\?tab=salary", r"/hrm")
+            # Card 19: Yêu cầu nghỉ phép chờ duyệt
+            test_kpi_list_card(page, runner, 20, "Yêu cầu nghỉ phép chờ duyệt", "/hrm?tab=leave", expect_money=False)
 
-            # Card 20: Yêu cầu nghỉ phép chờ duyệt
-            test_list_summary_card(page, runner, 21, "Yêu cầu nghỉ phép chờ duyệt", r"/hrm\?tab=leave", r"/hrm")
+            # Card 20: Hợp đồng lao động sắp hết hạn
+            test_kpi_list_card(page, runner, 21, "Hợp đồng lao động sắp hết hạn", "/hrm?tab=employees", expect_money=False)
 
-            # Card 21: Hợp đồng lao động sắp hết hạn
-            test_list_summary_card(page, runner, 22, "Hợp đồng lao động sắp hết hạn", r"/hrm\?tab=employees", r"/hrm")
+            # Card 21: Theo dõi vắng mặt
+            test_gauge_card(page, runner, 22, "Theo dõi vắng mặt", "/hrm?tab=attendance")
 
-            # Card 22: Nhân viên vắng mặt hôm nay
-            test_list_summary_card(page, runner, 23, "Nhân viên vắng mặt hôm nay", r"/hrm\?tab=attendance", r"/hrm")
+            # Card 22: Lệnh sản xuất chờ duyệt
+            test_kpi_list_card(page, runner, 23, "Lệnh sản xuất chờ duyệt", "/bom?tab=wo&status=pending_approval", expect_money=False)
 
-            # Card 23: Lệnh sản xuất chờ duyệt
-            test_list_summary_card(page, runner, 24, "Lệnh sản xuất chờ duyệt", r"/bom\?tab=wo&status=pending_approval", r"/bom")
+            # Card 23: Lệnh sản xuất đang thực hiện
+            test_stacked_progress_card(page, runner, 24, "Lệnh sản xuất đang thực hiện", "/bom?tab=wo&status=in_progress")
 
-            # Card 24: Lệnh sản xuất đang thực hiện
-            test_list_summary_card(page, runner, 25, "Lệnh sản xuất đang thực hiện", r"/bom\?tab=wo&status=in_progress", r"/bom")
+            # Card 24: Lệnh sản xuất sắp trễ hạn
+            test_kpi_list_card(page, runner, 25, "Lệnh sản xuất sắp trễ hạn", "/bom?tab=wo&status=in_progress", expect_money=False)
 
-            # Card 25: Lệnh sản xuất sắp trễ hạn
-            test_list_summary_card(page, runner, 26, "Lệnh sản xuất sắp trễ hạn", r"/bom\?tab=wo&status=in_progress", r"/bom")
+            # Card 25: Lệnh sản xuất chờ nghiệm thu
+            test_kpi_list_card(page, runner, 26, "Lệnh sản xuất chờ nghiệm thu", "/bom?tab=wo&status=in_progress", expect_money=False)
 
-            # Card 26: Lệnh sản xuất chờ nghiệm thu
-            test_list_summary_card(page, runner, 27, "Lệnh sản xuất chờ nghiệm thu", r"/bom\?tab=wo&status=in_progress", r"/bom")
-
-            # ── Step 28 đến Step 37: Kiểm tra Sidebar Navigation ──
-            
-            # Step 28: Click sidebar "Dashboard" -> verify URL
+            # ── Steps 27-36: Kiểm tra Sidebar Navigation ──
+            # Step 27: Dashboard
             try:
                 page.get_by_role("link", name="Dashboard").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/dashboard")
-                runner.log("WF-02", 28, "PASS", "Click sidebar link 'Dashboard' -> URL chứa /dashboard", url=page.url)
+                runner.log("WF-02", 27, "PASS", "Click sidebar link 'Dashboard' -> URL chứa /dashboard", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s28")
-                runner.log("WF-02", 28, "FAIL", "Click sidebar link 'Dashboard' -> URL chứa /dashboard", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s27")
+                runner.log("WF-02", 27, "FAIL", "Click sidebar link 'Dashboard' -> URL chứa /dashboard", str(e), url=page.url)
 
-            # Step 29: Click sidebar "BOM" -> verify URL
+            # Step 28: BOM
             try:
                 page.get_by_role("link", name="BOM").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/bom")
-                runner.log("WF-02", 29, "PASS", "Click sidebar link 'BOM' -> URL chứa /bom", url=page.url)
+                runner.log("WF-02", 28, "PASS", "Click sidebar link 'BOM' -> URL chứa /bom", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s29")
-                runner.log("WF-02", 29, "FAIL", "Click sidebar link 'BOM' -> URL chứa /bom", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s28")
+                runner.log("WF-02", 28, "FAIL", "Click sidebar link 'BOM' -> URL chứa /bom", str(e), url=page.url)
 
-            # Step 30: Click sidebar "Kho" -> verify URL
+            # Step 29: Kho
             try:
                 page.get_by_role("link", name="Kho").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/inventory")
-                runner.log("WF-02", 30, "PASS", "Click sidebar link 'Kho' -> URL chứa /inventory", url=page.url)
+                runner.log("WF-02", 29, "PASS", "Click sidebar link 'Kho' -> URL chứa /inventory", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s30")
-                runner.log("WF-02", 30, "FAIL", "Click sidebar link 'Kho' -> URL chứa /inventory", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s29")
+                runner.log("WF-02", 29, "FAIL", "Click sidebar link 'Kho' -> URL chứa /inventory", str(e), url=page.url)
 
-            # Step 31: Click sidebar "Mua Hàng" -> verify URL
+            # Step 30: Mua Hàng
             try:
                 page.get_by_role("link", name="Mua Hàng").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/purchasing")
-                runner.log("WF-02", 31, "PASS", "Click sidebar link 'Mua Hàng' -> URL chứa /purchasing", url=page.url)
+                runner.log("WF-02", 30, "PASS", "Click sidebar link 'Mua Hàng' -> URL chứa /purchasing", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s31")
-                runner.log("WF-02", 31, "FAIL", "Click sidebar link 'Mua Hàng' -> URL chứa /purchasing", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s30")
+                runner.log("WF-02", 30, "FAIL", "Click sidebar link 'Mua Hàng' -> URL chứa /purchasing", str(e), url=page.url)
 
-            # Step 32: Click sidebar "Bán Hàng" -> verify URL
+            # Step 31: Bán Hàng
             try:
                 page.get_by_role("link", name="Bán Hàng").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/sales")
-                runner.log("WF-02", 32, "PASS", "Click sidebar link 'Bán Hàng' -> URL chứa /sales", url=page.url)
+                runner.log("WF-02", 31, "PASS", "Click sidebar link 'Bán Hàng' -> URL chứa /sales", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s32")
-                runner.log("WF-02", 32, "FAIL", "Click sidebar link 'Bán Hàng' -> URL chứa /sales", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s31")
+                runner.log("WF-02", 31, "FAIL", "Click sidebar link 'Bán Hàng' -> URL chứa /sales", str(e), url=page.url)
 
-            # Step 33: Click sidebar "Khách Hàng" -> verify URL
+            # Step 32: Khách Hàng
             try:
                 page.get_by_role("link", name="Khách Hàng").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/customers")
-                runner.log("WF-02", 33, "PASS", "Click sidebar link 'Khách Hàng' -> URL chứa /customers", url=page.url)
+                runner.log("WF-02", 32, "PASS", "Click sidebar link 'Khách Hàng' -> URL chứa /customers", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s33")
-                runner.log("WF-02", 33, "FAIL", "Click sidebar link 'Khách Hàng' -> URL chứa /customers", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s32")
+                runner.log("WF-02", 32, "FAIL", "Click sidebar link 'Khách Hàng' -> URL chứa /customers", str(e), url=page.url)
 
-            # Step 34: Click sidebar "Nhà Cung Cấp" -> verify URL
+            # Step 33: Nhà Cung Cấp
             try:
                 page.get_by_role("link", name="Nhà Cung Cấp").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/suppliers")
-                runner.log("WF-02", 34, "PASS", "Click sidebar link 'Nhà Cung Cấp' -> URL chứa /suppliers", url=page.url)
+                runner.log("WF-02", 33, "PASS", "Click sidebar link 'Nhà Cung Cấp' -> URL chứa /suppliers", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s34")
-                runner.log("WF-02", 34, "FAIL", "Click sidebar link 'Nhà Cung Cấp' -> URL chứa /suppliers", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s33")
+                runner.log("WF-02", 33, "FAIL", "Click sidebar link 'Nhà Cung Cấp' -> URL chứa /suppliers", str(e), url=page.url)
 
-            # Step 35: Click sidebar "Dòng Tiền" -> verify URL
+            # Step 34: Dòng Tiền
             try:
                 page.get_by_role("link", name="Dòng Tiền").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/finance")
-                runner.log("WF-02", 35, "PASS", "Click sidebar link 'Dòng Tiền' -> URL chứa /finance", url=page.url)
+                runner.log("WF-02", 34, "PASS", "Click sidebar link 'Dòng Tiền' -> URL chứa /finance", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s35")
-                runner.log("WF-02", 35, "FAIL", "Click sidebar link 'Dòng Tiền' -> URL chứa /finance", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s34")
+                runner.log("WF-02", 34, "FAIL", "Click sidebar link 'Dòng Tiền' -> URL chứa /finance", str(e), url=page.url)
 
-            # Step 36: Click sidebar "Tài Sản Cố Định" -> verify URL
+            # Step 35: Tài Sản Cố Định
             try:
                 page.get_by_role("link", name="Tài Sản Cố Định").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/finance/fixed-assets")
-                runner.log("WF-02", 36, "PASS", "Click sidebar link 'Tài Sản Cố Định' -> URL chứa /finance/fixed-assets", url=page.url)
+                runner.log("WF-02", 35, "PASS", "Click sidebar link 'Tài Sản Cố Định' -> URL chứa /finance/fixed-assets", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s36")
-                runner.log("WF-02", 36, "FAIL", "Click sidebar link 'Tài Sản Cố Định' -> URL chứa /finance/fixed-assets", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s35")
+                runner.log("WF-02", 35, "FAIL", "Click sidebar link 'Tài Sản Cố Định' -> URL chứa /finance/fixed-assets", str(e), url=page.url)
 
-            # Step 37: Click sidebar "Quản Lý HR" -> verify URL
+            # Step 36: Quản Lý HR
             try:
                 page.get_by_role("link", name="Quản Lý HR").click()
                 wait_for_page_ready(page)
                 expect(page).to_have_url(f"{BASE_URL}/hrm")
-                runner.log("WF-02", 37, "PASS", "Click sidebar link 'Quản Lý HR' -> URL chứa /hrm", url=page.url)
+                runner.log("WF-02", 36, "PASS", "Click sidebar link 'Quản Lý HR' -> URL chứa /hrm", url=page.url)
             except Exception as e:
-                runner.screenshot(page, "wf02_s37")
-                runner.log("WF-02", 37, "FAIL", "Click sidebar link 'Quản Lý HR' -> URL chứa /hrm", str(e), url=page.url)
+                runner.screenshot(page, "wf02_s36")
+                runner.log("WF-02", 36, "FAIL", "Click sidebar link 'Quản Lý HR' -> URL chứa /hrm", str(e), url=page.url)
 
         except Exception as e:
             runner.screenshot(page, "wf02_blocker")

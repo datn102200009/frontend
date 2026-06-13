@@ -36,7 +36,7 @@ def run():
                 time.sleep(0.5)
                 page.get_by_role("combobox", name="Chọn năm").select_option("2026")
                 page.get_by_role("combobox", name="Chọn tháng").select_option("4")  # May (0-indexed)
-                page.get_by_role("button", name="15 Tháng 5 Năm 2026").click()
+                page.get_by_role("button", name="15 Tháng 5 Năm 2026", exact=True).click()
                 page.get_by_role("button", name="Xác nhận").click()
 
                 time.sleep(1)
@@ -149,7 +149,7 @@ def run():
                 try:
                     page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn Thử Nghiệm (NV_TEST_001)")
                 except Exception:
-                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (NV001)")
+                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (EMP001)")
                     
                 page.get_by_label("Loại nghỉ phép").select_option("paid")
                 page.get_by_label("Từ ngày").fill("2026-04-20")

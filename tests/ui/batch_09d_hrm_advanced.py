@@ -32,7 +32,7 @@ def run():
             # ── Step 1: Cập nhật thông tin nhân viên ──
             try:
                 search = page.get_by_placeholder("Tìm kiếm nhân viên theo mã hoặc tên...")
-                search.fill("NV001")
+                search.fill("EMP001")
                 time.sleep(0.5)
 
                 page.get_by_title("Sửa thông tin").first.click()
@@ -52,10 +52,10 @@ def run():
                 time.sleep(1.5)
 
                 expect(page.get_by_role("dialog")).not_to_be_visible()
-                runner.log("WF-11", 1, "PASS", "Cập nhật thông tin nhân viên NV001 thành công", url=page.url)
+                runner.log("WF-11", 1, "PASS", "Cập nhật thông tin nhân viên EMP001 thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step1_fail")
-                runner.log("WF-11", 1, "FAIL", "Cập nhật thông tin nhân viên NV001 thành công", str(e), url=page.url)
+                runner.log("WF-11", 1, "FAIL", "Cập nhật thông tin nhân viên EMP001 thành công", str(e), url=page.url)
 
             # Reset search
             search.fill("")
@@ -106,7 +106,7 @@ def run():
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 
-                page.get_by_label("Mã nhân viên").fill("NV001")
+                page.get_by_label("Mã nhân viên").fill("EMP001")
                 page.get_by_label("Họ và tên").fill("Trùng Mã Nhân Viên")
                 page.get_by_label("Lương cơ bản (VND)").fill("10000000")
 
@@ -117,12 +117,12 @@ def run():
                 error_toast = page.get_by_text("Mã nhân viên đã tồn tại")
                 # Fallback to general validation alert check
                 if error_toast.is_visible() or page.get_by_role("dialog").is_visible():
-                    runner.log("WF-11", 3, "PASS", "Lỗi validate chặn tạo nhân viên trùng mã NV001 hiển thị chính xác", url=page.url)
+                    runner.log("WF-11", 3, "PASS", "Lỗi validate chặn tạo nhân viên trùng mã EMP001 hiển thị chính xác", url=page.url)
                 else:
-                    raise AssertionError("Hệ thống cho phép lưu nhân viên trùng mã NV001")
+                    raise AssertionError("Hệ thống cho phép lưu nhân viên trùng mã EMP001")
             except Exception as e:
                 runner.screenshot(page, "step3_fail")
-                runner.log("WF-11", 3, "FAIL", "Lỗi validate chặn tạo nhân viên trùng mã NV001 hiển thị chính xác", str(e), url=page.url)
+                runner.log("WF-11", 3, "FAIL", "Lỗi validate chặn tạo nhân viên trùng mã EMP001 hiển thị chính xác", str(e), url=page.url)
             finally:
                 if page.get_by_role("dialog").is_visible():
                     page.get_by_role("button", name="Hủy").first.click()
@@ -239,7 +239,7 @@ def run():
 
             # ── Step 7: Ghi nhận khen thưởng cho nhân viên ──
             try:
-                search.fill("NV001")
+                search.fill("EMP001")
                 time.sleep(0.5)
 
                 page.get_by_title("Khen thưởng").first.click()
@@ -254,10 +254,10 @@ def run():
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
-                runner.log("WF-11", 7, "PASS", "Ghi nhận khen thưởng thành công cho nhân viên NV001", url=page.url)
+                runner.log("WF-11", 7, "PASS", "Ghi nhận khen thưởng thành công cho nhân viên EMP001", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step7_fail")
-                runner.log("WF-11", 7, "FAIL", "Ghi nhận khen thưởng thành công cho nhân viên NV001", str(e), url=page.url)
+                runner.log("WF-11", 7, "FAIL", "Ghi nhận khen thưởng thành công cho nhân viên EMP001", str(e), url=page.url)
 
             # ── Step 8: Ghi nhận kỷ luật cho nhân viên ──
             try:
@@ -273,10 +273,10 @@ def run():
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
-                runner.log("WF-11", 8, "PASS", "Ghi nhận kỷ luật khấu trừ lương thành công cho NV001", url=page.url)
+                runner.log("WF-11", 8, "PASS", "Ghi nhận kỷ luật khấu trừ lương thành công cho EMP001", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step8_fail")
-                runner.log("WF-11", 8, "FAIL", "Ghi nhận kỷ luật khấu trừ lương thành công cho NV001", str(e), url=page.url)
+                runner.log("WF-11", 8, "FAIL", "Ghi nhận kỷ luật khấu trừ lương thành công cho EMP001", str(e), url=page.url)
 
             # ── Step 9: Form validation khen thưởng thiếu lý do (Fail Case) ──
             try:
@@ -314,7 +314,7 @@ def run():
                 if page.get_by_text("Không tìm thấy đơn nghỉ phép nào").is_visible() or page.locator("tbody tr").count() == 0:
                     page.get_by_role("button", name="Tạo Đơn Phép").click()
                     time.sleep(0.5)
-                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (NV001)")
+                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (EMP001)")
                     page.get_by_label("Loại nghỉ phép").select_option("paid")
                     page.get_by_label("Từ ngày").fill("2026-05-10")
                     page.get_by_label("Đến ngày").fill("2026-05-11")
@@ -348,7 +348,7 @@ def run():
                 if page.get_by_text("Không tìm thấy đơn nghỉ phép nào").is_visible() or page.locator("tbody tr").count() == 0:
                     page.get_by_role("button", name="Tạo Đơn Phép").click()
                     time.sleep(0.5)
-                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (NV001)")
+                    page.get_by_label("Chọn nhân viên").select_option(label="Nguyễn Văn An (EMP001)")
                     page.get_by_label("Loại nghỉ phép").select_option("paid")
                     page.get_by_label("Từ ngày").fill("2026-05-15")
                     page.get_by_label("Đến ngày").fill("2026-05-16")
@@ -421,7 +421,7 @@ def run():
                 page.get_by_role("tab", name="Nhân Viên").click()
                 time.sleep(0.5)
 
-                search.fill("NV001")
+                search.fill("EMP001")
                 time.sleep(0.5)
 
                 page.get_by_title("Gia hạn hợp đồng").first.click()
