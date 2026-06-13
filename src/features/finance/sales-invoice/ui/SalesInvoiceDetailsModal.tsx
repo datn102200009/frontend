@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGetSalesInvoicesByPkQuery } from '@entities/sales/api/salesApi';
+import { useGetFinanceInvoicesSalesByPkQuery } from '@entities/finance/api/financeApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -12,7 +12,7 @@ interface SalesInvoiceDetailsModalProps {
 }
 
 export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> = ({ invoiceId, onClose }) => {
-  const { data: invoice, isLoading } = useGetSalesInvoicesByPkQuery({ pk: invoiceId });
+  const { data: invoice, isLoading } = useGetFinanceInvoicesSalesByPkQuery({ pk: invoiceId });
 
   if (isLoading || !invoice) {
     return (
@@ -113,7 +113,6 @@ export const SalesInvoiceDetailsModal: React.FC<SalesInvoiceDetailsModalProps> =
           </div>
         </div>
       </Modal>
-
     </>
   );
 };

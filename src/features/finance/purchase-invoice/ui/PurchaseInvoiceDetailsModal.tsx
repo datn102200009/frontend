@@ -1,7 +1,5 @@
 import React from 'react';
-import { 
-  useGetPurchasingInvoicesByPkQuery
-} from '@entities/purchasing/api/purchasingApi';
+import { useGetFinanceInvoicesPurchaseByPkQuery } from '@entities/finance/api/financeApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -14,7 +12,7 @@ interface PurchaseInvoiceDetailsModalProps {
 }
 
 export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalProps> = ({ invoiceId, onClose }) => {
-  const { data: invoice, isLoading } = useGetPurchasingInvoicesByPkQuery({ pk: invoiceId });
+  const { data: invoice, isLoading } = useGetFinanceInvoicesPurchaseByPkQuery({ pk: invoiceId });
 
   if (isLoading || !invoice) {
     return (
@@ -103,17 +101,16 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
               </div>
               {(invoice.lines || []).map((line, index) => (
                 <div key={line.id || index} className={styles.tableRow}>
-                   <span>{line.item_name || 'Linh Kiện'}</span>
-                   <span style={{ textAlign: 'right' }}>{line.quantity}</span>
-                   <span style={{ textAlign: 'right' }}>{formatCurrency(line.unit_price || 0)}</span>
-                   <span style={{ textAlign: 'right', fontWeight: 500 }}>{formatCurrency(line.line_total || 0)}</span>
+                  <span>{line.item_name || 'Linh Kiện'}</span>
+                  <span style={{ textAlign: 'right' }}>{line.quantity}</span>
+                  <span style={{ textAlign: 'right' }}>{formatCurrency(line.unit_price || 0)}</span>
+                  <span style={{ textAlign: 'right', fontWeight: 500 }}>{formatCurrency(line.line_total || 0)}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </Modal>
-
     </>
   );
 };

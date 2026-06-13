@@ -122,27 +122,23 @@ export type SalesPendingFulfillmentLine = {
   id?: string
   customer_name?: string
   total_amount?: string
+  receipt_fulfillment_rate?: string
+  payment_fulfillment_rate?: string
   created_at?: string
 }
 export type ActivePoCountLine = {
   id?: string
   supplier_name?: string
   total_amount?: string
+  expected_delivery_date?: string | null
+  receipt_fulfillment_rate?: string
+  payment_fulfillment_rate?: string
   created_at?: string
 }
 export type PurchasingDraftOrderLine = {
   id?: string
   supplier_name?: string
   total_amount?: string
-  created_at?: string
-}
-export type PurchasingPendingDeliveryLine = {
-  id?: string
-  supplier_name?: string
-  total_amount?: string
-  expected_delivery_date?: string | null
-  receipt_fulfillment_rate?: string
-  payment_fulfillment_rate?: string
   created_at?: string
 }
 export type PurchasingPendingQcLine = {
@@ -155,6 +151,10 @@ export type PurchasingPendingLogisticLine = {
   id?: string
   shipment_num?: string
   name?: string
+  status?: string
+  purchase_order_id?: string | null
+  purchase_order_name?: string | null
+  remarks?: string | null
   created_at?: string
 }
 export type PurchasingBlockedInvoiceLine = {
@@ -162,16 +162,6 @@ export type PurchasingBlockedInvoiceLine = {
   supplier_name?: string
   total_amount?: string
   block_reason?: string
-  created_at?: string
-}
-export type InventoryPendingEntryLine = {
-  id?: string
-  name?: string
-  purpose?: string
-  remarks?: string | null
-  route_desc?: string
-  item_count?: number
-  posting_date?: string
   created_at?: string
 }
 export type FinanceCashflowSummaryLine = {
@@ -292,12 +282,10 @@ export type WidgetBatchDataResult = {
                 | SalesPendingFulfillmentLine
                 | ActivePoCountLine
                 | PurchasingDraftOrderLine
-                | PurchasingPendingDeliveryLine
                 | PurchasingPendingQcLine
                 | PurchasingPendingLogisticLine
                 | PurchasingBlockedInvoiceLine
                 | InventoryLowStockLine
-                | InventoryPendingEntryLine
                 | FinanceCashflowSummaryLine
                 | FinanceUnpaidApLine
                 | FinanceUnpaidArLine

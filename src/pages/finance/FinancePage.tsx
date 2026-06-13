@@ -1,18 +1,15 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CashFlowTable } from '@widgets/finance/CashFlowTable';
-import { CashFlowFormModal } from '@features/finance/create-transaction/ui/CashFlowFormModal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { Modal } from '@shared/ui/Modal/Modal';
-import { Input } from '@shared/ui/Input/Input';
 import { useToast } from '@shared/ui/Toast/Toast';
-import { CreditCard, ChevronLeft, ChevronRight, DollarSign, Check } from 'lucide-react';
-import { useGetPurchasingInvoicesQuery } from '@entities/purchasing/api/purchasingApi';
-import { useGetSalesInvoicesQuery } from '@entities/sales/api/salesApi';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import {
-  usePostFinanceInvoicesPurchaseByPkPayMutation,
   useGetFinanceCashFlowsQuery,
-  usePostFinanceCashFlowsByPkApproveMutation
+  usePostFinanceCashFlowsByPkApproveMutation,
+  useGetFinanceInvoicesPurchaseQuery,
+  useGetFinanceInvoicesSalesQuery,
 } from '@entities/finance/api/financeApi';
 import { usePermission } from '@shared/hooks/usePermission';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
@@ -20,24 +17,51 @@ import { createColumnHelper } from '@tanstack/react-table';
 import type { CashFlowTransaction } from '@entities/finance/api/financeApi';
 import styles from './FinancePage.module.css';
 
+import { PurchaseInvoiceTable } from '@features/finance/purchase-invoice/ui/PurchaseInvoiceTable';
+import { PurchaseInvoiceDetailsModal } from '@features/finance/purchase-invoice/ui/PurchaseInvoiceDetailsModal';
+import { PurchaseInvoicePaymentModal } from '@features/finance/purchase-invoice/ui/PurchaseInvoicePaymentModal';
+
+import { SalesInvoiceTable } from '@features/finance/sales-invoice/ui/SalesInvoiceTable';
+import { SalesInvoiceDetailsModal } from '@features/finance/sales-invoice/ui/SalesInvoiceDetailsModal';
+import { SalesInvoiceCollectionModal } from '@features/finance/sales-invoice/ui/SalesInvoiceCollectionModal';
+
 const FinancePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'cashflow' | 'ap' | 'ar' | 'approvals'>('cashflow');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab') || 'cashflow';
   
+  const activeTab = useMemo(() => {
+    if (rawTab === 'ap') return 'purchase_invoices';
+    if (rawTab === 'ar') return 'sales_invoices';
+    if (['cashflow', 'purchase_invoices', 'sales_invoices', 'approvals'].includes(rawTab)) {
+      return rawTab as 'cashflow' | 'purchase_invoices' | 'sales_invoices' | 'approvals';
+    }
+    return 'cashflow';
+  }, [rawTab]);
+
+  const setActiveTab = (newTab: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', newTab);
+      next.delete('id');
+      return next;
+    }, { replace: true });
+  };
+
   // Permissions
   const hasApprovePermission = usePermission('finance.approve_cash_flow');
 
   // Pagination & query state for AP
   const [pageAP, setPageAP] = useState(1);
-  const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetPurchasingInvoicesQuery(
+  const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetFinanceInvoicesPurchaseQuery(
     { status: 'unpaid,partial', page: pageAP, limit: 10 },
-    { skip: activeTab !== 'ap' }
+    { skip: activeTab !== 'purchase_invoices' }
   );
 
   // Pagination & query state for AR
   const [pageAR, setPageAR] = useState(1);
-  const { data: arData, isLoading: isLoadingAR, refetch: refetchAR } = useGetSalesInvoicesQuery(
+  const { data: arData, isLoading: isLoadingAR, refetch: refetchAR } = useGetFinanceInvoicesSalesQuery(
     { status: 'unpaid,partial', page: pageAR, limit: 10 },
-    { skip: activeTab !== 'ar' }
+    { skip: activeTab !== 'sales_invoices' }
   );
 
   // Pagination & query state for Approvals
@@ -47,61 +71,21 @@ const FinancePage: React.FC = () => {
     { skip: activeTab !== 'approvals' || !hasApprovePermission }
   );
 
+  // Details modal states
+  const [selectedAPDetailsId, setSelectedAPDetailsId] = useState<string | null>(null);
+  const [selectedARDetailsId, setSelectedARDetailsId] = useState<string | null>(null);
+
   // AR collection modal state
   const [selectedARInvoice, setSelectedARInvoice] = useState<{ id: string; amount: number; name?: string } | null>(null);
 
   // AP payment modal state
   const [selectedAPInvoice, setSelectedAPInvoice] = useState<{ id: string; amount: number } | null>(null);
-  const [payAmount, setPayAmount] = useState<number>(0);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank_transfer'>('bank_transfer');
-  const [payError, setPayError] = useState('');
   
-  const [payPurchaseInvoice, { isLoading: isPayingAP }] = usePostFinanceInvoicesPurchaseByPkPayMutation();
   const [approveCashFlow, { isLoading: isApproving }] = usePostFinanceCashFlowsByPkApproveMutation();
   const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-  };
-
-  const handleOpenAPPayment = (invoiceId: string, remainingAmount: number) => {
-    setSelectedAPInvoice({ id: invoiceId, amount: remainingAmount });
-    setPayAmount(remainingAmount);
-    setPaymentMethod('bank_transfer');
-    setPayError('');
-  };
-
-  const handleAPPaymentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPayError('');
-
-    if (!selectedAPInvoice) return;
-
-    if (payAmount <= 0) {
-      setPayError('Số tiền thanh toán phải lớn hơn 0.');
-      return;
-    }
-    if (payAmount > selectedAPInvoice.amount) {
-      setPayError(`Số tiền thanh toán vượt quá số tiền còn nợ (${formatCurrency(selectedAPInvoice.amount)}).`);
-      return;
-    }
-
-    try {
-      await payPurchaseInvoice({
-        pk: selectedAPInvoice.id,
-        payInvoiceInput: {
-          amount: payAmount,
-          payment_method: paymentMethod,
-        }
-      }).unwrap();
-      
-      toast('success', 'Thanh toán hóa đơn mua hàng thành công');
-      setSelectedAPInvoice(null);
-      refetchAP();
-    } catch (err: unknown) {
-      const error = err as { data?: { detail?: string } };
-      setPayError(error?.data?.detail || 'Giao dịch thất bại. Vui lòng kiểm tra lại.');
-    }
   };
 
   const handleApproveCashFlow = async (id: string) => {
@@ -116,141 +100,6 @@ const FinancePage: React.FC = () => {
       toast('error', error?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
     }
   };
-
-  // Columns definitions using createColumnHelper
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const apColumnHelper = createColumnHelper<any>();
-  const apColumns = useMemo(() => [
-    apColumnHelper.accessor('id', {
-      header: 'Mã Hóa Đơn',
-      cell: (info) => <span style={{ fontWeight: 500 }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
-    }),
-    apColumnHelper.accessor('order', {
-      header: 'Đơn Hàng Gốc',
-      cell: (info) => (
-        <span style={{ color: 'var(--clr-text-secondary)' }}>
-          {info.getValue() ? (info.getValue() || '').slice(0, 8).toUpperCase() : 'N/A'}
-        </span>
-      ),
-    }),
-    apColumnHelper.accessor('vendor_name', {
-      header: 'Nhà Cung Cấp',
-      cell: (info) => info.getValue() || 'N/A',
-    }),
-    apColumnHelper.accessor('total_amount', {
-      header: 'Tổng Tiền',
-      cell: (info) => <span style={{ fontWeight: 500 }}>{formatCurrency(info.getValue() || 0)}</span>,
-    }),
-    apColumnHelper.accessor('paid_amount', {
-      header: 'Đã Trả',
-      cell: (info) => <span style={{ color: 'var(--clr-success)' }}>{formatCurrency(info.getValue() || 0)}</span>,
-    }),
-    apColumnHelper.display({
-      id: 'remaining',
-      header: 'Còn Nợ',
-      cell: (info) => {
-        const inv = info.row.original;
-        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
-        return <span style={{ color: 'var(--clr-danger)', fontWeight: 500 }}>{formatCurrency(remaining)}</span>;
-      },
-    }),
-    apColumnHelper.accessor('due_date', {
-      header: 'Hạn Thanh Toán',
-      cell: (info) => info.getValue() ? new Date(info.getValue()).toLocaleDateString('vi-VN') : 'Không có',
-    }),
-    apColumnHelper.accessor('status', {
-      header: 'Trạng Thái',
-      cell: (info) => (
-        <Badge variant={info.getValue() === 'partial' ? 'warning' : 'error'}>
-          {info.getValue() === 'partial' ? 'Trả một phần' : 'Chưa thanh toán'}
-        </Badge>
-      ),
-    }),
-    apColumnHelper.display({
-      id: 'actions',
-      header: 'Thao Tác',
-      cell: (info) => {
-        const inv = info.row.original;
-        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
-        return (
-          <Button 
-            size="sm"
-            icon={<CreditCard size={14} />}
-            onClick={() => handleOpenAPPayment(inv.id!, remaining)}
-          >
-            Thanh Toán
-          </Button>
-        );
-      },
-    }),
-  ], []);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const arColumnHelper = createColumnHelper<any>();
-  const arColumns = useMemo(() => [
-    arColumnHelper.accessor('id', {
-      header: 'Mã Hóa Đơn',
-      cell: (info) => <span style={{ fontWeight: 500 }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
-    }),
-    arColumnHelper.accessor('order', {
-      header: 'Đơn Hàng Gốc',
-      cell: (info) => (
-        <span style={{ color: 'var(--clr-text-secondary)' }}>
-          {info.getValue() ? (info.getValue() || '').slice(0, 8).toUpperCase() : 'N/A'}
-        </span>
-      ),
-    }),
-    arColumnHelper.accessor('customer_name', {
-      header: 'Khách Hàng',
-      cell: (info) => info.getValue() || 'N/A',
-    }),
-    arColumnHelper.accessor('total_amount', {
-      header: 'Tổng Tiền',
-      cell: (info) => <span style={{ fontWeight: 500 }}>{formatCurrency(info.getValue() || 0)}</span>,
-    }),
-    arColumnHelper.accessor('paid_amount', {
-      header: 'Đã Thu',
-      cell: (info) => <span style={{ color: 'var(--clr-success)' }}>{formatCurrency(info.getValue() || 0)}</span>,
-    }),
-    arColumnHelper.display({
-      id: 'remaining',
-      header: 'Còn Nợ',
-      cell: (info) => {
-        const inv = info.row.original;
-        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
-        return <span style={{ color: 'var(--clr-danger)', fontWeight: 500 }}>{formatCurrency(remaining)}</span>;
-      },
-    }),
-    arColumnHelper.accessor('created_at', {
-      header: 'Ngày Tạo',
-      cell: (info) => info.getValue() ? new Date(info.getValue()).toLocaleDateString('vi-VN') : 'Không có',
-    }),
-    arColumnHelper.accessor('status', {
-      header: 'Trạng Thái',
-      cell: (info) => (
-        <Badge variant={info.getValue() === 'partial' ? 'warning' : 'error'}>
-          {info.getValue() === 'partial' ? 'Thu một phần' : 'Chưa thu tiền'}
-        </Badge>
-      ),
-    }),
-    arColumnHelper.display({
-      id: 'actions',
-      header: 'Thao Tác',
-      cell: (info) => {
-        const inv = info.row.original;
-        const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
-        return (
-          <Button 
-            size="sm"
-            icon={<DollarSign size={14} />}
-            onClick={() => setSelectedARInvoice({ id: inv.id!, amount: remaining, name: inv.customer_name })}
-          >
-            Thu Tiền
-          </Button>
-        );
-      },
-    }),
-  ], []);
 
   const approvalColumnHelper = createColumnHelper<CashFlowTransaction>();
   const approvalColumns = useMemo(() => [
@@ -325,14 +174,14 @@ const FinancePage: React.FC = () => {
           Dòng Tiền
         </button>
         <button 
-          className={`${styles.tab} ${activeTab === 'ap' ? styles.active : ''}`}
-          onClick={() => setActiveTab('ap')}
+          className={`${styles.tab} ${activeTab === 'purchase_invoices' ? styles.active : ''}`}
+          onClick={() => setActiveTab('purchase_invoices')}
         >
           Phải Trả (AP)
         </button>
         <button 
-          className={`${styles.tab} ${activeTab === 'ar' ? styles.active : ''}`}
-          onClick={() => setActiveTab('ar')}
+          className={`${styles.tab} ${activeTab === 'sales_invoices' ? styles.active : ''}`}
+          onClick={() => setActiveTab('sales_invoices')}
         >
           Phải Thu (AR)
         </button>
@@ -353,15 +202,13 @@ const FinancePage: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'ap' && (
+        {activeTab === 'purchase_invoices' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <DataTable 
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              columns={apColumns as any} 
-              data={apData?.results || []} 
+            <PurchaseInvoiceTable 
+              data={apData?.results || []}
               loading={isLoadingAP}
-              searchPlaceholder="Tìm kiếm hóa đơn mua..."
-              emptyMessage="Không có hóa đơn mua hàng nào chưa thanh toán."
+              onView={(id) => setSelectedAPDetailsId(id)}
+              onPay={(inv) => setSelectedAPInvoice(inv)}
             />
 
             {/* Pagination for AP */}
@@ -395,15 +242,13 @@ const FinancePage: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'ar' && (
+        {activeTab === 'sales_invoices' && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <DataTable 
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              columns={arColumns as any} 
-              data={arData?.results || []} 
+            <SalesInvoiceTable 
+              data={arData?.results || []}
               loading={isLoadingAR}
-              searchPlaceholder="Tìm kiếm hóa đơn bán..."
-              emptyMessage="Không có hóa đơn bán hàng nào chưa thu tiền."
+              onView={(id) => setSelectedARDetailsId(id)}
+              onCollect={(inv) => setSelectedARInvoice(inv)}
             />
 
             {/* Pagination for AR */}
@@ -480,74 +325,48 @@ const FinancePage: React.FC = () => {
         )}
       </div>
 
-      {/* AR invoice collection modal overlay using CashFlowFormModal */}
+      {/* Details Modals */}
+      {selectedAPDetailsId && (
+        <PurchaseInvoiceDetailsModal 
+          invoiceId={selectedAPDetailsId}
+          onClose={() => setSelectedAPDetailsId(null)}
+        />
+      )}
+
+      {selectedARDetailsId && (
+        <SalesInvoiceDetailsModal 
+          invoiceId={selectedARDetailsId}
+          onClose={() => setSelectedARDetailsId(null)}
+        />
+      )}
+
+      {/* AR invoice collection modal overlay */}
       {selectedARInvoice && (
-        <CashFlowFormModal 
+        <SalesInvoiceCollectionModal 
           open={!!selectedARInvoice}
           onClose={() => setSelectedARInvoice(null)}
           onSuccess={() => {
             setSelectedARInvoice(null);
             refetchAR();
           }}
-          defaultValues={{
-            payment_type: 'receive',
-            sales_invoice_id: selectedARInvoice.id,
-            amount: selectedARInvoice.amount.toString(),
-            category: 'Thanh toán hóa đơn',
-            remarks: `Thu tiền thanh toán hóa đơn bán ${selectedARInvoice.id.slice(0, 8).toUpperCase()} (Khách hàng: ${selectedARInvoice.name || 'N/A'}, Số tiền: ${formatCurrency(selectedARInvoice.amount)}).`
-          }}
+          invoiceId={selectedARInvoice.id}
+          remainingAmount={selectedARInvoice.amount}
+          customerName={selectedARInvoice.name}
         />
       )}
 
       {/* AP payment modal overlay */}
       {selectedAPInvoice && (
-        <Modal 
-          open={!!selectedAPInvoice} 
-          onClose={() => setSelectedAPInvoice(null)} 
-          title="Thanh Toán Hóa Đơn Mua (AP)"
-          size="md"
-        >
-          <form onSubmit={handleAPPaymentSubmit} className={styles.payForm} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
-            {payError && <div style={{ padding: 'var(--sp-3)', backgroundColor: '#fef2f2', color: 'var(--clr-danger)', borderRadius: 'var(--br-md)', fontSize: 'var(--fs-sm)' }}>{payError}</div>}
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-sm)', borderBottom: '1px solid var(--clr-border)', paddingBottom: 'var(--sp-2)' }}>
-              <span>Số tiền còn nợ:</span>
-              <strong style={{ color: 'var(--clr-danger)' }}>{formatCurrency(selectedAPInvoice.amount)}</strong>
-            </div>
-
-            <Input 
-              label="Số tiền thanh toán (VND)" 
-              type="number"
-              value={payAmount}
-              onChange={(e) => setPayAmount(Number(e.target.value))}
-              required
-            />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
-              <label style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>Phương thức thanh toán</label>
-              <select 
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value as 'cash' | 'bank_transfer')}
-                style={{
-                  width: '100%',
-                  padding: 'var(--sp-2) var(--sp-3)',
-                  borderRadius: 'var(--br-md)',
-                  border: '1px solid var(--clr-border)',
-                  backgroundColor: 'white',
-                  fontSize: 'var(--fs-sm)'
-                }}
-              >
-                <option value="bank_transfer">Chuyển khoản ngân hàng</option>
-                <option value="cash">Tiền mặt</option>
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--sp-2)' }}>
-              <Button type="button" variant="secondary" onClick={() => setSelectedAPInvoice(null)} disabled={isPayingAP}>Hủy</Button>
-              <Button type="submit" loading={isPayingAP}>Xác nhận thanh toán</Button>
-            </div>
-          </form>
-        </Modal>
+        <PurchaseInvoicePaymentModal 
+          open={!!selectedAPInvoice}
+          onClose={() => setSelectedAPInvoice(null)}
+          onSuccess={() => {
+            setSelectedAPInvoice(null);
+            refetchAP();
+          }}
+          invoiceId={selectedAPInvoice.id}
+          remainingAmount={selectedAPInvoice.amount}
+        />
       )}
     </div>
   );

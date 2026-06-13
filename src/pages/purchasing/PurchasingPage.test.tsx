@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PurchasingPage } from './PurchasingPage';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -11,7 +11,7 @@ describe('PurchasingPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders PurchasingPage and switches between orders and invoices tabs', async () => {
+  it('renders PurchasingPage and switches between orders and shipment tabs', async () => {
     server.use(
       http.get('*/api/v1/purchasing/orders/', () => {
         return HttpResponse.json([
@@ -26,24 +26,12 @@ describe('PurchasingPage', () => {
           }
         ]);
       }),
-      http.get('*/api/v1/purchasing/invoices/', () => {
+      http.get('*/api/v1/purchasing/shipment/', () => {
         return HttpResponse.json({
-          count: 1,
+          count: 0,
           total_pages: 1,
           current_page: 1,
-          results: [
-            {
-              id: 'PI-001',
-              order: 'PO-001',
-              vendor: 'SUP01',
-              vendor_name: 'Tech Component',
-              total_amount: 15000000,
-              paid_amount: 0,
-              status: 'unpaid',
-              created_at: '2026-05-20',
-              lines: []
-            }
-          ]
+          results: []
         });
       })
     );
@@ -58,14 +46,12 @@ describe('PurchasingPage', () => {
     expect(screen.getByText('Tech Component')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Thêm Đơn Mua/i })).toBeInTheDocument();
 
-    // Click Invoices tab
+    // Click Shipment tab
     const user = userEvent.setup();
-    const invoicesTab = screen.getByRole('tab', { name: /Hóa Đơn Mua/i });
-    await user.click(invoicesTab);
+    const shipmentTab = screen.getByRole('tab', { name: /Lô Hàng/i });
+    await user.click(shipmentTab);
 
-    // Should load and display Invoices
-    expect(await screen.findByText('PI-001')).toBeInTheDocument();
-    // "Thêm Đơn Mua" button should not be rendered on Invoices tab
+    // "Thêm Đơn Mua" button should not be rendered on Shipment tab
     expect(screen.queryByRole('button', { name: /Thêm Đơn Mua/i })).not.toBeInTheDocument();
   });
 
@@ -139,87 +125,6 @@ describe('PurchasingPage', () => {
     });
   });
 
-  it('allows viewing invoice details in modal', async () => {
-    server.use(
-      http.get('*/api/v1/purchasing/orders/', () => {
-        return HttpResponse.json([]);
-      }),
-      http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json({
-          count: 1,
-          total_pages: 1,
-          current_page: 1,
-          results: [
-            {
-              id: 'PI-001',
-              order: 'PO-001',
-              vendor: 'SUP01',
-              vendor_name: 'Tech Component',
-              total_amount: 15000000,
-              paid_amount: 0,
-              status: 'unpaid',
-              created_at: '2026-05-20',
-              lines: []
-            }
-          ]
-        });
-      }),
-      http.get('*/api/v1/purchasing/invoices/PI-001/', () => {
-        return HttpResponse.json({
-          id: 'PI-001',
-          order: 'PO-001',
-          vendor: 'SUP01',
-          vendor_name: 'Tech Component',
-          status: 'unpaid',
-          total_amount: 15000000,
-          paid_amount: 0,
-          created_at: '2026-05-20',
-          lines: [
-            {
-              id: 'PIL-001',
-              item_name: 'Linh kiện A',
-              item_code: 'LKA',
-              quantity: 10,
-              unit_price: 1500000,
-              import_tax: 0,
-              vat_tax: 10,
-              line_total: 15000000
-            }
-          ]
-        });
-      })
-    );
-
-    renderWithProviders(<PurchasingPage />);
-    const user = userEvent.setup();
-
-    // Click Invoices tab
-    const invoicesTab = screen.getByRole('tab', { name: /Hóa Đơn Mua/i });
-    await user.click(invoicesTab);
-
-    // Locate row and click View Details
-    const row = await screen.findByText('PI-001');
-    const actionButtons = within(row.closest('tr')!).getAllByRole('button');
-    await user.click(actionButtons[0]); // First action is "Xem chi tiết"
-
-    // Detail Modal should open
-    const modal = await screen.findByRole('dialog');
-    expect(within(modal).getByRole('heading', { name: /Hóa Đơn PI-001|Chi Tiết Hóa Đơn/i })).toBeInTheDocument();
-    
-    // Check fields loaded in the modal
-    expect(await within(modal).findByText('Linh kiện A')).toBeInTheDocument();
-    expect(within(modal).getByText('Tech Component')).toBeInTheDocument();
-    expect(within(modal).getByText('10')).toBeInTheDocument();
-    
-    // Close modal
-    const closeBtn = within(modal).getAllByRole('button', { name: /Đóng/i })[0];
-    await user.click(closeBtn);
-
-    await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: /Chi Tiết Hóa Đơn Mua Hàng/i })).not.toBeInTheDocument();
-    });
-  });
-
   it('automatically opens order modal when orderId is present in URL query params', async () => {
     server.use(
       http.get('*/api/v1/purchasing/orders/', () => {
@@ -260,53 +165,5 @@ describe('PurchasingPage', () => {
 
     // Check if the order detail modal is auto-opened
     expect(await screen.findByRole('heading', { name: /Chi Tiết Đơn Mua/i })).toBeInTheDocument();
-  });
-
-  it('automatically opens invoice modal when invoiceId is present in URL query params', async () => {
-    server.use(
-      http.get('*/api/v1/purchasing/orders/', () => {
-        return HttpResponse.json([]);
-      }),
-      http.get('*/api/v1/purchasing/invoices/', () => {
-        return HttpResponse.json({
-          count: 1,
-          total_pages: 1,
-          current_page: 1,
-          results: [
-            {
-              id: 'PI-001',
-              order: 'PO-001',
-              vendor: 'SUP01',
-              vendor_name: 'Tech Component',
-              total_amount: 15000000,
-              paid_amount: 0,
-              status: 'unpaid',
-              created_at: '2026-05-20',
-              lines: []
-            }
-          ]
-        });
-      }),
-      http.get('*/api/v1/purchasing/invoices/PI-001/', () => {
-        return HttpResponse.json({
-          id: 'PI-001',
-          order: 'PO-001',
-          vendor: 'SUP01',
-          vendor_name: 'Tech Component',
-          status: 'unpaid',
-          total_amount: 15000000,
-          paid_amount: 0,
-          created_at: '2026-05-20',
-          lines: []
-        });
-      })
-    );
-
-    renderWithProviders(<PurchasingPage />, {
-      initialEntries: ['/purchasing?tab=invoices&id=PI-001']
-    });
-
-    // Check if the invoice detail modal is auto-opened
-    expect(await screen.findByRole('heading', { name: /Hóa Đơn PI-001|Chi Tiết Hóa Đơn/i })).toBeInTheDocument();
   });
 });

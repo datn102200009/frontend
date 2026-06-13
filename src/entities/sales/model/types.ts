@@ -3,9 +3,11 @@ import type {
   SalesOrderLine as GenSalesOrderLine,
   SalesOrderInput as GenSalesOrderInput,
   SalesOrderLineInput as GenSalesOrderLineInput,
+} from '../api/salesApi';
+import type {
   SalesInvoice as GenSalesInvoice,
   SalesInvoiceLine as GenSalesInvoiceLine,
-} from '../api/salesApi';
+} from '../../finance/api/financeApi';
 
 export type SalesOrderLine = GenSalesOrderLine & {
   id: string;

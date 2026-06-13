@@ -3,9 +3,11 @@ import type {
   PurchaseOrderLine as GenPurchaseOrderLine,
   PurchaseOrderInput as GenPurchaseOrderInput,
   PurchaseOrderLineInput as GenPurchaseOrderLineInput,
+} from '../api/purchasingApi';
+import type {
   PurchaseInvoice as GenPurchaseInvoice,
   PurchaseInvoiceLine as GenPurchaseInvoiceLine,
-} from '../api/purchasingApi';
+} from '../../finance/api/financeApi';
 
 export type PurchaseOrderLine = GenPurchaseOrderLine & {
   id: string;

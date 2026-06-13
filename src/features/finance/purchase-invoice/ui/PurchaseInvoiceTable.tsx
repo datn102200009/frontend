@@ -1,39 +1,34 @@
 import React, { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
-import { useGetPurchasingInvoicesQuery } from '@entities/purchasing/api/purchasingApi';
-import type { PurchaseInvoice } from '@entities/purchasing/model/types';
-import { Eye, Printer } from 'lucide-react';
+import type { PurchaseInvoice } from '@entities/finance/api/financeApi';
+import { Eye, Printer, CreditCard } from 'lucide-react';
 
 interface PurchaseInvoiceTableProps {
+  data: PurchaseInvoice[];
+  loading: boolean;
   onView?: (id: string) => void;
+  onPay?: (invoice: { id: string; amount: number }) => void;
 }
 
-export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onView }) => {
-  const { data, isLoading } = useGetPurchasingInvoicesQuery({});
-  const invoices = data?.results || [];
-  const [searchParams] = useSearchParams();
-  const statusFilter = searchParams.get('status');
-
-  const filteredInvoices = useMemo(() => {
-    if (!statusFilter) return invoices;
-    const mappedStatus = statusFilter === 'blocked' ? 'blocked_for_payment' : statusFilter;
-    return invoices.filter((i) => i.status === mappedStatus);
-  }, [invoices, statusFilter]);
-
+export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ 
+  data, 
+  loading, 
+  onView, 
+  onPay 
+}) => {
   const columns = useMemo(() => {
     const helper = createColumnHelper<PurchaseInvoice>();
     return [
       helper.accessor('id', {
         header: 'Mã Hóa Đơn',
-        cell: (info) => <span className="font-medium text-slate-900">{info.getValue().slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="font-medium text-slate-900">{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
       }),
       helper.accessor('order', {
         header: 'Tham Chiếu Đơn',
-        cell: (info) => <span className="text-slate-500">{info.getValue().slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="text-slate-500">{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
       }),
       helper.accessor('vendor_name', {
         header: 'Nhà Cung Cấp',
@@ -41,16 +36,32 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onVi
       }),
       helper.accessor('total_amount', {
         header: 'Tổng Tiền',
-        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue()),
+        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue() || 0),
       }),
       helper.accessor('paid_amount', {
         header: 'Đã Thanh Toán',
-        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue()),
+        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue() || 0),
+      }),
+      helper.display({
+        id: 'remaining',
+        header: 'Còn Nợ',
+        cell: (info) => {
+          const inv = info.row.original;
+          const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
+          return <span className="text-rose-600 font-medium">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(remaining)}</span>;
+        },
+      }),
+      helper.accessor('due_date', {
+        header: 'Hạn Thanh Toán',
+        cell: (info) => {
+          const val = info.getValue();
+          return val ? new Date(val).toLocaleDateString('vi-VN') : 'Không có';
+        },
       }),
       helper.accessor('status', {
         header: 'Trạng Thái',
         cell: (info) => {
-          const status = info.getValue();
+          const status = info.getValue() || 'unpaid';
           const colorMap: Record<string, 'neutral' | 'success' | 'error' | 'warning' | 'info'> = {
             unpaid: 'error',
             partial: 'warning',
@@ -71,30 +82,39 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ onVi
       helper.display({
         id: 'actions',
         header: 'Thao Tác',
-        size: 100,
+        size: 150,
         enableSorting: false,
         cell: (info) => {
           const inv = info.row.original;
+          const remaining = (inv.total_amount || 0) - (inv.paid_amount || 0);
+          const showPay = inv.status === 'unpaid' || inv.status === 'partial';
           return (
             <TableActions>
-              <ActionButton icon={<Eye size={15} />} title="Xem chi tiết" onClick={() => onView?.(inv.id)} />
+              <ActionButton icon={<Eye size={15} />} title="Xem chi tiết" onClick={() => onView?.(inv.id!)} />
+              {showPay && onPay && (
+                <ActionButton 
+                  icon={<CreditCard size={15} />} 
+                  title="Thanh toán" 
+                  onClick={() => onPay({ id: inv.id!, amount: remaining })} 
+                />
+              )}
               <ActionButton icon={<Printer size={15} />} title="In hóa đơn" />
             </TableActions>
           );
         },
       })
     ];
-  }, [onView]);
+  }, [onView, onPay]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <DataTable 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any} 
-        data={filteredInvoices} 
-        loading={isLoading}
-        searchPlaceholder="Tìm kiếm hóa đơn..."
-        emptyMessage="Không tìm thấy hóa đơn nào"
+        data={data} 
+        loading={loading}
+        searchPlaceholder="Tìm kiếm hóa đơn mua..."
+        emptyMessage="Không tìm thấy hóa đơn mua hàng nào"
       />
     </div>
   );

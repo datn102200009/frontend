@@ -54,19 +54,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/sales/orders/${queryArg.pk}/cancel/`, method: 'POST' }),
     }),
-    getSalesInvoices: build.query<GetSalesInvoicesApiResponse, GetSalesInvoicesApiArg>({
-      query: (queryArg) => ({
-        url: `/sales/invoices/`,
-        params: {
-          status: queryArg.status,
-          limit: queryArg.limit,
-          page: queryArg.page,
-        },
-      }),
-    }),
-    getSalesInvoicesByPk: build.query<GetSalesInvoicesByPkApiResponse, GetSalesInvoicesByPkApiArg>({
-      query: (queryArg) => ({ url: `/sales/invoices/${queryArg.pk}/` }),
-    }),
   }),
   overrideExisting: false,
 })
@@ -109,21 +96,6 @@ export type PostSalesOrdersByPkApproveCreditBypassApiArg = {
 export type PostSalesOrdersByPkCancelApiResponse =
   /** status 200 Đơn bán hàng đã được hủy thành công. */ SalesOrder
 export type PostSalesOrdersByPkCancelApiArg = {
-  pk: string
-}
-export type GetSalesInvoicesApiResponse = /** status 200 A paginated list of sales invoices. */ {
-  count?: number
-  total_pages?: number
-  current_page?: number
-  results?: SalesInvoice[]
-}
-export type GetSalesInvoicesApiArg = {
-  status?: string
-  limit?: number
-  page?: number
-}
-export type GetSalesInvoicesByPkApiResponse = /** status 200 Sales invoice details. */ SalesInvoice
-export type GetSalesInvoicesByPkApiArg = {
   pk: string
 }
 export type SalesOrderLine = {
@@ -175,30 +147,6 @@ export type SalesOrderInput = {
   advance_paid_amount?: number
   lines: SalesOrderLineInput[]
 }
-export type SalesInvoiceLine = {
-  id?: string
-  item?: string
-  item_name?: string
-  item_code?: string
-  quantity?: number
-  unit_price?: number
-  vat_tax?: number
-  line_total?: number
-}
-export type SalesInvoice = {
-  id?: string
-  order?: string
-  stock_entry?: string | null
-  stock_entry_name?: string | null
-  customer?: string
-  customer_name?: string
-  status?: 'unpaid' | 'partial' | 'paid' | 'cancelled'
-  total_amount?: number
-  paid_amount?: number
-  created_at?: string
-  updated_at?: string
-  lines?: SalesInvoiceLine[]
-}
 export const {
   useGetSalesOrdersQuery,
   usePostSalesOrdersMutation,
@@ -209,6 +157,4 @@ export const {
   usePostSalesOrdersByPkApproveMutation,
   usePostSalesOrdersByPkApproveCreditBypassMutation,
   usePostSalesOrdersByPkCancelMutation,
-  useGetSalesInvoicesQuery,
-  useGetSalesInvoicesByPkQuery,
 } = injectedRtkApi

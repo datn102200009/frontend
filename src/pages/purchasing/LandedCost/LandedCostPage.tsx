@@ -330,11 +330,11 @@ export const LandedCostPage: React.FC = () => {
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'draft':
-        return <Badge variant="neutral">Nháp (Chờ hàng về)</Badge>;
+        return <Badge variant="neutral">Chờ Hàng Về</Badge>;
       case 'inspecting':
-        return <Badge variant="info">Đang tiếp nhận</Badge>;
+        return <Badge variant="info">Đang Tiếp Nhận</Badge>;
       case 'completed':
-        return <Badge variant="success">Hoàn tất</Badge>;
+        return <Badge variant="success">Hoàn Tất</Badge>;
       default:
         return <Badge variant="neutral">Không rõ</Badge>;
     }
@@ -542,7 +542,7 @@ export const LandedCostPage: React.FC = () => {
                                     )}
                                   </td>
                                   <td>
-                                    <Badge variant="info">Đang tiếp nhận</Badge>
+                                    <Badge variant="info">Đang Tiếp Nhận</Badge>
                                   </td>
                                 </tr>
                               );
@@ -582,7 +582,7 @@ export const LandedCostPage: React.FC = () => {
                                         </div>
                                       )
                                     ) : (
-                                      <Badge variant="neutral">Chờ hàng về</Badge>
+                                      <Badge variant="neutral">Chờ Hàng Về</Badge>
                                     )}
                                   </td>
                                 </tr>

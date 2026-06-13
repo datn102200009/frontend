@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -7,6 +6,8 @@ import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions
 import { useGetSalesOrdersQuery } from '@entities/sales/api/salesApi';
 import type { SalesOrder } from '@entities/sales/model/types';
 import { Eye, Printer } from 'lucide-react';
+import { useSalesOrderFilters } from '@features/sales/manage-order/lib/useSalesOrderFilters';
+import { SalesOrderStatusFilter } from '@features/sales/manage-order/ui/SalesOrderStatusFilter';
 
 interface SalesOrderTableProps {
   onView?: (id: string) => void;
@@ -14,13 +15,12 @@ interface SalesOrderTableProps {
 
 export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
   const { data: orders = [], isLoading } = useGetSalesOrdersQuery();
-  const [searchParams] = useSearchParams();
-  const statusFilter = searchParams.get('status');
+  const { status, search, setStatus, setSearch } = useSalesOrderFilters();
 
   const filteredOrders = useMemo(() => {
-    if (!statusFilter) return orders;
-    return orders.filter((o) => o.status === statusFilter);
-  }, [orders, statusFilter]);
+    if (!status) return orders;
+    return orders.filter((o) => o.status === status);
+  }, [orders, status]);
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<SalesOrder>();
@@ -90,6 +90,9 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn bán hàng..."
         emptyMessage="Không tìm thấy đơn bán hàng nào"
+        initialSearch={search}
+        onSearch={setSearch}
+        filterSlot={<SalesOrderStatusFilter value={status} onChange={setStatus} />}
       />
     </div>
   );

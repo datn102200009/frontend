@@ -58,25 +58,6 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.purchaseOrderCancelInput,
       }),
     }),
-    getPurchasingInvoices: build.query<
-      GetPurchasingInvoicesApiResponse,
-      GetPurchasingInvoicesApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/purchasing/invoices/`,
-        params: {
-          status: queryArg.status,
-          limit: queryArg.limit,
-          page: queryArg.page,
-        },
-      }),
-    }),
-    getPurchasingInvoicesByPk: build.query<
-      GetPurchasingInvoicesByPkApiResponse,
-      GetPurchasingInvoicesByPkApiArg
-    >({
-      query: (queryArg) => ({ url: `/purchasing/invoices/${queryArg.pk}/` }),
-    }),
     getPurchasingShipments: build.query<
       GetPurchasingShipmentsApiResponse,
       GetPurchasingShipmentsApiArg
@@ -182,23 +163,6 @@ export type PostPurchasingOrdersByPkCancelApiArg = {
   pk: string
   purchaseOrderCancelInput: PurchaseOrderCancelInput
 }
-export type GetPurchasingInvoicesApiResponse =
-  /** status 200 A paginated list of purchase invoices. */ {
-    count?: number
-    total_pages?: number
-    current_page?: number
-    results?: PurchaseInvoice[]
-  }
-export type GetPurchasingInvoicesApiArg = {
-  status?: string
-  limit?: number
-  page?: number
-}
-export type GetPurchasingInvoicesByPkApiResponse =
-  /** status 200 Purchase invoice details. */ PurchaseInvoice
-export type GetPurchasingInvoicesByPkApiArg = {
-  pk: string
-}
 export type GetPurchasingShipmentsApiResponse = /** status 200 Danh sách lô hàng. */ Shipment[]
 export type GetPurchasingShipmentsApiArg = void
 export type PostPurchasingShipmentsApiResponse = /** status 201 Tạo thành công. */ Shipment
@@ -286,32 +250,6 @@ export type PurchaseOrderCancelInput = {
   /** Có giữ lại phần hàng đã nhận hay không (khi đã có hàng nhập kho) */
   keep_goods?: boolean
 }
-export type PurchaseInvoiceLine = {
-  id?: string
-  item?: string
-  item_name?: string
-  item_code?: string
-  quantity?: number
-  unit_price?: number
-  import_tax?: number
-  vat_tax?: number
-  line_total?: number
-}
-export type PurchaseInvoice = {
-  id?: string
-  order?: string
-  stock_entry?: string | null
-  stock_entry_name?: string | null
-  vendor?: string
-  vendor_name?: string
-  status?: 'unpaid' | 'partial' | 'paid' | 'cancelled'
-  total_amount?: number
-  paid_amount?: number
-  due_date?: string | null
-  created_at?: string
-  updated_at?: string
-  lines?: PurchaseInvoiceLine[]
-}
 export type Shipment = {
   id?: string
   shipment_num?: string
@@ -391,8 +329,6 @@ export const {
   usePostPurchasingOrdersByPkReceiveMutation,
   usePostPurchasingOrdersByPkApproveMutation,
   usePostPurchasingOrdersByPkCancelMutation,
-  useGetPurchasingInvoicesQuery,
-  useGetPurchasingInvoicesByPkQuery,
   useGetPurchasingShipmentsQuery,
   usePostPurchasingShipmentsMutation,
   useGetPurchasingShipmentsByPkQuery,
