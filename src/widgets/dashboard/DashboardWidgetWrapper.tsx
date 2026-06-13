@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useState, useEffect } from 'react';
 import {
   TrendingUp,
   Receipt,
@@ -76,11 +76,7 @@ function getWidgetIcon(code: string): ReactNode {
       return <AlertTriangle size={16} />;
     case 'inventory_pending_entries':
       return <RefreshCw size={16} />;
-    case 'finance_cashflow_chart':
-      return <TrendingUp size={16} />;
     case 'finance_cashflow_overview':
-      return <CircleDollarSign size={16} />;
-    case 'finance_cashflow_summary':
       return <CircleDollarSign size={16} />;
     case 'finance_unpaid_purchase_invoices':
       return <ArrowUpRight size={16} />;
@@ -140,14 +136,12 @@ export function DashboardWidgetWrapper({
     dashboardApi.useLazyGetDashboardWidgetsByWidgetCodeQuery();
 
   const [hasRetried, setHasRetried] = useState(false);
-  const [prevBatchLoading, setPrevBatchLoading] = useState(batchLoading);
 
-  if (batchLoading !== prevBatchLoading) {
-    setPrevBatchLoading(batchLoading);
+  useEffect(() => {
     if (batchLoading) {
       setHasRetried(false);
     }
-  }
+  }, [batchLoading]);
 
   const batchResult = batchData?.[code];
   const activeSuccess = hasRetried && detailData ? detailData.success : batchResult?.success;

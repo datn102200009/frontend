@@ -1,6 +1,18 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
 import { niceCeil } from '../../shared/lib/chartScale';
+import { formatVND } from '../../shared/lib/formatVND';
+import { formatYAxis } from '../../shared/lib/chartAxis';
+import {
+  CHART_SVG_WIDTH,
+  CHART_SVG_HEIGHT,
+  CHART_PLOT_LEFT,
+  CHART_PLOT_RIGHT,
+  CHART_PLOT_TOP,
+  CHART_PLOT_BOTTOM,
+  TOOLTIP_ESTIMATED_WIDTH,
+  TOOLTIP_OFFSET,
+} from '../../shared/lib/chartLayout';
 import styles from './DashboardWidgets.module.css';
 
 export interface ChartCardProps {
@@ -23,15 +35,7 @@ interface WeekData {
   pay: number;
 }
 
-const formatYAxis = (value: number) => {
-  if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
-  }
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(0)} tr`;
-  }
-  return String(value);
-};
+
 
 export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -53,12 +57,12 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
   const weeks: WeekData[] = data.weeks;
 
   // Chart coordinate calculation parameters
-  const svgWidth = 500;
-  const svgHeight = 220;
-  const plotLeft = 60;
-  const plotRight = 20;
-  const plotTop = 20;
-  const plotBottom = 30;
+  const svgWidth = CHART_SVG_WIDTH;
+  const svgHeight = CHART_SVG_HEIGHT;
+  const plotLeft = CHART_PLOT_LEFT;
+  const plotRight = CHART_PLOT_RIGHT;
+  const plotTop = CHART_PLOT_TOP;
+  const plotBottom = CHART_PLOT_BOTTOM;
 
   const plotWidth = svgWidth - plotLeft - plotRight; // 420
   const plotHeight = svgHeight - plotTop - plotBottom; // 170
@@ -89,8 +93,6 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
     if (!cardRect) return;
 
-    const TOOLTIP_ESTIMATED_WIDTH = 180;
-    const TOOLTIP_OFFSET = 15;
     const cardWidth = cardRect.width;
     const pointerXInCard = e.clientX - cardRect.left;
     const spaceRight = cardWidth - pointerXInCard;
@@ -293,14 +295,14 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)' }} />
             <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng thu:</span>
             <span style={{ fontWeight: 'bold', color: 'var(--clr-text)', fontFamily: 'var(--font-heading)', fontVariantNumeric: 'tabular-nums' }}>
-              {activeWeek.receive.toLocaleString('vi-VN')} ₫
+              {formatVND(activeWeek.receive)}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)' }} />
             <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng chi:</span>
             <span style={{ fontWeight: 'bold', color: 'var(--clr-text)', fontFamily: 'var(--font-heading)', fontVariantNumeric: 'tabular-nums' }}>
-              {activeWeek.pay.toLocaleString('vi-VN')} ₫
+              {formatVND(activeWeek.pay)}
             </span>
           </div>
         </div>

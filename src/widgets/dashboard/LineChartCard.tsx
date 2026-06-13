@@ -1,6 +1,18 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
 import { niceCeil } from '../../shared/lib/chartScale';
+import { formatVND } from '../../shared/lib/formatVND';
+import { formatYAxis } from '../../shared/lib/chartAxis';
+import {
+  CHART_SVG_WIDTH,
+  CHART_SVG_HEIGHT,
+  CHART_PLOT_LEFT,
+  CHART_PLOT_RIGHT,
+  CHART_PLOT_TOP,
+  CHART_PLOT_BOTTOM,
+  TOOLTIP_ESTIMATED_WIDTH,
+  TOOLTIP_OFFSET,
+} from '../../shared/lib/chartLayout';
 import styles from './DashboardWidgets.module.css';
 
 export interface LineChartCardProps {
@@ -16,20 +28,7 @@ export interface LineChartCardProps {
   } | null | undefined;
 }
 
-const formatYAxis = (value: number) => {
-  if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
-  }
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(0)} tr`;
-  }
-  return String(value);
-};
 
-const formatVND = (valueStr: string | number) => {
-  const num = typeof valueStr === 'string' ? parseFloat(valueStr) || 0 : valueStr;
-  return num.toLocaleString('vi-VN') + ' ₫';
-};
 
 const formatDate = (dateStr: string) => {
   const parts = dateStr.split('-');
@@ -67,12 +66,12 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
   const points = data.points;
 
   // Chart layout dimensions
-  const svgWidth = 500;
-  const svgHeight = 220;
-  const plotLeft = 60;
-  const plotRight = 20;
-  const plotTop = 20;
-  const plotBottom = 30;
+  const svgWidth = CHART_SVG_WIDTH;
+  const svgHeight = CHART_SVG_HEIGHT;
+  const plotLeft = CHART_PLOT_LEFT;
+  const plotRight = CHART_PLOT_RIGHT;
+  const plotTop = CHART_PLOT_TOP;
+  const plotBottom = CHART_PLOT_BOTTOM;
 
   const plotWidth = svgWidth - plotLeft - plotRight; // 420
   const plotHeight = svgHeight - plotTop - plotBottom; // 170
@@ -112,8 +111,6 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
     if (!cardRect) return;
 
-    const TOOLTIP_ESTIMATED_WIDTH = 180;
-    const TOOLTIP_OFFSET = 15;
     const cardWidth = cardRect.width;
     const pointerXInCard = e.clientX - cardRect.left;
     const spaceRight = cardWidth - pointerXInCard;

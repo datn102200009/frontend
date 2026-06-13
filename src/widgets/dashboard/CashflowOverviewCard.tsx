@@ -1,6 +1,18 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
 import { niceCeil } from '../../shared/lib/chartScale';
+import { formatVND } from '../../shared/lib/formatVND';
+import { formatYAxis } from '../../shared/lib/chartAxis';
+import {
+  CHART_SVG_WIDTH,
+  CASHFLOW_SVG_HEIGHT,
+  CHART_PLOT_LEFT,
+  CHART_PLOT_RIGHT,
+  CASHFLOW_PLOT_TOP,
+  CASHFLOW_PLOT_BOTTOM,
+  TOOLTIP_ESTIMATED_WIDTH,
+  TOOLTIP_OFFSET,
+} from '../../shared/lib/chartLayout';
 import styles from './DashboardWidgets.module.css';
 
 export interface CashflowOverviewCardProps {
@@ -24,20 +36,7 @@ export interface CashflowOverviewCardProps {
   } | null | undefined;
 }
 
-const formatYAxis = (value: number) => {
-  if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
-  }
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(0)} tr`;
-  }
-  return String(value);
-};
 
-const formatVND = (valueStr: string | number) => {
-  const num = typeof valueStr === 'string' ? parseFloat(valueStr) || 0 : valueStr;
-  return num.toLocaleString('vi-VN') + ' ₫';
-};
 
 export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: CashflowOverviewCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -61,12 +60,12 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
   const isNetPositive = netVal >= 0;
 
   // Chart layout dimensions
-  const svgWidth = 500;
-  const svgHeight = 140;
-  const plotLeft = 60;
-  const plotRight = 20;
-  const plotTop = 10;
-  const plotBottom = 20;
+  const svgWidth = CHART_SVG_WIDTH;
+  const svgHeight = CASHFLOW_SVG_HEIGHT;
+  const plotLeft = CHART_PLOT_LEFT;
+  const plotRight = CHART_PLOT_RIGHT;
+  const plotTop = CASHFLOW_PLOT_TOP;
+  const plotBottom = CASHFLOW_PLOT_BOTTOM;
 
   const plotWidth = svgWidth - plotLeft - plotRight; // 420
   const plotHeight = svgHeight - plotTop - plotBottom; // 110
@@ -97,8 +96,6 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
     if (!cardRect) return;
 
-    const TOOLTIP_ESTIMATED_WIDTH = 180;
-    const TOOLTIP_OFFSET = 15;
     const cardWidth = cardRect.width;
     const pointerXInCard = e.clientX - cardRect.left;
     const spaceRight = cardWidth - pointerXInCard;

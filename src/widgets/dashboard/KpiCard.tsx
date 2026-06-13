@@ -5,13 +5,67 @@ import { CardHeader } from './CardHeader';
 import { Badge } from '@shared/ui/Badge/Badge';
 import styles from './DashboardWidgets.module.css';
 
+export interface KpiCardBaseData {}
+
+export interface KpiCardPurchasingPO extends KpiCardBaseData {
+  active_po_count?: number;
+  total_pending_amount?: string | number;
+}
+
+export interface KpiCardInventoryPending extends KpiCardBaseData {
+  pending_entry_count?: number;
+}
+
+export interface KpiCardFinanceDepreciation extends KpiCardBaseData {
+  is_done?: boolean;
+  total_depreciation_amount?: string | number;
+  depreciated_assets_count?: number;
+  pending_assets_count?: number;
+}
+
+export interface KpiCardHRMPayroll extends KpiCardBaseData {
+  status?: 'draft' | 'calculated' | 'submitted' | 'approved' | 'paid';
+  salary_period?: string;
+  calculated_slips_count?: number;
+  net_pay_total?: string | number;
+}
+
+export interface KpiCardHRMExpiring extends KpiCardBaseData {
+  expiring_count?: number;
+  critical_count?: number;
+  top_items?: Array<{
+    id: string;
+    employee_name: string;
+    days_left: number;
+  }>;
+}
+
+export interface KpiCardManufacturingPendingCompletion extends KpiCardBaseData {
+  pending_completion_count?: number;
+  total_produced_qty?: string | number;
+}
+
+export interface KpiCardGeneric extends KpiCardBaseData {
+  value?: string | number;
+  subtext?: string;
+}
+
+export type KpiCardData =
+  | KpiCardPurchasingPO
+  | KpiCardInventoryPending
+  | KpiCardFinanceDepreciation
+  | KpiCardHRMPayroll
+  | KpiCardHRMExpiring
+  | KpiCardManufacturingPendingCompletion
+  | KpiCardGeneric
+  | Record<string, unknown>;
+
 export interface KpiCardProps {
   title: string;
   code: string;
   icon?: ReactNode;
   quickLinks?: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
+  data: KpiCardData;
 }
 
 function EmptyCard({ title, icon, quickLinks }: { title: string; icon?: ReactNode; quickLinks?: string[] }) {
@@ -33,14 +87,11 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   }
 
   // ───────────────────────────────────────────────────────────────────────
-  // sales_today_revenue: Hero metric + comparison row + breakdown
-  // ───────────────────────────────────────────────────────────────────────
-
-  // ───────────────────────────────────────────────────────────────────────
   // purchasing_active_po_count: Hero metric + breakdown
   // ───────────────────────────────────────────────────────────────────────
   if (code === 'purchasing_active_po_count') {
-    const count = data.active_po_count ?? 0;
+    const d = data as KpiCardPurchasingPO;
+    const count = d.active_po_count ?? 0;
     return (
       <div className={styles.card}>
         <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
@@ -52,7 +103,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
             <div className={styles.kpiComparison}>
               <span className={styles.kpiComparisonLabel}>Tổng giá trị</span>
               <span className={styles.kpiComparisonValue}>
-                {formatVND(data.total_pending_amount)}
+                {formatVND(d.total_pending_amount)}
               </span>
             </div>
           </div>
@@ -65,7 +116,8 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   // inventory_pending_entry_count: Hero metric + warning pill
   // ───────────────────────────────────────────────────────────────────────
   if (code === 'inventory_pending_entry_count') {
-    const count = data.pending_entry_count ?? 0;
+    const d = data as KpiCardInventoryPending;
+    const count = d.pending_entry_count ?? 0;
     const isHigh = count > 5;
     return (
       <div className={styles.card}>
@@ -93,14 +145,11 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   }
 
   // ───────────────────────────────────────────────────────────────────────
-  // finance_cashflow_summary: Net cashflow hero + breakdown
-  // ───────────────────────────────────────────────────────────────────────
-
-  // ───────────────────────────────────────────────────────────────────────
   // finance_depreciation_status: Status hero
   // ───────────────────────────────────────────────────────────────────────
   if (code === 'finance_depreciation_status') {
-    const isDone = data.is_done === true;
+    const d = data as KpiCardFinanceDepreciation;
+    const isDone = d.is_done === true;
     return (
       <div className={styles.card}>
         <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
@@ -117,15 +166,15 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
                   {isDone ? `Đã hoàn tất` : `Chưa thực hiện`}
                 </Badge>
                 <span className={styles.metricValue} style={{ fontSize: 'var(--fs-xl)' }}>
-                  {formatVND(data.total_depreciation_amount)}
+                  {formatVND(d.total_depreciation_amount)}
                 </span>
               </div>
             </div>
             <div className={styles.metricFooter}>
               <span className={styles.metricSubtext}>
                 {isDone
-                  ? `${data.depreciated_assets_count ?? 0} tài sản đã trích khấu hao`
-                  : `${data.pending_assets_count ?? 0} tài sản chờ trích khấu hao`}
+                  ? `${d.depreciated_assets_count ?? 0} tài sản đã trích khấu hao`
+                  : `${d.pending_assets_count ?? 0} tài sản chờ trích khấu hao`}
               </span>
             </div>
           </div>
@@ -138,24 +187,25 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   // hrm_payroll_lifecycle_status: Status hero
   // ───────────────────────────────────────────────────────────────────────
   if (code === 'hrm_payroll_lifecycle_status') {
-    const statusVal: string = data.status || 'draft';
+    const d = data as KpiCardHRMPayroll;
+    const statusVal: string = d.status || 'draft';
     let statusDisplay = 'Chưa khởi tạo';
     let statusClass = styles.colRedText;
 
     if (statusVal === 'draft') {
-      statusDisplay = `Cần khởi tạo kỳ lương ${data.salary_period || ''}`;
+      statusDisplay = `Cần khởi tạo kỳ lương ${d.salary_period || ''}`;
       statusClass = styles.colRedText;
     } else if (statusVal === 'calculated') {
       statusDisplay = 'Chờ tính toán lương';
       statusClass = styles.colOrangeText;
     } else if (statusVal === 'submitted') {
-      statusDisplay = `Chờ duyệt: ${data.calculated_slips_count || 0} phiếu lương`;
+      statusDisplay = `Chờ duyệt: ${d.calculated_slips_count || 0} phiếu lương`;
       statusClass = styles.colOrangeText;
     } else if (statusVal === 'approved') {
-      statusDisplay = `Chờ chi: ${formatVND(data.net_pay_total)}`;
+      statusDisplay = `Chờ chi: ${formatVND(d.net_pay_total)}`;
       statusClass = styles.colBoldLink;
     } else if (statusVal === 'paid') {
-      statusDisplay = `Kỳ lương ${data.salary_period || ''} hoàn tất`;
+      statusDisplay = `Kỳ lương ${d.salary_period || ''} hoàn tất`;
       statusClass = styles.normalText;
     }
 
@@ -169,7 +219,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
             </div>
             <div className={styles.metricFooter}>
               <span className={styles.metricSubtext}>
-                Tổng thực chi: {formatVND(data.net_pay_total || 0)}
+                Tổng thực chi: {formatVND(d.net_pay_total || 0)}
               </span>
             </div>
           </div>
@@ -182,9 +232,10 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   // hrm_expiring_contracts: Hero metric + top 3 list
   // ───────────────────────────────────────────────────────────────────────
   if (code === 'hrm_expiring_contracts') {
-    const expiring = data.expiring_count ?? 0;
-    const critical = data.critical_count ?? 0;
-    const topExpiring = Array.isArray(data.top_expiring) ? data.top_expiring : [];
+    const d = data as KpiCardHRMExpiring;
+    const expiring = d.expiring_count ?? 0;
+    const critical = d.critical_count ?? 0;
+    const topExpiring = Array.isArray(d.top_items) ? d.top_items : [];
     return (
       <div className={styles.card}>
         <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
@@ -199,9 +250,9 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
               </span>
             </div>
 
-            {topExpiring.length > 0 && (
+            {topExpiring && topExpiring.length > 0 && (
               <div className={styles.kpiTopList}>
-                {topExpiring.slice(0, 3).map((c: { id: string; employee_name: string; days_left: number }) => (
+                {topExpiring.slice(0, 3).map((c) => (
                   <div key={c.id} className={styles.kpiTopRow}>
                     <span className={styles.kpiTopName}>{c.employee_name}</span>
                     <span
@@ -209,7 +260,11 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
                         c.days_left <= 7 ? styles.kpiPillDown : styles.kpiPillWarning
                       }`}
                     >
-                      {c.days_left <= 0 ? 'Hết hạn' : `Còn ${c.days_left} ngày`}
+                      {c.days_left < 0
+                        ? `Đã quá hạn ${Math.abs(c.days_left)} ngày`
+                        : c.days_left === 0
+                        ? 'Hết hạn hôm nay'
+                        : `Còn ${c.days_left} ngày`}
                     </span>
                   </div>
                 ))}
@@ -227,19 +282,20 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   // manufacturing_pending_completion: Hero metric + qty
   // ───────────────────────────────────────────────────────────────────────
   if (code === 'manufacturing_pending_completion') {
+    const d = data as KpiCardManufacturingPendingCompletion;
     return (
       <div className={styles.card}>
         <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
         <div className={styles.cardBody}>
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
-              <span className={styles.kpiHeroValue}>{data.pending_completion_count ?? 0}</span>
+              <span className={styles.kpiHeroValue}>{d.pending_completion_count ?? 0}</span>
             </div>
-            {data.total_produced_qty && Number(data.total_produced_qty) > 0 && (
+            {d.total_produced_qty && Number(d.total_produced_qty) > 0 && (
               <div className={styles.kpiComparison}>
                 <span className={styles.kpiComparisonLabel}>Tổng SL</span>
                 <span className={styles.kpiComparisonValue}>
-                  {data.total_produced_qty}
+                  {d.total_produced_qty}
                 </span>
               </div>
             )}
@@ -252,17 +308,18 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   // ───────────────────────────────────────────────────────────────────────
   // Generic KPI fallback
   // ───────────────────────────────────────────────────────────────────────
+  const d = data as KpiCardGeneric;
   return (
     <div className={styles.card}>
       <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
       <div className={styles.cardBody}>
         <div className={styles.metricContent}>
           <div className={styles.metricValue}>
-            {data.value !== undefined ? String(data.value) : '—'}
+            {d.value !== undefined ? String(d.value) : '—'}
           </div>
-          {data.subtext && (
+          {d.subtext && (
             <div className={styles.metricFooter}>
-              <span className={styles.metricSubtext}>{String(data.subtext)}</span>
+              <span className={styles.metricSubtext}>{String(d.subtext)}</span>
             </div>
           )}
         </div>

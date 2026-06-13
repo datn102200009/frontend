@@ -47,12 +47,14 @@ export function KpiListCard({ title, code, icon, data, quickLinks }: KpiListCard
     dashboardApi.useLazyGetDashboardWidgetsByWidgetCodeQuery();
 
   useEffect(() => {
-    if (isPendingEntries && activeTab !== 'all') {
-      triggerFetch({
-        widgetCode: 'inventory_pending_entries',
-        purpose: activeTab,
-      });
-    }
+    if (!isPendingEntries || activeTab === 'all') return;
+    const promise = triggerFetch({
+      widgetCode: 'inventory_pending_entries',
+      purpose: activeTab,
+    });
+    return () => {
+      promise.abort();
+    };
   }, [activeTab, isPendingEntries, triggerFetch]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
