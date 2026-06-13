@@ -46,7 +46,7 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     const q = status ? `&status=${status}` : '';
     return { to: `/purchasing?tab=orders${q}&id=${id}`, display: `PO-${sid}` };
   }
-  if (code === 'purchasing_pending_qc' || code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees') {
     return { to: `/purchasing?tab=shipment&id=${id}`, display: item.shipment_num || 'QC' };
   }
   if (code === 'purchasing_blocked_invoices') {
@@ -101,7 +101,7 @@ export function buildItemTitle(item: any, code: string): ReactNode {
   if (code.startsWith('sales_') || code === 'finance_unpaid_sales_invoices') {
     return <span className={styles.rowMainText}>{item.customer_name || 'Khách hàng'}</span>;
   }
-  if (code === 'purchasing_pending_qc' || code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees') {
     return <span className={styles.rowMainText}>{item.name || 'Lô hàng'}</span>;
   }
   if (code.startsWith('purchasing_') || code === 'finance_unpaid_purchase_invoices') {
@@ -165,9 +165,7 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
   if (code === 'purchasing_blocked_invoices' && item.block_reason) {
     return <div className={styles.colRedText}>{item.block_reason}</div>;
   }
-  if (code === 'purchasing_pending_qc') {
-    return <div className={styles.rowSubText}>Cập bến {daysAgo(item.created_at)} ngày trước</div>;
-  }
+
   if (code === 'inventory_low_stock') {
     return (
       <div className={styles.rowSubText}>
@@ -237,23 +235,7 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
       </div>
     );
   }
-  if (code === 'purchasing_pending_qc') {
-    return (
-      <div className={styles.colRightAlign}>
-        <span
-          style={{
-            fontSize: 'var(--fs-xs)',
-            padding: '1px 6px',
-            borderRadius: '4px',
-            background: 'var(--clr-warning-bg)',
-            color: 'var(--clr-warning)',
-          }}
-        >
-          Chờ QC
-        </span>
-      </div>
-    );
-  }
+
   if (code === 'purchasing_pending_logistic_fees') {
     const d = daysAgo(item.created_at);
     return (

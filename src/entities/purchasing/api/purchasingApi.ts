@@ -1,28 +1,6 @@
 import { baseApi as api } from '../../../shared/api/baseApi'
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
-    getPurchasingCertifications: build.query<
-      GetPurchasingCertificationsApiResponse,
-      GetPurchasingCertificationsApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/purchasing/certifications/`,
-        params: {
-          item_id: queryArg.itemId,
-          stock_entry_id: queryArg.stockEntryId,
-        },
-      }),
-    }),
-    postPurchasingCertifications: build.mutation<
-      PostPurchasingCertificationsApiResponse,
-      PostPurchasingCertificationsApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/purchasing/certifications/`,
-        method: 'POST',
-        body: queryArg.technicalCertificationCreateInput,
-      }),
-    }),
     getPurchasingOrders: build.query<GetPurchasingOrdersApiResponse, GetPurchasingOrdersApiArg>({
       query: () => ({ url: `/purchasing/orders/` }),
     }),
@@ -99,12 +77,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/purchasing/invoices/${queryArg.pk}/` }),
     }),
-    postPurchasingInvoicesByPkVerify: build.mutation<
-      PostPurchasingInvoicesByPkVerifyApiResponse,
-      PostPurchasingInvoicesByPkVerifyApiArg
-    >({
-      query: (queryArg) => ({ url: `/purchasing/invoices/${queryArg.pk}/verify/`, method: 'POST' }),
-    }),
     getPurchasingShipments: build.query<
       GetPurchasingShipmentsApiResponse,
       GetPurchasingShipmentsApiArg
@@ -137,6 +109,16 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    postPurchasingShipmentsByPkComplete: build.mutation<
+      PostPurchasingShipmentsByPkCompleteApiResponse,
+      PostPurchasingShipmentsByPkCompleteApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/purchasing/shipments/${queryArg.pk}/complete/`,
+        method: 'POST',
+        body: queryArg.shipmentCompleteInput,
+      }),
+    }),
     postPurchasingShipmentsAllocate: build.mutation<
       PostPurchasingShipmentsAllocateApiResponse,
       PostPurchasingShipmentsAllocateApiArg
@@ -162,17 +144,6 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 })
 export { injectedRtkApi as purchasingApi }
-export type GetPurchasingCertificationsApiResponse =
-  /** status 200 A list of certifications. */ TechnicalCertification[]
-export type GetPurchasingCertificationsApiArg = {
-  itemId?: string
-  stockEntryId?: string
-}
-export type PostPurchasingCertificationsApiResponse =
-  /** status 201 Certification successfully created. */ TechnicalCertification
-export type PostPurchasingCertificationsApiArg = {
-  technicalCertificationCreateInput: TechnicalCertificationCreateInput
-}
 export type GetPurchasingOrdersApiResponse =
   /** status 200 A list of purchase orders. */ PurchaseOrder[]
 export type GetPurchasingOrdersApiArg = void
@@ -228,11 +199,6 @@ export type GetPurchasingInvoicesByPkApiResponse =
 export type GetPurchasingInvoicesByPkApiArg = {
   pk: string
 }
-export type PostPurchasingInvoicesByPkVerifyApiResponse =
-  /** status 200 Kết quả đối soát cập nhật trên Hóa đơn. */ PurchaseInvoice
-export type PostPurchasingInvoicesByPkVerifyApiArg = {
-  pk: string
-}
 export type GetPurchasingShipmentsApiResponse = /** status 200 Danh sách lô hàng. */ Shipment[]
 export type GetPurchasingShipmentsApiArg = void
 export type PostPurchasingShipmentsApiResponse = /** status 201 Tạo thành công. */ Shipment
@@ -247,9 +213,15 @@ export type PutPurchasingShipmentsByPkApiResponse = /** status 200 Cập nhật 
 export type PutPurchasingShipmentsByPkApiArg = {
   pk: string
   body: {
-    status?: 'draft' | 'arrived' | 'inspected' | 'completed'
+    status?: 'draft' | 'inspecting' | 'completed'
     remarks?: string | null
   }
+}
+export type PostPurchasingShipmentsByPkCompleteApiResponse =
+  /** status 200 Hoàn tất thành công. */ Shipment
+export type PostPurchasingShipmentsByPkCompleteApiArg = {
+  pk: string
+  shipmentCompleteInput: ShipmentCompleteInput
 }
 export type PostPurchasingShipmentsAllocateApiResponse =
   /** status 200 Phân bổ thành công. */ Shipment
@@ -260,30 +232,6 @@ export type GetPurchasingReportsApAgingApiResponse =
   /** status 200 Bảng báo cáo tuổi nợ. */ ApAging[]
 export type GetPurchasingReportsApAgingApiArg = {
   supplierId?: string
-}
-export type TechnicalCertification = {
-  id?: string
-  cert_id?: string
-  item?: string
-  item_name?: string
-  item_code?: string
-  stock_entry?: string | null
-  stock_entry_name?: string | null
-  cert_type?: string
-  assessment_fee?: number | null
-  expiry_date?: string | null
-  issue_date?: string
-  result?: 'PASSED' | 'FAILED'
-  remarks?: string | null
-}
-export type TechnicalCertificationCreateInput = {
-  item_id: string
-  stock_entry_id: string
-  cert_type: string
-  assessment_fee?: number | null
-  expiry_date?: string | null
-  result?: 'PASSED' | 'FAILED'
-  remarks?: string | null
 }
 export type PurchaseOrderLine = {
   id?: string
@@ -348,15 +296,6 @@ export type PurchaseInvoiceLine = {
   import_tax?: number
   vat_tax?: number
   line_total?: number
-  qty_fulfillment_rate?: number | null
-  qc_status?: string
-  latest_cert?: {
-    id?: string
-    cert_id?: string
-    result?: string
-    remarks?: string | null
-    issue_date?: string
-  } | null
 }
 export type PurchaseInvoice = {
   id?: string
@@ -365,12 +304,10 @@ export type PurchaseInvoice = {
   stock_entry_name?: string | null
   vendor?: string
   vendor_name?: string
-  status?: 'unpaid' | 'partial' | 'paid' | 'blocked_for_payment' | 'cancelled'
+  status?: 'unpaid' | 'partial' | 'paid' | 'cancelled'
   total_amount?: number
   paid_amount?: number
-  block_reason?: string | null
   due_date?: string | null
-  qty_fulfillment_rate?: number | null
   created_at?: string
   updated_at?: string
   lines?: PurchaseInvoiceLine[]
@@ -379,8 +316,17 @@ export type Shipment = {
   id?: string
   shipment_num?: string
   name?: string
+  purchase_order?: string | null
+  purchase_order_lines?: {
+    id?: string
+    item_id?: string
+    item_code?: string
+    item_name?: string
+    quantity?: number
+    unit?: string
+  }[]
   total_logistic_fees?: number
-  status?: 'draft' | 'arrived' | 'inspected' | 'completed'
+  status?: 'draft' | 'inspecting' | 'completed'
   remarks?: string | null
   stock_entries?: {
     id?: string
@@ -399,8 +345,6 @@ export type Shipment = {
     source_warehouse_name?: string | null
     target_warehouse_id?: string | null
     target_warehouse_name?: string | null
-    qc_status?: string
-    latest_cert?: object | null
     stock_entry_id?: string
     stock_entry_name?: string
     stock_entry_status?: string
@@ -412,7 +356,18 @@ export type ShipmentInput = {
   shipment_num: string
   name: string
   remarks?: string | null
+  purchase_order_id?: string | null
   stock_entry_ids?: string[]
+}
+export type ShipmentDetailComplete = {
+  po_line_id: string
+  item_id: string
+  quantity: number
+  target_warehouse_id?: string | null
+}
+export type ShipmentCompleteInput = {
+  total_logistic_fees: number
+  details: ShipmentDetailComplete[]
 }
 export type LandedCostAllocationInput = {
   shipment_id: string
@@ -428,8 +383,6 @@ export type ApAging = {
   overdue_above_30?: number
 }
 export const {
-  useGetPurchasingCertificationsQuery,
-  usePostPurchasingCertificationsMutation,
   useGetPurchasingOrdersQuery,
   usePostPurchasingOrdersMutation,
   useGetPurchasingOrdersByPkQuery,
@@ -440,11 +393,11 @@ export const {
   usePostPurchasingOrdersByPkCancelMutation,
   useGetPurchasingInvoicesQuery,
   useGetPurchasingInvoicesByPkQuery,
-  usePostPurchasingInvoicesByPkVerifyMutation,
   useGetPurchasingShipmentsQuery,
   usePostPurchasingShipmentsMutation,
   useGetPurchasingShipmentsByPkQuery,
   usePutPurchasingShipmentsByPkMutation,
+  usePostPurchasingShipmentsByPkCompleteMutation,
   usePostPurchasingShipmentsAllocateMutation,
   useGetPurchasingReportsApAgingQuery,
 } = injectedRtkApi

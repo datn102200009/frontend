@@ -4,7 +4,6 @@ import { PurchaseOrderTable } from '@widgets/purchasing/PurchaseOrderTable';
 import { PurchaseInvoiceTable } from '@widgets/purchasing/PurchaseInvoiceTable';
 import { LandedCostPage } from './LandedCost/LandedCostPage';
 import { ApAgingPage } from './ApAging/ApAgingPage';
-import { QcReportPage } from './QcReport/QcReportPage';
 import { PurchaseOrderFormModal } from '@features/purchasing/create-order/ui/PurchaseOrderFormModal';
 import { PurchaseInvoiceDetailsModal } from '@features/purchasing/manage-invoice/ui/PurchaseInvoiceDetailsModal';
 import { Button } from '@shared/ui/Button/Button';
@@ -14,7 +13,7 @@ import clsx from 'clsx';
 
 export const PurchasingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'invoices' | 'shipment' | 'qc' | 'ap-aging';
+  const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'invoices' | 'shipment' | 'ap-aging';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const queryId = searchParams.get('id');
   const editOrderId = activeTab === 'orders' ? queryId : null;
@@ -53,15 +52,6 @@ export const PurchasingPage = () => {
         <button
           type="button"
           role="tab"
-          aria-selected={activeTab === 'qc'}
-          className={clsx(styles.tab, activeTab === 'qc' && styles.active)}
-          onClick={() => setSearchParams({ tab: 'qc' })}
-        >
-          Kiểm Định QA/QC
-        </button>
-        <button
-          type="button"
-          role="tab"
           aria-selected={activeTab === 'ap-aging'}
           className={clsx(styles.tab, activeTab === 'ap-aging' && styles.active)}
           onClick={() => setSearchParams({ tab: 'ap-aging' })}
@@ -73,18 +63,6 @@ export const PurchasingPage = () => {
       <div className={styles.content}>
         {activeTab === 'shipment' ? (
           <LandedCostPage />
-        ) : activeTab === 'qc' ? (
-          <div className={styles.container}>
-            <div className={styles.header}>
-              <div>
-                <h2 className={styles.title}>Lịch Sử Kiểm Định QA/QC</h2>
-                <p className={styles.subtitle}>Danh sách chứng nhận chất lượng kỹ thuật các lô hàng nhập</p>
-              </div>
-            </div>
-            <div style={{ marginTop: '8px' }}>
-              <QcReportPage />
-            </div>
-          </div>
         ) : activeTab === 'ap-aging' ? (
           <ApAgingPage />
         ) : (

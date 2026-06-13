@@ -279,7 +279,7 @@ def run():
 
             # ── Step 7: Tạo lô hàng mới (Shipment) ──
             try:
-                # Approve the draft PO we just created to generate a draft GRN
+                # Approve the draft PO we just created
                 page.get_by_role("button", name="Chỉnh sửa").first.click()
                 page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
                 page.get_by_role("button", name="Duyệt Đơn").click()
@@ -298,21 +298,21 @@ def run():
                 page.get_by_label("Tên Lô Hàng / Mô tả hồ sơ").fill(f"Lô hàng nhập Sunrise {rand_id}")
                 page.get_by_label("Ghi Chú").fill("Hàng nhập đường bộ")
 
-                # Select a draft stock entry checkbox
-                page.locator("div[class*='selectionItem']").filter(has_text="Sunrise").first.locator("input[type='checkbox']").check()
+                # Select the PO from the dropdown list (second option, since first option is placeholder)
+                page.locator("select").first.select_option(index=1)
 
                 page.get_by_role("button", name="Khởi tạo lô hàng").click()
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
-                # Verify shipment appears in list and has badge "Nháp (Đang đi đường)"
+                # Verify shipment appears in list and has badge "Nháp (Chờ hàng về)"
                 expect(page.get_by_text(created_shipment_num)).to_be_visible()
-                expect(page.get_by_text("Nháp (Đang đi đường)").first).to_be_visible()
+                expect(page.get_by_text("Nháp (Chờ hàng về)").first).to_be_visible()
 
-                runner.log("WF-06", 7, "PASS", f"Tạo lô hàng mới {created_shipment_num} liên kết phiếu kho nháp thành công", url=page.url)
+                runner.log("WF-06", 7, "PASS", f"Tạo lô hàng mới {created_shipment_num} liên kết PO thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step7_fail")
-                runner.log("WF-06", 7, "FAIL", f"Tạo lô hàng mới {created_shipment_num} liên kết phiếu kho nháp thành công", str(e), url=page.url)
+                runner.log("WF-06", 7, "FAIL", f"Tạo lô hàng mới {created_shipment_num} liên kết PO thành công", str(e), url=page.url)
 
             # ── Step 8: Xác nhận hàng về (Arrived) ──
             try:
@@ -320,85 +320,69 @@ def run():
                 page.get_by_text(created_shipment_num).first.click()
                 time.sleep(0.5)
 
-                page.get_by_role("button", name="Xác nhận hàng về (Arrived)").click()
+                page.get_by_role("button", name="Xác nhận hàng về (Bắt đầu tiếp nhận)").click()
                 time.sleep(1.5)
 
-                expect(page.get_by_text("Đã cập bến (Chờ QC)").first).to_be_visible()
-                expect(page.get_by_role("button", name="Đánh giá QC").first).to_be_visible()
+                expect(page.get_by_text("Đang tiếp nhận").first).to_be_visible()
+                expect(page.get_by_role("button", name="Xác Nhận Hoàn Tất").first).to_be_visible()
 
-                runner.log("WF-06", 8, "PASS", "Cập nhật trạng thái lô hàng sang Arrived và hiển thị nút QC thành công", url=page.url)
+                runner.log("WF-06", 8, "PASS", "Xác nhận hàng về và chuyển sang trạng thái Đang tiếp nhận thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step8_fail")
-                runner.log("WF-06", 8, "FAIL", "Cập nhật trạng thái lô hàng sang Arrived và hiển thị nút QC thành công", str(e), url=page.url)
+                runner.log("WF-06", 8, "FAIL", "Xác nhận hàng về và chuyển sang trạng thái Đang tiếp nhận thành công", str(e), url=page.url)
 
-            # ── Step 9: Đánh giá QC sản phẩm (PASSED) ──
+            # ── Step 9: Verify tab QC đã bị gỡ bỏ ──
             try:
-                page.get_by_role("button", name="Đánh giá QC").first.click()
-                time.sleep(0.5)
-                expect(page.get_by_role("dialog")).to_be_visible()
+                # Tab QC no longer exists
+                expect(page.get_by_role("tab", name="Kiểm Định QA/QC")).to_be_hidden()
 
-                # Choose radio PASSED
-                page.locator("input[name='qc_result'][value='PASSED']").check()
-                page.get_by_label("Ghi chú đánh giá / Lý do (nếu hỏng)").fill("Kích thước đạt chuẩn, không móp méo.")
-
-                page.get_by_role("button", name="Lưu kết quả QC").click()
-                time.sleep(1.5)
-                expect(page.get_by_role("dialog")).not_to_be_visible()
-
-                # Check PASSED badge on item row
-                expect(page.get_by_text("PASSED (Đạt)")).to_be_visible()
-
-                runner.log("WF-06", 9, "PASS", "Kiểm định chất lượng đạt tiêu chuẩn (PASSED) thành công", url=page.url)
+                runner.log("WF-06", 9, "PASS", "Hệ thống QC cũ đã được loại bỏ thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step9_fail")
-                runner.log("WF-06", 9, "FAIL", "Kiểm định chất lượng đạt tiêu chuẩn (PASSED) thành công", str(e), url=page.url)
+                runner.log("WF-06", 9, "FAIL", "Hệ thống QC cũ đã được loại bỏ thành công", str(e), url=page.url)
 
-            # ── Step 10: Hoàn tất kiểm định + Gán kho + Nhận hàng ──
+            # ── Step 10: Hoàn tất tiếp nhận & Hoàn tất Lô hàng ──
             try:
-                page.get_by_role("button", name="Hoàn tất Kiểm định QC").click()
+                page.get_by_role("button", name="Xác Nhận Hoàn Tất").click()
                 time.sleep(1.5)
-                expect(page.get_by_text("Đã QC (Chờ nhận hàng)").first).to_be_visible()
+                
+                modal = page.get_by_role("dialog", name="Tiếp Nhận & Hoàn Tất Lô Hàng")
+                expect(modal).to_be_visible()
 
-                # Select destination warehouse
-                page.locator("select").first.select_option(label="Kho Nguyên Vật Liệu")
+                # Select destination warehouse inside modal
+                modal.locator("select").first.select_option(label="Kho Nguyên Vật Liệu")
                 
                 # Enter receiving quantity (same as ordered)
-                # Input is inside the table
-                qty_input = page.locator("input[type='number']").first
+                qty_input = modal.locator("input[type='number']").last
                 qty_input.clear()
                 qty_input.fill("10")
 
                 # Fill logistic fee
-                fee_input = page.locator("input[placeholder*='Nhập chi phí vận chuyển']").first
+                fee_input = modal.get_by_label("Chi phí vận chuyển thực tế (VND)")
                 fee_input.clear()
                 fee_input.fill("150000")
 
-                # Confirm receiving & Allocate costs
-                page.get_by_role("button", name="Xác nhận nhận hàng & Hoàn tất Lô hàng").click()
+                # Confirm completion
+                modal.get_by_role("button", name="Xác nhận Hoàn Tất").click()
                 time.sleep(2)
 
                 expect(page.get_by_text("Hoàn tất").first).to_be_visible()
-                expect(page.get_by_text("Chi phí đã được phân bổ thành công")).to_be_visible()
 
-                runner.log("WF-06", 10, "PASS", "Gán kho đích, phân bổ chi phí Logistic và hoàn tất nhập kho thành công", url=page.url)
+                runner.log("WF-06", 10, "PASS", "Tiếp nhận hàng hóa, phân bổ chi phí Logistic và hoàn tất lô hàng thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step10_fail")
-                runner.log("WF-06", 10, "FAIL", "Gán kho đích, phân bổ chi phí Logistic và hoàn tất nhập kho thành công", str(e), url=page.url)
+                runner.log("WF-06", 10, "FAIL", "Tiếp nhận hàng hóa, phân bổ chi phí Logistic và hoàn tất lô hàng thành công", str(e), url=page.url)
 
-            # ── Step 11: Verify tab lịch sử QC ──
+            # ── Step 11: Verify trạng thái hoàn tất ──
             try:
-                page.get_by_role("tab", name="Kiểm Định QA/QC").click()
-                time.sleep(0.5)
+                # Verify that the shipment is completed and landed cost is correctly recorded
+                expect(page.get_by_text("Hoàn tất").first).to_be_visible()
+                expect(page.get_by_text("150.000")).to_be_visible()  # formatted VND logistic fee
 
-                expect(page.get_by_role("heading", name="Lịch Sử Kiểm Định QA/QC")).to_be_visible()
-                # Verify that the item we just QCed is listed in the history table
-                expect(page.get_by_text("Ống thủy tinh huỳnh quang 1m2").first).to_be_visible()
-                expect(page.get_by_text("Đạt").first).to_be_visible()
-
-                runner.log("WF-06", 11, "PASS", "Lịch sử chứng nhận QA/QC hiển thị chính xác kết quả kiểm định", url=page.url)
+                runner.log("WF-06", 11, "PASS", "Lô hàng hoàn tất hiển thị chính xác trạng thái và landed cost", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step11_fail")
-                runner.log("WF-06", 11, "FAIL", "Lịch sử chứng nhận QA/QC hiển thị chính xác kết quả kiểm định", str(e), url=page.url)
+                runner.log("WF-06", 11, "FAIL", "Lô hàng hoàn tất hiển thị chính xác trạng thái và landed cost", str(e), url=page.url)
 
         except Exception as e:
             runner.screenshot(page, "blocker_batch_04a")
