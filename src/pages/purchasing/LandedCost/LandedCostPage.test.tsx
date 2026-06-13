@@ -122,13 +122,17 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
     expect(completeBtn).toBeInTheDocument();
 
+    // Select warehouse inline to pass validation
+    const select = await screen.findByRole('combobox');
+    await user.selectOptions(select, 'WH01');
+
     // Click complete button opens modal
     await user.click(completeBtn);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Tiếp Nhận & Hoàn Tất Lô Hàng')).toBeInTheDocument();
   });
 
-  it('validates warehouse required in completion modal when quantity > 0', async () => {
+  it('validates warehouse required when quantity > 0 (triggers inline validation)', async () => {
     const inspectingShipment = {
       ...mockShipments[0],
       status: 'inspecting'
@@ -149,13 +153,7 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
     await user.click(completeBtn);
 
-    const modal = screen.getByRole('dialog');
-    
-    // Find the submit button inside modal
-    const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
-    await user.click(submitBtn);
-
-    // Should display validation error because warehouse is empty and quantity > 0
+    // Should display validation error on the main page because warehouse is empty and quantity > 0
     expect(await screen.findByText('Bắt buộc chọn kho khi số lượng nhận lớn hơn 0')).toBeInTheDocument();
   });
 
@@ -182,16 +180,18 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     const card = await screen.findByText('LH-20260604-001');
     await user.click(card);
 
+    // Select warehouse inline (main page)
+    const select = await screen.findByRole('combobox');
+    await user.selectOptions(select, 'WH01');
+
+    // Click "Xác Nhận Hoàn Tất" on main page
     const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
     await user.click(completeBtn);
 
+    // Modal opens
     const modal = screen.getByRole('dialog');
     
-    // Select warehouse
-    const select = within(modal).getByRole('combobox');
-    await user.selectOptions(select, 'WH01');
-
-    // Click submit
+    // Click submit in modal
     const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
     await user.click(submitBtn);
 

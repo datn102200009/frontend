@@ -86,7 +86,7 @@
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: 2fr 1fr 1.2fr 1.5fr;
   padding: var(--sp-3) var(--sp-4);
   background-color: var(--clr-surface-muted);
   border-bottom: 1px solid var(--clr-border);
@@ -97,7 +97,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr 1.2fr;
+  grid-template-columns: 2fr 1fr 1.2fr 1.5fr;
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--clr-border);
   font-size: var(--fs-sm);

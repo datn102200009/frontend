@@ -15,15 +15,12 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { Plus, Package, Calendar, Info, CheckCircle2, Check, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { Plus, Package, AlertTriangle, ClipboardCheck } from 'lucide-react';
 import styles from './LandedCostPage.module.css';
 
 // Schema validation for completing shipment
 const completeFormSchema = z.object({
-  total_logistic_fees: z.preprocess(
-    (val) => (val === '' ? undefined : Number(val)),
-    z.number({ required_error: 'Chi phí logistic là bắt buộc', invalid_type_error: 'Chi phí logistic phải là số' }).min(0, 'Chi phí logistic không được âm')
-  ),
+  total_logistic_fees: z.number({ message: 'Chi phí logistic phải là số' }).min(0, 'Chi phí logistic không được âm'),
   remarks: z.string().optional(),
   details: z.array(
     z.object({
@@ -32,10 +29,7 @@ const completeFormSchema = z.object({
       item_code: z.string(),
       item_name: z.string(),
       ordered_quantity: z.number(),
-      quantity: z.preprocess(
-        (val) => (val === '' ? undefined : Number(val)),
-        z.number({ required_error: 'Số lượng là bắt buộc', invalid_type_error: 'Số lượng phải là số' }).min(0, 'Số lượng không được âm')
-      ),
+      quantity: z.number({ message: 'Số lượng phải là số' }).min(0, 'Số lượng không được âm'),
       target_warehouse_id: z.string().nullable().optional(),
     }).refine(
       (data) => {
@@ -102,6 +96,7 @@ export const LandedCostPage: React.FC = () => {
     control,
     setValue,
     watch,
+    trigger,
     formState: { errors },
     reset,
   } = useForm<CompleteFormValues>({
@@ -142,8 +137,31 @@ export const LandedCostPage: React.FC = () => {
     setPrevActiveShipmentId(activeShipmentId);
     if (activeShipment) {
       setLogisticFees(activeShipment.total_logistic_fees ? String(activeShipment.total_logistic_fees) : '0');
+      
+      const lines = activeShipment.purchase_order_lines || [];
+      reset({
+        total_logistic_fees: activeShipment.total_logistic_fees ? parseFloat(String(activeShipment.total_logistic_fees)) : 0,
+        remarks: activeShipment.remarks || '',
+        details: lines.map((line) => {
+          const matched = activeShipment.stock_entries_details?.find((r) => r.item_id === line.item_id);
+          return {
+            po_line_id: line.id || '',
+            item_id: line.item_id || '',
+            item_code: line.item_code || '',
+            item_name: line.item_name || '',
+            ordered_quantity: parseFloat(String(line.quantity)) || 0,
+            quantity: matched ? parseFloat(String(matched.quantity)) : parseFloat(String(line.quantity)) || 0,
+            target_warehouse_id: matched ? (matched.target_warehouse_id || '') : '',
+          };
+        }),
+      });
     } else {
       setLogisticFees('0');
+      reset({
+        total_logistic_fees: 0,
+        remarks: '',
+        details: [],
+      });
     }
   }
 
@@ -251,23 +269,16 @@ export const LandedCostPage: React.FC = () => {
     }
   };
 
-  const handleOpenCompleteModal = () => {
+  const handleOpenCompleteModal = async () => {
     if (!activeShipment) return;
     
-    const lines = activeShipment.purchase_order_lines || [];
-    reset({
-      total_logistic_fees: parseFloat(logisticFees) || 0,
-      remarks: activeShipment.remarks || '',
-      details: lines.map((line) => ({
-        po_line_id: line.id || '',
-        item_id: line.item_id || '',
-        item_code: line.item_code || '',
-        item_name: line.item_name || '',
-        ordered_quantity: parseFloat(String(line.quantity)) || 0,
-        quantity: parseFloat(String(line.quantity)) || 0,
-        target_warehouse_id: '',
-      })),
-    });
+    // Validate inline details form fields
+    const isValid = await trigger('details');
+    if (!isValid) return;
+
+    setValue('total_logistic_fees', parseFloat(logisticFees) || 0);
+    setValue('remarks', activeShipment.remarks || '');
+    
     setCompleteError('');
     setIsCompleteModalOpen(true);
   };
@@ -301,7 +312,7 @@ export const LandedCostPage: React.FC = () => {
       }).unwrap();
 
       // Update remarks if edited
-      if (data.remarks !== undefined && data.remarks !== activeShipment.remarks) {
+      if (activeShipment && data.remarks !== undefined && data.remarks !== activeShipment.remarks) {
         await updateShipment({
           pk: activeShipmentId,
           body: { remarks: data.remarks }
@@ -482,49 +493,101 @@ export const LandedCostPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {matchedDetails.map((detail) => {
-                          return (
-                            <tr key={detail.id}>
-                              <td>
-                                <div className={styles.itemMeta}>
-                                  <span className={styles.itemCode}>{detail.item_code}</span>
-                                  <span className={styles.itemName}>{detail.item_name}</span>
-                                </div>
-                              </td>
-                              <td>{detail.ordered_quantity} {detail.unit}</td>
-                              <td>
-                                {activeShipment.status === 'completed' ? (
-                                  detail.received_quantity
-                                ) : (
-                                  <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
-                                )}
-                              </td>
-                              <td>
-                                {activeShipment.status === 'completed' ? (
-                                  detail.target_warehouse_name || '---'
-                                ) : (
-                                  <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
-                                )}
-                              </td>
-                              <td>
-                                {activeShipment.status === 'completed' ? (
-                                  detail.received_quantity > 0 ? (
-                                    <Badge variant="success">Đạt: {detail.received_quantity}/{detail.ordered_quantity}</Badge>
-                                  ) : (
-                                    <div className={styles.failedText}>
-                                      <AlertTriangle size={11} />
-                                      <span>Từ chối nhận (0/{detail.ordered_quantity})</span>
+                        {activeShipment.status === 'inspecting'
+                          ? fields.map((field, index) => {
+                              const itemQty = watch(`details.${index}.quantity`);
+                              const poLine = activeShipment.purchase_order_lines?.find(l => l.id === field.po_line_id);
+                              const unit = poLine?.unit || '';
+                              return (
+                                <tr key={field.id}>
+                                  <td>
+                                    <div className={styles.itemMeta}>
+                                      <span className={styles.itemCode}>{field.item_code}</span>
+                                      <span className={styles.itemName}>{field.item_name}</span>
                                     </div>
-                                  )
-                                ) : activeShipment.status === 'inspecting' ? (
-                                  <Badge variant="info">Đang tiếp nhận</Badge>
-                                ) : (
-                                  <Badge variant="neutral">Chờ hàng về</Badge>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                                  </td>
+                                  <td>{field.ordered_quantity} {unit}</td>
+                                  <td>
+                                    <input
+                                      type="number"
+                                      className={styles.inputNumber}
+                                      min="0"
+                                      step="0.01"
+                                      style={{ width: '100%' }}
+                                      {...register(`details.${index}.quantity`, { valueAsNumber: true })}
+                                    />
+                                    {errors.details?.[index]?.quantity && (
+                                      <span className={styles.errorText}>
+                                        {errors.details?.[index]?.quantity?.message}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <select
+                                      className={styles.selectWarehouse}
+                                      disabled={itemQty === 0}
+                                      style={{ margin: 0, width: '100%' }}
+                                      {...register(`details.${index}.target_warehouse_id`)}
+                                    >
+                                      {warehouseOptions.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                          {opt.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {errors.details?.[index]?.target_warehouse_id && (
+                                      <span className={styles.errorText}>
+                                        {errors.details?.[index]?.target_warehouse_id?.message}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <Badge variant="info">Đang tiếp nhận</Badge>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          : matchedDetails.map((detail) => {
+                              return (
+                                <tr key={detail.id}>
+                                  <td>
+                                    <div className={styles.itemMeta}>
+                                      <span className={styles.itemCode}>{detail.item_code}</span>
+                                      <span className={styles.itemName}>{detail.item_name}</span>
+                                    </div>
+                                  </td>
+                                  <td>{detail.ordered_quantity} {detail.unit}</td>
+                                  <td>
+                                    {activeShipment.status === 'completed' ? (
+                                      detail.received_quantity
+                                    ) : (
+                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {activeShipment.status === 'completed' ? (
+                                      detail.target_warehouse_name || '---'
+                                    ) : (
+                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {activeShipment.status === 'completed' ? (
+                                      detail.received_quantity > 0 ? (
+                                        <Badge variant="success">Đạt: {detail.received_quantity}/{detail.ordered_quantity}</Badge>
+                                      ) : (
+                                        <div className={styles.failedText}>
+                                          <AlertTriangle size={11} />
+                                          <span>Từ chối nhận (0/{detail.ordered_quantity})</span>
+                                        </div>
+                                      )
+                                    ) : (
+                                      <Badge variant="neutral">Chờ hàng về</Badge>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                       </tbody>
                     </table>
                   </div>
@@ -655,7 +718,7 @@ export const LandedCostPage: React.FC = () => {
           </div>
 
           <div className={styles.entriesSection} style={{ marginTop: '16px' }}>
-            <h4 className={styles.entriesTitle}>Số Lượng Thực Nhận & Chỉ Định Kho Đích</h4>
+            <h4 className={styles.entriesTitle}>Số Lượng Thực Nhận & Chỉ Định Kho Đích (Review)</h4>
             
             <div className={styles.tableWrap} style={{ maxHeight: '300px', overflowY: 'auto' }}>
               <table className={styles.table}>
@@ -669,7 +732,8 @@ export const LandedCostPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {fields.map((field, index) => {
-                    const itemQty = watch(`details.${index}.quantity`);
+                    const targetWarehouseId = watch(`details.${index}.target_warehouse_id`);
+                    const warehouse = warehouses.find((w) => w.id === targetWarehouseId);
                     return (
                       <tr key={field.id}>
                         <td>
@@ -679,40 +743,8 @@ export const LandedCostPage: React.FC = () => {
                           </div>
                         </td>
                         <td>{field.ordered_quantity}</td>
-                        <td>
-                          <input
-                            type="number"
-                            className={styles.inputNumber}
-                            min="0"
-                            step="0.01"
-                            style={{ width: '100%' }}
-                            {...register(`details.${index}.quantity`, { valueAsNumber: true })}
-                          />
-                          {errors.details?.[index]?.quantity && (
-                            <span style={{ color: 'var(--clr-error)', fontSize: '10px', display: 'block', marginTop: '2px' }}>
-                              {errors.details?.[index]?.quantity?.message}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          <select
-                            className={styles.selectWarehouse}
-                            disabled={itemQty === 0}
-                            style={{ margin: 0, width: '100%' }}
-                            {...register(`details.${index}.target_warehouse_id`)}
-                          >
-                            {warehouseOptions.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                          {errors.details?.[index]?.target_warehouse_id && (
-                            <span style={{ color: 'var(--clr-error)', fontSize: '10px', display: 'block', marginTop: '2px' }}>
-                              {errors.details?.[index]?.target_warehouse_id?.message}
-                            </span>
-                          )}
-                        </td>
+                        <td>{watch(`details.${index}.quantity`)}</td>
+                        <td>{warehouse?.name || '---'}</td>
                       </tr>
                     );
                   })}
