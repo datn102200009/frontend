@@ -27,7 +27,6 @@ export function StackedProgressCard({
   title,
   icon,
   data,
-  totalCount,
   quickLinks,
 }: StackedProgressCardProps) {
   const items = Array.isArray(data) ? data : [];
@@ -45,26 +44,9 @@ export function StackedProgressCard({
     );
   }
 
-  const countBadge =
-    typeof totalCount === 'number' && totalCount > 0 ? (
-      <span
-        className="shared-badge"
-        style={{
-          background: 'var(--clr-bg)',
-          color: 'var(--clr-text-secondary)',
-          fontSize: 'var(--fs-xs)',
-          fontWeight: 'bold',
-          padding: '1px 6px',
-          borderRadius: '10px',
-        }}
-      >
-        {totalCount}
-      </span>
-    ) : null;
-
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={countBadge} />
+      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
 
       <div className={styles.cardBody}>
         <div className={styles.stackedList}>

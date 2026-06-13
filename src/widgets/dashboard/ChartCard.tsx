@@ -1,5 +1,6 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
+import { niceCeil } from '../../shared/lib/chartScale';
 import styles from './DashboardWidgets.module.css';
 
 export interface ChartCardProps {
@@ -68,7 +69,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
     ...weeks.map((w) => Math.max(w.receive, w.pay)),
     1_000_000 // Fallback minimum scale
   );
-  const chartMax = maxVal * 1.15; // Leave 15% headroom
+  const chartMax = niceCeil(maxVal * 1.15); // Leave 15% headroom
 
   // Calculate grid lines (5 lines: 0%, 25%, 50%, 75%, 100%)
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map((pct) => {
@@ -86,15 +87,22 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
 
   const handleMouseMove = (index: number, e: MouseEvent<SVGRectElement>) => {
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
+    if (!cardRect) return;
 
-    if (cardRect) {
-      // Position relative to the card container
-      setTooltipPos({
-        x: e.clientX - cardRect.left + 15,
-        y: e.clientY - cardRect.top - 70,
-      });
-      setHoveredIndex(index);
-    }
+    const TOOLTIP_ESTIMATED_WIDTH = 180;
+    const TOOLTIP_OFFSET = 15;
+    const cardWidth = cardRect.width;
+    const pointerXInCard = e.clientX - cardRect.left;
+    const spaceRight = cardWidth - pointerXInCard;
+
+    const x = spaceRight < TOOLTIP_ESTIMATED_WIDTH + TOOLTIP_OFFSET
+      ? pointerXInCard - TOOLTIP_ESTIMATED_WIDTH - TOOLTIP_OFFSET
+      : pointerXInCard + TOOLTIP_OFFSET;
+
+    const y = Math.max(8, e.clientY - cardRect.top - 70);
+
+    setTooltipPos({ x: Math.max(8, x), y });
+    setHoveredIndex(index);
   };
 
   const handleMouseLeave = () => {

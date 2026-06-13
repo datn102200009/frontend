@@ -665,9 +665,8 @@
 }
 
 .gaugeSvg {
-  width: 100px;
-  height: 100px;
-  transform: rotate(-90deg);
+  width: 140px;
+  height: 140px;
 }
 
 .gaugeBg {
@@ -863,6 +862,11 @@
   color: var(--clr-error-600);
 }
 
+.kpiPillWarning {
+  background: var(--clr-warning-bg);
+  color: var(--clr-warning-600);
+}
+
 .kpiPillNeutral {
   background: var(--clr-bg);
   color: var(--clr-text-secondary);
@@ -911,6 +915,8 @@
   flex-shrink: 0;
 }
 
+
+
 /* Gauge card layout */
 .gaugeWrapper {
   position: relative;
@@ -918,20 +924,21 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  min-height: 90px;
+  min-height: 140px;
   max-height: 140px;
   margin: var(--sp-2) 0;
 }
 
 .gaugeText {
   position: absolute;
-  top: 50%;
+  top: 0;
   left: 0;
   right: 0;
-  transform: translateY(-30%);
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .gaugeValue {
@@ -949,16 +956,16 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  min-height: 120px;
-  max-height: 200px;
+  min-height: 160px;
+  max-height: 160px;
   margin: var(--sp-2) auto;
-  max-width: 120px;
+  max-width: 160px;
   width: 100%;
 }
 
 .donutSvg {
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
 }
 
 .donutBg {
@@ -1016,13 +1023,15 @@
 .donutLegendLabel {
   color: var(--clr-text-secondary);
   flex: 1;
+  font-size: var(--fs-md);
 }
 
 .donutLegendValue {
   font-family: var(--font-heading);
-  font-weight: var(--fw-bold);
+  font-weight: var(--fw-semibold);
   color: var(--clr-text);
   font-variant-numeric: tabular-nums;
+  font-size: var(--fs-md);
 }
 
 .donutTopList {
@@ -1354,21 +1363,32 @@
   height: 100%;
 }
 .cashflowSummary {
-  padding: var(--sp-3);
-  background: var(--clr-bg);
+  padding: var(--sp-4);
+  background: var(--clr-surface-alt);
+  border: 1px solid var(--clr-border);
   border-radius: var(--radius-md);
 }
 .cashflowSummaryHero {
   display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  margin-bottom: 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
+  text-align: center;
+}
+.cashflowSummaryHeroLabel {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .cashflowSummaryValue {
   font-family: var(--font-heading);
-  font-size: var(--fs-xl);
+  font-size: var(--fs-2xl);
   font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 .cashflowSummarySub {
   font-size: var(--fs-xs);
@@ -1377,19 +1397,141 @@
 .cashflowSummaryRow {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  flex: 1;
   font-size: var(--fs-sm);
-  padding: 2px 0;
 }
 .cashflowSummaryLabel {
   color: var(--clr-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.dotReceive {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--clr-primary-500);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dotPay {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--clr-warning-500);
+  display: inline-block;
+  flex-shrink: 0;
+}
+.verticalDivider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--clr-border);
+  flex-shrink: 0;
+}
+.cashflowRowValue {
+  font-family: var(--font-heading);
+  font-weight: var(--fw-bold);
+  color: var(--clr-text);
+  font-variant-numeric: tabular-nums;
 }
 .cashflowSummaryBreakdown {
   display: flex;
-  gap: var(--sp-3);
-  font-size: var(--fs-sm);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  border-top: 1px solid var(--clr-border);
+  padding-top: var(--sp-3);
 }
 .cashflowChartWrapper {
   flex: 1;
   min-height: 140px;
+}
+
+/* KPI List Card Styles */
+.kpiListHero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+}
+
+.kpiListSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.kpiListRow {
+  display: grid;
+  grid-template-columns: 110px 1.5fr 1.2fr;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--clr-border);
+  font-size: var(--fs-sm);
+}
+
+.kpiListRow:last-child {
+  border-bottom: none;
+}
+
+.kpiListTabFilter {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--clr-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* Component Tracker (Low Stock) Card Styles */
+.componentTrackerSelect {
+  margin-bottom: var(--sp-3);
+}
+
+.componentTrackerContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.componentTrackerMain {
+  display: flex;
+  gap: var(--sp-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.componentTrackerDonut {
+  flex: 1;
+  min-height: 120px;
+  max-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.componentTrackerLegend {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 120px;
+}
+
+.componentTrackerWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--clr-error-500);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
 }
 

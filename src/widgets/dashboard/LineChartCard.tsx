@@ -1,5 +1,6 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
+import { niceCeil } from '../../shared/lib/chartScale';
 import styles from './DashboardWidgets.module.css';
 
 export interface LineChartCardProps {
@@ -80,7 +81,7 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
   // Calculate scales
   const revenues = points.map((p) => parseFloat(p.revenue) || 0);
   const maxVal = Math.max(...revenues, 1_000_000);
-  const chartMax = maxVal * 1.15; // 15% head room
+  const chartMax = niceCeil(maxVal * 1.15); // 15% head room
 
   // Calculate 5 Y-axis grid lines
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map((pct) => {
@@ -109,13 +110,22 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
 
   const handleMouseMove = (index: number, e: MouseEvent<SVGRectElement>) => {
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
-    if (cardRect) {
-      setTooltipPos({
-        x: e.clientX - cardRect.left + 15,
-        y: e.clientY - cardRect.top - 65,
-      });
-      setHoveredIndex(index);
-    }
+    if (!cardRect) return;
+
+    const TOOLTIP_ESTIMATED_WIDTH = 180;
+    const TOOLTIP_OFFSET = 15;
+    const cardWidth = cardRect.width;
+    const pointerXInCard = e.clientX - cardRect.left;
+    const spaceRight = cardWidth - pointerXInCard;
+
+    const x = spaceRight < TOOLTIP_ESTIMATED_WIDTH + TOOLTIP_OFFSET
+      ? pointerXInCard - TOOLTIP_ESTIMATED_WIDTH - TOOLTIP_OFFSET
+      : pointerXInCard + TOOLTIP_OFFSET;
+
+    const y = Math.max(8, e.clientY - cardRect.top - 65);
+
+    setTooltipPos({ x: Math.max(8, x), y });
+    setHoveredIndex(index);
   };
 
   const handleMouseLeave = () => {
@@ -135,7 +145,6 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
       <div className={styles.cardBody}>
         <div className={styles.kpiHero} style={{ marginBottom: 'var(--sp-4)' }}>
           <span className={styles.kpiHeroValue}>{formatVND(todayRevenue)}</span>
-          <span className={styles.kpiHeroSub}>Hôm nay</span>
         </div>
 
         <div className={styles.chartContainer}>

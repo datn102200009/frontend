@@ -1,5 +1,6 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
+import { niceCeil } from '../../shared/lib/chartScale';
 import styles from './DashboardWidgets.module.css';
 
 export interface CashflowOverviewCardProps {
@@ -13,6 +14,7 @@ export interface CashflowOverviewCardProps {
       pay_total: string;
       net_cashflow: string;
       tx_count: number;
+      period_label?: string;
     };
     weeks?: {
       week_label: string;
@@ -75,7 +77,7 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
     ...weeks.map((w) => Math.max(w.receive, w.pay)),
     1_000_000 // Fallback minimum scale
   );
-  const chartMax = maxVal * 1.15; // Leave 15% headroom
+  const chartMax = niceCeil(maxVal * 1.15); // Leave 15% headroom
 
   // Calculate 4 Y-axis grid lines (0%, 33%, 66%, 100%)
   const gridLines = [0, 0.33, 0.66, 1].map((pct) => {
@@ -93,13 +95,22 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
 
   const handleMouseMove = (index: number, e: MouseEvent<SVGRectElement>) => {
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
-    if (cardRect) {
-      setTooltipPos({
-        x: e.clientX - cardRect.left + 15,
-        y: e.clientY - cardRect.top - 65,
-      });
-      setHoveredIndex(index);
-    }
+    if (!cardRect) return;
+
+    const TOOLTIP_ESTIMATED_WIDTH = 180;
+    const TOOLTIP_OFFSET = 15;
+    const cardWidth = cardRect.width;
+    const pointerXInCard = e.clientX - cardRect.left;
+    const spaceRight = cardWidth - pointerXInCard;
+
+    const x = spaceRight < TOOLTIP_ESTIMATED_WIDTH + TOOLTIP_OFFSET
+      ? pointerXInCard - TOOLTIP_ESTIMATED_WIDTH - TOOLTIP_OFFSET
+      : pointerXInCard + TOOLTIP_OFFSET;
+
+    const y = Math.max(8, e.clientY - cardRect.top - 65);
+
+    setTooltipPos({ x: Math.max(8, x), y });
+    setHoveredIndex(index);
   };
 
   const handleMouseLeave = () => {
@@ -118,7 +129,9 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
           {/* Top Summary Section */}
           <div className={styles.cashflowSummary}>
             <div className={styles.cashflowSummaryHero}>
-              <span className={styles.cashflowSummaryLabel} style={{ fontSize: 'var(--fs-xs)' }}>Dòng tiền ròng tháng này</span>
+              <span className={styles.cashflowSummaryHeroLabel}>
+                Dòng tiền ròng {summary.period_label || 'tháng này'}
+              </span>
               <span
                 className={styles.cashflowSummaryValue}
                 style={{ color: isNetPositive ? 'var(--clr-success)' : 'var(--clr-error)' }}
@@ -129,21 +142,22 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
             </div>
             
             <div className={styles.cashflowSummaryBreakdown}>
-              <div className={styles.cashflowSummaryRow} style={{ flex: 1 }}>
-                <span className={styles.cashflowSummaryLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)', display: 'inline-block' }} />
+              <div className={styles.cashflowSummaryRow}>
+                <span className={styles.cashflowSummaryLabel}>
+                  <span className={styles.dotReceive} />
                   Tổng thu
                 </span>
-                <span style={{ fontWeight: 'semibold', fontFamily: 'var(--font-heading)' }}>
+                <span className={styles.cashflowRowValue}>
                   {formatVND(summary.receive_total)}
                 </span>
               </div>
-              <div className={styles.cashflowSummaryRow} style={{ flex: 1 }}>
-                <span className={styles.cashflowSummaryLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)', display: 'inline-block' }} />
+              <div className={styles.verticalDivider} />
+              <div className={styles.cashflowSummaryRow}>
+                <span className={styles.cashflowSummaryLabel}>
+                  <span className={styles.dotPay} />
                   Tổng chi
                 </span>
-                <span style={{ fontWeight: 'semibold', fontFamily: 'var(--font-heading)' }}>
+                <span className={styles.cashflowRowValue}>
                   {formatVND(summary.pay_total)}
                 </span>
               </div>

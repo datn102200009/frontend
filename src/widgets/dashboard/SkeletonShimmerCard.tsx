@@ -2,6 +2,7 @@ import styles from './DashboardWidgets.module.css';
 
 export type SkeletonType =
   | 'kpi'
+  | 'kpi_list'
   | 'donut_chart'
   | 'aging_bar'
   | 'gauge'
@@ -18,7 +19,7 @@ export interface SkeletonShimmerCardProps {
 }
 
 export function SkeletonShimmerCard({ type = 'kpi' }: SkeletonShimmerCardProps) {
-  const isList = type === 'list_mini' || type === 'list_summary' || type === 'stacked_progress';
+  const isList = type === 'list_mini' || type === 'list_summary' || type === 'stacked_progress' || type === 'kpi_list';
   const isChart = type === 'mini_chart' || type === 'donut_chart' || type === 'aging_bar' || type === 'line_chart' || type === 'cashflow_overview';
   const isGauge = type === 'gauge';
 
@@ -30,7 +31,7 @@ export function SkeletonShimmerCard({ type = 'kpi' }: SkeletonShimmerCardProps) 
       </div>
 
       <div className={styles.shimmerBody}>
-        {(type === 'kpi' || type === 'metric') && (
+        {(type === 'kpi' || type === 'metric' || type === 'kpi_list') && (
           <>
             <div className={styles.shimmerValue} />
             <div className={styles.shimmerSubtext} />

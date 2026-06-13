@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { formatVND } from '@shared/lib/formatVND';
 import { CardHeader } from './CardHeader';
-import { Badge } from '@shared/ui/Badge/Badge';
 import styles from './DashboardWidgets.module.css';
 
 export interface AgingBucket {
@@ -49,11 +48,11 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
   const totalNumeric = buckets.reduce((sum, b) => sum + (parseFloat(b.value) || 0), 0);
 
   // Donut chart geometry
-  const size = 120;
-  const radius = 42;
+  const size = 160;
+  const radius = 56;
   const cx = size / 2;
   const cy = size / 2;
-  const strokeWidth = 14;
+  const strokeWidth = 18;
   const circumference = 2 * Math.PI * radius;
 
   let offsetAcc = 0;
@@ -70,11 +69,9 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
     return { ...bucket, val, dashArray, dashOffset };
   });
 
-  const countBadge = totalCount > 0 ? <Badge variant="neutral">{totalCount}</Badge> : null;
-
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={countBadge} />
+      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
 
       <div className={styles.cardBody}>
         {/* Total Outstanding Header */}
@@ -135,10 +132,10 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
                   className={styles.donutLegendDot}
                   style={{ background: COLOR_BY_KEY[bucket.color_key] || 'var(--clr-primary-500)' }}
                 />
-                <span className={styles.donutLegendLabel} style={{ fontSize: '11px' }}>
+                <span className={styles.donutLegendLabel}>
                   {bucket.label} ({bucket.count})
                 </span>
-                <span className={styles.donutLegendValue} style={{ fontSize: '11px', fontWeight: 'semibold' }}>
+                <span className={styles.donutLegendValue} style={{ fontWeight: 'semibold' }}>
                   {formatVND(bucket.value)}
                 </span>
               </div>
@@ -152,7 +149,7 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
             <div className={styles.agingTopHeader} style={{ fontSize: 'var(--fs-xs)', fontWeight: 'bold', color: 'var(--clr-text-secondary)', marginBottom: '6px' }}>
               {code === 'finance_unpaid_purchase_invoices' ? 'Hóa đơn trễ hạn lâu nhất' : 'Khách nợ lâu nhất'}
             </div>
-            {topOverdue.slice(0, 3).map((item: { id?: string; supplier_name?: string; customer_name?: string; overdue_days?: number }, idx: number) => {
+            {topOverdue.slice(0, 3).map((item: { id?: string; supplier_name?: string; customer_name?: string; overdue_days?: number; remaining_amount?: string | number }, idx: number) => {
               const name =
                 (item.supplier_name as string | undefined) ||
                 (item.customer_name as string | undefined) ||
@@ -170,19 +167,24 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
                     borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
                   }}
                 >
-                  <span className={styles.donutTopName} style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text)' }}>
+                  <span className={styles.donutTopName} style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
                     {name}
                   </span>
-                  <span
-                    className={styles.donutTopMeta}
-                    style={{
-                      fontSize: 'var(--fs-xs)',
-                      fontWeight: 'bold',
-                      color: overdueDays > 30 ? 'var(--clr-error)' : 'var(--clr-warning)',
-                    }}
-                  >
-                    {overdueDays > 0 ? `Trễ ${overdueDays} ngày` : 'Mới'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', flexShrink: 0 }}>
+                    <span className={styles.donutTopAmount} style={{ fontSize: 'var(--fs-sm)', fontWeight: '600', color: 'var(--clr-text-secondary)' }}>
+                      {formatVND(item.remaining_amount ?? 0)}
+                    </span>
+                    <span
+                      className={styles.donutTopMeta}
+                      style={{
+                        fontSize: 'var(--fs-sm)',
+                        fontWeight: 'bold',
+                        color: overdueDays > 30 ? 'var(--clr-error)' : 'var(--clr-warning)',
+                      }}
+                    >
+                      {overdueDays > 0 ? `Trễ ${overdueDays} ngày` : 'Mới'}
+                    </span>
+                  </div>
                 </div>
               );
             })}

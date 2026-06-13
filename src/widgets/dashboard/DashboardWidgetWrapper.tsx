@@ -28,6 +28,8 @@ import { dashboardApi, type WidgetMetadata } from '../../entities/dashboard/api/
 import { SkeletonShimmerCard } from './SkeletonShimmerCard';
 import { ListMini } from './ListMini';
 import { KpiCard } from './KpiCard';
+import { KpiListCard } from './KpiListCard';
+import { ComponentTrackerCard } from './ComponentTrackerCard';
 import { ChartCard } from './ChartCard';
 import { GaugeCard } from './GaugeCard';
 import { DonutChartCard } from './DonutChartCard';
@@ -109,6 +111,7 @@ function getWidgetIcon(code: string): ReactNode {
 
 const SKELETON_TYPES = new Set([
   'kpi',
+  'kpi_list',
   'donut_chart',
   'aging_bar',
   'gauge',
@@ -174,7 +177,7 @@ export function DashboardWidgetWrapper({
 
   if (batchLoading && !hasRetried) {
     const skelType = SKELETON_TYPES.has(type)
-      ? (type as 'kpi' | 'donut_chart' | 'aging_bar' | 'gauge' | 'stacked_progress' | 'mini_chart' | 'list_mini')
+      ? (type as 'kpi' | 'kpi_list' | 'donut_chart' | 'aging_bar' | 'gauge' | 'stacked_progress' | 'mini_chart' | 'list_mini')
       : 'list_mini';
     return (
       <div style={gridStyle}>
@@ -226,8 +229,26 @@ export function DashboardWidgetWrapper({
         />
       )}
 
+      {type === 'kpi_list' && (
+        <KpiListCard
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          quickLinks={quick_links}
+        />
+      )}
+
       {type === 'donut_chart' && (
-        code === 'finance_unpaid_purchase_invoices' || code === 'finance_unpaid_sales_invoices' ? (
+        code === 'inventory_low_stock' ? (
+          <ComponentTrackerCard
+            title={title}
+            code={code}
+            icon={getWidgetIcon(code)}
+            data={activeData}
+            quickLinks={quick_links}
+          />
+        ) : code === 'finance_unpaid_purchase_invoices' || code === 'finance_unpaid_sales_invoices' ? (
           <AgingBarChartCard
             title={title}
             code={code}

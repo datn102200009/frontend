@@ -11,35 +11,35 @@ describe('DashboardPage', () => {
   // stacked_progress, mini_chart, list_mini. 27 widgets in total.
   const mockWidgetsMetadata = [
     { code: 'sales_today_revenue', title: 'Doanh thu hôm nay', type: 'line_chart', size: '2x2', quick_links: ['/sales?tab=orders'] },
-    { code: 'sales_draft_orders', title: 'Đơn hàng nháp', type: 'list_mini', size: '1x2', quick_links: ['/sales?tab=orders&status=draft'] },
-    { code: 'sales_pending_credit_bypass', title: 'Đơn bán chờ duyệt vượt hạn mức', type: 'list_mini', size: '1x2', quick_links: ['/sales?tab=orders&status=pending_credit_approval'] },
-    { code: 'sales_pending_fulfillment', title: 'Đơn bán chờ giao hàng', type: 'list_mini', size: '1x2', quick_links: ['/inventory?tab=entries&status=draft'] },
+    { code: 'sales_draft_orders', title: 'Đơn bán hàng nháp', type: 'kpi_list', size: '1x2', quick_links: ['/sales?tab=orders&status=draft'] },
+    { code: 'sales_pending_credit_bypass', title: 'Đơn bán chờ duyệt vượt hạn mức', type: 'kpi_list', size: '1x2', quick_links: ['/sales?tab=orders&status=pending_credit_approval'] },
+    { code: 'sales_pending_fulfillment', title: 'Đơn bán chờ giao hàng', type: 'kpi_list', size: '1x2', quick_links: ['/inventory?tab=entries&status=draft'] },
 
-    { code: 'purchasing_active_po_count', title: 'Đơn mua hàng hoạt động', type: 'kpi', size: '1x2', quick_links: ['/purchasing?tab=orders&status=pending'] },
-    { code: 'purchasing_draft_orders', title: 'Đơn mua hàng nháp', type: 'list_mini', size: '1x2', quick_links: ['/purchasing?tab=orders&status=draft'] },
-    { code: 'purchasing_pending_delivery', title: 'Đơn mua chờ nhận hàng', type: 'list_mini', size: '1x2', quick_links: ['/inventory?tab=entries&status=draft'] },
-    { code: 'purchasing_pending_qc', title: 'Lô hàng chờ QC', type: 'list_mini', size: '1x2', quick_links: ['/purchasing?tab=shipment'] },
-    { code: 'purchasing_pending_logistic_fees', title: 'Lô hàng chờ phân bổ chi phí', type: 'list_mini', size: '1x2', quick_links: ['/purchasing?tab=shipment'] },
-    { code: 'purchasing_blocked_invoices', title: 'Hóa đơn mua bị chặn', type: 'list_mini', size: '1x2', quick_links: ['/purchasing?tab=invoices&status=blocked'] },
+    { code: 'purchasing_active_po_count', title: 'Đơn mua hàng hoạt động', type: 'kpi_list', size: '1x2', quick_links: ['/purchasing?tab=orders&status=pending'] },
+    { code: 'purchasing_draft_orders', title: 'Đơn mua hàng nháp', type: 'kpi_list', size: '1x2', quick_links: ['/purchasing?tab=orders&status=draft'] },
+    { code: 'purchasing_pending_delivery', title: 'Đơn mua chờ nhận hàng', type: 'kpi_list', size: '1x2', quick_links: ['/inventory?tab=entries&status=draft'] },
+    { code: 'purchasing_pending_qc', title: 'Lô hàng chờ QC', type: 'kpi_list', size: '1x2', quick_links: ['/purchasing?tab=shipment'] },
+    { code: 'purchasing_pending_logistic_fees', title: 'Lô hàng chờ phân bổ chi phí', type: 'kpi_list', size: '1x2', quick_links: ['/purchasing?tab=shipment'] },
+    { code: 'purchasing_blocked_invoices', title: 'Hóa đơn mua bị chặn', type: 'kpi_list', size: '1x2', quick_links: ['/purchasing?tab=invoices&status=blocked'] },
 
-    { code: 'inventory_pending_entry_count', title: 'Phiếu nhập kho chờ duyệt', type: 'kpi', size: '1x2', quick_links: ['/inventory?tab=entries&status=draft'] },
-    { code: 'inventory_low_stock', title: 'Cảnh báo tồn kho thấp', type: 'donut_chart', size: '2x2', quick_links: ['/inventory?tab=ledger'] },
-    { code: 'inventory_pending_entries', title: 'Yêu cầu chuyển kho chờ thực hiện', type: 'list_mini', size: '2x2', quick_links: ['/inventory?tab=entries&status=draft'] },
+    { code: 'inventory_pending_entry_count', title: 'Phiếu nhập kho chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/inventory?tab=entries&status=draft'] },
+    { code: 'inventory_low_stock', title: 'Theo dõi linh kiện', type: 'donut_chart', size: '2x2', quick_links: ['/inventory?tab=ledger'] },
+    { code: 'inventory_pending_entries', title: 'Yêu cầu chuyển kho chờ thực hiện', type: 'kpi_list', size: '2x2', quick_links: ['/inventory?tab=entries&status=draft'] },
 
     { code: 'finance_cashflow_overview', title: 'Tổng quan dòng tiền', type: 'cashflow_overview', size: '2x2', quick_links: ['/finance'] },
     { code: 'finance_unpaid_purchase_invoices', title: 'AP - Hóa đơn mua chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance?tab=ap&status=unpaid'] },
     { code: 'finance_unpaid_sales_invoices', title: 'AR - Hóa đơn bán chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/sales?tab=invoices&status=unpaid'] },
-    { code: 'finance_depreciation_status', title: 'Khấu hao tài sản cố định', type: 'kpi', size: '1x2', quick_links: ['/finance/fixed-assets'] },
+    { code: 'finance_depreciation_status', title: 'Khấu hao tài sản cố định', type: 'kpi_list', size: '1x2', quick_links: ['/finance/fixed-assets'] },
 
-    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'kpi', size: '1x2', quick_links: ['/hrm?tab=salary'] },
-    { code: 'hrm_pending_leave_requests', title: 'Yêu cầu nghỉ phép chờ duyệt', type: 'list_mini', size: '1x2', quick_links: ['/hrm?tab=leave'] },
-    { code: 'hrm_expiring_contracts', title: 'Hợp đồng lao động sắp hết hạn', type: 'kpi', size: '1x2', quick_links: ['/hrm?tab=employees'] },
-    { code: 'hrm_today_attendance_rate', title: 'Tỷ lệ đi làm hôm nay', type: 'gauge', size: '1x2', quick_links: ['/hrm?tab=attendance'] },
+    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=salary'] },
+    { code: 'hrm_pending_leave_requests', title: 'Yêu cầu nghỉ phép chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=leave'] },
+    { code: 'hrm_expiring_contracts', title: 'Hợp đồng lao động sắp hết hạn', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=employees'] },
+    { code: 'hrm_today_attendance_rate', title: 'Theo dõi vắng mặt', type: 'gauge', size: '1x2', quick_links: ['/hrm?tab=attendance'] },
 
-    { code: 'manufacturing_pending_wo_approval', title: 'Lệnh sản xuất chờ duyệt', type: 'kpi', size: '1x2', quick_links: ['/bom?tab=wo&status=pending_approval'] },
+    { code: 'manufacturing_pending_wo_approval', title: 'Lệnh sản xuất chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=pending_approval'] },
     { code: 'manufacturing_active_wos', title: 'Lệnh sản xuất đang thực hiện', type: 'stacked_progress', size: '2x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
-    { code: 'manufacturing_pending_declarations', title: 'Lệnh sản xuất sắp trễ hạn', type: 'list_mini', size: '1x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
-    { code: 'manufacturing_pending_completion', title: 'Lệnh sản xuất chờ nghiệm thu', type: 'kpi', size: '1x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
+    { code: 'manufacturing_pending_declarations', title: 'Lệnh sản xuất sắp trễ hạn', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
+    { code: 'manufacturing_pending_completion', title: 'Lệnh sản xuất chờ nghiệm thu', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
   ];
 
   // Mock batch data with the new payload shapes (dict for KPI/donut/aging/gauge, list for stacked_progress/list_mini).
@@ -59,8 +59,22 @@ describe('DashboardPage', () => {
         ]
       }
     },
-    purchasing_active_po_count: { success: true, data: { active_po_count: 5, total_pending_amount: '50000000.00' } },
-    inventory_pending_entry_count: { success: true, data: { pending_entry_count: 2 } },
+    purchasing_active_po_count: {
+      success: true,
+      data: {
+        total_count: 5,
+        top_items: []
+      },
+      total_count: 5,
+    },
+    inventory_pending_entry_count: {
+      success: true,
+      data: {
+        total_count: 2,
+        top_items: []
+      },
+      total_count: 2,
+    },
     finance_cashflow_overview: {
       success: true,
       data: {
@@ -68,33 +82,88 @@ describe('DashboardPage', () => {
           receive_total: '350000000.00',
           pay_total: '180000000.00',
           net_cashflow: '170000000.00',
-          tx_count: 23
+          tx_count: 23,
+          period_label: '4 tuần gần nhất'
         },
         weeks: [
           { week_label: 'Tuần 1', receive: 100000000, pay: 50000000 }
         ]
       }
     },
-    finance_depreciation_status: { success: true, data: { depreciated_assets_count: 5, pending_assets_count: 0, total_depreciation_amount: '85000000.00', is_done: true } },
-    hrm_payroll_lifecycle_status: { success: true, data: { salary_period: '2026-06', status: 'calculated', calculated_slips_count: 23, approved_slips_count: 0, paid_slips_count: 0, net_pay_total: '45000000.00' } },
-    hrm_expiring_contracts: { success: true, data: { expiring_count: 3, critical_count: 1, top_expiring: [{ id: 'c1', employee_name: 'Nguyễn Văn A', contract_no: 'HDLD-001', contract_type: 'Xác định thời hạn', end_date: '2026-06-25', days_left: 13 }] } },
-    manufacturing_pending_wo_approval: { success: true, data: { pending_count: 4, earliest_planned_start: '2026-06-13' } },
-    manufacturing_pending_completion: { success: true, data: { pending_completion_count: 2, total_produced_qty: '400.00' } },
+    finance_depreciation_status: {
+      success: true,
+      data: {
+        total_count: 5,
+        top_items: [],
+        depreciated_assets_count: 5,
+        pending_assets_count: 0,
+        total_depreciation_amount: '85000000.00',
+        is_done: true
+      },
+      total_count: 5,
+    },
+    hrm_payroll_lifecycle_status: {
+      success: true,
+      data: {
+        total_count: 23,
+        top_items: [],
+        salary_period: '2026-06',
+        status: 'calculated',
+        calculated_slips_count: 23,
+        approved_slips_count: 0,
+        paid_slips_count: 0,
+        net_pay_total: '45000000.00'
+      },
+      total_count: 23,
+    },
+    hrm_expiring_contracts: {
+      success: true,
+      data: {
+        total_count: 3,
+        top_items: [
+          { id: 'c1', employee_name: 'Nguyễn Văn A', contract_no: 'HDLD-001', contract_type: 'Xác định thời hạn', end_date: '2026-06-25', days_left: 13 }
+        ],
+        expiring_count: 3,
+        critical_count: 1
+      },
+      total_count: 3,
+    },
+    manufacturing_pending_wo_approval: {
+      success: true,
+      data: {
+        total_count: 4,
+        top_items: [
+          { id: 'wo-p1', name: 'WO-2026-001', code: 'WO-2026-001', product_name: 'Bàn ghế học sinh', production_item_name: 'Bàn ghế học sinh', quantity: '50.00', planned_start_date: '2026-06-15', days_to_start: 2 }
+        ]
+      }
+    },
+    manufacturing_pending_completion: {
+      success: true,
+      data: {
+        total_count: 2,
+        top_items: [],
+        pending_completion_count: 2,
+        total_produced_qty: '400.00'
+      },
+      total_count: 2,
+    },
 
     // Donut widget
     inventory_low_stock: {
       success: true,
       data: {
-        segments: [
-          { label: 'Khẩn cấp', value: 1, color_key: 'critical' },
-          { label: 'Cảnh báo', value: 2, color_key: 'warning' },
-          { label: 'Bình thường', value: 5, color_key: 'normal' },
+        items: [
+          { id: 'p1', item_code: 'STEEL-01', item_name: 'Thép hình H150', uom: 'cái', status: 'critical', reason: 'Dưới ngưỡng tối thiểu tại Kho A' }
         ],
-        total_alerts: 3,
-        top_alerts: [
-          { item_code: 'STEEL-01', item_name: 'Thép hình H150', balance: '5', uom: 'cái', status: 'critical', reason: 'Dưới ngưỡng tối thiểu' },
+        product_distribution: {
+          p1: { wh1: '5' }
+        },
+        warehouses: [
+          { id: 'wh1', name: 'Kho A' }
         ],
+        total_count: 1
       },
+      total_count: 1,
     },
 
     // Mini chart
@@ -108,14 +177,16 @@ describe('DashboardPage', () => {
       success: true,
       data: {
         buckets: [
-          { label: '0-30 ngày', value: '150000000.00', count: 12, color_key: 'fresh' },
-          { label: '31-60 ngày', value: '80000000.00', count: 5, color_key: 'aging' },
-          { label: '61-90 ngày', value: '30000000.00', count: 2, color_key: 'overdue' },
-          { label: '> 90 ngày', value: '10000000.00', count: 1, color_key: 'critical' },
+          { label: '0-30 ngày', value: '120000000.00', count: 8, color_key: 'fresh' },
+          { label: '31-60 ngày', value: '60000000.00', count: 3, color_key: 'aging' },
+          { label: '61-90 ngày', value: '0.00', count: 0, color_key: 'overdue' },
+          { label: '> 90 ngày', value: '0.00', count: 0, color_key: 'critical' },
         ],
-        total_outstanding: '270000000.00',
-        total_count: 20,
-        top_overdue: [{ id: 'inv-1', supplier_name: 'NCC A', remaining_amount: '5000000.00', due_date: '2026-05-01', overdue_days: 42 }],
+        total_outstanding: '180000000.00',
+        total_count: 11,
+        top_overdue: [
+          { id: 'inv-1', supplier_name: 'NCC A', overdue_days: 45, remaining_amount: '5000000.00' }
+        ],
       },
     },
     finance_unpaid_sales_invoices: {
@@ -152,60 +223,93 @@ describe('DashboardPage', () => {
     // List mini widgets (most are 1-row lists, e.g. sales_draft_orders)
     sales_draft_orders: {
       success: true,
-      data: [{ id: 'draft-1', customer_name: 'KH D', total_amount: '50000000.00', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'draft-1', customer_name: 'KH D', total_amount: '50000000.00', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     sales_pending_credit_bypass: {
       success: true,
-      data: [{ id: 'credit-1', customer_name: 'KH C', total_amount: '115200000.00', reason: 'Vượt hạn mức 15.2M', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'credit-1', customer_name: 'KH C', total_amount: '115200000.00', reason: 'Vượt hạn mức 15.2M', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     sales_pending_fulfillment: {
       success: true,
-      data: [{ id: 'ful-1', customer_name: 'KH B', total_amount: '60000000.00', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'ful-1', customer_name: 'KH B', total_amount: '60000000.00', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     purchasing_draft_orders: {
       success: true,
-      data: [{ id: 'p-draft-1', supplier_name: 'NCC X', total_amount: '45000000.00', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'p-draft-1', supplier_name: 'NCC X', total_amount: '45000000.00', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     purchasing_pending_delivery: {
       success: true,
-      data: [{ id: 'p-del-1', supplier_name: 'NCC Y', total_amount: '120000000.00', expected_delivery_date: '2026-06-15T00:00:00Z', receipt_fulfillment_rate: '85.00', payment_fulfillment_rate: '60.00', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'p-del-1', supplier_name: 'NCC Y', total_amount: '120000000.00', expected_delivery_date: '2026-06-15T00:00:00Z', receipt_fulfillment_rate: '85.00', payment_fulfillment_rate: '60.00', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     purchasing_pending_qc: {
       success: true,
-      data: [{ id: 'qc-1', shipment_num: 'SHIP-01', name: 'Lô hàng 1', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'qc-1', shipment_num: 'SHIP-01', name: 'Lô hàng 1', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     purchasing_pending_logistic_fees: {
       success: true,
-      data: [{ id: 'fee-1', shipment_num: 'SHIP-02', name: 'Lô hàng 2', created_at: '2026-06-04T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'fee-1', shipment_num: 'SHIP-02', name: 'Lô hàng 2', created_at: '2026-06-04T10:00:00Z' }]
+      },
       total_count: 1,
     },
     purchasing_blocked_invoices: {
       success: true,
-      data: [{ id: 'block-1', supplier_name: 'NCC Z', total_amount: '88000000.00', block_reason: 'Lệch giá đơn PO (+5%)', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'block-1', supplier_name: 'NCC Z', total_amount: '88000000.00', block_reason: 'Lệch giá đơn PO (+5%)', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     inventory_pending_entries: {
       success: true,
-      data: [
-        { id: 'se-trf-1', name: 'SE-001', purpose: 'transfer', route_desc: 'Kho A → Kho B', item_count: 5, posting_date: '2026-06-07T10:00:00Z', created_at: '2026-06-07T10:00:00Z' },
-        { id: 'se-rec-1', name: 'SE-002', purpose: 'receipt', route_desc: 'Từ PO: PO-001', item_count: 2, posting_date: '2026-06-07T10:00:00Z', created_at: '2026-06-07T10:00:00Z' },
-      ],
+      data: {
+        total_count: 2,
+        top_items: [
+          { id: 'se-trf-1', name: 'SE-001', purpose: 'transfer', route_desc: 'Kho A → Kho B', item_count: 5, posting_date: '2026-06-07T10:00:00Z', created_at: '2026-06-07T10:00:00Z' },
+          { id: 'se-rec-1', name: 'SE-002', purpose: 'receipt', route_desc: 'Từ PO: PO-001', item_count: 2, posting_date: '2026-06-07T10:00:00Z', created_at: '2026-06-07T10:00:00Z' }
+        ]
+      },
       total_count: 2,
     },
     hrm_pending_leave_requests: {
       success: true,
-      data: [{ id: 'lv-1', employee_name: 'NV B', leave_type: 'Phép năm', start_date: '2026-06-08', end_date: '2026-06-10', days: '3.0', created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'lv-1', employee_name: 'NV B', leave_type: 'Phép năm', start_date: '2026-06-08', end_date: '2026-06-10', days: '3.0', created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
     manufacturing_pending_declarations: {
       success: true,
-      data: [{ id: 'wo-3', name: 'WO-003', production_item_name: 'SP C', quantity: '200', produced_qty: '120', planned_start_date: '2026-06-01', planned_end_date: '2026-06-05', status: 'in_progress', days_left: -2, created_at: '2026-06-07T10:00:00Z' }],
+      data: {
+        total_count: 1,
+        top_items: [{ id: 'wo-3', name: 'WO-003', production_item_name: 'SP C', quantity: '200', produced_qty: '120', planned_start_date: '2026-06-01', planned_end_date: '2026-06-05', status: 'in_progress', days_left: -2, created_at: '2026-06-07T10:00:00Z' }]
+      },
       total_count: 1,
     },
   };
@@ -217,6 +321,35 @@ describe('DashboardPage', () => {
       }),
       http.get('*/api/v1/dashboard/widgets/batch-data/', () => {
         return HttpResponse.json(mockBatchData);
+      }),
+      http.get('*/api/v1/dashboard/widgets/:widget_code/', ({ params, request }) => {
+        const widgetCode = params.widget_code as string;
+        const url = new URL(request.url);
+        const purpose = url.searchParams.get('purpose');
+
+        const widgetResult = mockBatchData[widgetCode];
+        if (!widgetResult) {
+          return new HttpResponse(null, { status: 404 });
+        }
+
+        let filteredData = widgetResult.data;
+        let totalCount = widgetResult.total_count ?? 0;
+
+        if (widgetCode === 'inventory_pending_entries' && purpose && filteredData && typeof filteredData === 'object' && 'top_items' in filteredData) {
+          const items = (filteredData as any).top_items || [];
+          const filteredItems = items.filter((item: any) => item.purpose === purpose);
+          filteredData = {
+            total_count: filteredItems.length,
+            top_items: filteredItems,
+          };
+          totalCount = filteredItems.length;
+        }
+
+        return HttpResponse.json({
+          success: true,
+          data: filteredData,
+          total_count: totalCount,
+        });
       })
     );
   });
@@ -253,11 +386,11 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Lệnh sản xuất chờ nghiệm thu')).toBeInTheDocument();
 
     // Donut
-    expect(screen.getByText('Cảnh báo tồn kho thấp')).toBeInTheDocument();
+    expect(screen.getByText('Theo dõi linh kiện')).toBeInTheDocument();
     expect(screen.getAllByTestId('donut-svg').length).toBe(3);
 
     // Gauge
-    expect(screen.getByText('Tỷ lệ đi làm hôm nay')).toBeInTheDocument();
+    expect(screen.getByText('Theo dõi vắng mặt')).toBeInTheDocument();
     expect(screen.getByTestId('gauge-svg')).toBeInTheDocument();
 
     // Stacked progress
@@ -271,7 +404,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('AR - Hóa đơn bán chưa thanh toán')).toBeInTheDocument();
 
     // List mini widgets
-    expect(screen.getByText('Đơn hàng nháp')).toBeInTheDocument();
+    expect(screen.getByText('Đơn bán hàng nháp')).toBeInTheDocument();
     expect(screen.getByText('Đơn bán chờ duyệt vượt hạn mức')).toBeInTheDocument();
     expect(screen.getByText('Đơn bán chờ giao hàng')).toBeInTheDocument();
     expect(screen.getByText('Đơn mua hàng nháp')).toBeInTheDocument();
@@ -358,7 +491,7 @@ describe('DashboardPage', () => {
     });
     // Other widgets should NOT be rendered
     expect(screen.queryByText('Tổng quan dòng tiền')).not.toBeInTheDocument();
-    expect(screen.queryByText('Cảnh báo tồn kho thấp')).not.toBeInTheDocument();
+    expect(screen.queryByText('Theo dõi linh kiện')).not.toBeInTheDocument();
   });
 
   it('filters stock entries based on tab select', async () => {
@@ -378,11 +511,16 @@ describe('DashboardPage', () => {
 
     await userEvent.click(tabReceipt);
     // After clicking Nhập, transfer entries are hidden
-    expect(screen.queryByText(/SE-001/)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/SE-001/)).not.toBeInTheDocument();
+    });
     expect(screen.getAllByText(/SE-002/).length).toBeGreaterThan(0);
 
     await userEvent.click(tabTransfer);
-    expect(screen.getAllByText(/SE-001/).length).toBeGreaterThan(0);
+    // After clicking Chuyển, receipt entries are hidden and transfer is visible
+    await waitFor(() => {
+      expect(screen.getAllByText(/SE-001/).length).toBeGreaterThan(0);
+    });
     expect(screen.queryByText(/SE-002/)).not.toBeInTheDocument();
   });
 
@@ -419,5 +557,36 @@ describe('DashboardPage', () => {
       expect(screen.getByText('Trang Tổng Quan')).toBeInTheDocument();
       expect(screen.getAllByText('Lỗi nạp dữ liệu').length).toBeGreaterThan(0);
     });
+  });
+
+  it('renders modified widget layouts and verifies correct elements and styling', async () => {
+    renderWithProviders(<DashboardPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('WO-2026-001')).toBeInTheDocument();
+    });
+
+    // 1. renders manufacturing pending WO list and product name
+    expect(screen.getByText(/Bàn ghế học sinh/)).toBeInTheDocument();
+
+    // 2. renders cashflow with period label
+    expect(screen.getByText(/4 tuần gần nhất/)).toBeInTheDocument();
+
+    // 3. renders hrm expiring contracts without gap text
+    expect(screen.queryByText(/gấp/)).toBeNull();
+
+    // 4. renders gauge as full circle (2 circle elements)
+    const gaugeWrapper = screen.getByTestId('gauge-svg');
+    const gaugeSvg = gaugeWrapper.querySelector('svg');
+    expect(gaugeSvg).toBeInTheDocument();
+    const circles = gaugeSvg?.querySelectorAll('circle');
+    expect(circles?.length).toBe(2);
+
+    // 5. renders aging top list with remaining amount
+    expect(screen.getByText(/^5\.000\.000\s*₫$/)).toBeInTheDocument();
+
+    // 6. aging top list uses var(--fs-sm) font size (13px)
+    const nameEl = screen.getByText('NCC A');
+    expect(nameEl.style.fontSize).toBe('var(--fs-sm)');
   });
 });

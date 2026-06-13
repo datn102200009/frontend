@@ -26,11 +26,11 @@ export function GaugeCard({ title, icon, data, quickLinks }: GaugeCardProps) {
   }
 
   const rate = Math.max(0, Math.min(100, Number(data.attendance_rate) || 0));
-  const radius = 50;
-  const cx = 60;
-  const cy = 60;
-  // Half-circle gauge: from 180deg (left) to 360deg (right)
-  const circumference = Math.PI * radius; // half-circle
+  const radius = 56;
+  const cx = 70;
+  const cy = 70;
+  const strokeWidth = 12;
+  const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - rate / 100);
 
   // Color based on rate
@@ -44,22 +44,26 @@ export function GaugeCard({ title, icon, data, quickLinks }: GaugeCardProps) {
 
       <div className={styles.cardBody}>
         <div className={styles.gaugeWrapper} data-testid="gauge-svg">
-          <svg width="120" height="80" viewBox="0 0 120 80">
-            <path
-              d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+          <svg width="140" height="140" viewBox="0 0 140 140" className={styles.gaugeSvg}>
+            <circle
+              cx={cx}
+              cy={cy}
+              r={radius}
               fill="none"
-              stroke="var(--clr-bg)"
-              strokeWidth="10"
-              strokeLinecap="round"
+              stroke="var(--clr-border)"
+              strokeWidth={strokeWidth}
             />
-            <path
-              d={`M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`}
+            <circle
+              cx={cx}
+              cy={cy}
+              r={radius}
               fill="none"
               stroke={strokeColor}
-              strokeWidth="10"
+              strokeWidth={strokeWidth}
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
+              transform={`rotate(-90 ${cx} ${cy})`}
               style={{ transition: 'stroke-dashoffset 0.6s ease' }}
             />
           </svg>
@@ -69,7 +73,7 @@ export function GaugeCard({ title, icon, data, quickLinks }: GaugeCardProps) {
         </div>
         <div className={styles.metricFooter} style={{ justifyContent: 'center', marginTop: 'var(--sp-2)' }}>
           <span className={styles.metricSubtext} style={{ textAlign: 'center' }}>
-            Đi làm: {data.present_count ?? 0}/{data.total_active_employees ?? 0} (Vắng: {data.absent_count ?? 0})
+            {data.absent_count ?? 0} người vắng
           </span>
         </div>
       </div>

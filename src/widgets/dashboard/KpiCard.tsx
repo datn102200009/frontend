@@ -48,7 +48,6 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
               <span className={styles.kpiHeroValue}>{count}</span>
-              <span className={styles.kpiHeroSub}>đơn mua hàng</span>
             </div>
             <div className={styles.kpiComparison}>
               <span className={styles.kpiComparisonLabel}>Tổng giá trị</span>
@@ -80,7 +79,6 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
               >
                 {count}
               </span>
-              <span className={styles.kpiHeroSub}>phiếu kho</span>
             </div>
             {isHigh && (
               <div className={styles.kpiComparison}>
@@ -199,9 +197,6 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
               >
                 {expiring}
               </span>
-              <span className={styles.kpiHeroSub}>
-                trong 30 ngày tới · {critical} gấp
-              </span>
             </div>
 
             {topExpiring.length > 0 && (
@@ -211,7 +206,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
                     <span className={styles.kpiTopName}>{c.employee_name}</span>
                     <span
                       className={`${styles.kpiPill} ${styles.kpiPillSm} ${
-                        c.days_left <= 7 ? styles.kpiPillDown : styles.kpiPillUp
+                        c.days_left <= 7 ? styles.kpiPillDown : styles.kpiPillWarning
                       }`}
                     >
                       {c.days_left <= 0 ? 'Hết hạn' : `Còn ${c.days_left} ngày`}
@@ -226,32 +221,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
     );
   }
 
-  // ───────────────────────────────────────────────────────────────────────
-  // manufacturing_pending_wo_approval: Hero metric + date
-  // ───────────────────────────────────────────────────────────────────────
-  if (code === 'manufacturing_pending_wo_approval') {
-    return (
-      <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
-        <div className={styles.cardBody}>
-          <div className={styles.kpiEnhanced}>
-            <div className={styles.kpiHero}>
-              <span className={styles.kpiHeroValue}>{data.pending_count ?? 0}</span>
-              <span className={styles.kpiHeroSub}>lệnh sản xuất</span>
-            </div>
-            {data.earliest_planned_start && (
-              <div className={styles.kpiComparison}>
-                <span className={styles.kpiComparisonLabel}>Sớm nhất</span>
-                <span className={styles.kpiComparisonValue}>
-                  {new Date(data.earliest_planned_start).toLocaleDateString('vi-VN')}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   // ───────────────────────────────────────────────────────────────────────
   // manufacturing_pending_completion: Hero metric + qty
@@ -264,7 +234,6 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
               <span className={styles.kpiHeroValue}>{data.pending_completion_count ?? 0}</span>
-              <span className={styles.kpiHeroSub}>lệnh sản xuất</span>
             </div>
             {data.total_produced_qty && Number(data.total_produced_qty) > 0 && (
               <div className={styles.kpiComparison}>
