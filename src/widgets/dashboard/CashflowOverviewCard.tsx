@@ -2,24 +2,24 @@ import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
 import styles from './DashboardWidgets.module.css';
 
-export interface ChartCardProps {
+export interface CashflowOverviewCardProps {
   title: string;
   code: string;
   icon?: ReactNode;
   quickLinks?: string[];
   data: {
+    summary?: {
+      receive_total: string;
+      pay_total: string;
+      net_cashflow: string;
+      tx_count: number;
+    };
     weeks?: {
       week_label: string;
       receive: number;
       pay: number;
     }[];
   } | null | undefined;
-}
-
-interface WeekData {
-  week_label: string;
-  receive: number;
-  pay: number;
 }
 
 const formatYAxis = (value: number) => {
@@ -32,66 +32,71 @@ const formatYAxis = (value: number) => {
   return String(value);
 };
 
-export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProps) {
+const formatVND = (valueStr: string | number) => {
+  const num = typeof valueStr === 'string' ? parseFloat(valueStr) || 0 : valueStr;
+  return num.toLocaleString('vi-VN') + ' ₫';
+};
+
+export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: CashflowOverviewCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
-  if (code !== 'finance_cashflow_chart' || !data || !Array.isArray(data.weeks)) {
+  if (code !== 'finance_cashflow_overview' || !data || !data.summary || !Array.isArray(data.weeks)) {
     return (
       <div className={styles.card}>
         <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
-            <span>Chưa có dữ liệu biểu đồ</span>
+            <span>Chưa có dữ liệu dòng tiền</span>
           </div>
         </div>
       </div>
     );
   }
 
-  const weeks: WeekData[] = data.weeks;
+  const { summary, weeks } = data;
+  const netVal = parseFloat(summary.net_cashflow) || 0;
+  const isNetPositive = netVal >= 0;
 
-  // Chart coordinate calculation parameters
+  // Chart layout dimensions
   const svgWidth = 500;
-  const svgHeight = 220;
+  const svgHeight = 140;
   const plotLeft = 60;
   const plotRight = 20;
-  const plotTop = 20;
-  const plotBottom = 30;
+  const plotTop = 10;
+  const plotBottom = 20;
 
   const plotWidth = svgWidth - plotLeft - plotRight; // 420
-  const plotHeight = svgHeight - plotTop - plotBottom; // 170
-  const zeroY = svgHeight - plotBottom; // 190
+  const plotHeight = svgHeight - plotTop - plotBottom; // 110
+  const zeroY = svgHeight - plotBottom; // 120
 
-  // Calculate max value in data to scale Y axis
+  // Calculate max value in weeks data to scale Y axis
   const maxVal = Math.max(
     ...weeks.map((w) => Math.max(w.receive, w.pay)),
     1_000_000 // Fallback minimum scale
   );
   const chartMax = maxVal * 1.15; // Leave 15% headroom
 
-  // Calculate grid lines (5 lines: 0%, 25%, 50%, 75%, 100%)
-  const gridLines = [0, 0.25, 0.5, 0.75, 1].map((pct) => {
+  // Calculate 4 Y-axis grid lines (0%, 33%, 66%, 100%)
+  const gridLines = [0, 0.33, 0.66, 1].map((pct) => {
     const value = chartMax * pct;
     const y = zeroY - pct * plotHeight;
     return { y, value };
   });
 
   // Calculate bars dimensions
-  const groupWidth = plotWidth / weeks.length; // 105
-  const barWidth = 22;
-  const barGap = 6;
-  const totalBarWidth = barWidth * 2 + barGap; // 50
-  const groupOffset = (groupWidth - totalBarWidth) / 2; // 27.5
+  const groupWidth = plotWidth / (weeks.length || 1);
+  const barWidth = 18;
+  const barGap = 4;
+  const totalBarWidth = barWidth * 2 + barGap;
+  const groupOffset = (groupWidth - totalBarWidth) / 2;
 
   const handleMouseMove = (index: number, e: MouseEvent<SVGRectElement>) => {
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
-
     if (cardRect) {
-      // Position relative to the card container
       setTooltipPos({
         x: e.clientX - cardRect.left + 15,
-        y: e.clientY - cardRect.top - 70,
+        y: e.clientY - cardRect.top - 65,
       });
       setHoveredIndex(index);
     }
@@ -104,26 +109,49 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
 
   const activeWeek = hoveredIndex !== null ? weeks[hoveredIndex] : null;
 
-  const chartLegend = (
-    <div className={styles.cardActions} style={{ display: 'flex', gap: '12px', fontSize: 'var(--fs-xs)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)', display: 'inline-block' }} />
-        <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng thu</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)', display: 'inline-block' }} />
-        <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng chi</span>
-      </div>
-    </div>
-  );
-
   return (
     <div className={styles.card} style={{ position: 'relative' }}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={chartLegend} />
+      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
 
       <div className={styles.cardBody}>
-        <div className={styles.chartContainer}>
-          <div className={styles.chartWrapper} style={{ height: '100%', minHeight: '180px' }}>
+        <div className={styles.cashflowOverviewBody}>
+          {/* Top Summary Section */}
+          <div className={styles.cashflowSummary}>
+            <div className={styles.cashflowSummaryHero}>
+              <span className={styles.cashflowSummaryLabel} style={{ fontSize: 'var(--fs-xs)' }}>Dòng tiền ròng tháng này</span>
+              <span
+                className={styles.cashflowSummaryValue}
+                style={{ color: isNetPositive ? 'var(--clr-success)' : 'var(--clr-error)' }}
+              >
+                {isNetPositive ? '+' : ''}
+                {formatVND(netVal)}
+              </span>
+            </div>
+            
+            <div className={styles.cashflowSummaryBreakdown}>
+              <div className={styles.cashflowSummaryRow} style={{ flex: 1 }}>
+                <span className={styles.cashflowSummaryLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)', display: 'inline-block' }} />
+                  Tổng thu
+                </span>
+                <span style={{ fontWeight: 'semibold', fontFamily: 'var(--font-heading)' }}>
+                  {formatVND(summary.receive_total)}
+                </span>
+              </div>
+              <div className={styles.cashflowSummaryRow} style={{ flex: 1 }}>
+                <span className={styles.cashflowSummaryLabel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)', display: 'inline-block' }} />
+                  Tổng chi
+                </span>
+                <span style={{ fontWeight: 'semibold', fontFamily: 'var(--font-heading)' }}>
+                  {formatVND(summary.pay_total)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Chart Section */}
+          <div className={styles.cashflowChartWrapper}>
             <svg
               viewBox={`0 0 ${svgWidth} ${svgHeight}`}
               width="100%"
@@ -131,17 +159,17 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
               style={{ overflow: 'visible' }}
             >
               <defs>
-                <linearGradient id="receiveGrad" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="cfReceiveGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--clr-primary)" stopOpacity={1} />
-                  <stop offset="100%" stopColor="var(--clr-primary-600)" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="var(--clr-primary)" stopOpacity={0.7} />
                 </linearGradient>
-                <linearGradient id="payGrad" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="cfPayGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--clr-warning)" stopOpacity={1} />
                   <stop offset="100%" stopColor="var(--clr-warning)" stopOpacity={0.7} />
                 </linearGradient>
               </defs>
 
-              {/* Grid Lines & Y-Axis Labels */}
+              {/* Grid Lines */}
               {gridLines.map((line, idx) => (
                 <g key={idx}>
                   <line
@@ -157,9 +185,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                     x={plotLeft - 10}
                     y={line.y + 4}
                     textAnchor="end"
-                    fill="var(--clr-text-secondary)"
-                    fontSize="11"
-                    fontFamily="var(--font-heading)"
+                    className={styles.lineChartAxisLabel}
                     style={{ fontVariantNumeric: 'tabular-nums' }}
                   >
                     {formatYAxis(line.value)}
@@ -167,7 +193,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                 </g>
               ))}
 
-              {/* Draw Chart Bars */}
+              {/* Draw Weekly Bars */}
               {weeks.map((w, idx) => {
                 const groupX = plotLeft + idx * groupWidth;
                 const bar1X = groupX + groupOffset;
@@ -202,8 +228,8 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                       y={bar1Y}
                       width={barWidth}
                       height={Math.max(bar1Height, 2)}
-                      fill="url(#receiveGrad)"
-                      rx="4"
+                      fill="url(#cfReceiveGrad)"
+                      rx="3"
                       style={{
                         transition: 'all 0.2s ease',
                         transformOrigin: `${bar1X + barWidth / 2}px ${zeroY}px`,
@@ -217,8 +243,8 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                       y={bar2Y}
                       width={barWidth}
                       height={Math.max(bar2Height, 2)}
-                      fill="url(#payGrad)"
-                      rx="4"
+                      fill="url(#cfPayGrad)"
+                      rx="3"
                       style={{
                         transition: 'all 0.2s ease',
                         transformOrigin: `${bar2X + barWidth / 2}px ${zeroY}px`,
@@ -229,11 +255,11 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                     {/* X Axis Label */}
                     <text
                       x={groupX + groupWidth / 2}
-                      y={zeroY + 18}
+                      y={zeroY + 16}
                       textAnchor="middle"
                       fill={isHovered ? 'var(--clr-text)' : 'var(--clr-text-secondary)'}
                       fontWeight={isHovered ? 'semibold' : 'normal'}
-                      fontSize="11"
+                      fontSize="10"
                     >
                       {w.week_label}
                     </text>
@@ -257,7 +283,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
         </div>
       </div>
 
-      {/* Premium Interactive Hover Tooltip */}
+      {/* Tooltip */}
       {activeWeek && tooltipPos && (
         <div
           style={{
@@ -285,14 +311,14 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)' }} />
             <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng thu:</span>
             <span style={{ fontWeight: 'bold', color: 'var(--clr-text)', fontFamily: 'var(--font-heading)', fontVariantNumeric: 'tabular-nums' }}>
-              {activeWeek.receive.toLocaleString('vi-VN')} ₫
+              {formatVND(activeWeek.receive)}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)' }} />
             <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng chi:</span>
             <span style={{ fontWeight: 'bold', color: 'var(--clr-text)', fontFamily: 'var(--font-heading)', fontVariantNumeric: 'tabular-nums' }}>
-              {activeWeek.pay.toLocaleString('vi-VN')} ₫
+              {formatVND(activeWeek.pay)}
             </span>
           </div>
         </div>

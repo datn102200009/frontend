@@ -26,8 +26,15 @@ import {
 } from 'lucide-react';
 import { dashboardApi, type WidgetMetadata } from '../../entities/dashboard/api/dashboardApi';
 import { SkeletonShimmerCard } from './SkeletonShimmerCard';
-import { ListSummaryCard } from './ListSummaryCard';
+import { ListMini } from './ListMini';
+import { KpiCard } from './KpiCard';
 import { ChartCard } from './ChartCard';
+import { GaugeCard } from './GaugeCard';
+import { DonutChartCard } from './DonutChartCard';
+import { AgingBarChartCard } from './AgingBarChartCard';
+import { StackedProgressCard } from './StackedProgressCard';
+import { LineChartCard } from './LineChartCard';
+import { CashflowOverviewCard } from './CashflowOverviewCard';
 import styles from './DashboardWidgets.module.css';
 
 export interface DashboardWidgetWrapperProps {
@@ -41,7 +48,6 @@ export interface DashboardWidgetWrapperProps {
 
 function getWidgetIcon(code: string): ReactNode {
   switch (code) {
-    // Sales
     case 'sales_today_revenue':
       return <TrendingUp size={16} />;
     case 'sales_draft_orders':
@@ -50,8 +56,6 @@ function getWidgetIcon(code: string): ReactNode {
       return <CreditCard size={16} />;
     case 'sales_pending_fulfillment':
       return <Truck size={16} />;
-
-    // Purchasing
     case 'purchasing_active_po_count':
       return <ClipboardList size={16} />;
     case 'purchasing_draft_orders':
@@ -64,18 +68,16 @@ function getWidgetIcon(code: string): ReactNode {
       return <DollarSign size={16} />;
     case 'purchasing_blocked_invoices':
       return <AlertTriangle size={16} />;
-
-    // Inventory
     case 'inventory_pending_entry_count':
       return <Package size={16} />;
     case 'inventory_low_stock':
       return <AlertTriangle size={16} />;
     case 'inventory_pending_entries':
       return <RefreshCw size={16} />;
-
-    // Finance
     case 'finance_cashflow_chart':
       return <TrendingUp size={16} />;
+    case 'finance_cashflow_overview':
+      return <CircleDollarSign size={16} />;
     case 'finance_cashflow_summary':
       return <CircleDollarSign size={16} />;
     case 'finance_unpaid_purchase_invoices':
@@ -84,8 +86,6 @@ function getWidgetIcon(code: string): ReactNode {
       return <ArrowDownRight size={16} />;
     case 'finance_depreciation_status':
       return <BadgePercent size={16} />;
-
-    // HRM
     case 'hrm_payroll_lifecycle_status':
       return <Users size={16} />;
     case 'hrm_pending_leave_requests':
@@ -94,8 +94,6 @@ function getWidgetIcon(code: string): ReactNode {
       return <FileText size={16} />;
     case 'hrm_today_attendance_rate':
       return <UserCheck size={16} />;
-
-    // Manufacturing
     case 'manufacturing_pending_wo_approval':
       return <Wrench size={16} />;
     case 'manufacturing_active_wos':
@@ -104,11 +102,22 @@ function getWidgetIcon(code: string): ReactNode {
       return <Wrench size={16} />;
     case 'manufacturing_pending_completion':
       return <CheckCircle size={16} />;
-
     default:
       return <Package size={16} />;
   }
 }
+
+const SKELETON_TYPES = new Set([
+  'kpi',
+  'donut_chart',
+  'aging_bar',
+  'gauge',
+  'stacked_progress',
+  'mini_chart',
+  'list_mini',
+  'line_chart',
+  'cashflow_overview',
+]);
 
 export function DashboardWidgetWrapper({
   widget,
@@ -116,9 +125,14 @@ export function DashboardWidgetWrapper({
   batchLoading,
   batchError,
 }: DashboardWidgetWrapperProps) {
-  const { code = '', title = '', type = 'metric', size = '1x1', quick_links = [] } = widget;
+  const {
+    code = '',
+    title = '',
+    type = 'kpi',
+    size = '1x1',
+    quick_links = [],
+  } = widget;
 
-  // Lazy query for individual card refresh
   const [triggerDetail, { data: detailData, error: detailError, isFetching: isFetchingDetail }] =
     dashboardApi.useLazyGetDashboardWidgetsByWidgetCodeQuery();
 
@@ -132,20 +146,20 @@ export function DashboardWidgetWrapper({
     }
   }
 
-  // Extract result from batch or detail query
   const batchResult = batchData?.[code];
   const activeSuccess = hasRetried && detailData ? detailData.success : batchResult?.success;
   const activeData = hasRetried && detailData ? detailData.data : batchResult?.data;
   const activeError = hasRetried
     ? detailData?.error || (detailError ? 'Lỗi kết nối chi tiết' : null)
     : batchResult?.error || (batchError ? 'Lỗi tải hệ thống' : null);
+  const activeTotalCount =
+    hasRetried && detailData ? detailData.total_count : batchResult?.total_count;
 
   const handleRetry = () => {
     setHasRetried(true);
     triggerDetail({ widgetCode: code });
   };
 
-  // Determine layout size
   const gridStyle: Record<string, string> = {};
   if (size === '1x2') {
     gridStyle.gridColumn = 'span 2';
@@ -158,16 +172,17 @@ export function DashboardWidgetWrapper({
     gridStyle.gridRow = 'span 1';
   }
 
-  // Render Skeleton when loading the batch for the first time
   if (batchLoading && !hasRetried) {
+    const skelType = SKELETON_TYPES.has(type)
+      ? (type as 'kpi' | 'donut_chart' | 'aging_bar' | 'gauge' | 'stacked_progress' | 'mini_chart' | 'list_mini')
+      : 'list_mini';
     return (
       <div style={gridStyle}>
-        <SkeletonShimmerCard type={type as 'metric' | 'list_summary' | 'mini_chart'} />
+        <SkeletonShimmerCard type={skelType} />
       </div>
     );
   }
 
-  // Render Error if either batch item failed or retried detail failed
   if (activeSuccess === false || activeError) {
     return (
       <div style={{ ...gridStyle, position: 'relative' }} className={styles.card}>
@@ -180,11 +195,7 @@ export function DashboardWidgetWrapper({
             <AlertOctagon size={24} />
             <span className={styles.errorTitle}>Lỗi nạp dữ liệu</span>
             <span className={styles.errorText}>{activeError || 'Đã xảy ra lỗi không xác định.'}</span>
-            <button
-              onClick={handleRetry}
-              disabled={isFetchingDetail}
-              className={styles.retryBtn}
-            >
+            <button onClick={handleRetry} disabled={isFetchingDetail} className={styles.retryBtn}>
               {isFetchingDetail ? (
                 <SpinnerIcon className={styles.spinner} size={12} />
               ) : (
@@ -203,17 +214,86 @@ export function DashboardWidgetWrapper({
     );
   }
 
-  // Render appropriate widget based on visual type
   return (
     <div style={{ ...gridStyle, position: 'relative' }}>
-      {type === 'list_summary' && (
-        <ListSummaryCard
+      {type === 'kpi' && (
+        <KpiCard
           title={title}
           code={code}
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
-          totalCount={hasRetried && detailData ? detailData.total_count : batchResult?.total_count}
+        />
+      )}
+
+      {type === 'donut_chart' && (
+        code === 'finance_unpaid_purchase_invoices' || code === 'finance_unpaid_sales_invoices' ? (
+          <AgingBarChartCard
+            title={title}
+            code={code}
+            icon={getWidgetIcon(code)}
+            data={activeData}
+            quickLinks={quick_links}
+          />
+        ) : (
+          <DonutChartCard
+            title={title}
+            code={code}
+            icon={getWidgetIcon(code)}
+            data={activeData}
+            quickLinks={quick_links}
+          />
+        )
+      )}
+
+      {type === 'line_chart' && (
+        <LineChartCard
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          quickLinks={quick_links}
+        />
+      )}
+
+      {type === 'cashflow_overview' && (
+        <CashflowOverviewCard
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          quickLinks={quick_links}
+        />
+      )}
+
+      {type === 'aging_bar' && (
+        <AgingBarChartCard
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          quickLinks={quick_links}
+        />
+      )}
+
+      {type === 'gauge' && (
+        <GaugeCard
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          quickLinks={quick_links}
+        />
+      )}
+
+      {type === 'stacked_progress' && (
+        <StackedProgressCard
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          totalCount={activeTotalCount}
+          quickLinks={quick_links}
         />
       )}
 
@@ -223,10 +303,21 @@ export function DashboardWidgetWrapper({
           code={code}
           icon={getWidgetIcon(code)}
           data={activeData}
+          quickLinks={quick_links}
         />
       )}
 
-      {/* Local loading spinner overlay when user clicked retry and it is fetching */}
+      {type === 'list_mini' && (
+        <ListMini
+          title={title}
+          code={code}
+          icon={getWidgetIcon(code)}
+          data={activeData}
+          quickLinks={quick_links}
+          totalCount={activeTotalCount}
+        />
+      )}
+
       {isFetchingDetail && (
         <div className={styles.loadingOverlay}>
           <SpinnerIcon className={styles.spinner} size={24} />

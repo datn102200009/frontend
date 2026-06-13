@@ -1,0 +1,76 @@
+/* CardHeader — shared header for all dashboard widget cards.
+   Provides clickable title and icon-link for navigation via quickLinks. */
+
+.titleLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  margin: -2px -4px; /* keep visual alignment with non-link title */
+  transition: color var(--duration-fast) var(--ease-out);
+  min-width: 0;
+}
+
+.titleLink:hover {
+  color: var(--clr-primary-600);
+}
+
+.titleLink:hover .titleText {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+}
+
+.titleLink:hover .titleIcon {
+  transform: translate(1px, -1px);
+}
+
+.titleLink:focus-visible {
+  outline: 2px solid var(--clr-primary-400);
+  outline-offset: 2px;
+}
+
+.titleText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.titleIcon {
+  color: var(--clr-primary-500);
+  transition: transform var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.iconLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--clr-primary-50);
+  color: var(--clr-primary-600);
+  text-decoration: none;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.iconLink:hover {
+  background: var(--clr-primary-100);
+  color: var(--clr-primary-700);
+  transform: translateY(-1px);
+}
+
+.iconLink:focus-visible {
+  outline: 2px solid var(--clr-primary-400);
+  outline-offset: 2px;
+}

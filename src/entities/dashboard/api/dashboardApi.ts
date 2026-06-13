@@ -43,236 +43,132 @@ export type GetDashboardWidgetsByWidgetCodeApiArg = {
 export type WidgetMetadata = {
   code?: string
   title?: string
-  type?: string
+  type?:
+    | 'kpi'
+    | 'donut_chart'
+    | 'aging_bar'
+    | 'stacked_progress'
+    | 'gauge'
+    | 'mini_chart'
+    | 'list_mini'
+    | 'line_chart'
+    | 'cashflow_overview'
   size?: string
   quick_links?: string[]
 }
 export type ErrorResponse = {
   detail?: string
 }
-export type SalesTodayRevenueLine = {
-  id?: string
-  customer_name?: string
-  total_amount?: number
-  created_at?: string
+export type KpiPayload = {
+  [key: string]: any
 }
-export type SalesDraftOrderLine = {
-  id?: string
-  customer_name?: string
-  total_amount?: number
-  created_at?: string
+export type LineChartPoint = {
+  date: string
+  revenue: string
 }
-export type SalesCreditBypassLine = {
-  id?: string
-  customer_name?: string
-  total_amount?: number
-  reason?: string
-  created_at?: string
+export type LineChartPayload = {
+  points: LineChartPoint[]
 }
-export type SalesPendingFulfillmentLine = {
-  id?: string
-  customer_name?: string
-  total_amount?: number
-  created_at?: string
+export type CashflowSummary = {
+  receive_total: string
+  pay_total: string
+  net_cashflow: string
+  tx_count: number
 }
-export type ActivePoCountLine = {
-  id?: string
-  supplier_name?: string
-  total_amount?: number
-  created_at?: string
+export type CashflowOverviewPayload = {
+  summary: CashflowSummary
+  weeks: {
+    week_label: string
+    receive: number
+    pay: number
+  }[]
 }
-export type PurchasingDraftOrderLine = {
-  id?: string
-  supplier_name?: string
-  total_amount?: number
-  created_at?: string
-}
-export type PurchasingPendingDeliveryLine = {
-  id?: string
-  supplier_name?: string
-  total_amount?: number
-  expected_delivery_date?: string | null
-  receipt_fulfillment_rate?: number
-  payment_fulfillment_rate?: number
-  created_at?: string
-}
-export type PurchasingPendingQcLine = {
-  id?: string
-  shipment_num?: string
-  name?: string
-  created_at?: string
-}
-export type PurchasingPendingLogisticLine = {
-  id?: string
-  shipment_num?: string
-  name?: string
-  created_at?: string
-}
-export type PurchasingBlockedInvoiceLine = {
-  id?: string
-  supplier_name?: string
-  total_amount?: number
-  block_reason?: string
-  created_at?: string
+export type DonutSegment = {
+  label?: string
+  value?: number
+  color_key?: 'critical' | 'warning' | 'normal'
 }
 export type InventoryLowStockLine = {
   item_code?: string
   item_name?: string
   uom?: string
   warehouse_name?: string
-  balance?: number
+  balance?: string
   days_left?: number | null
   status?: string
   reason?: string
   action_suggest?: string
 }
-export type InventoryPendingEntryLine = {
-  id?: string
-  name?: string
-  purpose?: string
-  remarks?: string | null
-  route_desc?: string
-  item_count?: number
-  posting_date?: string
-  created_at?: string
+export type DonutChartPayload = {
+  segments?: DonutSegment[]
+  total_alerts?: number
+  top_alerts?: InventoryLowStockLine[]
 }
-export type FinanceCashflowSummaryLine = {
-  id?: string
-  name?: string
-  category?: string
-  payment_type?: string
-  amount?: number
-  payment_date?: string
+export type AgingBucket = {
+  label?: string
+  value?: string
+  count?: number
+  color_key?: 'fresh' | 'aging' | 'overdue' | 'critical'
 }
-export type FinanceUnpaidApLine = {
+export type AgingTopOverdueLine = {
   id?: string
   supplier_name?: string
-  total_amount?: number
-  remaining_amount?: number
-  due_date?: string | null
-  created_at?: string
-}
-export type FinanceUnpaidArLine = {
-  id?: string
   customer_name?: string
-  total_amount?: number
-  remaining_amount?: number
-  created_at?: string
+  remaining_amount?: string
+  due_date?: string | null
+  created_at?: string | null
+  overdue_days?: number
 }
-export type FinanceDepreciationStatusLine = {
-  asset_code?: string
-  asset_name?: string
-  depreciation_amount?: number
-  status?: string
+export type AgingBarPayload = {
+  buckets?: AgingBucket[]
+  total_outstanding?: string
+  total_count?: number
+  top_overdue?: AgingTopOverdueLine[]
 }
-export type HrmPayrollStatusLine = {
-  id?: string
-  employee_name?: string
-  salary_period?: string
-  net_pay?: number
-  status?: string
+export type GaugePayload = {
+  attendance_rate?: number
+  present_count?: number
+  absent_count?: number
+  total_active_employees?: number
 }
-export type HrmLeaveRequestLine = {
-  id?: string
-  employee_name?: string
-  leave_type?: string
-  start_date?: string
-  end_date?: string
-  days?: number
-  created_at?: string
-}
-export type HrmExpiringContractLine = {
-  id?: string
-  employee_name?: string
-  contract_no?: string
-  contract_type?: string
-  end_date?: string
-  created_at?: string
-}
-export type HrmTodayAbsentLine = {
-  id?: string
-  employee_id?: string
-  full_name?: string
-  department?: string
-  status?: string
-}
-export type ManufacturingPendingWoApprovalLine = {
+export type StackedProgressLine = {
   id?: string
   name?: string
   production_item_name?: string
-  quantity?: number
+  quantity?: string
+  produced_qty?: string
+  progress_pct?: number
   planned_start_date?: string
-  created_at?: string
-}
-export type ManufacturingActiveWoLine = {
-  id?: string
-  name?: string
-  production_item_name?: string
-  quantity?: number
-  produced_qty?: number
-  planned_start_date?: string
-  created_at?: string
-}
-export type ManufacturingPendingDeclarationLine = {
-  id?: string
-  name?: string
-  production_item_name?: string
-  quantity?: number
-  produced_qty?: number
-  planned_start_date?: string
-  planned_end_date?: string
-  status?: string
-  days_left?: number | null
-  created_at?: string
-}
-export type ManufacturingPendingCompletionLine = {
-  id?: string
-  name?: string
-  production_item_name?: string
-  quantity?: number
-  produced_qty?: number
   target_warehouse_name?: string | null
-  planned_start_date?: string
   created_at?: string
 }
+export type StackedProgressList = StackedProgressLine[]
+export type MiniChartPayload = {
+  weeks?: {
+    week_label?: string
+    receive?: number
+    pay?: number
+  }[]
+}
+export type GenericListLine = {
+  [key: string]: any
+}
+export type ListMiniPayload = GenericListLine[]
 export type WidgetBatchDataResult = {
   success?: boolean
-  /** Total count of items matching the criteria (which can be more than the 5 items returned). */
+  /** Total count of items matching the criteria. Present for list-based widgets (list_mini, stacked_progress, mini_chart). Omitted for KPI/donut/aging/gauge. */
   total_count?: number
   data?:
     | (
-        | (
-            | (
-                | SalesTodayRevenueLine
-                | SalesDraftOrderLine
-                | SalesCreditBypassLine
-                | SalesPendingFulfillmentLine
-                | ActivePoCountLine
-                | PurchasingDraftOrderLine
-                | PurchasingPendingDeliveryLine
-                | PurchasingPendingQcLine
-                | PurchasingPendingLogisticLine
-                | PurchasingBlockedInvoiceLine
-                | InventoryLowStockLine
-                | InventoryPendingEntryLine
-                | FinanceCashflowSummaryLine
-                | FinanceUnpaidApLine
-                | FinanceUnpaidArLine
-                | FinanceDepreciationStatusLine
-                | HrmPayrollStatusLine
-                | HrmLeaveRequestLine
-                | HrmExpiringContractLine
-                | HrmTodayAbsentLine
-                | ManufacturingPendingWoApprovalLine
-                | ManufacturingActiveWoLine
-                | ManufacturingPendingDeclarationLine
-                | ManufacturingPendingCompletionLine
-              )[]
-            | null
-          )
-        | ({
-            [key: string]: unknown
-          } | null)
+        | KpiPayload
+        | DonutChartPayload
+        | AgingBarPayload
+        | GaugePayload
+        | StackedProgressList
+        | MiniChartPayload
+        | ListMiniPayload
+        | LineChartPayload
+        | CashflowOverviewPayload
       )
     | null
   error?: string | null
