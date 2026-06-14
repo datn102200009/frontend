@@ -6,8 +6,8 @@ import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions
 import { useGetSalesOrdersQuery } from '@entities/sales/api/salesApi';
 import type { SalesOrder } from '@entities/sales/model/types';
 import { Eye, Printer } from 'lucide-react';
-import { useSalesOrderFilters } from '@features/sales/manage-order/lib/useSalesOrderFilters';
-import { SalesOrderStatusFilter } from '@features/sales/manage-order/ui/SalesOrderStatusFilter';
+import { useSalesOrderFilters } from '@entities/sales/lib/useSalesOrderFilters';
+import { SalesOrderStatusFilter } from '@entities/sales/ui/SalesOrderStatusFilter';
 
 interface SalesOrderTableProps {
   onView?: (id: string) => void;

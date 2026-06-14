@@ -6,8 +6,8 @@ import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions
 import { useGetPurchasingOrdersQuery } from '@entities/purchasing/api/purchasingApi';
 import type { PurchaseOrder } from '@entities/purchasing/model/types';
 import { Eye, Edit, Printer } from 'lucide-react';
-import { usePurchaseOrderFilters } from '@features/purchasing/manage-order/lib/usePurchaseOrderFilters';
-import { PurchaseOrderStatusFilter } from '@features/purchasing/manage-order/ui/PurchaseOrderStatusFilter';
+import { usePurchaseOrderFilters } from '@entities/purchasing/lib/usePurchaseOrderFilters';
+import { PurchaseOrderStatusFilter } from '@entities/purchasing/ui/PurchaseOrderStatusFilter';
 
 interface PurchaseOrderTableProps {
   onView?: (id: string) => void;

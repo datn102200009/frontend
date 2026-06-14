@@ -76,6 +76,8 @@ export const LandedCostPage: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [isConfirmZeroModalOpen, setIsConfirmZeroModalOpen] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<CompleteFormValues | null>(null);
 
   // Form states for creating shipment
   const [shipmentNum, setShipmentNum] = useState('');
@@ -289,18 +291,29 @@ export const LandedCostPage: React.FC = () => {
     
     const allZero = data.details.every((d) => d.quantity === 0);
     if (allZero) {
-      const confirmZero = window.confirm(
-        'Tất cả sản phẩm có số lượng nhận là 0 (Từ chối nhận toàn bộ). Bạn có chắc chắn muốn hoàn tất lô hàng này?'
-      );
-      if (!confirmZero) return;
+      setPendingFormData(data);
+      setIsConfirmZeroModalOpen(true);
+      return;
     }
 
+    await doComplete(data);
+  };
+
+  const handleConfirmZero = async () => {
+    if (!pendingFormData) return;
+    setIsConfirmZeroModalOpen(false);
+    await doComplete(pendingFormData);
+    setPendingFormData(null);
+  };
+
+  const doComplete = async (data: CompleteFormValues) => {
+    if (!activeShipmentId) return;
     try {
       const payloadDetails = data.details.map((d) => ({
         po_line_id: d.po_line_id,
         item_id: d.item_id,
         quantity: d.quantity,
-        target_warehouse_id: d.quantity > 0 ? d.target_warehouse_id || null : null,
+        target_warehouse_id: d.quantity > 0 ? (d.target_warehouse_id || null) : null,
       }));
 
       await completeShipment({
@@ -322,8 +335,8 @@ export const LandedCostPage: React.FC = () => {
       setIsCompleteModalOpen(false);
       refetchShipments();
     } catch (err: unknown) {
-      const error = err as { data?: { detail?: string } };
-      setCompleteError(error?.data?.detail || 'Có lỗi xảy ra khi hoàn tất lô hàng.');
+      const error = err as { data?: { detail?: string; error?: string } };
+      setCompleteError(error?.data?.error || error?.data?.detail || 'Có lỗi xảy ra khi hoàn tất lô hàng.');
     }
   };
 
@@ -758,6 +771,46 @@ export const LandedCostPage: React.FC = () => {
             <Button type="submit" variant="primary" loading={isCompleting}>Xác nhận Hoàn Tất</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal: Confirm Zero-All Acceptance */}
+      <Modal
+        open={isConfirmZeroModalOpen}
+        onClose={() => {
+          setIsConfirmZeroModalOpen(false);
+          setPendingFormData(null);
+        }}
+        title="Xác nhận từ chối nhận toàn bộ"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsConfirmZeroModalOpen(false);
+                setPendingFormData(null);
+              }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleConfirmZero}
+            >
+              Xác nhận từ chối
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <AlertTriangle size={24} color="var(--clr-warning, #f59e0b)" style={{ flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: 'var(--clr-text, #0f172a)' }}>
+            Tất cả sản phẩm có số lượng nhận là 0. Hệ thống sẽ ghi nhận lô hàng này là{' '}
+            <strong>từ chối nhận toàn bộ</strong> và KHÔNG tạo phiếu nhập kho. Bạn có chắc chắn muốn tiếp tục?
+          </p>
+        </div>
       </Modal>
     </div>
   );

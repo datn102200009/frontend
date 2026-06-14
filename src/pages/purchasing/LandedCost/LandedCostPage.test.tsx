@@ -203,4 +203,135 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     expect(completePayload.details[0].quantity).toBe(100);
     expect(completePayload.details[0].target_warehouse_id).toBe('WH01');
   });
+
+  describe('Confirm zero-all Modal', () => {
+    it('opens confirm modal when all quantities are 0', async () => {
+      const inspectingShipment = {
+        ...mockShipments[0],
+        status: 'inspecting'
+      };
+
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-20260604-001');
+      await user.click(card);
+
+      // Set quantity to 0 in input field
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '0');
+
+      // Click complete button opens modal
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      expect(modal).toBeInTheDocument();
+
+      // Click submit in modal
+      const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+      await user.click(submitBtn);
+
+      // Confirm modal should open
+      const confirmDialog = await screen.findByRole('dialog', { name: 'Xác nhận từ chối nhận toàn bộ' });
+      expect(confirmDialog).toBeInTheDocument();
+      expect(within(confirmDialog).getByText(/Hệ thống sẽ ghi nhận lô hàng này là/i)).toBeInTheDocument();
+    });
+
+    it('does not call completeShipment when user cancels confirm modal', async () => {
+      const inspectingShipment = {
+        ...mockShipments[0],
+        status: 'inspecting'
+      };
+
+      let completeCalled = false;
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        }),
+        http.post('*/api/v1/purchasing/shipments/:pk/complete/', () => {
+          completeCalled = true;
+          return HttpResponse.json({ ...inspectingShipment, status: 'completed' });
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-20260604-001');
+      await user.click(card);
+
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '0');
+
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+      await user.click(submitBtn);
+
+      const confirmDialog = await screen.findByRole('dialog', { name: 'Xác nhận từ chối nhận toàn bộ' });
+      const cancelBtn = within(confirmDialog).getByRole('button', { name: /Hủy bỏ/i });
+      await user.click(cancelBtn);
+
+      // Confirm modal should close
+      expect(confirmDialog).not.toBeInTheDocument();
+      expect(completeCalled).toBe(false);
+    });
+
+    it('calls completeShipment when user confirms', async () => {
+      const inspectingShipment = {
+        ...mockShipments[0],
+        status: 'inspecting'
+      };
+
+      let completePayload: any = null;
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        }),
+        http.post('*/api/v1/purchasing/shipments/:pk/complete/', async ({ request }) => {
+          completePayload = await request.json();
+          return HttpResponse.json({ ...inspectingShipment, status: 'completed' });
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-20260604-001');
+      await user.click(card);
+
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '0');
+
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+      await user.click(submitBtn);
+
+      const confirmDialog = await screen.findByRole('dialog', { name: 'Xác nhận từ chối nhận toàn bộ' });
+      const confirmBtn = within(confirmDialog).getByRole('button', { name: /Xác nhận từ chối/i });
+      await user.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(completePayload).not.toBeNull();
+      });
+
+      expect(completePayload.details[0].quantity).toBe(0);
+      expect(completePayload.details[0].target_warehouse_id).toBeNull();
+    });
+  });
 });
