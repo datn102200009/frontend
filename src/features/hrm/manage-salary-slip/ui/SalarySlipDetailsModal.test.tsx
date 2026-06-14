@@ -43,7 +43,7 @@ describe('SalarySlipDetailsModal', () => {
     renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: 'Chi Tiết Phiếu Lương' })).toBeInTheDocument();
     expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument();
-    expect(screen.getByText('Mã NV: NV001 | Kỳ lương: 2026-05')).toBeInTheDocument();
+    expect(screen.getByText('Mã nhân viên: NV001 | Kỳ lương: 2026-05')).toBeInTheDocument();
     expect(screen.getByText('Bản nháp')).toBeInTheDocument();
   });
 

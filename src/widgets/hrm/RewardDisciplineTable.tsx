@@ -113,7 +113,7 @@ export const RewardDisciplineTable: React.FC = () => {
     const helper = createColumnHelper<RewardRecord>();
     return [
       helper.accessor('employee_code', {
-        header: 'Mã NV',
+        header: 'Mã nhân viên',
         cell: (info) => <span className="font-semibold text-slate-800">{info.getValue() || 'N/A'}</span>,
       }),
       helper.accessor('employee_name', {
@@ -166,7 +166,7 @@ export const RewardDisciplineTable: React.FC = () => {
     const helper = createColumnHelper<DisciplineRecord>();
     return [
       helper.accessor('employee_code', {
-        header: 'Mã NV',
+        header: 'Mã nhân viên',
         cell: (info) => <span className="font-semibold text-slate-800">{info.getValue() || 'N/A'}</span>,
       }),
       helper.accessor('employee_name', {

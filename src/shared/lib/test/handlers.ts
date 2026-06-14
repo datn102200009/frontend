@@ -360,6 +360,10 @@ export const handlers = [
     return HttpResponse.json({ id: params.id, status: data.action === 'approve' ? 'approved' : 'rejected' });
   }),
 
+  http.get('*/api/v1/hrm/salary-periods/', () => {
+    return HttpResponse.json(['2026-05']);
+  }),
+
   http.get('*/api/v1/hrm/salary-slips/', () => {
     return HttpResponse.json([
       { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'draft' }

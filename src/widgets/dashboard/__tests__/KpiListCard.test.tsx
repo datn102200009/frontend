@@ -121,4 +121,28 @@ describe('KpiListCard', () => {
     expect(screen.getByText('Thép ống: 10, Thép tấm: 5')).toBeInTheDocument();
     expect(screen.queryByText('1.000.000 ₫')).not.toBeInTheDocument();
   });
+
+  it('hides hero count for hrm_payroll_lifecycle_status', () => {
+    renderWithProviders(
+      <KpiListCard
+        title="Bảng lương chờ duyệt"
+        code="hrm_payroll_lifecycle_status"
+        data={mockData}
+      />
+    );
+
+    expect(screen.queryByText('12')).not.toBeInTheDocument();
+  });
+
+  it('displays custom empty state for hrm_payroll_lifecycle_status', () => {
+    renderWithProviders(
+      <KpiListCard
+        title="Bảng lương chờ duyệt"
+        code="hrm_payroll_lifecycle_status"
+        data={{ total_count: 0, top_items: [] }}
+      />
+    );
+
+    expect(screen.getByText('Không có kỳ lương nào đang chờ xử lý')).toBeInTheDocument();
+  });
 });

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { CardHeader } from './CardHeader';
-import { FormSelect } from '@shared/ui/Select/FormSelect';
+import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
 import styles from './DashboardWidgets.module.css';
 
 export interface ComponentTrackerCardProps {
@@ -16,7 +16,7 @@ export interface ComponentTrackerCardProps {
       item_code: string;
       item_name: string;
       uom: string;
-      status: string; // 'critical' | 'warning'
+      status: string; // 'critical' | 'warning' | 'normal'
       reason: string;
     }>;
     product_distribution: Record<string, Record<string, string>>; // product_id -> warehouse_id -> balance
@@ -27,12 +27,12 @@ export interface ComponentTrackerCardProps {
 
 const COLORS = [
   'var(--clr-primary-500)',
-  'var(--clr-warning-500)',
-  'var(--clr-success-500)',
-  'var(--clr-info-500)',
-  'var(--clr-error-500)',
-  'var(--clr-primary-300)',
-  'var(--clr-warning-300)',
+  'var(--clr-warning)',
+  'var(--clr-success)',
+  'var(--clr-info)',
+  'var(--clr-error)',
+  'var(--clr-secondary)',
+  'var(--clr-accent)',
 ];
 
 export function ComponentTrackerCard({ title, icon, data, quickLinks }: ComponentTrackerCardProps) {
@@ -58,19 +58,17 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
   const selectedItem = items.find((i) => i.id === selectedProductId) || items[0];
   const currentDistribution = data.product_distribution?.[selectedItem.id] ?? {};
 
-  // Build segments from distribution
-  const segments = data.warehouses
-    .map((wh, idx) => {
-      const valStr = currentDistribution[wh.id] ?? '0';
-      const value = parseFloat(valStr);
-      return {
-        label: wh.name,
-        value,
-        valStr,
-        color: COLORS[idx % COLORS.length],
-      };
-    })
-    .filter((s) => s.value > 0);
+  // Build segments from distribution (always return 4 warehouses)
+  const segments = data.warehouses.map((wh, idx) => {
+    const valStr = currentDistribution[wh.id] ?? '0';
+    const value = parseFloat(valStr);
+    return {
+      label: wh.name,
+      value,
+      valStr,
+      color: COLORS[idx % COLORS.length],
+    };
+  });
 
   const total = segments.reduce((acc, s) => acc + s.value, 0);
 
@@ -83,17 +81,24 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
   const circumference = 2 * Math.PI * radius;
 
   let offsetAcc = 0;
-  const segmentArcs = segments.map((seg) => {
-    const portion = total === 0 ? 0 : seg.value / total;
-    const arcLength = circumference * portion;
-    const dashArray = `${arcLength} ${circumference - arcLength}`;
-    const dashOffset = -offsetAcc;
-    offsetAcc += arcLength;
-    return { ...seg, dashArray, dashOffset };
-  });
+  // Filter for arcs only where value > 0
+  const segmentArcs = segments
+    .filter((s) => s.value > 0)
+    .map((seg) => {
+      const portion = total === 0 ? 0 : seg.value / total;
+      const arcLength = circumference * portion;
+      const dashArray = `${arcLength} ${circumference - arcLength}`;
+      const dashOffset = -offsetAcc;
+      offsetAcc += arcLength;
+      return { ...seg, dashArray, dashOffset };
+    });
+
+  const alertCount = items.filter(
+    (i) => i.status === 'critical' || i.status === 'warning'
+  ).length;
 
   const alertBadge =
-    data.total_count > 0 ? (
+    alertCount > 0 ? (
       <span
         className="shared-badge"
         style={{
@@ -105,7 +110,7 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
           borderRadius: '10px',
         }}
       >
-        {data.total_count} cảnh báo
+        {alertCount} cảnh báo
       </span>
     ) : null;
 
@@ -115,15 +120,15 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
 
       <div className={styles.cardBody}>
         <div className={styles.componentTrackerSelect}>
-          <FormSelect
-            label="Chọn sản phẩm theo dõi"
+          <SearchableSelect
             options={items.map((i) => ({
               value: i.id,
-              label: `${i.item_code} - ${i.item_name}`,
+              label: i.item_name,
             }))}
             value={selectedProductId}
-            onChange={(e) => setSelectedProductId(e.target.value)}
-            size="sm"
+            onChange={(val) => setSelectedProductId(val)}
+            ariaLabel="Chọn sản phẩm theo dõi"
+            placeholder="Tìm và chọn sản phẩm..."
           />
         </div>
 
@@ -157,10 +162,10 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
                   ))}
               </svg>
               <div className={styles.donutCenter}>
-                <span className={styles.donutTotal} style={{ fontSize: 'var(--fs-2xl)' }}>
-                  {total.toLocaleString('vi-VN')}
+                <span className={styles.donutTotal} style={{ fontSize: total === 0 ? 'var(--fs-xl)' : 'var(--fs-2xl)' }}>
+                  {total === 0 ? '0' : total.toLocaleString('vi-VN')}
                 </span>
-                <span className={styles.donutLabel}>{selectedItem.uom}</span>
+                <span className={styles.donutLabel}>{total === 0 ? 'Hết hàng' : selectedItem.uom}</span>
               </div>
             </div>
 
@@ -183,22 +188,19 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
             </div>
           </div>
 
-          {selectedItem && (selectedItem.status === 'critical' || selectedItem.status === 'warning') && (
-            <div
-              className={styles.componentTrackerWarning}
-              style={{
-                borderLeftColor:
-                  selectedItem.status === 'critical' ? 'var(--clr-error-500)' : 'var(--clr-warning-500)',
-                backgroundColor:
-                  selectedItem.status === 'critical' ? 'var(--clr-error-50)' : 'var(--clr-warning-50)',
-                color:
-                  selectedItem.status === 'critical' ? 'var(--clr-error-700)' : 'var(--clr-warning-700)',
-              }}
-            >
-              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-              <span>{selectedItem.reason}</span>
-            </div>
-          )}
+          {selectedItem && (selectedItem.status === 'critical' || selectedItem.status === 'warning') && (() => {
+            const isCritical = selectedItem.status === 'critical';
+            const isFallback = selectedItem.reason.includes('Dưới ngưỡng tối thiểu');
+            const className = isCritical
+              ? (isFallback ? styles.componentTrackerWarningCriticalFallback : styles.componentTrackerWarning)
+              : styles.componentTrackerWarningWarning;
+            return (
+              <div className={className}>
+                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                <span>{selectedItem.reason}</span>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

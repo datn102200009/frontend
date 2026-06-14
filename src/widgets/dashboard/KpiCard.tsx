@@ -165,9 +165,6 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
                 <Badge variant={isDone ? `success` : `warning`}>
                   {isDone ? `Đã hoàn tất` : `Chưa thực hiện`}
                 </Badge>
-                <span className={styles.metricValue} style={{ fontSize: 'var(--fs-xl)' }}>
-                  {formatVND(d.total_depreciation_amount)}
-                </span>
               </div>
             </div>
             <div className={styles.metricFooter}>

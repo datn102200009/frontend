@@ -238,7 +238,7 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
                       x={bar1X}
                       y={bar1Y}
                       width={barWidth}
-                      height={Math.max(bar1Height, 2)}
+                      height={bar1Height}
                       fill="url(#cfReceiveGrad)"
                       rx="3"
                       style={{
@@ -253,7 +253,7 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
                       x={bar2X}
                       y={bar2Y}
                       width={barWidth}
-                      height={Math.max(bar2Height, 2)}
+                      height={bar2Height}
                       fill="url(#cfPayGrad)"
                       rx="3"
                       style={{

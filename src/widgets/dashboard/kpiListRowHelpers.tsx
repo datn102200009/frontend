@@ -84,7 +84,10 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     return { to: `/finance/fixed-assets?assetCode=${item.asset_code}`, display: item.asset_code };
   }
   if (code === 'hrm_payroll_lifecycle_status') {
-    return { to: `/hrm?tab=salary&id=${id}`, display: `SLIP-${sid}` };
+    return {
+      to: `/hrm?tab=salary&period=${item.salary_period}&status=${item.status}`,
+      display: `Kỳ ${item.salary_period}`,
+    };
   }
   if (code === 'hrm_pending_leave_requests') {
     return { to: `/hrm?tab=leave&id=${id}`, display: item.employee_name };
@@ -126,7 +129,7 @@ export function buildItemTitle(item: any, code: string): ReactNode {
     return <span className={styles.rowMainText}>{item.asset_name}</span>;
   }
   if (code === 'hrm_payroll_lifecycle_status') {
-    return <span className={styles.rowMainText}>{item.employee_name}</span>;
+    return null;
   }
   if (code === 'hrm_pending_leave_requests') {
     return <span className={styles.rowMainText}>{item.leave_type || 'Nghỉ phép'}</span>;
@@ -218,10 +221,24 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
     return <div className={styles.rowSubText}>{item.category || 'Khác'}</div>;
   }
   if (code === 'finance_depreciation_status') {
-    return <div className={styles.rowSubText}>{item.status}</div>;
+    const isDone = item.status === 'Đã hoàn tất';
+    return (
+      <div className={styles.rowSubText}>
+        <span className={isDone ? styles.colGreenText : styles.colOrangeText}>
+          {item.status}
+        </span>
+      </div>
+    );
   }
   if (code === 'hrm_payroll_lifecycle_status') {
-    return <div className={styles.rowSubText}>Kỳ lương: {item.salary_period}</div>;
+    const isApproved = item.status === 'approved';
+    return (
+      <div className={styles.rowSubText}>
+        <span className={isApproved ? styles.colGreenText : styles.colOrangeText}>
+          {item.status_label}
+        </span>
+      </div>
+    );
   }
   if (code === 'hrm_pending_leave_requests') {
     return (
@@ -306,11 +323,21 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
       </div>
     );
   }
+  if (code === 'finance_depreciation_status') {
+    const value = item.latest_depreciation_amount ?? item.estimated_depreciation_amount;
+    const label = item.latest_depreciation_amount ? 'KH gần nhất' : 'KH ước tính';
+    return (
+      <div className={styles.colRightAlign}>
+        <div style={{ fontWeight: 'var(--fw-medium)' }}>{formatVND(value)}</div>
+        <div className={styles.rowSubText}>{label}</div>
+      </div>
+    );
+  }
   if (code === 'hrm_payroll_lifecycle_status') {
     return (
       <div className={styles.colRightAlign}>
-        <div style={{ fontWeight: 'var(--fw-medium)' }}>{formatVND(item.net_pay)}</div>
-        <div className={styles.rowSubText}>{item.status}</div>
+        <div style={{ fontWeight: 'var(--fw-bold)' }}>{formatVND(item.net_pay_total)}</div>
+        <div className={styles.rowSubText}>{item.slip_count} phiếu lương</div>
       </div>
     );
   }

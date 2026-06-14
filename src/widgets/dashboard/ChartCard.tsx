@@ -211,7 +211,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                       x={bar1X}
                       y={bar1Y}
                       width={barWidth}
-                      height={Math.max(bar1Height, 2)}
+                      height={bar1Height}
                       fill="url(#receiveGrad)"
                       rx="4"
                       style={{
@@ -226,7 +226,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
                       x={bar2X}
                       y={bar2Y}
                       width={barWidth}
-                      height={Math.max(bar2Height, 2)}
+                      height={bar2Height}
                       fill="url(#payGrad)"
                       rx="4"
                       style={{

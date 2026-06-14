@@ -89,7 +89,7 @@ export function FixedAssetsWidget() {
       { accessorKey: 'asset_name', header: 'Tên Tài Sản' },
       {
         accessorKey: 'depreciation_method',
-        header: 'Phương Pháp KH',
+        header: 'Phương pháp khấu hao',
         cell: ({ row }) => (
           row.original.depreciation_method === 'straight_line' ? (
             <Badge variant="info">Đường thẳng</Badge>
@@ -110,7 +110,7 @@ export function FixedAssetsWidget() {
       },
       {
         accessorKey: 'accumulated_depreciation',
-        header: 'Lũy Kế KH',
+        header: 'Lũy kế khấu hao',
         cell: ({ row }) => Number(row.original.accumulated_depreciation ?? 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }),
       },
       {
@@ -122,7 +122,7 @@ export function FixedAssetsWidget() {
         },
       },
       {
-        header: 'Thời Gian KH',
+        header: 'Thời gian khấu hao',
         cell: ({ row }) => `${row.original.remaining_life_months}/${row.original.useful_life_months} thg`,
       },
       { accessorKey: 'department', header: 'Bộ Phận', size: 100 },

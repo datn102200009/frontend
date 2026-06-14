@@ -135,7 +135,9 @@ describe('SalesOrderFormModal', () => {
     const depositInput = await screen.findByLabelText(/Số tiền đặt cọc/i);
     expect(depositInput).toBeInTheDocument();
     expect(depositInput).toBeEnabled();
-    expect(depositInput).toHaveValue(1000000);
+    await waitFor(() => {
+      expect(depositInput).toHaveValue(1000000);
+    });
   });
 
   it('disables deposit input in Pending state', async () => {

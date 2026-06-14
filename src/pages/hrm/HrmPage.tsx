@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { Plus, CheckSquare, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -127,10 +127,28 @@ const HrmPage: React.FC = () => {
   }, [holidayAnalysis, attendanceDate]);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
+    const periodParam = searchParams.get('period');
+    if (periodParam && /^\d{4}-\d{2}$/.test(periodParam)) return periodParam;
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     return `${d.getFullYear()}-${mm}`;
   });
+
+  const urlPeriod = searchParams.get('period');
+  useEffect(() => {
+    if (urlPeriod && /^\d{4}-\d{2}$/.test(urlPeriod)) {
+      setSelectedPeriod(urlPeriod);
+    }
+  }, [urlPeriod]);
+
+  useEffect(() => {
+    const currentParam = searchParams.get('period');
+    if (currentParam !== selectedPeriod) {
+      const params = new URLSearchParams(searchParams);
+      params.set('period', selectedPeriod);
+      setSearchParams(params, { replace: true });
+    }
+  }, [selectedPeriod, searchParams, setSearchParams]);
 
   // Actions
   const handleTerminateContractTrigger = (emp: Employee, contractId: string) => {

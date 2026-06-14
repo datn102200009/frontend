@@ -1533,5 +1533,32 @@
   border-left: 3px solid var(--clr-error-500);
   border-radius: var(--radius-sm);
   font-size: var(--fs-sm);
+  background-color: var(--clr-error-50);
+  color: var(--clr-error-700);
+}
+
+.componentTrackerWarningCriticalFallback {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--clr-error-700);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  background: linear-gradient(90deg, var(--clr-error-100), var(--clr-error-50));
+  color: var(--clr-error-800);
+  font-weight: var(--fw-semibold);
+}
+
+.componentTrackerWarningWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 3px solid var(--clr-warning-600);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  background-color: var(--clr-warning-50);
+  color: var(--clr-warning-800);
 }
 

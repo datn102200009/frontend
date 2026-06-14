@@ -21,7 +21,7 @@ describe('ComponentTrackerCard', () => {
     total_count: 1
   };
 
-  it('renders select box with all items', () => {
+  it('renders select box with all items', async () => {
     renderWithProviders(
       <ComponentTrackerCard
         title="Theo dõi linh kiện"
@@ -29,10 +29,14 @@ describe('ComponentTrackerCard', () => {
         data={mockData}
       />
     );
+    const user = userEvent.setup();
 
-    expect(screen.getByLabelText('Chọn sản phẩm theo dõi')).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'LK-001 - Linh kiện A' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'LK-002 - Linh kiện B' })).toBeInTheDocument();
+    const select = screen.getByRole('combobox', { name: 'Chọn sản phẩm theo dõi' });
+    expect(select).toBeInTheDocument();
+
+    await user.click(select);
+    expect(screen.getByRole('option', { name: 'Linh kiện A' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Linh kiện B' })).toBeInTheDocument();
   });
 
   it('shows donut and legend for first item by default', () => {
@@ -59,15 +63,19 @@ describe('ComponentTrackerCard', () => {
         data={mockData}
       />
     );
+    const user = userEvent.setup();
 
     expect(screen.getByText('30')).toBeInTheDocument();
 
-    const select = screen.getByLabelText('Chọn sản phẩm theo dõi');
-    await userEvent.selectOptions(select, 'p2');
+    const select = screen.getByRole('combobox', { name: 'Chọn sản phẩm theo dõi' });
+    await user.click(select);
+
+    const optionB = screen.getByRole('option', { name: 'Linh kiện B' });
+    await user.click(optionB);
 
     expect(screen.getAllByText('50').length).toBeGreaterThan(0);
     expect(screen.getByText('Kho A')).toBeInTheDocument();
-    expect(screen.queryByText('Kho B')).not.toBeInTheDocument();
+    expect(screen.getByText('Kho B')).toBeInTheDocument();
   });
 
   it('shows warning banner for critical items', () => {

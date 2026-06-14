@@ -9,7 +9,7 @@ import random
 sys.stdout.reconfigure(encoding='utf-8')
 sys.path.insert(0, os.path.dirname(__file__))
 
-from test_helpers import (TestRunner, BASE_URL, wait_for_page_ready, login, dismiss_all_toasts)
+from test_helpers import (TestRunner, BASE_URL, wait_for_page_ready, login, dismiss_all_toasts, select_first_available_period)
 from playwright.sync_api import sync_playwright, expect
 
 
@@ -197,9 +197,8 @@ def run():
                 page.get_by_role("tab", name="Bảng Lương").click()
                 time.sleep(0.5)
 
-                # Select filters for 07/2026 (fully paid period)
-                page.get_by_label("Chọn tháng kỳ lương").select_option("07")
-                page.get_by_label("Chọn năm kỳ lương").select_option("2026")
+                # Select filters (fully paid period)
+                select_first_available_period(page, preferred_month="07", preferred_year="2026")
                 page.get_by_label("Lọc trạng thái phiếu lương").select_option("all")
                 time.sleep(0.5)
 

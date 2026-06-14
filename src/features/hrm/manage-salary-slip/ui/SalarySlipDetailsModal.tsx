@@ -154,7 +154,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
           <div>
             <div className={styles.employeeName}>{salarySlip.employee_name || 'N/A'}</div>
             <div className={styles.employeeMeta}>
-              Mã NV: {salarySlip.employee_code || 'N/A'} | Kỳ lương: {salarySlip.salary_period}
+              Mã nhân viên: {salarySlip.employee_code || 'N/A'} | Kỳ lương: {salarySlip.salary_period}
             </div>
           </div>
           <span className={getStatusClass(salarySlip.status)}>{getStatusLabel(salarySlip.status)}</span>

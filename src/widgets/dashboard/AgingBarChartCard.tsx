@@ -100,7 +100,6 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
               />
               {totalNumeric > 0 &&
                 segmentArcs.map((seg, idx) => {
-                  if (seg.val === 0) return null;
                   return (
                     <circle
                       key={idx}

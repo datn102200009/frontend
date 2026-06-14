@@ -78,7 +78,7 @@ describe('FinancePage', () => {
     const user = userEvent.setup();
 
     // Click AP tab
-    const apTab = screen.getByRole('button', { name: /Phải Trả \(AP\)/i });
+    const apTab = screen.getByRole('tab', { name: /Phải Trả \(AP\)/i });
     await user.click(apTab);
 
     // Wait for unpaid purchase invoice to load
@@ -141,7 +141,7 @@ describe('FinancePage', () => {
     const user = userEvent.setup();
 
     // Click AR tab
-    const arTab = screen.getByRole('button', { name: /Phải Thu \(AR\)/i });
+    const arTab = screen.getByRole('tab', { name: /Phải Thu \(AR\)/i });
     await user.click(arTab);
 
     // Wait for unpaid sales invoice to load
