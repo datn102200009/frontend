@@ -399,7 +399,7 @@ def run():
                 time.sleep(1)
 
                 # Click Chấm Công to open modal
-                page.get_by_role("button", name="Chấm Công").click()
+                page.get_by_role("button", name="Chấm Công").last.click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
                 

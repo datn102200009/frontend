@@ -2,6 +2,18 @@ import type { ReactNode } from 'react';
 import { formatVND } from '@shared/lib/formatVND';
 import styles from './DashboardWidgets.module.css';
 
+function ProgressBar({ value, label, color }: { value: number; label: string; color: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+      <span style={{ fontSize: 10, color: 'var(--clr-text-muted)', minWidth: 70 }}>{label}</span>
+      <div style={{ flex: 1, height: 4, background: 'var(--clr-bg-accent, #f1f5f9)', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.min(Math.max(0, value), 100)}%`, height: '100%', background: color }} />
+      </div>
+      <span style={{ fontSize: 10, color: 'var(--clr-text-secondary)', minWidth: 28, textAlign: 'right' }}>{Math.round(value)}%</span>
+    </div>
+  );
+}
+
 export function formatDate(dateStr?: string | null): string {
   if (!dateStr) return '';
   try {
@@ -28,7 +40,7 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
   const sid = shortId(id);
 
   if (code === 'sales_pending_fulfillment') {
-    return { to: `/inventory?tab=entries&status=draft&search=SO-${sid}`, display: `SO-${sid}` };
+    return { to: `/sales?tab=orders&status=pending&id=${id}`, display: `SO-${sid}` };
   }
   if (code.startsWith('sales_')) {
     let status = '';
@@ -37,16 +49,13 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     const q = status ? `&status=${status}` : '';
     return { to: `/sales?tab=orders${q}&id=${id}`, display: `SO-${sid}` };
   }
-  if (code === 'purchasing_pending_delivery') {
-    return { to: `/inventory?tab=entries&status=draft&search=PO-${sid}`, display: `PO-${sid}` };
-  }
   if (code === 'purchasing_draft_orders' || code === 'purchasing_active_po_count') {
     let status = '';
     if (code === 'purchasing_draft_orders') status = 'draft';
     const q = status ? `&status=${status}` : '';
     return { to: `/purchasing?tab=orders${q}&id=${id}`, display: `PO-${sid}` };
   }
-  if (code === 'purchasing_pending_qc' || code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees') {
     return { to: `/purchasing?tab=shipment&id=${id}`, display: item.shipment_num || 'QC' };
   }
   if (code === 'purchasing_blocked_invoices') {
@@ -54,9 +63,6 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
   }
   if (code === 'inventory_low_stock') {
     return { to: `/inventory?tab=ledger&search=${item.item_code}`, display: item.item_code };
-  }
-  if (code === 'inventory_pending_entry_count') {
-    return { to: `/inventory?tab=entries&status=draft&id=${id}`, display: item.name };
   }
   if (code === 'inventory_pending_entries') {
     const iconMap: Record<string, string> = { receipt: '📥', issue: '📤', transfer: '🔄' };
@@ -69,10 +75,10 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     return { to: `/finance?tab=cashflow&search=${sid}`, display: `TX-${sid}` };
   }
   if (code === 'finance_unpaid_purchase_invoices') {
-    return { to: `/purchasing?status=unpaid&tab=invoices&id=${id}`, display: `INV-${sid}` };
+    return { to: `/finance?tab=purchase_invoices&id=${id}`, display: `INV-${sid}` };
   }
   if (code === 'finance_unpaid_sales_invoices') {
-    return { to: `/sales?status=unpaid&tab=invoices&id=${id}`, display: `INV-${sid}` };
+    return { to: `/finance?tab=sales_invoices&id=${id}`, display: `INV-${sid}` };
   }
   if (code === 'finance_depreciation_status') {
     return { to: `/finance/fixed-assets?assetCode=${item.asset_code}`, display: item.asset_code };
@@ -101,7 +107,7 @@ export function buildItemTitle(item: any, code: string): ReactNode {
   if (code.startsWith('sales_') || code === 'finance_unpaid_sales_invoices') {
     return <span className={styles.rowMainText}>{item.customer_name || 'Khách hàng'}</span>;
   }
-  if (code === 'purchasing_pending_qc' || code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees') {
     return <span className={styles.rowMainText}>{item.name || 'Lô hàng'}</span>;
   }
   if (code.startsWith('purchasing_') || code === 'finance_unpaid_purchase_invoices') {
@@ -146,7 +152,15 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
     return <div className={styles.rowSubText}>SO ngày: {formatDate(item.created_at)}</div>;
   }
   if (code === 'sales_pending_fulfillment') {
-    return <div className={styles.rowSubText}>{item.items_summary || ''}</div>;
+    const receiptRate = parseFloat(item.receipt_fulfillment_rate || '0');
+    const paymentRate = parseFloat(item.payment_fulfillment_rate || '0');
+    return (
+      <div className={styles.rowSubText} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ marginBottom: 4 }}>{item.items_summary || ''}</div>
+        <ProgressBar value={receiptRate} label="Giao hàng" color="var(--clr-success, #22c55e)" />
+        <ProgressBar value={paymentRate} label="Thanh toán" color="var(--clr-primary, #3b82f6)" />
+      </div>
+    );
   }
   if (code === 'sales_draft_orders') {
     return <div className={styles.rowSubText}>{item.items_summary || ''}</div>;
@@ -154,20 +168,42 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
   if (code === 'purchasing_draft_orders') {
     return <div className={styles.rowSubText}>{item.items_summary || ''}</div>;
   }
-  if (code === 'purchasing_pending_delivery') {
-    return <div className={styles.rowSubText}>{item.items_summary || ''}</div>;
-  }
   if (code === 'purchasing_active_po_count') {
-    const deliveryStr = item.expected_delivery_date ? `Giao: ${formatDate(item.expected_delivery_date)}` : 'Giao: —';
-    const summaryStr = item.items_summary ? ` • ${item.items_summary}` : '';
-    return <div className={styles.rowSubText}>{deliveryStr}{summaryStr}</div>;
+    const deliveryStr = item.expected_delivery_date ? `Dự kiến giao: ${formatDate(item.expected_delivery_date)}` : 'Dự kiến giao: —';
+    const receiptRate = parseFloat(item.receipt_fulfillment_rate || '0');
+    const paymentRate = parseFloat(item.payment_fulfillment_rate || '0');
+    return (
+      <div className={styles.rowSubText} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        <div style={{ marginBottom: 4 }}>{deliveryStr}</div>
+        <ProgressBar value={receiptRate} label="Nhập kho" color="var(--clr-emerald-600, #059669)" />
+        <ProgressBar value={paymentRate} label="Thanh toán" color="var(--clr-indigo-600, #4f46e5)" />
+      </div>
+    );
+  }
+  if (code === 'purchasing_pending_logistic_fees') {
+    const statusMap: Record<string, string> = {
+      draft: 'Chờ Hàng Về',
+      inspecting: 'Đang Tiếp Nhận',
+      completed: 'Hoàn Tất',
+    };
+    const statusText = statusMap[item.status] || item.status;
+    const colorMap: Record<string, string> = {
+      draft: '',
+      inspecting: styles.colOrangeText,
+      completed: styles.colGreenText,
+    };
+    const statusColorClass = colorMap[item.status] || '';
+    const remarksText = item.remarks ? ` • ${item.remarks}` : '';
+    return (
+      <div className={styles.rowSubText}>
+        <span className={statusColorClass}>{statusText}</span>{remarksText}
+      </div>
+    );
   }
   if (code === 'purchasing_blocked_invoices' && item.block_reason) {
     return <div className={styles.colRedText}>{item.block_reason}</div>;
   }
-  if (code === 'purchasing_pending_qc') {
-    return <div className={styles.rowSubText}>Cập bến {daysAgo(item.created_at)} ngày trước</div>;
-  }
+
   if (code === 'inventory_low_stock') {
     return (
       <div className={styles.rowSubText}>
@@ -237,23 +273,7 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
       </div>
     );
   }
-  if (code === 'purchasing_pending_qc') {
-    return (
-      <div className={styles.colRightAlign}>
-        <span
-          style={{
-            fontSize: 'var(--fs-xs)',
-            padding: '1px 6px',
-            borderRadius: '4px',
-            background: 'var(--clr-warning-bg)',
-            color: 'var(--clr-warning)',
-          }}
-        >
-          Chờ QC
-        </span>
-      </div>
-    );
-  }
+
   if (code === 'purchasing_pending_logistic_fees') {
     const d = daysAgo(item.created_at);
     return (
@@ -267,7 +287,7 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
       </div>
     );
   }
-  if (code === 'inventory_pending_entry_count' || code === 'inventory_pending_entries') {
+  if (code === 'inventory_pending_entries') {
     return (
       <div className={styles.colRightAlign}>
         <div>{item.item_count} mặt hàng</div>

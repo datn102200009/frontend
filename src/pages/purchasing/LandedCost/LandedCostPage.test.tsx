@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LandedCostPage } from './LandedCostPage';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -11,30 +11,25 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     { id: 'WH02', name: 'Kho Thành Phẩm B' }
   ];
 
-  const mockStockEntriesResponse = {
-    results: [
-      {
-        id: 'SE-001',
-        name: 'PX001',
-        purpose: 'receipt',
-        posting_date: '2026-06-04T12:00:00Z',
-        vendor_name: 'Tech Component Supplier',
-        status: 'draft'
-      }
-    ]
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    server.use(
-      http.get('*/api/v1/inventory/stock-entry/list/*', () => {
-        return HttpResponse.json(mockStockEntriesResponse);
-      }),
-      http.get('*/api/v1/master-data/warehouses/*', () => {
-        return HttpResponse.json(mockWarehouses);
-      })
-    );
-  });
+  const mockPurchaseOrders = [
+    {
+      id: 'PO-001',
+      vendor_name: 'Tech Component Supplier',
+      status: 'pending',
+      total_amount: 5000000,
+      lines: [
+        {
+          id: 'POL-001',
+          item_id: 'ITEM-001',
+          item_code: 'BONG_DEN',
+          item_name: 'Bóng đèn halogen',
+          quantity: 100,
+          unit: 'Cái',
+          unit_price: 50000
+        }
+      ]
+    }
+  ];
 
   const mockShipments = [
     {
@@ -44,38 +39,38 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
       status: 'draft',
       remarks: 'Lô hàng thử nghiệm',
       total_logistic_fees: 0,
-      stock_entries: [
-        { id: 'SE-001', name: 'PX001', status: 'draft' }
-      ],
-      stock_entries_details: [
+      purchase_order: 'PO-001',
+      purchase_order_lines: [
         {
-          id: 'SED-001',
-          stock_entry_id: 'SE-001',
-          stock_entry_name: 'PX001',
-          stock_entry_status: 'draft',
+          id: 'POL-001',
           item_id: 'ITEM-001',
           item_code: 'BONG_DEN',
           item_name: 'Bóng đèn halogen',
           quantity: 100,
-          target_warehouse_id: null,
-          target_warehouse_name: null,
-          qc_status: 'PENDING',
-          latest_cert: null
+          unit: 'Cái'
         }
-      ]
+      ],
+      stock_entries: [],
+      stock_entries_details: []
     }
   ];
 
-  const setupDefaultMocks = () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
     server.use(
-      http.get('*/api/v1/purchasing/shipments/', () => {
+      http.get('*/api/v1/purchasing/orders/*', () => {
+        return HttpResponse.json(mockPurchaseOrders);
+      }),
+      http.get('*/api/v1/master-data/warehouses/*', () => {
+        return HttpResponse.json(mockWarehouses);
+      }),
+      http.get('*/api/v1/purchasing/shipments/*', () => {
         return HttpResponse.json(mockShipments);
       })
     );
-  };
+  });
 
   it('renders shipments list and detail placeholders correctly', async () => {
-    setupDefaultMocks();
     renderWithProviders(<LandedCostPage />);
 
     expect(await screen.findByText('LH-20260604-001')).toBeInTheDocument();
@@ -83,7 +78,6 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
   });
 
   it('automatically selects shipment when id query param is present in URL', async () => {
-    setupDefaultMocks();
     renderWithProviders(<LandedCostPage />, {
       initialEntries: ['/purchasing?tab=shipment&id=SHIP-001']
     });
@@ -91,8 +85,7 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     expect(await screen.findByText('Mã lô hàng: LH-20260604-001')).toBeInTheDocument();
   });
 
-  it('handles state transitions: Draft state (inputs and QC button are locked)', async () => {
-    setupDefaultMocks();
+  it('handles state transitions: Draft state (allows confirming arrival)', async () => {
     renderWithProviders(<LandedCostPage />);
 
     const user = userEvent.setup();
@@ -101,25 +94,19 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
 
     expect(await screen.findByText('Mã lô hàng: LH-20260604-001')).toBeInTheDocument();
     
-    // Draft state: Show Arrived transition button
-    expect(screen.getByRole('button', { name: /Xác nhận hàng về \(Arrived\)/i })).toBeInTheDocument();
-
-    // QC action is locked (showing label instead of button)
-    expect(screen.getByText('Chờ hàng đến')).toBeInTheDocument();
-
-    // Storekeeper controls are read-only (displays static warehouse name/placeholder instead of select)
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    // Draft state: Show Confirm Arrival transition button
+    expect(screen.getByRole('button', { name: /Xác nhận hàng về \(Bắt đầu tiếp nhận\)/i })).toBeInTheDocument();
   });
 
-  it('handles state transitions: Arrived state (QC action is open, storekeeper controls locked)', async () => {
-    const arrivedShipment = {
+  it('handles state transitions: Inspecting state (shows complete button and allows opening complete modal)', async () => {
+    const inspectingShipment = {
       ...mockShipments[0],
-      status: 'arrived'
+      status: 'inspecting'
     };
 
     server.use(
-      http.get('*/api/v1/purchasing/shipments/', () => {
-        return HttpResponse.json([arrivedShipment]);
+      http.get('*/api/v1/purchasing/shipments/*', () => {
+        return HttpResponse.json([inspectingShipment]);
       })
     );
 
@@ -130,44 +117,60 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     await user.click(card);
 
     expect(await screen.findByText('Mã lô hàng: LH-20260604-001')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Hoàn tất Kiểm định QC/i })).toBeInTheDocument();
+    
+    // Inspecting state: Show complete button
+    const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+    expect(completeBtn).toBeInTheDocument();
 
-    // QC action button is active
-    const qcBtn = screen.getByRole('button', { name: /Đánh giá QC/i });
-    expect(qcBtn).toBeInTheDocument();
+    // Select warehouse inline to pass validation
+    const select = await screen.findByRole('combobox');
+    await user.selectOptions(select, 'WH01');
 
-    // Storekeeper controls are still locked
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    // Click complete button opens modal
+    await user.click(completeBtn);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Tiếp Nhận & Hoàn Tất Lô Hàng')).toBeInTheDocument();
   });
 
-  it('handles state transitions: Inspected state (QC is locked, storekeeper input is open for PASSED, locked for FAILED)', async () => {
-    const inspectedShipment = {
+  it('validates warehouse required when quantity > 0 (triggers inline validation)', async () => {
+    const inspectingShipment = {
       ...mockShipments[0],
-      status: 'inspected',
-      stock_entries_details: [
-        {
-          ...mockShipments[0].stock_entries_details[0],
-          id: 'SED-001',
-          item_code: 'PASSED-001',
-          item_name: 'Bóng đèn PASSED',
-          qc_status: 'PASSED'
-        },
-        {
-          ...mockShipments[0].stock_entries_details[0],
-          id: 'SED-002',
-          item_code: 'FAILED-002',
-          item_name: 'Bóng đèn FAILED',
-          qc_status: 'FAILED'
-        }
-      ]
+      status: 'inspecting'
     };
 
     server.use(
-      http.get('*/api/v1/purchasing/shipments/', () => {
-        return HttpResponse.json([inspectedShipment]);
+      http.get('*/api/v1/purchasing/shipments/*', () => {
+        return HttpResponse.json([inspectingShipment]);
+      })
+    );
+
+    renderWithProviders(<LandedCostPage />);
+
+    const user = userEvent.setup();
+    const card = await screen.findByText('LH-20260604-001');
+    await user.click(card);
+
+    const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+    await user.click(completeBtn);
+
+    // Should display validation error on the main page because warehouse is empty and quantity > 0
+    expect(await screen.findByText('Bắt buộc chọn kho khi số lượng nhận lớn hơn 0')).toBeInTheDocument();
+  });
+
+  it('successfully completes shipment when valid inputs are provided', async () => {
+    const inspectingShipment = {
+      ...mockShipments[0],
+      status: 'inspecting'
+    };
+
+    let completePayload: any = null;
+    server.use(
+      http.get('*/api/v1/purchasing/shipments/*', () => {
+        return HttpResponse.json([inspectingShipment]);
       }),
-      http.get('*/api/v1/master-data/warehouses/', () => {
-        return HttpResponse.json(mockWarehouses);
+      http.post('*/api/v1/purchasing/shipments/:pk/complete/', async ({ request }) => {
+        completePayload = await request.json();
+        return HttpResponse.json({ ...inspectingShipment, status: 'completed' });
       })
     );
 
@@ -177,27 +180,158 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     const card = await screen.findByText('LH-20260604-001');
     await user.click(card);
 
-    expect(await screen.findByText('Mã lô hàng: LH-20260604-001')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Nhập chi phí vận chuyển/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Xác nhận nhận hàng & Hoàn tất Lô hàng/i })).toBeInTheDocument();
+    // Select warehouse inline (main page)
+    const select = await screen.findByRole('combobox');
+    await user.selectOptions(select, 'WH01');
 
-    // QC button is locked (displays "Đã khóa QC")
-    expect(screen.getAllByText('Đã khóa QC').length).toBe(2);
+    // Click "Xác Nhận Hoàn Tất" on main page
+    const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+    await user.click(completeBtn);
 
-    // PASSED item allows warehouse assignment and quantity update
-    const whSelect = screen.getByRole('combobox');
-    expect(whSelect).toBeInTheDocument();
-    expect(whSelect).toHaveValue('');
+    // Modal opens
+    const modal = screen.getByRole('dialog');
+    
+    // Click submit in modal
+    const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+    await user.click(submitBtn);
 
-    const spinbuttons = screen.getAllByRole('spinbutton');
-    const feeInput = spinbuttons[0];
-    expect(feeInput).toHaveValue(0);
+    await waitFor(() => {
+      expect(completePayload).not.toBeNull();
+    });
 
-    const qtyInput = spinbuttons[1];
-    expect(qtyInput).toHaveValue(100);
+    expect(completePayload.total_logistic_fees).toBe(0);
+    expect(completePayload.details[0].quantity).toBe(100);
+    expect(completePayload.details[0].target_warehouse_id).toBe('WH01');
+  });
 
-    // FAILED item displays "Từ chối nhận" and quantity is read-only (not a spinbutton input)
-    expect(screen.getByText('Từ chối nhận')).toBeInTheDocument();
-    expect(screen.getByText('Bị loại bỏ (QC Hỏng)')).toBeInTheDocument();
+  describe('Confirm zero-all Modal', () => {
+    it('opens confirm modal when all quantities are 0', async () => {
+      const inspectingShipment = {
+        ...mockShipments[0],
+        status: 'inspecting'
+      };
+
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-20260604-001');
+      await user.click(card);
+
+      // Set quantity to 0 in input field
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '0');
+
+      // Click complete button opens modal
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      expect(modal).toBeInTheDocument();
+
+      // Click submit in modal
+      const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+      await user.click(submitBtn);
+
+      // Confirm modal should open
+      const confirmDialog = await screen.findByRole('dialog', { name: 'Xác nhận từ chối nhận toàn bộ' });
+      expect(confirmDialog).toBeInTheDocument();
+      expect(within(confirmDialog).getByText(/Hệ thống sẽ ghi nhận lô hàng này là/i)).toBeInTheDocument();
+    });
+
+    it('does not call completeShipment when user cancels confirm modal', async () => {
+      const inspectingShipment = {
+        ...mockShipments[0],
+        status: 'inspecting'
+      };
+
+      let completeCalled = false;
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        }),
+        http.post('*/api/v1/purchasing/shipments/:pk/complete/', () => {
+          completeCalled = true;
+          return HttpResponse.json({ ...inspectingShipment, status: 'completed' });
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-20260604-001');
+      await user.click(card);
+
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '0');
+
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+      await user.click(submitBtn);
+
+      const confirmDialog = await screen.findByRole('dialog', { name: 'Xác nhận từ chối nhận toàn bộ' });
+      const cancelBtn = within(confirmDialog).getByRole('button', { name: /Hủy bỏ/i });
+      await user.click(cancelBtn);
+
+      // Confirm modal should close
+      expect(confirmDialog).not.toBeInTheDocument();
+      expect(completeCalled).toBe(false);
+    });
+
+    it('calls completeShipment when user confirms', async () => {
+      const inspectingShipment = {
+        ...mockShipments[0],
+        status: 'inspecting'
+      };
+
+      let completePayload: any = null;
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        }),
+        http.post('*/api/v1/purchasing/shipments/:pk/complete/', async ({ request }) => {
+          completePayload = await request.json();
+          return HttpResponse.json({ ...inspectingShipment, status: 'completed' });
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-20260604-001');
+      await user.click(card);
+
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '0');
+
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      const submitBtn = within(modal).getByRole('button', { name: /Xác nhận Hoàn Tất/i });
+      await user.click(submitBtn);
+
+      const confirmDialog = await screen.findByRole('dialog', { name: 'Xác nhận từ chối nhận toàn bộ' });
+      const confirmBtn = within(confirmDialog).getByRole('button', { name: /Xác nhận từ chối/i });
+      await user.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(completePayload).not.toBeNull();
+      });
+
+      expect(completePayload.details[0].quantity).toBe(0);
+      expect(completePayload.details[0].target_warehouse_id).toBeNull();
+    });
   });
 });

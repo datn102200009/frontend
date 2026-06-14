@@ -23,6 +23,7 @@ interface DataTableProps<TData> {
   emptyDescription?: string;
   onSearch?: (value: string) => void;
   initialSearch?: string;
+  filterSlot?: React.ReactNode;
 }
 
 export function DataTable<TData>({
@@ -35,6 +36,7 @@ export function DataTable<TData>({
   emptyDescription = 'Chưa có bản ghi nào được tạo.',
   onSearch,
   initialSearch = '',
+  filterSlot,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState(initialSearch);
@@ -79,6 +81,7 @@ export function DataTable<TData>({
             aria-label={searchPlaceholder}
           />
         </div>
+        {filterSlot && <div style={{ marginLeft: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>{filterSlot}</div>}
       </div>
 
       {/* Table */}

@@ -410,8 +410,8 @@ def run():
             # Card 3: Đơn bán hàng chờ duyệt vượt hạn mức
             test_kpi_list_card(page, runner, 4, "Đơn bán hàng chờ duyệt vượt hạn mức", "/sales?tab=orders&status=pending_credit_approval", expect_money=True)
 
-            # Card 4: Đơn bán hàng chờ giao hàng
-            test_kpi_list_card(page, runner, 5, "Đơn bán hàng chờ giao hàng", "/inventory?tab=entries&status=draft", expect_money=False)
+            # Card 4: Đơn bán hàng đang hoạt động
+            test_kpi_list_card(page, runner, 5, "Đơn bán hàng đang hoạt động", "/sales?tab=orders&status=pending", expect_money=True)
 
             # Card 5: Đơn mua hàng hoạt động
             test_kpi_list_card(page, runner, 6, "Đơn mua hàng hoạt động", "/purchasing?tab=orders&status=pending", expect_money=True)
@@ -419,20 +419,20 @@ def run():
             # Card 6: Đơn mua hàng nháp
             test_kpi_list_card(page, runner, 7, "Đơn mua hàng nháp", "/purchasing?tab=orders&status=draft", expect_money=True)
 
-            # Card 7: Đơn mua hàng chờ nhận hàng
-            test_kpi_list_card(page, runner, 8, "Đơn mua hàng chờ nhận hàng", "/inventory?tab=entries&status=draft", expect_money=False)
+            # Card 7: Đơn mua hàng chờ nhận hàng (ĐÃ XÓA khỏi registry)
+            runner.log("WF-02", 8, "SKIP", "Thẻ 'Đơn mua hàng chờ nhận hàng' đã bị xóa khỏi dashboard registry")
 
-            # Card 8: Lô hàng chờ kiểm QC
-            test_kpi_list_card(page, runner, 9, "Lô hàng chờ kiểm QC", "/purchasing?tab=shipment", expect_money=False)
+            # Card 8: Lô hàng chờ kiểm QC (ĐÃ XÓA khỏi registry)
+            runner.log("WF-02", 9, "SKIP", "Thẻ 'Lô hàng chờ kiểm QC' đã bị xóa khỏi dashboard registry")
 
-            # Card 9: Lô hàng chờ phân bổ chi phí
-            test_kpi_list_card(page, runner, 10, "Lô hàng chờ phân bổ chi phí", "/purchasing?tab=shipment", expect_money=False)
+            # Card 9: Lô Hàng Chờ Duyệt
+            test_kpi_list_card(page, runner, 10, "Lô Hàng Chờ Duyệt", "/purchasing?tab=shipment&status=draft", expect_money=False)
 
-            # Card 10: Hóa đơn mua bị chặn
-            test_kpi_list_card(page, runner, 11, "Hóa đơn mua bị chặn", "/purchasing?tab=invoices&status=blocked", expect_money=True)
+            # Card 10: Hóa đơn mua bị chặn (ĐÃ XÓA khỏi registry)
+            runner.log("WF-02", 11, "SKIP", "Thẻ 'Hóa đơn mua bị chặn' đã bị xóa khỏi dashboard registry")
 
-            # Card 11: Phiếu nhập kho chờ duyệt
-            test_kpi_list_card(page, runner, 12, "Phiếu nhập kho chờ duyệt", "/inventory?tab=entries&status=draft", expect_money=False)
+            # Card 11: Phiếu nhập kho chờ duyệt (ĐÃ XÓA khỏi registry)
+            runner.log("WF-02", 12, "SKIP", "Thẻ 'Phiếu nhập kho chờ duyệt' đã bị xóa khỏi dashboard registry")
 
             # Card 12: Theo dõi linh kiện
             test_donut_chart_card(page, runner, 13, "Theo dõi linh kiện", "/inventory?tab=ledger")
@@ -444,10 +444,10 @@ def run():
             test_cashflow_overview_card(page, runner, 15, "Tổng quan & Xu hướng dòng tiền", "/finance")
 
             # Card 15: Hóa đơn mua chưa thanh toán
-            test_aging_bar_chart_card(page, runner, 16, "Hóa đơn mua chưa thanh toán", "/finance?tab=ap&status=unpaid")
+            test_aging_bar_chart_card(page, runner, 16, "Hóa đơn mua chưa thanh toán", "/finance?tab=purchase_invoices&status=unpaid,partial")
 
             # Card 16: Hóa đơn bán chưa thanh toán
-            test_aging_bar_chart_card(page, runner, 17, "Hóa đơn bán chưa thanh toán", "/sales?tab=invoices&status=unpaid")
+            test_aging_bar_chart_card(page, runner, 17, "Hóa đơn bán chưa thanh toán", "/finance?tab=sales_invoices&status=unpaid,partial")
 
             # Card 17: Khấu hao tài sản cố định
             test_kpi_list_card(page, runner, 18, "Khấu hao tài sản cố định", "/finance/fixed-assets", expect_money=False)

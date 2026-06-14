@@ -103,14 +103,8 @@ purchasingApi.enhanceEndpoints({
     getPurchasingOrders: {
       providesTags: ['PurchaseOrders'],
     },
-    getPurchasingInvoices: {
-      providesTags: ['Invoices'],
-    },
     getPurchasingOrdersByPk: {
       providesTags: ['PurchaseOrders'],
-    },
-    getPurchasingInvoicesByPk: {
-      providesTags: ['Invoices'],
     },
     postPurchasingOrders: {
       invalidatesTags: ['PurchaseOrders'],
@@ -130,9 +124,6 @@ purchasingApi.enhanceEndpoints({
     postPurchasingOrdersByPkCancel: {
       invalidatesTags: ['PurchaseOrders', 'Invoices', 'Inventory', 'CashFlows'],
     },
-    postPurchasingInvoicesByPkVerify: {
-      invalidatesTags: ['Invoices', 'PurchaseOrders'],
-    },
   },
 });
 
@@ -141,14 +132,8 @@ salesApi.enhanceEndpoints({
     getSalesOrders: {
       providesTags: ['SalesOrders'],
     },
-    getSalesInvoices: {
-      providesTags: ['Invoices'],
-    },
     getSalesOrdersByPk: {
       providesTags: ['SalesOrders'],
-    },
-    getSalesInvoicesByPk: {
-      providesTags: ['Invoices'],
     },
     postSalesOrders: {
       invalidatesTags: ['SalesOrders'],
@@ -185,8 +170,23 @@ financeApi.enhanceEndpoints({
     postFinanceCashFlows: {
       invalidatesTags: ['CashFlows', 'Invoices', 'PurchaseOrders', 'SalesOrders'],
     },
+    getFinanceInvoicesPurchase: {
+      providesTags: ['Invoices'],
+    },
+    getFinanceInvoicesPurchaseByPk: {
+      providesTags: ['Invoices'],
+    },
     postFinanceInvoicesPurchaseByPkPay: {
       invalidatesTags: ['Invoices', 'PurchaseOrders', 'CashFlows'],
+    },
+    getFinanceInvoicesSales: {
+      providesTags: ['Invoices'],
+    },
+    getFinanceInvoicesSalesByPk: {
+      providesTags: ['Invoices'],
+    },
+    postFinanceInvoicesSalesByPkCollect: {
+      invalidatesTags: ['Invoices', 'SalesOrders', 'CashFlows'],
     },
   },
 });

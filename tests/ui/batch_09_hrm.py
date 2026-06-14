@@ -156,7 +156,7 @@ def run():
                 # Nếu chưa có dữ liệu chấm công (lần đầu chạy sau reset DB), tự động tạo chấm công trước
                 rows = page.locator("tbody tr")
                 if rows.count() < 10:
-                    page.get_by_role("button", name="Chấm Công").click()
+                    page.get_by_role("button", name="Chấm Công").last.click()
                     time.sleep(0.5)
                     page.locator("#attendance_date").fill("2026-05-15")
                     time.sleep(0.3)
@@ -181,7 +181,7 @@ def run():
 
             # ── Tab 2: Batch attendance (test future date and invalid hours) ──
             try:
-                page.get_by_role("button", name="Chấm Công").click()
+                page.get_by_role("button", name="Chấm Công").last.click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 

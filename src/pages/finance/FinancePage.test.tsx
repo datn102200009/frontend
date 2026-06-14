@@ -38,14 +38,12 @@ describe('FinancePage', () => {
     expect(screen.getByText('Thu tiền hóa đơn')).toBeInTheDocument();
   });
 
-
-
   it('navigates to AP tab and processes an AP invoice payment successfully', async () => {
     let payPayload: any = null;
 
     server.use(
       http.get('*/api/v1/finance/cash-flows/', () => HttpResponse.json([])),
-      http.get('*/api/v1/purchasing/invoices/', () => {
+      http.get('*/api/v1/finance/invoices/purchase/', () => {
         return HttpResponse.json({
           count: 1,
           total_pages: 1,
@@ -85,7 +83,7 @@ describe('FinancePage', () => {
 
     // Wait for unpaid purchase invoice to load
     expect(await screen.findByText('Supplier A')).toBeInTheDocument();
-    expect(screen.getByText('Trả một phần')).toBeInTheDocument();
+    expect(screen.getByText('Thanh Toán Một Phần')).toBeInTheDocument();
 
     // Click "Thanh Toán" button
     const payBtn = screen.getByRole('button', { name: /Thanh Toán/i });
@@ -117,7 +115,7 @@ describe('FinancePage', () => {
   it('navigates to AR tab and opens collection form prefilled with customer details', async () => {
     server.use(
       http.get('*/api/v1/finance/cash-flows/', () => HttpResponse.json([])),
-      http.get('*/api/v1/sales/invoices/', () => {
+      http.get('*/api/v1/finance/invoices/sales/', () => {
         return HttpResponse.json({
           count: 1,
           total_pages: 1,
@@ -148,22 +146,20 @@ describe('FinancePage', () => {
 
     // Wait for unpaid sales invoice to load
     expect(await screen.findByText('Customer B')).toBeInTheDocument();
-    expect(screen.getByText('Thu một phần')).toBeInTheDocument();
+    expect(screen.getByText('Thanh Toán Một Phần')).toBeInTheDocument();
 
     // Click "Thu Tiền" button
-    const collectBtn = screen.getByRole('button', { name: /^Thu Tiền$/ });
+    const collectBtn = screen.getByRole('button', { name: /Thu tiền/i });
     await user.click(collectBtn);
 
     // Form inputs modal should appear prefilled
-    expect(await screen.findByRole('heading', { name: /Ghi Nhận Thu Tiền/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Thu Tiền Hóa Đơn Bán \(AR\)/i })).toBeInTheDocument();
     
-    // Select options should show SO-002 / SI-002 details
+    // Check fields loaded in the modal
     const modal = screen.getByRole('dialog');
-    const targetSelect = within(modal).getByLabelText(/Mã Chứng Từ/i);
-    expect(targetSelect).toBeDisabled(); // disabled due to isDirect
-    expect(within(targetSelect).getByRole('option')).toHaveTextContent(/SI-002/i);
+    expect(within(modal).getByText('Customer B')).toBeInTheDocument();
 
-    const amountInput = within(modal).getByLabelText(/Số Tiền/i);
+    const amountInput = within(modal).getByLabelText(/Số tiền thu nợ/i);
     expect(amountInput).toHaveValue(10000000); // Prefilled remaining amount: 15m - 5m = 10m
   });
 });

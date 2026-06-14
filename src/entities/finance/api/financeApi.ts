@@ -101,6 +101,25 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    getFinanceInvoicesPurchase: build.query<
+      GetFinanceInvoicesPurchaseApiResponse,
+      GetFinanceInvoicesPurchaseApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/invoices/purchase/`,
+        params: {
+          status: queryArg.status,
+          limit: queryArg.limit,
+          page: queryArg.page,
+        },
+      }),
+    }),
+    getFinanceInvoicesPurchaseByPk: build.query<
+      GetFinanceInvoicesPurchaseByPkApiResponse,
+      GetFinanceInvoicesPurchaseByPkApiArg
+    >({
+      query: (queryArg) => ({ url: `/finance/invoices/purchase/${queryArg.pk}/` }),
+    }),
     postFinanceInvoicesPurchaseByPkPay: build.mutation<
       PostFinanceInvoicesPurchaseByPkPayApiResponse,
       PostFinanceInvoicesPurchaseByPkPayApiArg
@@ -109,6 +128,35 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/finance/invoices/purchase/${queryArg.pk}/pay/`,
         method: 'POST',
         body: queryArg.payInvoiceInput,
+      }),
+    }),
+    getFinanceInvoicesSales: build.query<
+      GetFinanceInvoicesSalesApiResponse,
+      GetFinanceInvoicesSalesApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/invoices/sales/`,
+        params: {
+          status: queryArg.status,
+          limit: queryArg.limit,
+          page: queryArg.page,
+        },
+      }),
+    }),
+    getFinanceInvoicesSalesByPk: build.query<
+      GetFinanceInvoicesSalesByPkApiResponse,
+      GetFinanceInvoicesSalesByPkApiArg
+    >({
+      query: (queryArg) => ({ url: `/finance/invoices/sales/${queryArg.pk}/` }),
+    }),
+    postFinanceInvoicesSalesByPkCollect: build.mutation<
+      PostFinanceInvoicesSalesByPkCollectApiResponse,
+      PostFinanceInvoicesSalesByPkCollectApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/invoices/sales/${queryArg.pk}/collect/`,
+        method: 'POST',
+        body: queryArg.collectInvoiceInput,
       }),
     }),
   }),
@@ -191,11 +239,51 @@ export type GetFinanceFixedAssetsDepreciationLogsApiArg = {
   limit?: number
   page?: number
 }
+export type GetFinanceInvoicesPurchaseApiResponse =
+  /** status 200 A paginated list of purchase invoices. */ {
+    count?: number
+    total_pages?: number
+    current_page?: number
+    results?: PurchaseInvoice[]
+  }
+export type GetFinanceInvoicesPurchaseApiArg = {
+  status?: string
+  limit?: number
+  page?: number
+}
+export type GetFinanceInvoicesPurchaseByPkApiResponse =
+  /** status 200 Purchase invoice details. */ PurchaseInvoice
+export type GetFinanceInvoicesPurchaseByPkApiArg = {
+  pk: string
+}
 export type PostFinanceInvoicesPurchaseByPkPayApiResponse =
   /** status 200 Thanh toán thành công, trả về hóa đơn đã cập nhật. */ PurchaseInvoice
 export type PostFinanceInvoicesPurchaseByPkPayApiArg = {
   pk: string
   payInvoiceInput: PayInvoiceInput
+}
+export type GetFinanceInvoicesSalesApiResponse =
+  /** status 200 A paginated list of sales invoices. */ {
+    count?: number
+    total_pages?: number
+    current_page?: number
+    results?: SalesInvoice[]
+  }
+export type GetFinanceInvoicesSalesApiArg = {
+  status?: string
+  limit?: number
+  page?: number
+}
+export type GetFinanceInvoicesSalesByPkApiResponse =
+  /** status 200 Sales invoice details. */ SalesInvoice
+export type GetFinanceInvoicesSalesByPkApiArg = {
+  pk: string
+}
+export type PostFinanceInvoicesSalesByPkCollectApiResponse =
+  /** status 200 Thu tiền thành công, trả về hóa đơn bán hàng đã cập nhật. */ SalesInvoice
+export type PostFinanceInvoicesSalesByPkCollectApiArg = {
+  pk: string
+  collectInvoiceInput: CollectInvoiceInput
 }
 export type CashFlowTransaction = {
   id?: string
@@ -278,17 +366,61 @@ export type FixedAssetDepreciationLog = {
 export type RunDepreciationInput = {
   period: string
 }
+export type PurchaseInvoiceLine = {
+  id?: string
+  item?: string
+  item_name?: string
+  item_code?: string
+  quantity?: number
+  unit_price?: number
+  import_tax?: number
+  vat_tax?: number
+  line_total?: number
+}
 export type PurchaseInvoice = {
   id?: string
   order?: string
+  stock_entry?: string | null
+  stock_entry_name?: string | null
   vendor?: string
   vendor_name?: string
   status?: 'unpaid' | 'partial' | 'paid' | 'blocked_for_payment' | 'cancelled'
   total_amount?: number
   paid_amount?: number
   due_date?: string | null
+  created_at?: string
+  updated_at?: string
+  lines?: PurchaseInvoiceLine[]
 }
 export type PayInvoiceInput = {
+  amount: number
+  payment_method?: 'cash' | 'bank_transfer'
+}
+export type SalesInvoiceLine = {
+  id?: string
+  item?: string
+  item_name?: string
+  item_code?: string
+  quantity?: number
+  unit_price?: number
+  vat_tax?: number
+  line_total?: number
+}
+export type SalesInvoice = {
+  id?: string
+  order?: string
+  stock_entry?: string | null
+  stock_entry_name?: string | null
+  customer?: string
+  customer_name?: string
+  status?: 'unpaid' | 'partial' | 'paid' | 'cancelled'
+  total_amount?: number
+  paid_amount?: number
+  created_at?: string
+  updated_at?: string
+  lines?: SalesInvoiceLine[]
+}
+export type CollectInvoiceInput = {
   amount: number
   payment_method?: 'cash' | 'bank_transfer'
 }
@@ -304,5 +436,10 @@ export const {
   useDeleteFinanceFixedAssetsByPkMutation,
   usePostFinanceFixedAssetsDepreciationMutation,
   useGetFinanceFixedAssetsDepreciationLogsQuery,
+  useGetFinanceInvoicesPurchaseQuery,
+  useGetFinanceInvoicesPurchaseByPkQuery,
   usePostFinanceInvoicesPurchaseByPkPayMutation,
+  useGetFinanceInvoicesSalesQuery,
+  useGetFinanceInvoicesSalesByPkQuery,
+  usePostFinanceInvoicesSalesByPkCollectMutation,
 } = injectedRtkApi

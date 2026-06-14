@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -7,6 +6,8 @@ import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions
 import { useGetPurchasingOrdersQuery } from '@entities/purchasing/api/purchasingApi';
 import type { PurchaseOrder } from '@entities/purchasing/model/types';
 import { Eye, Edit, Printer } from 'lucide-react';
+import { usePurchaseOrderFilters } from '@entities/purchasing/lib/usePurchaseOrderFilters';
+import { PurchaseOrderStatusFilter } from '@entities/purchasing/ui/PurchaseOrderStatusFilter';
 
 interface PurchaseOrderTableProps {
   onView?: (id: string) => void;
@@ -15,13 +16,12 @@ interface PurchaseOrderTableProps {
 
 export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, onEdit }) => {
   const { data: orders = [], isLoading } = useGetPurchasingOrdersQuery();
-  const [searchParams] = useSearchParams();
-  const statusFilter = searchParams.get('status');
+  const { status, search, setStatus, setSearch } = usePurchaseOrderFilters();
 
   const filteredOrders = useMemo(() => {
-    if (!statusFilter) return orders;
-    return orders.filter((o) => o.status === statusFilter);
-  }, [orders, statusFilter]);
+    if (!status) return orders;
+    return orders.filter((o) => o.status === status);
+  }, [orders, status]);
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<PurchaseOrder>();
@@ -86,7 +86,7 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
           const labelMap: Record<string, string> = {
             draft: 'Nháp',
             pending: 'Đang hoạt động',
-            paid_unshipped: 'Chờ giao hàng',
+            paid_unshipped: 'Chờ nhập kho',
             shipped_unpaid: 'Chờ thanh toán',
             completed: 'Hoàn thành',
             cancelled: 'Đã hủy',
@@ -135,6 +135,9 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn mua hàng..."
         emptyMessage="Không tìm thấy đơn mua hàng nào"
+        initialSearch={search}
+        onSearch={setSearch}
+        filterSlot={<PurchaseOrderStatusFilter value={status} onChange={setStatus} />}
       />
     </div>
   );
