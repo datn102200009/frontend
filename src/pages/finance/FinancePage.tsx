@@ -166,20 +166,29 @@ const FinancePage: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.tabs}>
+      <div className={styles.tabs} role="tablist">
         <button 
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'cashflow'}
           className={`${styles.tab} ${activeTab === 'cashflow' ? styles.active : ''}`}
           onClick={() => setActiveTab('cashflow')}
         >
           Dòng Tiền
         </button>
         <button 
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'purchase_invoices'}
           className={`${styles.tab} ${activeTab === 'purchase_invoices' ? styles.active : ''}`}
           onClick={() => setActiveTab('purchase_invoices')}
         >
           Phải Trả (AP)
         </button>
         <button 
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'sales_invoices'}
           className={`${styles.tab} ${activeTab === 'sales_invoices' ? styles.active : ''}`}
           onClick={() => setActiveTab('sales_invoices')}
         >
@@ -187,6 +196,9 @@ const FinancePage: React.FC = () => {
         </button>
         {hasApprovePermission && (
           <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'approvals'}
             className={`${styles.tab} ${activeTab === 'approvals' ? styles.active : ''}`}
             onClick={() => setActiveTab('approvals')}
           >

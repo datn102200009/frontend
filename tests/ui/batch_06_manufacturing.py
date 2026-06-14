@@ -49,7 +49,7 @@ def run():
                     raise AssertionError(f"Tìm thấy {row_count} BOMs, kỳ vọng ít nhất 3")
                 
                 # Mở chi tiết định mức đầu tiên để kiểm tra danh sách linh kiện
-                rows.first.get_by_role("button", name="Chỉnh sửa").click()
+                rows.first.get_by_title("Chỉnh sửa").click()
                 time.sleep(0.5)
                 expect(page.get_by_role("heading", name="Chỉnh Sửa Định Mức")).to_be_visible()
                 expect(page.get_by_role("combobox", name="Mã linh kiện").first).to_be_visible()
@@ -113,7 +113,7 @@ def run():
                 
                 # Phê duyệt lệnh WO-TEST-1000
                 row = page.get_by_role("row").filter(has_text=f"WO-TEST-1000-{rand_id}")
-                row.get_by_role("button", name="Phê duyệt").click()
+                row.get_by_title("Phê duyệt").click()
                 time.sleep(0.3)
                 page.get_by_role("button", name="Xác nhận").click()
                 
@@ -147,7 +147,7 @@ def run():
                 
                 # Phê duyệt lệnh WO-TEST-10
                 row = page.get_by_role("row").filter(has_text=f"WO-TEST-10-{rand_id}")
-                row.get_by_role("button", name="Phê duyệt").click()
+                row.get_by_title("Phê duyệt").click()
                 time.sleep(0.3)
                 page.get_by_role("button", name="Xác nhận").click()
                 
@@ -164,7 +164,7 @@ def run():
                 if not wo_approved:
                     raise AssertionError("Bị block do Step 5 phê duyệt lệnh sản xuất thất bại (Lỗi 500 Backend)")
                 row = page.get_by_role("row").filter(has_text=f"WO-TEST-10-{rand_id}")
-                row.get_by_role("button", name="Nhập liệu").click()
+                row.get_by_title("Nhập liệu").click()
                 time.sleep(0.5)
                 expect(page.get_by_role("heading", name="Nhập Liệu Sản Xuất")).to_be_visible()
                 
@@ -184,7 +184,7 @@ def run():
                 if not wo_approved:
                     raise AssertionError("Bị block do Step 5 phê duyệt lệnh sản xuất thất bại (Lỗi 500 Backend)")
                 row = page.get_by_role("row").filter(has_text=f"WO-TEST-10-{rand_id}")
-                row.get_by_role("button", name="Hoàn thành").click()
+                row.get_by_title("Hoàn thành").click()
                 time.sleep(0.3)
                 page.get_by_role("button", name="Xác nhận").click()
                 
@@ -215,7 +215,7 @@ def run():
                 
                 # Hủy lệnh
                 row = page.get_by_role("row").filter(has_text=f"WO-TEST-CANCEL-{rand_id}")
-                row.get_by_role("button", name="Hủy").click()
+                row.get_by_title("Hủy").click()
                 time.sleep(0.3)
                 page.get_by_role("button", name="Xác nhận").click()
                 

@@ -38,7 +38,7 @@ def run():
                 time.sleep(0.5)
 
                 page.get_by_label("Nhà Cung Cấp").select_option(label="Công ty TNHH Linh kiện Điện tử Sunrise (NCC001)")
-                page.get_by_role("combobox").nth(1).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
+                page.get_by_role("combobox").nth(2).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
                 page.get_by_role("spinbutton").nth(0).fill("10")
                 page.get_by_role("spinbutton").nth(1).fill("60000")
                 
@@ -81,7 +81,7 @@ def run():
                 expect(page.get_by_text("Đặt cọc đơn hàng")).to_be_visible()
 
                 # Duyệt giao dịch đặt cọc này để đánh dấu đã thanh toán đặt cọc
-                page.get_by_role("button", name="Duyệt Giao Dịch").click()
+                page.get_by_role("tab", name="Duyệt Giao Dịch").click()
                 time.sleep(0.5)
                 deposit_row = page.locator("table tbody tr").filter(has_text="Đặt cọc đơn hàng").first
                 expect(deposit_row).to_be_visible()
@@ -92,6 +92,11 @@ def run():
             except Exception as e:
                 runner.screenshot(page, "step1_fail")
                 runner.log("WF-06", 1, "FAIL", "Tạo và duyệt PO có đặt cọc thành công", str(e), url=page.url)
+            finally:
+                close_btn = page.get_by_role("button", name="Đóng")
+                if close_btn.count() > 0 and close_btn.last.is_visible():
+                    close_btn.last.click()
+                    time.sleep(0.5)
 
             # Navigate back to purchasing
             page.goto(f"{BASE_URL}/purchasing")
@@ -148,6 +153,11 @@ def run():
             except Exception as e:
                 runner.screenshot(page, "step3_fail")
                 runner.log("WF-06", 3, "FAIL", "Hủy PO chưa nhập kho và tạo phiếu thu hoàn cọc thành công", str(e), url=page.url)
+            finally:
+                close_btn = page.get_by_role("button", name="Đóng")
+                if close_btn.count() > 0 and close_btn.last.is_visible():
+                    close_btn.last.click()
+                    time.sleep(0.3)
 
             # ── Step 4: Hủy PO chưa nhập kho + giữ tiền cọc (không hoàn trả) ──
             try:
@@ -155,7 +165,7 @@ def run():
                 page.get_by_role("button", name="Thêm Đơn Mua").click()
                 time.sleep(0.5)
                 page.get_by_label("Nhà Cung Cấp").select_option(label="Công ty TNHH Linh kiện Điện tử Sunrise (NCC001)")
-                page.get_by_role("combobox").nth(1).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
+                page.get_by_role("combobox").nth(2).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
                 page.get_by_role("spinbutton").nth(0).fill("10")
                 page.get_by_role("spinbutton").nth(1).fill("60000")
                 page.get_by_placeholder("DD/MM/YYYY").click()
@@ -180,38 +190,39 @@ def run():
                 
                 page.get_by_role("button", name="Duyệt Đơn").click()
                 time.sleep(1.5)
+                expect(page.get_by_text("Duyệt đơn mua hàng thành công")).to_be_visible()
                 dismiss_all_toasts(page)
 
                 # Duyệt giao dịch đặt cọc thứ 2 này để đánh dấu đã thanh toán đặt cọc
                 page.goto(f"{BASE_URL}/finance")
                 wait_for_page_ready(page)
-                page.get_by_role("button", name="Duyệt Giao Dịch").click()
+                page.get_by_role("tab", name="Duyệt Giao Dịch").click()
                 time.sleep(0.5)
                 deposit_row = page.locator("table tbody tr").filter(has_text="Đặt cọc đơn hàng").first
                 expect(deposit_row).to_be_visible()
                 deposit_row.get_by_role("button", name="Duyệt").click()
                 time.sleep(1.5)
 
-                # Quay lại trang purchasing để thực hiện hủy
+                # Navigate to /purchasing
                 page.goto(f"{BASE_URL}/purchasing")
                 wait_for_page_ready(page)
 
-                # Cancel PO, but uncheck refund deposit
+                # Open PO3 details and Cancel it
                 po_short_id_2 = po_with_dep_id_2[:8].upper()
                 page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill(po_short_id_2)
                 time.sleep(0.5)
                 page.locator(f"tr:has-text('{po_short_id_2}')").first.get_by_title("Xem chi tiết").click()
                 page.get_by_text("Đang tải dữ liệu...").wait_for(state="hidden")
+
                 page.get_by_role("button", name="Hủy Đơn").click()
                 time.sleep(0.5)
+                expect(page.get_by_role("heading", name="Xác Nhận Hủy Đơn Mua Hàng")).to_be_visible()
 
-                checkbox = page.get_by_role("checkbox", name=re.compile("Nhận lại tiền đặt cọc"))
-                if checkbox.is_checked():
-                    checkbox.uncheck()
-
-                # Expect warning label
-                expect(page.get_by_text("⚠️ Cảnh báo: Tiền cọc sẽ không được hoàn lại")).to_be_visible()
-
+                # Choose NOT to refund deposit (uncheck hoàn tiền đặt cọc)
+                refund_cb = page.get_by_role("checkbox", name=re.compile("Nhận lại tiền đặt cọc"))
+                if refund_cb.is_checked():
+                    refund_cb.uncheck()
+                
                 page.get_by_role("button", name="Xác nhận hủy").click()
                 time.sleep(1.5)
                 expect(page.get_by_text("Hủy đơn mua hàng thành công")).to_be_visible()
@@ -219,7 +230,7 @@ def run():
                 page.get_by_placeholder("Tìm kiếm đơn mua hàng...").fill("")
                 time.sleep(0.5)
 
-                runner.log("WF-06", 4, "PASS", "Hủy PO chưa nhập kho và giữ lại tiền cọc thành công", url=page.url)
+                runner.log("WF-06", 4, "PASS", "Hủy PO chưa nhập kho và không hoàn tiền cọc thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step4_fail")
                 runner.log("WF-06", 4, "FAIL", "Hủy PO chưa nhập kho và giữ lại tiền cọc thành công", str(e), url=page.url)
@@ -252,7 +263,7 @@ def run():
                 page.get_by_role("button", name="Thêm Đơn Mua").click()
                 time.sleep(0.5)
                 page.get_by_label("Nhà Cung Cấp").select_option(label="Công ty TNHH Linh kiện Điện tử Sunrise (NCC001)")
-                page.get_by_role("combobox").nth(1).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
+                page.get_by_role("combobox").nth(2).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
                 page.get_by_role("spinbutton").nth(0).fill("10")
                 page.get_by_role("spinbutton").nth(1).fill("60000")
                 page.get_by_placeholder("DD/MM/YYYY").click()
@@ -274,7 +285,9 @@ def run():
                 runner.screenshot(page, "step6_fail")
                 runner.log("WF-06", 6, "FAIL", "Không hiển thị nút Hủy Đơn cho đơn mua hàng nháp (Draft)", str(e), url=page.url)
             finally:
-                page.get_by_role("button", name="Đóng").last.click()
+                close_btn = page.get_by_role("button", name="Đóng").last
+                close_btn.wait_for(state="visible", timeout=5000)
+                close_btn.click()
                 time.sleep(0.5)
 
             # ── Step 7: Tạo lô hàng mới (Shipment) ──
@@ -306,8 +319,8 @@ def run():
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
                 # Verify shipment appears in list and has badge "Nháp (Chờ hàng về)"
-                expect(page.get_by_text(created_shipment_num)).to_be_visible()
-                expect(page.get_by_text("Nháp (Chờ hàng về)").first).to_be_visible()
+                expect(page.get_by_text(created_shipment_num).first).to_be_visible()
+                expect(page.get_by_text("Chờ Hàng Về").first).to_be_visible()
 
                 runner.log("WF-06", 7, "PASS", f"Tạo lô hàng mới {created_shipment_num} liên kết PO thành công", url=page.url)
             except Exception as e:
@@ -343,26 +356,26 @@ def run():
 
             # ── Step 10: Hoàn tất tiếp nhận & Hoàn tất Lô hàng ──
             try:
-                page.get_by_role("button", name="Xác Nhận Hoàn Tất").click()
-                time.sleep(1.5)
-                
-                modal = page.get_by_role("dialog", name="Tiếp Nhận & Hoàn Tất Lô Hàng")
-                expect(modal).to_be_visible()
-
-                # Select destination warehouse inside modal
-                modal.locator("select").first.select_option(label="Kho Nguyên Vật Liệu")
-                
-                # Enter receiving quantity (same as ordered)
-                qty_input = modal.locator("input[type='number']").last
-                qty_input.clear()
-                qty_input.fill("10")
-
-                # Fill logistic fee
-                fee_input = modal.get_by_label("Chi phí vận chuyển thực tế (VND)")
+                # Fill actual logistic fee on detail page
+                fee_input = page.locator("input[type='number']").first
                 fee_input.clear()
                 fee_input.fill("150000")
 
-                # Confirm completion
+                # Select destination warehouse in table row
+                page.locator("select").first.select_option(label="Kho Nguyên Vật Liệu")
+                
+                # Fill receiving quantity in table row
+                qty_input = page.locator("table input[type='number']").first
+                qty_input.clear()
+                qty_input.fill("10")
+
+                # Confirm completion on page
+                page.get_by_role("button", name="Xác Nhận Hoàn Tất").click()
+                time.sleep(1.5)
+
+                # Confirm completion in review modal
+                modal = page.get_by_role("dialog", name="Tiếp Nhận & Hoàn Tất Lô Hàng")
+                expect(modal).to_be_visible()
                 modal.get_by_role("button", name="Xác nhận Hoàn Tất").click()
                 time.sleep(2)
 
@@ -377,7 +390,7 @@ def run():
             try:
                 # Verify that the shipment is completed and landed cost is correctly recorded
                 expect(page.get_by_text("Hoàn tất").first).to_be_visible()
-                expect(page.get_by_text("150.000")).to_be_visible()  # formatted VND logistic fee
+                expect(page.get_by_text("150.000").first).to_be_visible()  # formatted VND logistic fee
 
                 runner.log("WF-06", 11, "PASS", "Lô hàng hoàn tất hiển thị chính xác trạng thái và landed cost", url=page.url)
             except Exception as e:

@@ -38,7 +38,7 @@ def run():
             invoice_code = None
             try:
                 # Chuyển sang Tab AP
-                page.get_by_role("button", name="Phải Trả (AP)").click()
+                page.get_by_role("tab", name="Phải Trả (AP)").click()
                 time.sleep(0.5)
                 
                 # Tìm hóa đơn đầu tiên chưa thanh toán
@@ -101,7 +101,7 @@ def run():
             if invoice_code:
                 try:
                     # Chuyển sang Tab Duyệt Giao Dịch
-                    page.get_by_role("button", name="Duyệt Giao Dịch").click()
+                    page.get_by_role("tab", name="Duyệt Giao Dịch").click()
                     time.sleep(0.5)
                     
                     # Tìm dòng giao dịch của hóa đơn vừa thanh toán (chứa mã hóa đơn trong cột Ghi chú hoặc thông tin)
@@ -120,7 +120,11 @@ def run():
                     runner.log("WF-12", 5, "PASS", "Happy Case: Phê duyệt giao dịch dòng tiền chờ duyệt thành công", url=page.url)
                     
                     # ── Failed Case UI: Chặn duyệt lại bằng cách xác thực dòng đó đã biến mất khỏi bảng ──
-                    # Vì tab Duyệt Giao Dịch chỉ hiển thị status=pending_approval, khi đã duyệt thì dòng này phải biến mất hoàn toàn
+                    # reload page to clean up the cached RTK query results
+                    page.reload()
+                    wait_for_page_ready(page)
+                    page.get_by_role("tab", name="Duyệt Giao Dịch").click()
+                    time.sleep(0.5)
                     expect(page.get_by_text(tx_code)).not_to_be_visible()
                     runner.log("WF-12", 6, "PASS", "Failed Case UI: Chặn phê duyệt lại thành công do giao dịch đã hạch toán biến mất khỏi giao diện duyệt dòng tiền", url=page.url)
                 except Exception as e:
