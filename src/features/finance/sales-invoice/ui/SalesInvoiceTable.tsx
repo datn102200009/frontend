@@ -12,13 +12,15 @@ interface SalesInvoiceTableProps {
   loading: boolean;
   onView?: (id: string) => void;
   onCollect?: (invoice: { id: string; amount: number; name?: string }) => void;
+  filterSlot?: React.ReactNode;
 }
 
 export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({ 
   data, 
   loading, 
   onView, 
-  onCollect 
+  onCollect,
+  filterSlot
 }) => {
   const columns = useMemo(() => {
     const helper = createColumnHelper<SalesInvoice>();
@@ -113,6 +115,7 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
         loading={loading}
         searchPlaceholder="Tìm kiếm hóa đơn bán..."
         emptyMessage="Không tìm thấy hóa đơn nào"
+        filterSlot={filterSlot}
       />
     </div>
   );

@@ -12,13 +12,15 @@ interface PurchaseInvoiceTableProps {
   loading: boolean;
   onView?: (id: string) => void;
   onPay?: (invoice: { id: string; amount: number }) => void;
+  filterSlot?: React.ReactNode;
 }
 
 export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ 
   data, 
   loading, 
   onView, 
-  onPay 
+  onPay,
+  filterSlot
 }) => {
   const columns = useMemo(() => {
     const helper = createColumnHelper<PurchaseInvoice>();
@@ -115,6 +117,7 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
         loading={loading}
         searchPlaceholder="Tìm kiếm hóa đơn mua..."
         emptyMessage="Không tìm thấy hóa đơn mua hàng nào"
+        filterSlot={filterSlot}
       />
     </div>
   );

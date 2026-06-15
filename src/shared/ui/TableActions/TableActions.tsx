@@ -16,18 +16,26 @@ export const TableActions: React.FC<TableActionsProps> = ({ children }) => {
 
 interface ActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode;
-  variant?: 'default' | 'danger';
+  variant?: 'default' | 'danger' | 'success' | 'info' | 'warning';
 }
 
 /**
  * Standard icon button for table actions.
  */
 export const ActionButton: React.FC<ActionButtonProps> = ({ icon, variant = 'default', className, title, ...props }) => {
+  const variantClassMap: Record<string, string> = {
+    default: '',
+    danger: styles.deleteBtn,
+    success: styles.successBtn,
+    info: styles.infoBtn,
+    warning: styles.warningBtn,
+  };
+
   return (
     <Tooltip content={title || ''}>
       <button
         type="button"
-        className={`${styles.actionBtn} ${variant === 'danger' ? styles.deleteBtn : ''} ${className || ''}`}
+        className={`${styles.actionBtn} ${variantClassMap[variant] || ''} ${className || ''}`}
         aria-label={props['aria-label'] || title}
         title={title}
         {...props}

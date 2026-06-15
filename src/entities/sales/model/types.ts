@@ -20,7 +20,7 @@ export type SalesOrderLine = GenSalesOrderLine & {
 export type SalesOrder = GenSalesOrder & {
   id: string;
   customer: string;
-  status: 'draft' | 'pending' | 'pending_credit_approval' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled';
+  status: 'draft' | 'pending' | 'pending_credit_approval' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled' | 'cancel_pending';
   total_amount: number;
   advance_paid_amount: number;
   created_at: string;

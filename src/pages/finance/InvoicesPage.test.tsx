@@ -149,4 +149,70 @@ describe('InvoicesPage', () => {
     const amountInput = within(modal).getByLabelText(/Số tiền thu nợ/i);
     expect(amountInput).toHaveValue(10000000); // Prefilled remaining amount: 15m - 5m = 10m
   });
+
+  it('filters invoices by status using status filter dropdown', async () => {
+    let lastAPQueryStatus: string | null | undefined = undefined;
+
+    server.use(
+      http.get('*/api/v1/finance/invoices/purchase/', ({ request }) => {
+        const url = new URL(request.url);
+        lastAPQueryStatus = url.searchParams.get('status');
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          current_page: 1,
+          results: [
+            {
+              id: 'PI-001',
+              order: 'PO-001',
+              vendor: 'VND-01',
+              vendor_name: lastAPQueryStatus === 'paid' ? 'Paid Supplier' : 'General Supplier',
+              total_amount: 10000000,
+              paid_amount: 4000000,
+              status: lastAPQueryStatus || 'unpaid',
+              due_date: '2026-06-30',
+              lines: []
+            }
+          ]
+        });
+      }),
+      http.get('*/api/v1/finance/invoices/sales/', () => {
+        return HttpResponse.json({
+          count: 0,
+          total_pages: 0,
+          current_page: 1,
+          results: []
+        });
+      })
+    );
+
+    renderWithProviders(<InvoicesPage />);
+    const user = userEvent.setup();
+
+    // Trạng thái mặc định phải là 'unpaid,partial'
+    await waitFor(() => {
+      expect(lastAPQueryStatus).toBe('unpaid,partial');
+      expect(screen.getByText('General Supplier')).toBeInTheDocument();
+    });
+
+    // Định vị dropdown chọn bộ lọc
+    const select = screen.getByRole('combobox');
+    
+    // Chọn "Đã thanh toán" (paid)
+    await user.selectOptions(select, 'paid');
+    
+    // Kiểm tra API được gọi với status=paid và UI cập nhật dữ liệu
+    await waitFor(() => {
+      expect(lastAPQueryStatus).toBe('paid');
+      expect(screen.getByText('Paid Supplier')).toBeInTheDocument();
+    });
+
+    // Chọn "Tất cả" (value rỗng)
+    await user.selectOptions(select, '');
+
+    // Kiểm tra API được gọi không có param status
+    await waitFor(() => {
+      expect(lastAPQueryStatus).toBeNull();
+    });
+  });
 });

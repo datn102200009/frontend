@@ -20,7 +20,7 @@ export type PurchaseOrderLine = GenPurchaseOrderLine & {
 export type PurchaseOrder = GenPurchaseOrder & {
   id: string;
   vendor: string;
-  status: 'draft' | 'pending' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled';
+  status: 'draft' | 'pending' | 'paid_unshipped' | 'shipped_unpaid' | 'completed' | 'cancelled' | 'cancel_pending';
   total_amount: number;
   advance_paid_amount: number;
   created_at: string;
