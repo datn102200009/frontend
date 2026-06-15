@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   usePostHrmSalarySlipsByIdCalculateMutation,
-  usePostHrmSalarySlipsByIdApproveMutation,
 } from '@entities/hrm/api/hrmApi';
+import { usePostFinanceSalarySlipsByIdApproveMutation } from '@entities/finance/api/financeApi';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -20,8 +20,8 @@ interface SalarySlipDetailsModalProps {
 export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (props) => {
   const { open, onClose, onSuccess, onCalculateSuccess, salarySlip } = props;
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
-  const [approveSalary, { isLoading: isApproving }] = usePostHrmSalarySlipsByIdApproveMutation();
-  const canApprove = usePermission('hrm.payroll_approve');
+  const [approveSalary, { isLoading: isApproving }] = usePostFinanceSalarySlipsByIdApproveMutation();
+  const canApprove = usePermission('finance.payroll_approve');
 
   const [apiError, setApiError] = useState<string | null>(null);
 

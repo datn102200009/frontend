@@ -404,11 +404,24 @@ export const handlers = [
     ]);
   }),
 
-  http.post('*/api/v1/hrm/salary-slips/bulk-confirm-pay/', async ({ request }) => {
-    const data = await request.json() as { salary_period: string };
+  http.post('*/api/v1/finance/salary-slips/bulk-approve-pay/', async ({ request }) => {
+    const data = await request.json() as { salarySlipBulkApprovePayInput: { salary_period: string } };
+    const period = data.salarySlipBulkApprovePayInput?.salary_period || '2026-05';
     return HttpResponse.json([
-      { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'paid' }
+      { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: period, base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'paid' }
     ], { status: 200 });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/:id/approve/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'approved' });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/:id/reject/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'calculated' });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/:id/pay/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'paid' });
   }),
 
   // Public Holidays mocks

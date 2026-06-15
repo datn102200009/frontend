@@ -154,12 +154,6 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/calculate/`, method: 'POST' }),
     }),
-    postHrmSalarySlipsByIdApprove: build.mutation<
-      PostHrmSalarySlipsByIdApproveApiResponse,
-      PostHrmSalarySlipsByIdApproveApiArg
-    >({
-      query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/approve/`, method: 'POST' }),
-    }),
     getHrmRewards: build.query<GetHrmRewardsApiResponse, GetHrmRewardsApiArg>({
       query: (queryArg) => ({
         url: `/hrm/rewards/`,
@@ -193,16 +187,6 @@ const injectedRtkApi = api.injectEndpoints({
       PostHrmDisciplinesByIdApproveApiArg
     >({
       query: (queryArg) => ({ url: `/hrm/disciplines/${queryArg.id}/approve/`, method: 'POST' }),
-    }),
-    postHrmSalarySlipsBulkConfirmPay: build.mutation<
-      PostHrmSalarySlipsBulkConfirmPayApiResponse,
-      PostHrmSalarySlipsBulkConfirmPayApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/salary-slips/bulk-confirm-pay/`,
-        method: 'POST',
-        body: queryArg.body,
-      }),
     }),
     getHrmPublicHolidays: build.query<GetHrmPublicHolidaysApiResponse, GetHrmPublicHolidaysApiArg>({
       query: (queryArg) => ({
@@ -436,11 +420,6 @@ export type PostHrmSalarySlipsByIdCalculateApiResponse =
 export type PostHrmSalarySlipsByIdCalculateApiArg = {
   id: string
 }
-export type PostHrmSalarySlipsByIdApproveApiResponse =
-  /** status 200 Phê duyệt thành công */ SalarySlip
-export type PostHrmSalarySlipsByIdApproveApiArg = {
-  id: string
-}
 export type GetHrmRewardsApiResponse = /** status 200 Thành công */ RewardRecord[]
 export type GetHrmRewardsApiArg = {
   /** Lọc theo ID nhân viên */
@@ -484,16 +463,6 @@ export type PostHrmDisciplinesByIdApproveApiResponse =
   /** status 200 Phê duyệt thành công */ DisciplineRecord
 export type PostHrmDisciplinesByIdApproveApiArg = {
   id: string
-}
-export type PostHrmSalarySlipsBulkConfirmPayApiResponse =
-  /** status 200 Xác nhận và thanh toán lương nhanh thành công */ SalarySlip[]
-export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
-  body: {
-    /** Kỳ lương cần thanh toán (YYYY-MM) */
-    salary_period: string
-    /** Hình thức chi trả lương */
-    payment_method: 'cash' | 'bank_transfer'
-  }
 }
 export type GetHrmPublicHolidaysApiResponse = /** status 200 Thành công */ PublicHoliday[]
 export type GetHrmPublicHolidaysApiArg = {
@@ -737,14 +706,12 @@ export const {
   useGetHrmSalaryPeriodsQuery,
   usePostHrmSalarySlipsInitializeMutation,
   usePostHrmSalarySlipsByIdCalculateMutation,
-  usePostHrmSalarySlipsByIdApproveMutation,
   useGetHrmRewardsQuery,
   usePostHrmRewardsMutation,
   usePostHrmRewardsByIdApproveMutation,
   useGetHrmDisciplinesQuery,
   usePostHrmDisciplinesMutation,
   usePostHrmDisciplinesByIdApproveMutation,
-  usePostHrmSalarySlipsBulkConfirmPayMutation,
   useGetHrmPublicHolidaysQuery,
   usePostHrmPublicHolidaysMutation,
   useGetHrmPublicHolidaysByIdQuery,

@@ -182,6 +182,45 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.collectInvoiceInput,
       }),
     }),
+    postFinanceSalarySlipsBulkApprovePay: build.mutation<
+      PostFinanceSalarySlipsBulkApprovePayApiResponse,
+      PostFinanceSalarySlipsBulkApprovePayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/bulk-approve-pay/`,
+        method: 'POST',
+        body: queryArg.salarySlipBulkApprovePayInput,
+      }),
+    }),
+    postFinanceSalarySlipsByIdApprove: build.mutation<
+      PostFinanceSalarySlipsByIdApproveApiResponse,
+      PostFinanceSalarySlipsByIdApproveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/${queryArg.id}/approve/`,
+        method: 'POST',
+      }),
+    }),
+    postFinanceSalarySlipsByIdReject: build.mutation<
+      PostFinanceSalarySlipsByIdRejectApiResponse,
+      PostFinanceSalarySlipsByIdRejectApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/${queryArg.id}/reject/`,
+        method: 'POST',
+        body: queryArg.salarySlipRejectInput,
+      }),
+    }),
+    postFinanceSalarySlipsByIdPay: build.mutation<
+      PostFinanceSalarySlipsByIdPayApiResponse,
+      PostFinanceSalarySlipsByIdPayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/${queryArg.id}/pay/`,
+        method: 'POST',
+        body: queryArg.salarySlipPaymentInput,
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -328,6 +367,28 @@ export type PostFinanceInvoicesSalesByPkCollectApiResponse =
 export type PostFinanceInvoicesSalesByPkCollectApiArg = {
   pk: string
   collectInvoiceInput: CollectInvoiceInput
+}
+export type PostFinanceSalarySlipsBulkApprovePayApiResponse =
+  /** status 200 Phê duyệt và thanh toán thành công. */ SalarySlip[]
+export type PostFinanceSalarySlipsBulkApprovePayApiArg = {
+  salarySlipBulkApprovePayInput: SalarySlipBulkApprovePayInput
+}
+export type PostFinanceSalarySlipsByIdApproveApiResponse =
+  /** status 200 Phê duyệt thành công. */ SalarySlip
+export type PostFinanceSalarySlipsByIdApproveApiArg = {
+  id: string
+}
+export type PostFinanceSalarySlipsByIdRejectApiResponse =
+  /** status 200 Từ chối thành công. */ SalarySlip
+export type PostFinanceSalarySlipsByIdRejectApiArg = {
+  id: string
+  salarySlipRejectInput: SalarySlipRejectInput
+}
+export type PostFinanceSalarySlipsByIdPayApiResponse =
+  /** status 200 Chi trả thành công. */ SalarySlip
+export type PostFinanceSalarySlipsByIdPayApiArg = {
+  id: string
+  salarySlipPaymentInput: SalarySlipPaymentInput
 }
 export type CashFlowTransaction = {
   id?: string
@@ -477,6 +538,49 @@ export type CollectInvoiceInput = {
   amount: number
   payment_method?: 'cash' | 'bank_transfer'
 }
+export type SalarySlip = {
+  id?: string
+  name?: string
+  employee_id?: string
+  employee_code?: string
+  employee_name?: string
+  /** Định dạng YYYY-MM */
+  salary_period?: string
+  base_salary?: string
+  overtime_amount?: string
+  allowance_amount?: string
+  reward_amount_total?: string
+  discipline_deduction_total?: string
+  gross_pay?: string
+  deductions?: string
+  net_pay?: string
+  payment_method?: ('cash' | 'bank_transfer') | null
+  status?: 'draft' | 'calculated' | 'pending_finance_review' | 'approved' | 'paid'
+  remarks?: string | null
+  breakdown?: {
+    standard_working_days?: number
+    incomes?: {
+      name?: string
+      amount?: number
+    }[]
+    deductions?: {
+      name?: string
+      amount?: number
+    }[]
+  } | null
+  created_at?: string
+  updated_at?: string
+}
+export type SalarySlipBulkApprovePayInput = {
+  salary_period: string
+  payment_method?: 'cash' | 'bank_transfer'
+}
+export type SalarySlipRejectInput = {
+  reason: string
+}
+export type SalarySlipPaymentInput = {
+  payment_method?: 'cash' | 'bank_transfer'
+}
 export const {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsMutation,
@@ -497,4 +601,8 @@ export const {
   useGetFinanceInvoicesSalesQuery,
   useGetFinanceInvoicesSalesByPkQuery,
   usePostFinanceInvoicesSalesByPkCollectMutation,
+  usePostFinanceSalarySlipsBulkApprovePayMutation,
+  usePostFinanceSalarySlipsByIdApproveMutation,
+  usePostFinanceSalarySlipsByIdRejectMutation,
+  usePostFinanceSalarySlipsByIdPayMutation,
 } = injectedRtkApi
