@@ -10,14 +10,22 @@ const mockAdminUser = {
   role: 'admin' as const,
   permissions: [
     'manufacturing.bom_view',
+    'manufacturing.work_order_view',
     'inventory.view',
     'purchasing.view_order',
     'sales.view_order',
     'crm.customer_view',
     'procurement.supplier_view',
     'finance.view_cash_flow',
+    'finance.pay_invoice',
+    'finance.collect_sales_invoice',
     'finance.view_fixed_asset',
     'hrm.view_employee',
+    'hrm.view_attendance',
+    'hrm.view_leaverequest',
+    'hrm.view_rewarddiscipline',
+    'hrm.view_publicholiday',
+    'finance.view_salaryslip',
   ],
 };
 
@@ -59,14 +67,20 @@ describe('Sidebar Component', () => {
     // Verify sections and links
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('BOM')).toBeInTheDocument();
+    expect(screen.getByText('Lệnh Sản Xuất')).toBeInTheDocument();
     expect(screen.getByText('Kho')).toBeInTheDocument();
     expect(screen.getByText('Mua Hàng')).toBeInTheDocument();
     expect(screen.getByText('Bán Hàng')).toBeInTheDocument();
     expect(screen.getByText('Khách Hàng')).toBeInTheDocument();
     expect(screen.getByText('Nhà Cung Cấp')).toBeInTheDocument();
     expect(screen.getByText('Dòng Tiền')).toBeInTheDocument();
+    expect(screen.getByText('Hoá Đơn Mua/Bán')).toBeInTheDocument();
     expect(screen.getByText('Tài Sản Cố Định')).toBeInTheDocument();
-    expect(screen.getByText('Quản Lý HR')).toBeInTheDocument();
+    expect(screen.getByText('Nhân Viên')).toBeInTheDocument();
+    expect(screen.getByText('Chấm Công & Nghỉ Phép')).toBeInTheDocument();
+    expect(screen.getByText('Khen Thưởng & Kỷ Luật')).toBeInTheDocument();
+    expect(screen.getByText('Ngày Nghỉ Lễ')).toBeInTheDocument();
+    expect(screen.getByText('Bảng Lương')).toBeInTheDocument();
 
     // Verify group headers
     expect(screen.getByText('Tổng Quan')).toBeInTheDocument();
@@ -96,13 +110,15 @@ describe('Sidebar Component', () => {
 
     // Hidden links
     expect(screen.queryByText('BOM')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lệnh Sản Xuất')).not.toBeInTheDocument();
     expect(screen.queryByText('Mua Hàng')).not.toBeInTheDocument();
     expect(screen.queryByText('Bán Hàng')).not.toBeInTheDocument();
     expect(screen.queryByText('Khách Hàng')).not.toBeInTheDocument();
     expect(screen.queryByText('Nhà Cung Cấp')).not.toBeInTheDocument();
     expect(screen.queryByText('Dòng Tiền')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hoá Đơn Mua/Bán')).not.toBeInTheDocument();
     expect(screen.queryByText('Tài Sản Cố Định')).not.toBeInTheDocument();
-    expect(screen.queryByText('Quản Lý HR')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nhân Viên')).not.toBeInTheDocument();
 
     // Hidden headers
     expect(screen.queryByText('Sản Xuất')).not.toBeInTheDocument();
@@ -132,6 +148,7 @@ describe('Sidebar Component', () => {
     expect(screen.queryByText('Kho')).not.toBeInTheDocument();
     expect(screen.queryByText('Sản Xuất')).not.toBeInTheDocument();
     expect(screen.queryByText('BOM')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lệnh Sản Xuất')).not.toBeInTheDocument();
     expect(screen.queryByText('Thương Mại')).not.toBeInTheDocument();
     expect(screen.queryByText('Mua Hàng')).not.toBeInTheDocument();
     expect(screen.queryByText('Bán Hàng')).not.toBeInTheDocument();

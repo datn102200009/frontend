@@ -75,34 +75,34 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     return { to: `/finance?tab=cashflow&search=${sid}`, display: sid };
   }
   if (code === 'finance_unpaid_purchase_invoices') {
-    return { to: `/finance?tab=purchase_invoices&id=${id}`, display: sid };
+    return { to: `/finance/invoices?tab=purchase_invoices&id=${id}`, display: sid };
   }
   if (code === 'finance_unpaid_sales_invoices') {
-    return { to: `/finance?tab=sales_invoices&id=${id}`, display: sid };
+    return { to: `/finance/invoices?tab=sales_invoices&id=${id}`, display: sid };
   }
   if (code === 'finance_depreciation_status') {
     return { to: `/finance/fixed-assets?assetCode=${item.asset_code}`, display: item.asset_code };
   }
   if (code === 'hrm_payroll_lifecycle_status') {
     return {
-      to: `/hrm?tab=salary&period=${item.salary_period}&status=${item.status}`,
+      to: `/hrm/payroll?period=${item.salary_period}&status=${item.status}`,
       display: `Kỳ ${item.salary_period}`,
     };
   }
   if (code === 'hrm_pending_leave_requests') {
-    return { to: `/hrm?tab=leave&id=${id}`, display: item.employee_name };
+    return { to: `/hrm/attendance-leave?tab=leave&id=${id}`, display: item.employee_name };
   }
   if (code === 'hrm_expiring_contracts') {
-    return { to: `/hrm?tab=employees&id=${item.employee_id || id}`, display: item.contract_no || sid };
+    return { to: `/hrm/employees?id=${item.employee_id || id}`, display: item.contract_no || sid };
   }
   if (code === 'hrm_today_attendance_rate') {
-    return { to: `/hrm?tab=attendance&id=${id}`, display: item.employee_id };
+    return { to: `/hrm/attendance-leave?tab=attendance&id=${id}`, display: item.employee_id };
   }
   if (code.startsWith('manufacturing_')) {
     let mStatus = 'in_progress';
     if (code === 'manufacturing_pending_wo_approval') mStatus = 'pending_approval';
     else if (code === 'manufacturing_pending_completion') mStatus = 'pending_production_complete';
-    return { to: `/bom?status=${mStatus}&tab=wo&id=${id}`, display: item.name || sid };
+    return { to: `/work-orders?status=${mStatus}&id=${id}`, display: item.name || sid };
   }
   return { to: '#', display: sid };
 }

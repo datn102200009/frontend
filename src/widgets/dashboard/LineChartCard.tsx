@@ -1,6 +1,6 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
-import { niceCeil } from '../../shared/lib/chartScale';
+import { computeChartMax } from '../../shared/lib/chartScale';
 import { formatVND } from '../../shared/lib/formatVND';
 import { formatYAxis } from '../../shared/lib/chartAxis';
 import {
@@ -80,7 +80,7 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
   // Calculate scales
   const revenues = points.map((p) => parseFloat(p.revenue) || 0);
   const maxVal = Math.max(...revenues, 1_000_000);
-  const chartMax = niceCeil(maxVal * 1.15); // 15% head room
+  const chartMax = computeChartMax(maxVal, 0.12);
 
   // Calculate 5 Y-axis grid lines
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map((pct) => {

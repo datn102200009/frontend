@@ -12,8 +12,12 @@ import {
   X,
   Users,
   Truck,
-  Contact,
   Briefcase,
+  FileText,
+  CalendarCheck,
+  Award,
+  CalendarDays,
+  Wallet,
 } from 'lucide-react';
 import type { RootState } from '@app/store';
 import { logout } from '@features/auth/model/authSlice';
@@ -31,7 +35,7 @@ interface NavItem {
   to: string;
   icon: React.ReactNode;
   label: string;
-  permission?: string;
+  permission?: string | string[];
 }
 
 interface NavSection {
@@ -50,6 +54,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Sản Xuất',
     items: [
       { to: '/bom', icon: <Boxes size={20} />, label: 'BOM', permission: 'manufacturing.bom_view' },
+      { to: '/work-orders', icon: <ClipboardList size={20} />, label: 'Lệnh Sản Xuất', permission: 'manufacturing.work_order_view' },
     ],
   },
   {
@@ -76,13 +81,18 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Tài Chính',
     items: [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền', permission: 'finance.view_cash_flow' },
+      { to: '/finance/invoices', icon: <FileText size={20} />, label: 'Hoá Đơn Mua/Bán', permission: ['finance.pay_invoice', 'finance.collect_sales_invoice'] },
       { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định', permission: 'finance.view_fixed_asset' },
     ],
   },
   {
     label: 'Nhân Sự',
     items: [
-      { to: '/hrm', icon: <Contact size={20} />, label: 'Quản Lý HR', permission: 'hrm.view_employee' },
+      { to: '/hrm/employees', icon: <Users size={20} />, label: 'Nhân Viên', permission: 'hrm.view_employee' },
+      { to: '/hrm/attendance-leave', icon: <CalendarCheck size={20} />, label: 'Chấm Công & Nghỉ Phép', permission: ['hrm.view_attendance', 'hrm.view_leaverequest'] },
+      { to: '/hrm/rewards-disciplines', icon: <Award size={20} />, label: 'Khen Thưởng & Kỷ Luật', permission: 'hrm.view_rewarddiscipline' },
+      { to: '/hrm/holidays', icon: <CalendarDays size={20} />, label: 'Ngày Nghỉ Lễ', permission: 'hrm.view_publicholiday' },
+      { to: '/hrm/payroll', icon: <Wallet size={20} />, label: 'Bảng Lương', permission: 'finance.view_salaryslip' },
     ],
   },
 ];
@@ -109,9 +119,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   // Filter navigation sections based on user permissions
   const filteredSections = NAV_SECTIONS.map((section) => {
-    const allowedItems = section.items.filter(
-      (item) => !item.permission || currentUser?.permissions?.includes(item.permission)
-    );
+    const allowedItems = section.items.filter((item) => {
+      if (!item.permission) return true;
+      if (Array.isArray(item.permission)) {
+        return item.permission.some((p) => currentUser?.permissions?.includes(p));
+      }
+      return currentUser?.permissions?.includes(item.permission);
+    });
     return { ...section, items: allowedItems };
   }).filter((section) => section.items.length > 0);
 

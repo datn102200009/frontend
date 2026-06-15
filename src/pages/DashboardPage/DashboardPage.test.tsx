@@ -27,18 +27,18 @@ describe('DashboardPage', () => {
     { code: 'inventory_pending_entries', title: 'Yêu cầu chuyển kho chờ thực hiện', type: 'kpi_list', size: '2x2', quick_links: ['/inventory?tab=entries&status=draft'] },
 
     { code: 'finance_cashflow_overview', title: 'Tổng quan dòng tiền', type: 'cashflow_overview', size: '2x2', quick_links: ['/finance'] },
-    { code: 'finance_unpaid_purchase_invoices', title: 'AP - Hóa đơn mua chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance?tab=ap&status=unpaid'] },
-    { code: 'finance_unpaid_sales_invoices', title: 'AR - Hóa đơn bán chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/sales?tab=invoices&status=unpaid'] },
+    { code: 'finance_unpaid_purchase_invoices', title: 'AP - Hóa đơn mua chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance/invoices?tab=purchase_invoices&status=unpaid,partial'] },
+    { code: 'finance_unpaid_sales_invoices', title: 'AR - Hóa đơn bán chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance/invoices?tab=sales_invoices&status=unpaid,partial'] },
     { code: 'finance_depreciation_status', title: 'Khấu hao tài sản cố định', type: 'kpi_list', size: '1x2', quick_links: ['/finance/fixed-assets'] },
 
-    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=salary'] },
-    { code: 'hrm_pending_leave_requests', title: 'Yêu cầu nghỉ phép chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=leave'] },
-    { code: 'hrm_expiring_contracts', title: 'Hợp đồng lao động sắp hết hạn', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=employees'] },
-    { code: 'hrm_today_attendance_rate', title: 'Theo dõi vắng mặt', type: 'gauge', size: '1x2', quick_links: ['/hrm?tab=attendance'] },
+    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'kpi_list', size: '1x2', quick_links: ['/hrm/payroll'] },
+    { code: 'hrm_pending_leave_requests', title: 'Yêu cầu nghỉ phép chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/hrm/attendance-leave?tab=leave'] },
+    { code: 'hrm_expiring_contracts', title: 'Hợp đồng lao động sắp hết hạn', type: 'kpi_list', size: '1x2', quick_links: ['/hrm/employees'] },
+    { code: 'hrm_today_attendance_rate', title: 'Theo dõi vắng mặt', type: 'gauge', size: '1x2', quick_links: ['/hrm/attendance-leave?tab=attendance'] },
 
-    { code: 'manufacturing_pending_wo_approval', title: 'Lệnh sản xuất chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=pending_approval'] },
-    { code: 'manufacturing_active_wos', title: 'Lệnh sản xuất đang thực hiện', type: 'stacked_progress', size: '2x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
-    { code: 'manufacturing_pending_completion', title: 'Lệnh sản xuất chờ nghiệm thu', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=pending_production_complete'] },
+    { code: 'manufacturing_pending_wo_approval', title: 'Lệnh sản xuất chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/work-orders?status=pending_approval'] },
+    { code: 'manufacturing_active_wos', title: 'Lệnh sản xuất đang thực hiện', type: 'stacked_progress', size: '2x2', quick_links: ['/work-orders?status=in_progress'] },
+    { code: 'manufacturing_pending_completion', title: 'Lệnh sản xuất chờ nghiệm thu', type: 'kpi_list', size: '1x2', quick_links: ['/work-orders?status=pending_production_complete'] },
   ];
 
   // Mock batch data with the new payload shapes (dict for KPI/donut/aging/gauge, list for stacked_progress/list_mini).

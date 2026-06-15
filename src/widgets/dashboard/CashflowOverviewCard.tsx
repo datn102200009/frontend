@@ -1,6 +1,6 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
 import { CardHeader } from './CardHeader';
-import { niceCeil } from '../../shared/lib/chartScale';
+import { computeChartMax } from '../../shared/lib/chartScale';
 import { formatVND } from '../../shared/lib/formatVND';
 import { formatYAxis } from '../../shared/lib/chartAxis';
 import {
@@ -76,7 +76,7 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
     ...weeks.map((w) => Math.max(w.receive, w.pay)),
     1_000_000 // Fallback minimum scale
   );
-  const chartMax = niceCeil(maxVal * 1.15); // Leave 15% headroom
+  const chartMax = computeChartMax(maxVal, 0.12);
 
   // Calculate 4 Y-axis grid lines (0%, 33%, 66%, 100%)
   const gridLines = [0, 0.33, 0.66, 1].map((pct) => {

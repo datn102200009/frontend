@@ -161,7 +161,7 @@ describe('WorkOrderList', () => {
 
   it('automatically opens work order detail modal when id is in search params', async () => {
     renderWithProviders(<WorkOrderList />, {
-      initialEntries: ['/bom?status=pending_approval&tab=wo&id=wo-1']
+      initialEntries: ['/work-orders?status=pending_approval&id=wo-1']
     });
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();

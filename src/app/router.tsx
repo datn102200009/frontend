@@ -24,14 +24,21 @@ const ForbiddenPage = () => (
 const LoginPage = lazy(() => import('../pages/LoginPage/LoginPage'));
 const DashboardPage = lazy(() => import('../pages/DashboardPage/DashboardPage'));
 const BomPage = lazy(() => import('../pages/BomPage/BomPage'));
+const WorkOrdersPage = lazy(() => import('../pages/manufacturing/WorkOrdersPage'));
 const InventoryPage = lazy(() => import('../pages/InventoryPage/InventoryPage'));
 const PurchasingPage = lazy(() => import('../pages/purchasing/PurchasingPage'));
 const SalesPage = lazy(() => import('../pages/sales/SalesPage'));
 const FinancePage = lazy(() => import('../pages/finance/FinancePage'));
+const InvoicesPage = lazy(() => import('../pages/finance/InvoicesPage'));
 const FixedAssetsPage = lazy(() => import('../pages/finance/assets/FixedAssetsPage').then(m => ({ default: m.FixedAssetsPage })));
 const CustomersPage = lazy(() => import('../pages/crm/CustomersPage'));
 const SuppliersPage = lazy(() => import('../pages/procurement/SuppliersPage'));
 const HrmPage = lazy(() => import('../pages/hrm/HrmPage'));
+const EmployeesPage = lazy(() => import('../pages/hrm/employees/EmployeesPage'));
+const AttendanceLeavePage = lazy(() => import('../pages/hrm/attendance-leave/AttendanceLeavePage'));
+const RewardsDisciplinesPage = lazy(() => import('../pages/hrm/rewards-disciplines/RewardsDisciplinesPage'));
+const HolidaysPage = lazy(() => import('../pages/hrm/holidays/HolidaysPage'));
+const PayrollPage = lazy(() => import('../pages/hrm/payroll/PayrollPage'));
 
 function PageLoader() {
   return (
@@ -82,6 +89,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'work-orders',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="manufacturing.work_order_view" fallback={<ForbiddenPage />}>
+              <WorkOrdersPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
         path: 'inventory',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -122,6 +139,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'finance/invoices',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermissions={['finance.pay_invoice', 'finance.collect_sales_invoice']} operator="OR" fallback={<ForbiddenPage />}>
+              <InvoicesPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
         path: 'finance/fixed-assets',
         element: (
           <Suspense fallback={<PageLoader />}>
@@ -157,6 +184,56 @@ export const router = createBrowserRouter([
           <Suspense fallback={<PageLoader />}>
             <PermissionGuard requiredPermission="hrm.view_employee" fallback={<ForbiddenPage />}>
               <HrmPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hrm/employees',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="hrm.view_employee" fallback={<ForbiddenPage />}>
+              <EmployeesPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hrm/attendance-leave',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermissions={['hrm.view_attendance', 'hrm.view_leaverequest']} operator="OR" fallback={<ForbiddenPage />}>
+              <AttendanceLeavePage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hrm/rewards-disciplines',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="hrm.view_rewarddiscipline" fallback={<ForbiddenPage />}>
+              <RewardsDisciplinesPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hrm/holidays',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="hrm.view_publicholiday" fallback={<ForbiddenPage />}>
+              <HolidaysPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'hrm/payroll',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="finance.view_salaryslip" fallback={<ForbiddenPage />}>
+              <PayrollPage />
             </PermissionGuard>
           </Suspense>
         ),

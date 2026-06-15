@@ -90,7 +90,7 @@ export default function DashboardPage() {
       <div className={styles.header}>
         <h1 className={styles.title} id="dashboard-title">Trang Tổng Quan</h1>
         <p className={styles.subtitle} id="dashboard-subtitle">
-          Hệ thống Bento Grid ERP Xuân Hòa — Dữ liệu cập nhật tự động{batchFetching && ' (đang đồng bộ...)'}
+
         </p>
       </div>
 

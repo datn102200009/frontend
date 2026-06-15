@@ -38,6 +38,6 @@ describe('kpiListRowHelpers', () => {
 
   it('links to employeeId for hrm_expiring_contracts', () => {
     const res = buildItemLink(mockItem, 'hrm_expiring_contracts');
-    expect(res.to).toBe(`/hrm?tab=employees&id=emp-999`);
+    expect(res.to).toBe(`/hrm/employees?id=emp-999`);
   });
 });

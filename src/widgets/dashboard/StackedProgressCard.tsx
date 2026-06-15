@@ -81,12 +81,12 @@ export function StackedProgressCard({
 
       <div className={styles.cardBody}>
         {enableSort && (
-          <div className={styles.stackedSortFilter} role="radiogroup" aria-label="Sắp xếp lệnh sản xuất">
+          <div className={styles.kpiListTabFilter} role="radiogroup" aria-label="Sắp xếp lệnh sản xuất">
             <button
               type="button"
               role="radio"
               aria-checked={sortKey === 'deadline'}
-              className={`${styles.stackedSortBtn} ${sortKey === 'deadline' ? styles.stackedSortBtnActive : ''}`}
+              className={`${styles.tabBtn} ${sortKey === 'deadline' ? styles.tabBtnActive : ''}`}
               onClick={() => setSortKey('deadline')}
             >
               Theo deadline
@@ -95,7 +95,7 @@ export function StackedProgressCard({
               type="button"
               role="radio"
               aria-checked={sortKey === 'progress'}
-              className={`${styles.stackedSortBtn} ${sortKey === 'progress' ? styles.stackedSortBtnActive : ''}`}
+              className={`${styles.tabBtn} ${sortKey === 'progress' ? styles.tabBtnActive : ''}`}
               onClick={() => setSortKey('progress')}
             >
               Theo % hoàn thành
