@@ -30,6 +30,8 @@ const completeFormSchema = z.object({
       item_code: z.string(),
       item_name: z.string(),
       ordered_quantity: z.number(),
+      received_quantity: z.number(),
+      remaining_quantity: z.number(),
       quantity: z.number({ message: 'Số lượng phải là số' }).min(0, 'Số lượng không được âm'),
       target_warehouse_id: z.string().nullable().optional(),
     }).refine(
@@ -45,10 +47,10 @@ const completeFormSchema = z.object({
       }
     ).refine(
       (data) => {
-        return data.quantity <= data.ordered_quantity;
+        return data.quantity <= data.remaining_quantity;
       },
       {
-        message: 'Số lượng nhận không được vượt quá số lượng đặt',
+        message: 'Số lượng nhận không được vượt quá số lượng còn lại',
         path: ['quantity'],
       }
     )
@@ -147,13 +149,18 @@ export const LandedCostPage: React.FC = () => {
         remarks: activeShipment.remarks || '',
         details: lines.map((line) => {
           const matched = activeShipment.stock_entries_details?.find((r) => r.item_id === line.item_id);
+          const ordered_qty = parseFloat(String(line.quantity)) || 0;
+          const received_qty = parseFloat(String(line.received_quantity)) || 0;
+          const remaining_qty = parseFloat(String(line.remaining_quantity ?? line.quantity)) || 0;
           return {
             po_line_id: line.id || '',
             item_id: line.item_id || '',
             item_code: line.item_code || '',
             item_name: line.item_name || '',
-            ordered_quantity: parseFloat(String(line.quantity)) || 0,
-            quantity: matched ? parseFloat(String(matched.quantity)) : parseFloat(String(line.quantity)) || 0,
+            ordered_quantity: ordered_qty,
+            received_quantity: received_qty,
+            remaining_quantity: remaining_qty,
+            quantity: matched ? parseFloat(String(matched.quantity)) : remaining_qty,
             target_warehouse_id: matched ? (matched.target_warehouse_id || '') : '',
           };
         }),
@@ -217,6 +224,8 @@ export const LandedCostPage: React.FC = () => {
         item_code: line.item_code,
         item_name: line.item_name,
         ordered_quantity: parseFloat(String(line.quantity)) || 0,
+        remaining_quantity: parseFloat(String(line.remaining_quantity ?? line.quantity)) || 0,
+        already_received: parseFloat(String(line.received_quantity)) || 0,
         unit: line.unit,
         received_quantity: matched ? parseFloat(String(matched.quantity)) : 0,
         target_warehouse_name: matched ? matched.target_warehouse_name : null,
@@ -498,13 +507,25 @@ export const LandedCostPage: React.FC = () => {
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
                       <thead>
-                        <tr>
-                          <th>Sản Phẩm</th>
-                          <th style={{ width: '120px' }}>Số Lượng Đặt</th>
-                          <th style={{ width: '160px' }}>Số Lượng Đạt Chuẩn</th>
-                          <th>Kho Nhập hàng</th>
-                          <th style={{ width: '180px' }}>Kết Quả</th>
-                        </tr>
+                        {activeShipment.status === 'inspecting' ? (
+                          <tr>
+                            <th>Sản Phẩm</th>
+                            <th style={{ width: '120px' }}>SL Đặt Gốc</th>
+                            <th style={{ width: '140px' }}>Đã Nhận Trước</th>
+                            <th style={{ width: '140px' }}>SL Có Thể Nhập</th>
+                            <th style={{ width: '160px' }}>SL Thực Nhận</th>
+                            <th>Kho Nhập hàng</th>
+                            <th style={{ width: '120px' }}>Kết Quả</th>
+                          </tr>
+                        ) : (
+                          <tr>
+                            <th>Sản Phẩm</th>
+                            <th style={{ width: '120px' }}>Số Lượng Đặt</th>
+                            <th style={{ width: '160px' }}>Số Lượng Đạt</th>
+                            <th>Kho Nhập hàng</th>
+                            <th style={{ width: '180px' }}>Kết Quả</th>
+                          </tr>
+                        )}
                       </thead>
                       <tbody>
                         {activeShipment.status === 'inspecting'
@@ -522,10 +543,23 @@ export const LandedCostPage: React.FC = () => {
                                   </td>
                                   <td>{field.ordered_quantity} {unit}</td>
                                   <td>
+                                    {field.received_quantity > 0 ? (
+                                      <span className={styles.receivedBadge}>
+                                        <AlertTriangle size={11} /> {field.received_quantity} {unit}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <strong>{field.remaining_quantity} {unit}</strong>
+                                  </td>
+                                  <td>
                                     <input
                                       type="number"
                                       className={styles.inputNumber}
                                       min="0"
+                                      max={field.remaining_quantity}
                                       step="0.01"
                                       style={{ width: '100%' }}
                                       {...register(`details.${index}.quantity`, { valueAsNumber: true })}
@@ -714,15 +748,17 @@ export const LandedCostPage: React.FC = () => {
           {completeError && <div className={styles.errorAlert}>{completeError}</div>}
           
           <div className={styles.formRow}>
-            <Input
-              label="Chi phí vận chuyển thực tế (VND)"
-              type="number"
-              min="0"
-              step="1000"
-              error={errors.total_logistic_fees?.message}
-              required
-              {...register('total_logistic_fees', { valueAsNumber: true })}
-            />
+            <div className={styles.logisticDisplayGroup}>
+              <label className={styles.logisticInputLabel}>Chi phí vận chuyển thực tế (VND)</label>
+              <div className={styles.logisticDisplayValue}>
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                  .format(watch('total_logistic_fees') || 0)}
+              </div>
+              <span className={styles.logisticDisplayHint}>
+                Lấy từ ô "Chi phí Logistic / Vận chuyển ước tính" trên bảng chính. Vui lòng chỉnh sửa ở trang chính trước khi xác nhận.
+              </span>
+              <input type="hidden" {...register('total_logistic_fees', { valueAsNumber: true })} />
+            </div>
             <Input
               label="Ghi chú hoàn tất"
               placeholder="Ghi chú khi hoàn tất nhận hàng..."
@@ -739,9 +775,10 @@ export const LandedCostPage: React.FC = () => {
                 <thead>
                   <tr>
                     <th>Sản Phẩm</th>
-                    <th style={{ width: '100px' }}>Số Lượng Đặt</th>
-                    <th style={{ width: '140px' }}>Số Lượng Đạt</th>
-                    <th style={{ width: '220px' }}>Kho Nhập</th>
+                    <th style={{ width: '100px' }}>SL Đặt Gốc</th>
+                    <th style={{ width: '120px' }}>SL Có Thể Nhập</th>
+                    <th style={{ width: '120px' }}>SL Thực Nhận</th>
+                    <th style={{ width: '200px' }}>Kho Nhập</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -757,6 +794,7 @@ export const LandedCostPage: React.FC = () => {
                           </div>
                         </td>
                         <td>{field.ordered_quantity}</td>
+                        <td>{field.remaining_quantity}</td>
                         <td>{watch(`details.${index}.quantity`)}</td>
                         <td>{warehouse?.name || '---'}</td>
                       </tr>

@@ -47,6 +47,8 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
           item_code: 'BONG_DEN',
           item_name: 'Bóng đèn halogen',
           quantity: 100,
+          remaining_quantity: 100,
+          received_quantity: 0,
           unit: 'Cái'
         }
       ],
@@ -332,6 +334,191 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
 
       expect(completePayload.details[0].quantity).toBe(0);
       expect(completePayload.details[0].target_warehouse_id).toBeNull();
+    });
+  });
+
+  describe('Enforce remaining quantities and shipping cost fixes', () => {
+    it('hiển thị SL Có Thể Nhập = 200 + cột phụ "Đã nhận trước" = 400 khi PO đã có shipment trước nhập 400/600', async () => {
+      const shipment2 = {
+        id: 'SHIP-002',
+        shipment_num: 'LH-002',
+        name: 'Lô 2',
+        status: 'inspecting',
+        purchase_order: 'PO-001',
+        remarks: '',
+        total_logistic_fees: 0,
+        purchase_order_lines: [{
+          id: 'POL-001',
+          item_id: 'ITEM-001',
+          item_code: 'BONG_DEN',
+          item_name: 'Bóng đèn halogen',
+          quantity: 600,
+          remaining_quantity: 200,
+          received_quantity: 400,
+          unit: 'Cái'
+        }],
+        stock_entries: [],
+        stock_entries_details: []
+      };
+
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([shipment2]);
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-002');
+      await user.click(card);
+
+      // SL Có Thể Nhập column showing remaining quantity
+      expect(screen.getByText('200 Cái')).toBeInTheDocument();
+      // Đã nhận trước column showing already received quantity
+      expect(screen.getByText('400 Cái')).toBeInTheDocument();
+    });
+
+    it('ẩn cột "Đã nhận trước" khi received_quantity = 0 (lô đầu tiên)', async () => {
+      const firstShipment = {
+        id: 'SHIP-001',
+        shipment_num: 'LH-001',
+        name: 'Lô 1',
+        status: 'inspecting',
+        purchase_order: 'PO-001',
+        remarks: '',
+        total_logistic_fees: 0,
+        purchase_order_lines: [{
+          id: 'POL-001',
+          item_id: 'ITEM-001',
+          item_code: 'BONG_DEN',
+          item_name: 'Bóng đèn halogen',
+          quantity: 600,
+          remaining_quantity: 600,
+          received_quantity: 0,
+          unit: 'Cái'
+        }],
+        stock_entries: [],
+        stock_entries_details: []
+      };
+
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([firstShipment]);
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-001');
+      await user.click(card);
+
+      // --- placeholder should be shown instead of received_quantity badge since received_quantity is 0
+      expect(screen.getByText('---')).toBeInTheDocument();
+    });
+
+    it('Modal hoàn tất hiển thị chi phí vận chuyển dạng plain text', async () => {
+      const inspectingShipment = {
+        id: 'SHIP-001',
+        shipment_num: 'LH-001',
+        name: 'Lô 1',
+        status: 'inspecting',
+        purchase_order: 'PO-001',
+        remarks: '',
+        total_logistic_fees: 0,
+        purchase_order_lines: [{
+          id: 'POL-001',
+          item_id: 'ITEM-001',
+          item_code: 'BONG_DEN',
+          item_name: 'Bóng đèn halogen',
+          quantity: 100,
+          remaining_quantity: 100,
+          received_quantity: 0,
+          unit: 'Cái'
+        }],
+        stock_entries: [],
+        stock_entries_details: []
+      };
+
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([inspectingShipment]);
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-001');
+      await user.click(card);
+
+      // Enter logistic fees on the main page
+      const feeInput = screen.getByPlaceholderText('Nhập chi phí vận chuyển ước tính...');
+      await user.clear(feeInput);
+      await user.type(feeInput, '500000');
+
+      // Select warehouse inline
+      const select = await screen.findByRole('combobox');
+      await user.selectOptions(select, 'WH01');
+
+      // Click "Xác Nhận Hoàn Tất" on main page
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      // Modal opens
+      const modal = screen.getByRole('dialog', { name: 'Tiếp Nhận & Hoàn Tất Lô Hàng' });
+      
+      // The shipping cost input should not be editable input number, instead it should render formatted text 500.000 ₫
+      expect(within(modal).queryByRole('spinbutton', { name: /Chi phí vận chuyển thực tế/i })).toBeNull();
+      expect(within(modal).getByText(/500.000/)).toBeInTheDocument();
+    });
+
+    it('validate không cho nhập vượt remaining_quantity (200) ở frontend', async () => {
+      const shipment2 = {
+        id: 'SHIP-002',
+        shipment_num: 'LH-002',
+        name: 'Lô 2',
+        status: 'inspecting',
+        purchase_order: 'PO-001',
+        remarks: '',
+        total_logistic_fees: 0,
+        purchase_order_lines: [{
+          id: 'POL-001',
+          item_id: 'ITEM-001',
+          item_code: 'BONG_DEN',
+          item_name: 'Bóng đèn halogen',
+          quantity: 600,
+          remaining_quantity: 200,
+          received_quantity: 400,
+          unit: 'Cái'
+        }],
+        stock_entries: [],
+        stock_entries_details: []
+      };
+
+      server.use(
+        http.get('*/api/v1/purchasing/shipments/*', () => {
+          return HttpResponse.json([shipment2]);
+        })
+      );
+
+      renderWithProviders(<LandedCostPage />);
+
+      const user = userEvent.setup();
+      const card = await screen.findByText('LH-002');
+      await user.click(card);
+
+      // Type 250 in the input quantity (exceeds remaining_quantity 200)
+      const qtyInput = document.querySelector('input[name="details.0.quantity"]') as HTMLInputElement;
+      await user.clear(qtyInput);
+      await user.type(qtyInput, '250');
+
+      const completeBtn = screen.getByRole('button', { name: /Xác Nhận Hoàn Tất/i });
+      await user.click(completeBtn);
+
+      // Inline validation error should trigger
+      expect(await screen.findByText('Số lượng nhận không được vượt quá số lượng còn lại')).toBeInTheDocument();
     });
   });
 });
