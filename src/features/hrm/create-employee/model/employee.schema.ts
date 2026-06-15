@@ -6,7 +6,6 @@ export const employeeSchema = z.object({
   department: z.string().optional().or(z.literal('')),
   position_title: z.string().optional().or(z.literal('')),
   salary_base: z.coerce.number().min(0, 'Lương cơ bản không được âm'),
-  is_union_member: z.boolean(),
   email: z.string().email('Địa chỉ email không hợp lệ').optional().or(z.literal('')),
   phone: z.string().optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other']),

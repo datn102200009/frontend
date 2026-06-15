@@ -121,7 +121,6 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
 
   const breakdownDeductions = salarySlip.breakdown?.deductions || [
     { name: 'Phạt kỷ luật/Khấu trừ', amount: parseFloat(salarySlip.discipline_deduction_total || '0') },
-    { name: 'Phí công đoàn (2%)', amount: parseFloat(salarySlip.union_fee_2pct || '0') },
   ];
 
   return (

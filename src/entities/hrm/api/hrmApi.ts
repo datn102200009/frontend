@@ -135,10 +135,8 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getHrmSalaryPeriods: build.query<string[], void>({
-      query: () => ({
-        url: `/hrm/salary-periods/`,
-      }),
+    getHrmSalaryPeriods: build.query<GetHrmSalaryPeriodsApiResponse, GetHrmSalaryPeriodsApiArg>({
+      query: () => ({ url: `/hrm/salary-periods/` }),
     }),
     postHrmSalarySlipsInitialize: build.mutation<
       PostHrmSalarySlipsInitializeApiResponse,
@@ -278,7 +276,6 @@ export type PostHrmEmployeesCreateApiArg = {
     department?: string
     position_title?: string
     salary_base?: number
-    is_union_member?: boolean
     email?: string
     phone?: string
     gender?: 'male' | 'female' | 'other'
@@ -424,6 +421,8 @@ export type GetHrmSalarySlipsApiArg = {
   employeeId?: string
   status?: 'draft' | 'calculated' | 'approved' | 'paid'
 }
+export type GetHrmSalaryPeriodsApiResponse = /** status 200 Thành công */ string[]
+export type GetHrmSalaryPeriodsApiArg = void
 export type PostHrmSalarySlipsInitializeApiResponse =
   /** status 201 Khởi tạo thành công */ SalarySlip[]
 export type PostHrmSalarySlipsInitializeApiArg = {
@@ -552,7 +551,6 @@ export type Employee = {
   position_title?: string | null
   /** Lương cơ bản dạng Decimal */
   salary_base?: string | null
-  is_union_member?: boolean
   email?: string | null
   phone?: string | null
   gender?: ('male' | 'female' | 'other') | null
@@ -689,7 +687,6 @@ export type SalarySlip = {
   allowance_amount?: string
   reward_amount_total?: string
   discipline_deduction_total?: string
-  union_fee_2pct?: string
   gross_pay?: string
   deductions?: string
   net_pay?: string

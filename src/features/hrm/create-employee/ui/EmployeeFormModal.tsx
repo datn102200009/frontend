@@ -36,7 +36,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
       department: '',
       position_title: '',
       salary_base: 0,
-      is_union_member: false,
       email: '',
       phone: '',
       gender: 'male',
@@ -81,7 +80,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
         department: values.department || undefined,
         position_title: values.position_title || undefined,
         salary_base: typeof values.salary_base === 'number' && !isNaN(values.salary_base) ? values.salary_base : undefined,
-        is_union_member: values.is_union_member,
         email: values.email || undefined,
         phone: values.phone || undefined,
         gender: values.gender || undefined,
@@ -272,19 +270,6 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
             {...register('address')}
             disabled={isLoading}
           />
-        </div>
-
-        <div className={styles.checkboxGroup}>
-          <input
-            id="is_union_member"
-            type="checkbox"
-            className={styles.checkbox}
-            {...register('is_union_member')}
-            disabled={isLoading}
-          />
-          <label htmlFor="is_union_member" className={styles.checkboxLabel}>
-            Là Đoàn viên Công đoàn (trích nộp phí công đoàn 2%)
-          </label>
         </div>
 
         <hr className={styles.sectionDivider} />
