@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
+import { useSalaryPeriods } from '@entities/hrm/lib/useSalaryPeriods';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Eye, ChevronDown } from 'lucide-react';
 import { SalarySlipDetailsModal } from '@features/hrm/manage-salary-slip/ui/SalarySlipDetailsModal';
@@ -25,9 +26,18 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
   const querySlipId = searchParams.get('id');
   const selectedSlipId = querySlipId || null;
 
+  const { monthOptions, yearOptions, isLoading: isPeriodsLoading } = useSalaryPeriods({ selectedPeriod });
+
   const { data: salarySlips = [], isLoading, refetch } = useGetHrmSalarySlipsQuery({
     salaryPeriod: selectedPeriod || undefined,
   });
+
+  const urlStatus = searchParams.get('status');
+  useEffect(() => {
+    if (urlStatus && ['all', 'draft', 'calculated', 'approved', 'paid'].includes(urlStatus)) {
+      setStatusFilter(urlStatus as any);
+    }
+  }, [urlStatus]);
 
   const filteredSlips = useMemo(() => {
     if (statusFilter === 'all') return salarySlips;
@@ -62,7 +72,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
     const helper = createColumnHelper<SalarySlip>();
     return [
       helper.accessor('employee_code', {
-        header: 'Mã NV',
+        header: 'Mã nhân viên',
         cell: (info) => <span className="font-semibold text-slate-800">{info.row.original.employee_code || 'N/A'}</span>,
       }),
       helper.accessor('employee_name', {
@@ -122,6 +132,8 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
     ];
   }, [onViewDetails]);
 
+  const noPeriods = monthOptions.length === 0 || yearOptions.length === 0;
+
   return (
     <div>
       {/* Filters toolbar */}
@@ -131,48 +143,50 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
             <span className="filterLabel">Kỳ lương:</span>
             <div className="filterSelectWrapper">
               <select
-                value={selectedPeriod.split('-')[1]}
+                value={selectedPeriod.split('-')[1] || ''}
                 onChange={(e) => {
                   const [y] = selectedPeriod.split('-');
                   onChangePeriod(`${y}-${e.target.value}`);
                 }}
-
                 className="filterSelectInput"
                 style={{ minWidth: '90px', paddingRight: '24px' }}
                 aria-label="Chọn tháng kỳ lương"
+                disabled={noPeriods}
               >
-                {Array.from({ length: 12 }, (_, i) => {
-                  const m = String(i + 1).padStart(2, '0');
-                  return (
+                {noPeriods ? (
+                  <option value="">Chưa có kỳ lương</option>
+                ) : (
+                  monthOptions.map((m) => (
                     <option key={m} value={m}>
-                      Tháng {i + 1}
+                      Tháng {parseInt(m, 10)}
                     </option>
-                  );
-                })}
+                  ))
+                )}
               </select>
               <ChevronDown size={14} className="filterSelectIcon" />
             </div>
 
             <div className="filterSelectWrapper">
               <select
-                value={selectedPeriod.split('-')[0]}
+                value={selectedPeriod.split('-')[0] || ''}
                 onChange={(e) => {
                   const [, m] = selectedPeriod.split('-');
                   onChangePeriod(`${e.target.value}-${m}`);
                 }}
-
                 className="filterSelectInput"
                 style={{ minWidth: '95px', paddingRight: '24px' }}
                 aria-label="Chọn năm kỳ lương"
+                disabled={noPeriods}
               >
-                {Array.from({ length: 10 }, (_, i) => {
-                  const y = String(2020 + i);
-                  return (
+                {noPeriods ? (
+                  <option value="">Chưa có kỳ lương</option>
+                ) : (
+                  yearOptions.map((y) => (
                     <option key={y} value={y}>
                       Năm {y}
                     </option>
-                  );
-                })}
+                  ))
+                )}
               </select>
               <ChevronDown size={14} className="filterSelectIcon" />
             </div>
@@ -202,7 +216,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
       <DataTable
         columns={columns}
         data={filteredSlips as SalarySlip[]}
-        loading={isLoading}
+        loading={isLoading || isPeriodsLoading}
         searchPlaceholder="Tìm kiếm phiếu lương theo mã hoặc tên..."
         emptyMessage="Không tìm thấy phiếu lương nào cho kỳ này"
       />

@@ -5,6 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import type { SalesInvoice } from '@entities/finance/api/financeApi';
 import { Eye, Printer, DollarSign } from 'lucide-react';
+import { shortId } from '@shared/lib/shortId';
 
 interface SalesInvoiceTableProps {
   data: SalesInvoice[];
@@ -24,11 +25,11 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
     return [
       helper.accessor('id', {
         header: 'Mã Hóa Đơn',
-        cell: (info) => <span className="font-medium text-slate-900">{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="font-medium text-slate-900">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('order', {
         header: 'Tham Chiếu Đơn',
-        cell: (info) => <span className="text-slate-500">{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="text-slate-500">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('customer_name', {
         header: 'Khách Hàng',

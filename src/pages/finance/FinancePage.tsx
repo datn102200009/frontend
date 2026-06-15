@@ -1,39 +1,41 @@
-import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CashFlowTable } from '@widgets/finance/CashFlowTable';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useToast } from '@shared/ui/Toast/Toast';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsByPkApproveMutation,
-  useGetFinanceInvoicesPurchaseQuery,
-  useGetFinanceInvoicesSalesQuery,
+  usePostFinanceCashFlowsByPkRejectMutation,
 } from '@entities/finance/api/financeApi';
 import { usePermission } from '@shared/hooks/usePermission';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { createColumnHelper } from '@tanstack/react-table';
 import type { CashFlowTransaction } from '@entities/finance/api/financeApi';
+import { shortId } from '@shared/lib/shortId';
 import styles from './FinancePage.module.css';
-
-import { PurchaseInvoiceTable } from '@features/finance/purchase-invoice/ui/PurchaseInvoiceTable';
-import { PurchaseInvoiceDetailsModal } from '@features/finance/purchase-invoice/ui/PurchaseInvoiceDetailsModal';
-import { PurchaseInvoicePaymentModal } from '@features/finance/purchase-invoice/ui/PurchaseInvoicePaymentModal';
-
-import { SalesInvoiceTable } from '@features/finance/sales-invoice/ui/SalesInvoiceTable';
-import { SalesInvoiceDetailsModal } from '@features/finance/sales-invoice/ui/SalesInvoiceDetailsModal';
-import { SalesInvoiceCollectionModal } from '@features/finance/sales-invoice/ui/SalesInvoiceCollectionModal';
 
 const FinancePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const rawTab = searchParams.get('tab') || 'cashflow';
   
+  // If tab is ap, ar, purchase_invoices, or sales_invoices, redirect to /finance/invoices with the corresponding tab
+  useEffect(() => {
+    if (['ap', 'ar', 'purchase_invoices', 'sales_invoices'].includes(rawTab)) {
+      const targetTab = rawTab === 'ap' ? 'purchase_invoices' : rawTab === 'ar' ? 'sales_invoices' : rawTab;
+      const params = new URLSearchParams(searchParams);
+      params.set('tab', targetTab);
+      navigate(`/finance/invoices?${params.toString()}`, { replace: true });
+    }
+  }, [rawTab, navigate, searchParams]);
+
   const activeTab = useMemo(() => {
-    if (rawTab === 'ap') return 'purchase_invoices';
-    if (rawTab === 'ar') return 'sales_invoices';
-    if (['cashflow', 'purchase_invoices', 'sales_invoices', 'approvals'].includes(rawTab)) {
-      return rawTab as 'cashflow' | 'purchase_invoices' | 'sales_invoices' | 'approvals';
+    if (['cashflow', 'approvals'].includes(rawTab)) {
+      return rawTab as 'cashflow' | 'approvals';
     }
     return 'cashflow';
   }, [rawTab]);
@@ -50,38 +52,17 @@ const FinancePage: React.FC = () => {
   // Permissions
   const hasApprovePermission = usePermission('finance.approve_cash_flow');
 
-  // Pagination & query state for AP
-  const [pageAP, setPageAP] = useState(1);
-  const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetFinanceInvoicesPurchaseQuery(
-    { status: 'unpaid,partial', page: pageAP, limit: 10 },
-    { skip: activeTab !== 'purchase_invoices' }
-  );
-
-  // Pagination & query state for AR
-  const [pageAR, setPageAR] = useState(1);
-  const { data: arData, isLoading: isLoadingAR, refetch: refetchAR } = useGetFinanceInvoicesSalesQuery(
-    { status: 'unpaid,partial', page: pageAR, limit: 10 },
-    { skip: activeTab !== 'sales_invoices' }
-  );
-
   // Pagination & query state for Approvals
   const [pageApprovals, setPageApprovals] = useState(1);
   const { data: approvalsData, isLoading: isLoadingApprovals, refetch: refetchApprovals } = useGetFinanceCashFlowsQuery(
     { status: 'pending_approval', page: pageApprovals, limit: 10 },
     { skip: activeTab !== 'approvals' || !hasApprovePermission }
   );
-
-  // Details modal states
-  const [selectedAPDetailsId, setSelectedAPDetailsId] = useState<string | null>(null);
-  const [selectedARDetailsId, setSelectedARDetailsId] = useState<string | null>(null);
-
-  // AR collection modal state
-  const [selectedARInvoice, setSelectedARInvoice] = useState<{ id: string; amount: number; name?: string } | null>(null);
-
-  // AP payment modal state
-  const [selectedAPInvoice, setSelectedAPInvoice] = useState<{ id: string; amount: number } | null>(null);
   
   const [approveCashFlow, { isLoading: isApproving }] = usePostFinanceCashFlowsByPkApproveMutation();
+  const [rejectCashFlow, { isLoading: isRejecting }] = usePostFinanceCashFlowsByPkRejectMutation();
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [remarks, setRemarks] = useState('');
   const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
@@ -93,11 +74,28 @@ const FinancePage: React.FC = () => {
       await approveCashFlow({ pk: id }).unwrap();
       toast('success', 'Phê duyệt giao dịch dòng tiền thành công');
       refetchApprovals();
-      refetchAP();
-      refetchAR();
     } catch (err: unknown) {
       const error = err as { data?: { detail?: string } };
       toast('error', error?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
+    }
+  };
+
+  const handleRejectClick = (id: string) => {
+    setRejectingId(id);
+    setRemarks('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectingId) return;
+    try {
+      await rejectCashFlow({ pk: rejectingId, body: { remarks } }).unwrap();
+      toast('success', 'Từ chối giao dịch dòng tiền thành công');
+      setRejectingId(null);
+      setRemarks('');
+      refetchApprovals();
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      toast('error', error?.data?.detail || 'Từ chối thất bại. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -105,7 +103,7 @@ const FinancePage: React.FC = () => {
   const approvalColumns = useMemo(() => [
     approvalColumnHelper.accessor('id', {
       header: 'Mã Giao Dịch',
-      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{shortId(info.getValue())}</span>,
     }),
     approvalColumnHelper.accessor('payment_type', {
       header: 'Loại',
@@ -145,24 +143,35 @@ const FinancePage: React.FC = () => {
       id: 'actions',
       header: 'Thao Tác',
       cell: (info) => (
-        <Button 
-          size="sm"
-          icon={<Check size={14} />}
-          onClick={() => handleApproveCashFlow(info.row.original.id!)}
-          disabled={isApproving}
-        >
-          Duyệt
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button 
+            size="sm"
+            icon={<Check size={14} />}
+            onClick={() => handleApproveCashFlow(info.row.original.id!)}
+            disabled={isApproving || isRejecting}
+          >
+            Duyệt
+          </Button>
+          <Button 
+            size="sm"
+            variant="danger"
+            icon={<X size={14} />}
+            onClick={() => handleRejectClick(info.row.original.id!)}
+            disabled={isApproving || isRejecting}
+          >
+            Từ chối
+          </Button>
+        </div>
       ),
     }),
-  ], [isApproving]);
+  ], [isApproving, isRejecting]);
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h2 className={styles.title}>Quản Lý Tài Chính & Dòng Tiền</h2>
-          <p className={styles.subtitle}>Quản lý phê duyệt dòng tiền, nợ phải trả (AP) và nợ phải thu (AR)</p>
+          <h2 className={styles.title}>Quản Lý Dòng Tiền</h2>
+          <p className={styles.subtitle}>Quản lý phê duyệt dòng tiền và báo cáo dòng tiền</p>
         </div>
       </div>
 
@@ -175,24 +184,6 @@ const FinancePage: React.FC = () => {
           onClick={() => setActiveTab('cashflow')}
         >
           Dòng Tiền
-        </button>
-        <button 
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'purchase_invoices'}
-          className={`${styles.tab} ${activeTab === 'purchase_invoices' ? styles.active : ''}`}
-          onClick={() => setActiveTab('purchase_invoices')}
-        >
-          Phải Trả (AP)
-        </button>
-        <button 
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'sales_invoices'}
-          className={`${styles.tab} ${activeTab === 'sales_invoices' ? styles.active : ''}`}
-          onClick={() => setActiveTab('sales_invoices')}
-        >
-          Phải Thu (AR)
         </button>
         {hasApprovePermission && (
           <button 
@@ -211,86 +202,6 @@ const FinancePage: React.FC = () => {
         {activeTab === 'cashflow' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <CashFlowTable />
-          </div>
-        )}
-
-        {activeTab === 'purchase_invoices' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <PurchaseInvoiceTable 
-              data={apData?.results || []}
-              loading={isLoadingAP}
-              onView={(id) => setSelectedAPDetailsId(id)}
-              onPay={(inv) => setSelectedAPInvoice(inv)}
-            />
-
-            {/* Pagination for AP */}
-            {apData && apData.total_pages && apData.total_pages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', padding: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)' }}>
-                <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
-                  Trang {pageAP} / {apData.total_pages} (Tổng {apData.count} hóa đơn)
-                </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    icon={<ChevronLeft size={16} />} 
-                    disabled={pageAP <= 1}
-                    onClick={() => setPageAP(p => p - 1)}
-                  >
-                    {""}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    icon={<ChevronRight size={16} />} 
-                    disabled={pageAP >= (apData.total_pages || 1)}
-                    onClick={() => setPageAP(p => p + 1)}
-                  >
-                    {""}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'sales_invoices' && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <SalesInvoiceTable 
-              data={arData?.results || []}
-              loading={isLoadingAR}
-              onView={(id) => setSelectedARDetailsId(id)}
-              onCollect={(inv) => setSelectedARInvoice(inv)}
-            />
-
-            {/* Pagination for AR */}
-            {arData && arData.total_pages && arData.total_pages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', padding: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)' }}>
-                <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
-                  Trang {pageAR} / {arData.total_pages} (Tổng {arData.count} hóa đơn)
-                </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    icon={<ChevronLeft size={16} />} 
-                    disabled={pageAR <= 1}
-                    onClick={() => setPageAR(p => p - 1)}
-                  >
-                    {""}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    icon={<ChevronRight size={16} />} 
-                    disabled={pageAR >= (arData.total_pages || 1)}
-                    onClick={() => setPageAR(p => p + 1)}
-                  >
-                    {""}
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -336,50 +247,37 @@ const FinancePage: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* Details Modals */}
-      {selectedAPDetailsId && (
-        <PurchaseInvoiceDetailsModal 
-          invoiceId={selectedAPDetailsId}
-          onClose={() => setSelectedAPDetailsId(null)}
-        />
-      )}
-
-      {selectedARDetailsId && (
-        <SalesInvoiceDetailsModal 
-          invoiceId={selectedARDetailsId}
-          onClose={() => setSelectedARDetailsId(null)}
-        />
-      )}
-
-      {/* AR invoice collection modal overlay */}
-      {selectedARInvoice && (
-        <SalesInvoiceCollectionModal 
-          open={!!selectedARInvoice}
-          onClose={() => setSelectedARInvoice(null)}
-          onSuccess={() => {
-            setSelectedARInvoice(null);
-            refetchAR();
-          }}
-          invoiceId={selectedARInvoice.id}
-          remainingAmount={selectedARInvoice.amount}
-          customerName={selectedARInvoice.name}
-        />
-      )}
-
-      {/* AP payment modal overlay */}
-      {selectedAPInvoice && (
-        <PurchaseInvoicePaymentModal 
-          open={!!selectedAPInvoice}
-          onClose={() => setSelectedAPInvoice(null)}
-          onSuccess={() => {
-            setSelectedAPInvoice(null);
-            refetchAP();
-          }}
-          invoiceId={selectedAPInvoice.id}
-          remainingAmount={selectedAPInvoice.amount}
-        />
-      )}
+      <ConfirmModal
+        open={!!rejectingId}
+        title="Từ chối phê duyệt giao dịch"
+        message={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+            <span>Bạn có chắc chắn muốn từ chối giao dịch dòng tiền này? Hành động này sẽ chuyển trạng thái các tài sản liên quan hoặc xóa chúng nếu là đơn duyệt mua.</span>
+            <textarea
+              placeholder="Nhập lý do từ chối (tùy chọn)..."
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '80px',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid var(--clr-border)',
+                fontSize: 'var(--fs-sm)',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                marginTop: '8px',
+              }}
+            />
+          </div>
+        }
+        confirmText="Từ chối"
+        cancelText="Hủy"
+        confirmVariant="danger"
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectingId(null)}
+        isLoading={isRejecting}
+      />
     </div>
   );
 };

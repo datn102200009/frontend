@@ -27,19 +27,18 @@ describe('DashboardPage', () => {
     { code: 'inventory_pending_entries', title: 'Yêu cầu chuyển kho chờ thực hiện', type: 'kpi_list', size: '2x2', quick_links: ['/inventory?tab=entries&status=draft'] },
 
     { code: 'finance_cashflow_overview', title: 'Tổng quan dòng tiền', type: 'cashflow_overview', size: '2x2', quick_links: ['/finance'] },
-    { code: 'finance_unpaid_purchase_invoices', title: 'AP - Hóa đơn mua chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance?tab=ap&status=unpaid'] },
-    { code: 'finance_unpaid_sales_invoices', title: 'AR - Hóa đơn bán chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/sales?tab=invoices&status=unpaid'] },
+    { code: 'finance_unpaid_purchase_invoices', title: 'AP - Hóa đơn mua chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance/invoices?tab=purchase_invoices&status=unpaid,partial'] },
+    { code: 'finance_unpaid_sales_invoices', title: 'AR - Hóa đơn bán chưa thanh toán', type: 'donut_chart', size: '1x2', quick_links: ['/finance/invoices?tab=sales_invoices&status=unpaid,partial'] },
     { code: 'finance_depreciation_status', title: 'Khấu hao tài sản cố định', type: 'kpi_list', size: '1x2', quick_links: ['/finance/fixed-assets'] },
 
-    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=salary'] },
-    { code: 'hrm_pending_leave_requests', title: 'Yêu cầu nghỉ phép chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=leave'] },
-    { code: 'hrm_expiring_contracts', title: 'Hợp đồng lao động sắp hết hạn', type: 'kpi_list', size: '1x2', quick_links: ['/hrm?tab=employees'] },
-    { code: 'hrm_today_attendance_rate', title: 'Theo dõi vắng mặt', type: 'gauge', size: '1x2', quick_links: ['/hrm?tab=attendance'] },
+    { code: 'hrm_payroll_lifecycle_status', title: 'Bảng lương chờ duyệt & thanh toán', type: 'kpi_list', size: '1x2', quick_links: ['/hrm/payroll'] },
+    { code: 'hrm_pending_leave_requests', title: 'Yêu cầu nghỉ phép chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/hrm/attendance-leave?tab=leave'] },
+    { code: 'hrm_expiring_contracts', title: 'Hợp đồng lao động sắp hết hạn', type: 'kpi_list', size: '1x2', quick_links: ['/hrm/employees'] },
+    { code: 'hrm_today_attendance_rate', title: 'Theo dõi vắng mặt', type: 'gauge', size: '1x2', quick_links: ['/hrm/attendance-leave?tab=attendance'] },
 
-    { code: 'manufacturing_pending_wo_approval', title: 'Lệnh sản xuất chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=pending_approval'] },
-    { code: 'manufacturing_active_wos', title: 'Lệnh sản xuất đang thực hiện', type: 'stacked_progress', size: '2x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
-    { code: 'manufacturing_pending_declarations', title: 'Lệnh sản xuất sắp trễ hạn', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
-    { code: 'manufacturing_pending_completion', title: 'Lệnh sản xuất chờ nghiệm thu', type: 'kpi_list', size: '1x2', quick_links: ['/bom?tab=wo&status=in_progress'] },
+    { code: 'manufacturing_pending_wo_approval', title: 'Lệnh sản xuất chờ duyệt', type: 'kpi_list', size: '1x2', quick_links: ['/work-orders?status=pending_approval'] },
+    { code: 'manufacturing_active_wos', title: 'Lệnh sản xuất đang thực hiện', type: 'stacked_progress', size: '2x2', quick_links: ['/work-orders?status=in_progress'] },
+    { code: 'manufacturing_pending_completion', title: 'Lệnh sản xuất chờ nghiệm thu', type: 'kpi_list', size: '1x2', quick_links: ['/work-orders?status=pending_production_complete'] },
   ];
 
   // Mock batch data with the new payload shapes (dict for KPI/donut/aging/gauge, list for stacked_progress/list_mini).
@@ -153,7 +152,17 @@ describe('DashboardPage', () => {
       success: true,
       data: {
         items: [
-          { id: 'p1', item_code: 'STEEL-01', item_name: 'Thép hình H150', uom: 'cái', status: 'critical', reason: 'Dưới ngưỡng tối thiểu tại Kho A' }
+          {
+            id: 'p1',
+            item_code: 'STEEL-01',
+            item_name: 'Thép hình H150',
+            uom: 'cái',
+            status: 'critical',
+            reason: 'Dưới ngưỡng tối thiểu tại Kho A',
+            alerts: [
+              { category: 'below_threshold' as const, level: 'critical' as const, reason: 'Dưới ngưỡng tối thiểu: tổng tồn kho 5/200 cái trên toàn bộ hệ thống' }
+            ],
+          }
         ],
         product_distribution: {
           p1: { wh1: '5' }
@@ -214,8 +223,8 @@ describe('DashboardPage', () => {
     manufacturing_active_wos: {
       success: true,
       data: [
-        { id: 'wo-1', name: 'WO-001', production_item_name: 'Sản phẩm A', quantity: '200', produced_qty: '150', progress_pct: 75, planned_start_date: '2026-06-01', target_warehouse_name: 'Kho TP A' },
-        { id: 'wo-2', name: 'WO-002', production_item_name: 'Sản phẩm B', quantity: '100', produced_qty: '40', progress_pct: 40, planned_start_date: '2026-06-05', target_warehouse_name: 'Kho TP B' },
+        { id: 'wo-1', name: 'WO-001', production_item_name: 'Sản phẩm A', quantity: '200', produced_qty: '150', progress_pct: 75, planned_start_date: '2026-06-01', planned_end_date: '2026-06-30', days_left: 16, target_warehouse_name: 'Kho TP A' },
+        { id: 'wo-2', name: 'WO-002', production_item_name: 'Sản phẩm B', quantity: '100', produced_qty: '40', progress_pct: 40, planned_start_date: '2026-06-05', planned_end_date: '2026-06-25', days_left: 11, target_warehouse_name: 'Kho TP B' },
       ],
       total_count: 2,
     },
@@ -304,14 +313,7 @@ describe('DashboardPage', () => {
       },
       total_count: 1,
     },
-    manufacturing_pending_declarations: {
-      success: true,
-      data: {
-        total_count: 1,
-        top_items: [{ id: 'wo-3', name: 'WO-003', production_item_name: 'SP C', quantity: '200', produced_qty: '120', planned_start_date: '2026-06-01', planned_end_date: '2026-06-05', status: 'in_progress', days_left: -2, created_at: '2026-06-07T10:00:00Z' }]
-      },
-      total_count: 1,
-    },
+
   };
 
   beforeEach(() => {
@@ -414,7 +416,6 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Hóa đơn mua bị chặn')).toBeInTheDocument();
     expect(screen.getByText('Yêu cầu chuyển kho chờ thực hiện')).toBeInTheDocument();
     expect(screen.getByText('Yêu cầu nghỉ phép chờ duyệt')).toBeInTheDocument();
-    expect(screen.getByText('Lệnh sản xuất sắp trễ hạn')).toBeInTheDocument();
   });
 
   it('renders CashflowOverviewCard with net cashflow total', async () => {

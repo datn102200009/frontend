@@ -5,6 +5,7 @@ import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Printer, FileText } from 'lucide-react';
 import styles from './InvoiceDetailsModal.module.css';
+import { shortId } from '@shared/lib/shortId';
 
 interface PurchaseInvoiceDetailsModalProps {
   invoiceId: string;
@@ -35,7 +36,7 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
       <Modal 
         open={true} 
         onClose={onClose} 
-        title={`Hóa Đơn ${(invoice.id || '').slice(0, 8).toUpperCase()}`}
+        title={`Hóa Đơn ${shortId(invoice.id)}`}
         size="lg"
         footer={
           <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -70,7 +71,7 @@ export const PurchaseInvoiceDetailsModal: React.FC<PurchaseInvoiceDetailsModalPr
               <span className={styles.label}>Đơn Hàng Gốc</span>
               <span className={styles.value} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <FileText size={14} />
-                {(invoice.order || '').slice(0, 8).toUpperCase()}
+                {shortId(invoice.order)}
               </span>
             </div>
           </div>

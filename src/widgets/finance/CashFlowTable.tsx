@@ -4,6 +4,7 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useGetFinanceCashFlowsQuery } from '@entities/finance/api/financeApi';
 import type { CashFlowTransaction } from '@entities/finance/model/types';
+import { shortId } from '@shared/lib/shortId';
 
 
 export const CashFlowTable: React.FC = () => {
@@ -15,7 +16,7 @@ export const CashFlowTable: React.FC = () => {
     return [
       helper.accessor('id', {
         header: 'Mã Giao Dịch',
-        cell: (info) => <span className="text-slate-500">{info.getValue().slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="text-slate-500">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('payment_type', {
         header: 'Loại',

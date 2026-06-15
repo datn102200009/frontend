@@ -73,6 +73,34 @@ describe('WorkOrderFormModal', () => {
     });
   });
 
+  it('submits form data with selected fixed assets', async () => {
+    renderWithProviders(<WorkOrderFormModal {...defaultProps} />);
+    const user = userEvent.setup();
+    
+    await user.type(screen.getByLabelText(/^Mã Lệnh Sản Xuất/i), 'WO-123');
+    
+    await selectOption(user, /^Chọn định mức/i, /BOM-01/i);
+    await selectOption(user, /^Kho nguồn/i, /Kho 1/i);
+    await selectOption(user, /^Kho sản xuất/i, /Kho 1/i);
+    await selectOption(user, /^Kho đích/i, /Kho 1/i);
+
+    const assetSelect = await screen.findByRole('combobox', { name: '' });
+    await user.click(assetSelect);
+    const assetOption = await screen.findByText('MOLD-001 - Khuôn mẫu 01');
+    await user.click(assetOption);
+
+    const addButton = screen.getByRole('button', { name: 'Thêm' });
+    await user.click(addButton);
+
+    expect(await screen.findByText('Khuôn mẫu 01')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Tạo lệnh' }));
+    
+    await waitFor(() => {
+      expect(defaultProps.onSuccess).toHaveBeenCalled();
+    });
+  });
+
   it('fetches and displays material preview', async () => {
     renderWithProviders(<WorkOrderFormModal {...defaultProps} />);
     const user = userEvent.setup();

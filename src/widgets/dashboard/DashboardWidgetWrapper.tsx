@@ -30,6 +30,7 @@ import { ListMini } from './ListMini';
 import { KpiCard } from './KpiCard';
 import { KpiListCard } from './KpiListCard';
 import { ComponentTrackerCard } from './ComponentTrackerCard';
+import { FixedAssetTrackerCard } from './FixedAssetTrackerCard';
 import { ChartCard } from './ChartCard';
 import { GaugeCard } from './GaugeCard';
 import { DonutChartCard } from './DonutChartCard';
@@ -96,8 +97,6 @@ function getWidgetIcon(code: string): ReactNode {
       return <Wrench size={16} />;
     case 'manufacturing_active_wos':
       return <Hammer size={16} />;
-    case 'manufacturing_pending_declarations':
-      return <Wrench size={16} />;
     case 'manufacturing_pending_completion':
       return <CheckCircle size={16} />;
     default:
@@ -242,6 +241,14 @@ export function DashboardWidgetWrapper({
             data={activeData}
             quickLinks={quick_links}
           />
+        ) : code === 'finance_depreciation_status' ? (
+          <FixedAssetTrackerCard
+            title={title}
+            code={code}
+            icon={getWidgetIcon(code)}
+            data={activeData}
+            quickLinks={quick_links}
+          />
         ) : code === 'finance_unpaid_purchase_invoices' || code === 'finance_unpaid_sales_invoices' ? (
           <AgingBarChartCard
             title={title}
@@ -309,6 +316,7 @@ export function DashboardWidgetWrapper({
           data={activeData}
           totalCount={activeTotalCount}
           quickLinks={quick_links}
+          enableSort={code === 'manufacturing_active_wos'}
         />
       )}
 

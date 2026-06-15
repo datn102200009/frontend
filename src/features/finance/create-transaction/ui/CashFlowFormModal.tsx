@@ -7,6 +7,7 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Input } from '@shared/ui/Input/Input';
 import styles from './CashFlowFormModal.module.css';
+import { shortId } from '@shared/lib/shortId';
 
 interface CashFlowFormState {
   payment_type: 'receive' | 'pay';
@@ -120,13 +121,13 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
               paymentType === 'receive' ? 'sales_invoice_id' : 'purchase_invoice_id'
             , { required: 'Bắt buộc' })} disabled={true}>
               {defaultValues?.sales_order_id ? (
-                <option value={defaultValues.sales_order_id}>{defaultValues.sales_order_id.slice(0,8).toUpperCase()} (Đặt Cọc Bán)</option>
+                <option value={defaultValues.sales_order_id}>{shortId(defaultValues.sales_order_id)} (Đặt Cọc Bán)</option>
               ) : defaultValues?.purchase_order_id ? (
-                <option value={defaultValues.purchase_order_id}>{defaultValues.purchase_order_id.slice(0,8).toUpperCase()} (Đặt Cọc Mua)</option>
+                <option value={defaultValues.purchase_order_id}>{shortId(defaultValues.purchase_order_id)} (Đặt Cọc Mua)</option>
               ) : defaultValues?.sales_invoice_id ? (
-                <option value={defaultValues.sales_invoice_id}>{defaultValues.sales_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Bán)</option>
+                <option value={defaultValues.sales_invoice_id}>{shortId(defaultValues.sales_invoice_id)} (Hóa Đơn Bán)</option>
               ) : defaultValues?.purchase_invoice_id ? (
-                <option value={defaultValues.purchase_invoice_id}>{defaultValues.purchase_invoice_id.slice(0,8).toUpperCase()} (Hóa Đơn Mua)</option>
+                <option value={defaultValues.purchase_invoice_id}>{shortId(defaultValues.purchase_invoice_id)} (Hóa Đơn Mua)</option>
               ) : (
                 <option value="">Không tìm thấy mã chứng từ hợp lệ</option>
               )}

@@ -135,6 +135,11 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    getHrmSalaryPeriods: build.query<string[], void>({
+      query: () => ({
+        url: `/hrm/salary-periods/`,
+      }),
+    }),
     postHrmSalarySlipsInitialize: build.mutation<
       PostHrmSalarySlipsInitializeApiResponse,
       PostHrmSalarySlipsInitializeApiArg
@@ -732,6 +737,7 @@ export const {
   usePostHrmLeaveRequestsCreateMutation,
   usePostHrmLeaveRequestsByIdApproveMutation,
   useGetHrmSalarySlipsQuery,
+  useGetHrmSalaryPeriodsQuery,
   usePostHrmSalarySlipsInitializeMutation,
   usePostHrmSalarySlipsByIdCalculateMutation,
   usePostHrmSalarySlipsByIdApproveMutation,

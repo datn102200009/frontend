@@ -21,6 +21,7 @@ import { usePermission } from '@shared/hooks/usePermission';
 import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { extractApiError } from '@shared/lib/extractApiError';
+import { shortId } from '@shared/lib/shortId';
 import styles from './PurchaseOrderFormModal.module.css';
 
 
@@ -292,8 +293,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const modalTitle = !orderId 
     ? "Thêm Đơn Mua Hàng Mới" 
     : isDraft 
-      ? `Chi Tiết Đơn Mua Nháp - ${(orderData?.id || '').slice(0, 8).toUpperCase()}`
-      : `Chi Tiết Đơn Mua Hàng - ${(orderData?.id || '').slice(0, 8).toUpperCase()}`;
+      ? `Chi Tiết Đơn Mua Nháp - ${shortId(orderData?.id)}`
+      : `Chi Tiết Đơn Mua Hàng - ${shortId(orderData?.id)}`;
 
   return (
     <>
@@ -538,7 +539,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                         {orderData.invoices.map(inv => (
                           <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--clr-background)' }}>
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>
-                              INV-{inv.id?.slice(0, 8).toUpperCase()}
+                              INV-{shortId(inv.id)}
                             </span>
                             <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getInvoiceStatusColor(inv.status) }}>
                               {getInvoiceStatusLabel(inv.status)}

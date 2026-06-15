@@ -19,7 +19,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({ onView, onEdit }) 
     const helper = createColumnHelper<Customer>();
     return [
       helper.accessor('name', {
-        header: 'Mã KH',
+        header: 'Mã khách hàng',
         cell: (info) => <span className="font-semibold text-slate-800">{info.getValue()}</span>,
       }),
       helper.accessor('customer_name', {

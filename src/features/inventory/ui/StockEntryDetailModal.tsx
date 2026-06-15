@@ -5,6 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { formatDateTime } from '@shared/lib/formatDate';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { Info } from 'lucide-react';
+import { shortId } from '@shared/lib/shortId';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 import { 
   usePostInventoryStockEntryByStockEntryIdUpdateMutation,
@@ -246,7 +247,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
               <tbody>
                 {localDetails.map((detail: StockEntryDetail, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--clr-border)' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code || detail.item_id?.substring(0, 8)}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code || shortId(detail.item_id)}</td>
                     <td style={{ padding: '8px 12px', textAlign: 'right' }}>{detail.quantity} {detail.uom_name || ''}</td>
                     <td style={{ padding: '8px 12px' }}>
                       {isDraft && (purposeType === 'issue' || purposeType === 'transfer') ? (
@@ -281,7 +282,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                           })()}
                         </div>
                       ) : (
-                        detail.source_warehouse_name || detail.source_warehouse_id?.substring(0, 8) || '—'
+                        detail.source_warehouse_name || shortId(detail.source_warehouse_id) || '—'
                       )}
                     </td>
                     <td style={{ padding: '8px 12px' }}>
@@ -298,7 +299,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                           ))}
                         </select>
                       ) : (
-                        detail.target_warehouse_name || detail.target_warehouse_id?.substring(0, 8) || '—'
+                        detail.target_warehouse_name || shortId(detail.target_warehouse_id) || '—'
                       )}
                     </td>
                   </tr>

@@ -110,14 +110,16 @@ export function KpiListCard({ title, code, icon, data, quickLinks }: KpiListCard
           </div>
         )}
 
-        <div className={styles.kpiListHero}>
-          <span
-            className={styles.kpiHeroValue}
-            style={config.heroColor ? { color: config.heroColor } : undefined}
-          >
-            {totalToShow}
-          </span>
-        </div>
+        {code !== 'hrm_payroll_lifecycle_status' && (
+          <div className={styles.kpiListHero}>
+            <span
+              className={styles.kpiHeroValue}
+              style={config.heroColor ? { color: config.heroColor } : undefined}
+            >
+              {totalToShow}
+            </span>
+          </div>
+        )}
 
         {isFetching && (
           <div className={styles.loadingOverlay} style={{ background: 'rgba(255, 255, 255, 0.5)' }}>
@@ -128,7 +130,11 @@ export function KpiListCard({ title, code, icon, data, quickLinks }: KpiListCard
         {items.length === 0 ? (
           <div className={styles.emptyState}>
             <Inbox className={styles.emptyStateIcon} size={24} />
-            <span>Không có hoạt động cần xử lý</span>
+            <span>
+              {code === 'hrm_payroll_lifecycle_status'
+                ? 'Không có kỳ lương nào đang chờ xử lý'
+                : 'Không có hoạt động cần xử lý'}
+            </span>
           </div>
         ) : (
           <div className={styles.kpiListSection}>

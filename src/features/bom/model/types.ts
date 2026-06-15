@@ -16,7 +16,7 @@ export interface BOM {
   is_active: boolean;
 }
 
-export type WorkOrderStatus = 'not_started' | 'in_progress' | 'completed';
+export type WorkOrderStatus = 'pending_approval' | 'in_progress' | 'pending_production_complete' | 'completed' | 'cancelled';
 
 export interface WorkOrder {
   id: string;

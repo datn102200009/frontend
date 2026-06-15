@@ -222,7 +222,9 @@ export const handlers = [
   http.get('*/api/v1/finance/fixed-assets/', () => {
     return HttpResponse.json({
       results: [
-        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'active' }
+        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'idle', depreciation_method: 'unit_of_production' },
+        { id: 'asset-2', asset_code: 'MOLD-002', asset_name: 'Khuôn mẫu 02', status: 'idle', depreciation_method: 'straight_line' },
+        { id: 'asset-3', asset_code: 'MOLD-003', asset_name: 'Khuôn mẫu 03', status: 'idle', depreciation_method: 'unit_of_production' }
       ]
     });
   }),
@@ -358,6 +360,10 @@ export const handlers = [
   http.post('*/api/v1/hrm/leave-requests/:id/approve/', async ({ params, request }) => {
     const data = await request.json() as { action: 'approve' | 'reject' };
     return HttpResponse.json({ id: params.id, status: data.action === 'approve' ? 'approved' : 'rejected' });
+  }),
+
+  http.get('*/api/v1/hrm/salary-periods/', () => {
+    return HttpResponse.json(['2026-05']);
   }),
 
   http.get('*/api/v1/hrm/salary-slips/', () => {

@@ -8,6 +8,7 @@ import type { SalesOrder } from '@entities/sales/model/types';
 import { Eye, Printer } from 'lucide-react';
 import { useSalesOrderFilters } from '@entities/sales/lib/useSalesOrderFilters';
 import { SalesOrderStatusFilter } from '@entities/sales/ui/SalesOrderStatusFilter';
+import { shortId } from '@shared/lib/shortId';
 
 interface SalesOrderTableProps {
   onView?: (id: string) => void;
@@ -27,7 +28,7 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
     return [
       helper.accessor('id', {
         header: 'Mã Đơn',
-        cell: (info) => <span className="font-medium text-blue-900">{info.getValue().slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="font-medium text-blue-900">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('customer_name', {
         header: 'Khách Hàng',

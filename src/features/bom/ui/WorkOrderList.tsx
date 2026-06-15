@@ -24,10 +24,11 @@ import {
 } from '@features/manufacturing/api/manufacturingApi';
 import styles from './BomList.module.css';
 
-const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' | 'error' }> = {
-  pending_approval: { label: 'Chờ duyệt', variant: 'neutral' },
-  in_progress: { label: 'Đang thực hiện', variant: 'warning' },
-  completed: { label: 'Hoàn thành', variant: 'success' },
+const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' | 'error' | 'info' }> = {
+  pending_approval: { label: 'Nháp', variant: 'neutral' },
+  in_progress: { label: 'Đang sản xuất', variant: 'warning' },
+  pending_production_complete: { label: 'Chờ nghiệm thu', variant: 'info' },
+  completed: { label: 'Hoàn tất', variant: 'success' },
   cancelled: { label: 'Đã hủy', variant: 'error' },
 };
 
@@ -240,6 +241,18 @@ export function WorkOrderList() {
                   )}
                 </>
               )}
+              {status === 'pending_production_complete' && (
+                <>
+                  {canComplete && (
+                    <ActionButton
+                      icon={<CheckCircle size={18} />}
+                      title="Phê duyệt hoàn tất"
+                      onClick={() => handleComplete(row.original)}
+                      disabled={isCompleting}
+                    />
+                  )}
+                </>
+              )}
             </TableActions>
           );
         }
@@ -328,6 +341,17 @@ export function WorkOrderList() {
             params.delete('id');
             setSearchParams(params);
           }}
+          onApprove={handleApprove}
+          onCancel={handleCancel}
+          onDeclare={(wo) => {
+            setDeclaringWo(wo);
+            setProducedQty('');
+          }}
+          onComplete={handleComplete}
+          canApprove={canApprove}
+          canCancel={canCancel}
+          canDeclare={canDeclare}
+          canComplete={canComplete}
         />
       )}
 
