@@ -81,8 +81,8 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Tài Chính',
     items: [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền', permission: 'finance.view_cash_flow' },
-      { to: '/finance/invoices', icon: <FileText size={20} />, label: 'Hoá Đơn Mua/Bán', permission: ['finance.pay_invoice', 'finance.collect_sales_invoice'] },
-      { to: '/finance/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định', permission: 'finance.view_fixed_asset' },
+      { to: '/invoices', icon: <FileText size={20} />, label: 'Hoá Đơn Mua/Bán', permission: ['finance.pay_invoice', 'finance.collect_sales_invoice'] },
+      { to: '/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định', permission: 'finance.view_fixed_asset' },
     ],
   },
   {

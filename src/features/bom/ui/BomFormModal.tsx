@@ -3,7 +3,6 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { SearchableSelect } from '../../../shared/ui/Select/SearchableSelect';
 import { usePostManufacturingBomCreateMutation, usePutManufacturingBomByBomIdUpdateMutation, useGetManufacturingBomByBomIdQuery } from '@features/manufacturing/api/manufacturingApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
-import { useGetFinanceFixedAssetsQuery } from '@entities/finance/api/financeApi';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { Plus, Trash2 } from 'lucide-react';
 import { Modal } from '@shared/ui/Modal/Modal';
@@ -15,7 +14,6 @@ interface BomFormData {
   name: string;
   product_code: string;
   notes: string;
-  mold_id: string;
   items: { item_code: string; quantity: number }[];
 }
 
@@ -34,16 +32,13 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
   const { data: itemsResponse, isSuccess: isItemsLoaded } = useGetMasterDataItemsListQuery({ limit: 1000 });
   const itemsList = itemsResponse?.results || [];
 
-  const { data: fixedAssetsResponse } = useGetFinanceFixedAssetsQuery({ limit: 1000 }, { skip: !open });
-  const fixedAssets = fixedAssetsResponse?.results || [];
-
   const { data: bomDetails, isFetching: isFetchingBom } = useGetManufacturingBomByBomIdQuery(
     { bomId: bomId! },
     { skip: !bomId }
   );
 
   const { register, control, handleSubmit, formState: { errors }, watch, reset } = useForm<BomFormData>({
-    defaultValues: { name: '', product_code: '', notes: '', mold_id: '', items: [{ item_code: '', quantity: 1 }] },
+    defaultValues: { name: '', product_code: '', notes: '', items: [{ item_code: '', quantity: 1 }] },
   });
 
   useEffect(() => {
@@ -52,12 +47,11 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
         name: bomDetails.name || '',
         product_code: bomDetails.item_code || '',
         notes: bomDetails.description || '',
-        mold_id: bomDetails.mold || '',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         items: bomDetails.items?.map((i: any) => ({ item_code: i.item_code, quantity: i.quantity })) || []
       });
     } else if (!isEdit && open && isItemsLoaded) {
-      reset({ name: '', product_code: '', notes: '', mold_id: '', items: [{ item_code: '', quantity: 1 }] });
+      reset({ name: '', product_code: '', notes: '', items: [{ item_code: '', quantity: 1 }] });
     }
   }, [isEdit, bomDetails, open, reset, isItemsLoaded]);
 
@@ -73,7 +67,6 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
             name: data.name,
             quantity: 1,
             description: data.notes,
-            mold_id: data.mold_id || null,
             items: data.items.map(item => ({ item_id: itemsList.find(i => i.item_code === item.item_code)?.id || item.item_code, quantity: item.quantity }))
           }
         }).unwrap();
@@ -85,7 +78,6 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
             item_id: itemsList.find(i => i.item_code === data.product_code)?.id || data.product_code,
             quantity: 1,
             description: data.notes,
-            mold_id: data.mold_id || null,
             items: data.items.map(item => ({ item_id: itemsList.find(i => i.item_code === item.item_code)?.id || item.item_code, quantity: item.quantity }))
           }
         }).unwrap();
@@ -138,26 +130,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
 
         <div className={styles.row}>
           <Input label="Ghi chú" {...register('notes')} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', flex: 1 }}>
-            <Controller
-              control={control}
-              name="mold_id"
-              render={({ field }) => (
-                <SearchableSelect
-                  label="Khuôn mẫu (Tài sản cố định)"
-                  placeholder="-- Chọn khuôn mẫu --"
-                  options={fixedAssets.map(asset => ({
-                    label: `${asset.asset_code} - ${asset.asset_name}`,
-                    value: asset.id || ''
-                  }))}
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={errors.mold_id?.message}
-                  disabled={isCreating || isUpdating}
-                />
-              )}
-            />
-          </div>
+          <div style={{ flex: 1 }} />
         </div>
 
         <div className={styles.itemsSection}>

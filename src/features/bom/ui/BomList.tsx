@@ -57,19 +57,6 @@ export function BomList() {
       { accessorKey: 'name', header: 'Tên Định Mức' },
       { accessorKey: 'item_name', header: 'Tên Sản Phẩm' },
       {
-        accessorKey: 'mold_code',
-        header: 'Khuôn Mẫu',
-        cell: ({ row }) => (
-          row.original.mold_code ? (
-            <span title={row.original.mold_name || ''} style={{ fontSize: 'var(--fs-sm)', fontWeight: 500 }}>
-              {row.original.mold_code} - {row.original.mold_name}
-            </span>
-          ) : (
-            <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic', fontSize: 'var(--fs-sm)' }}>Không có</span>
-          )
-        ),
-      },
-      {
         accessorKey: 'items_count',
         header: 'Linh Kiện',
         cell: ({ row }) => (

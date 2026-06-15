@@ -5,6 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import type { PurchaseInvoice } from '@entities/finance/api/financeApi';
 import { Eye, Printer, CreditCard } from 'lucide-react';
+import { shortId } from '@shared/lib/shortId';
 
 interface PurchaseInvoiceTableProps {
   data: PurchaseInvoice[];
@@ -24,11 +25,11 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
     return [
       helper.accessor('id', {
         header: 'Mã Hóa Đơn',
-        cell: (info) => <span className="font-medium text-slate-900">{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="font-medium text-slate-900">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('order', {
         header: 'Tham Chiếu Đơn',
-        cell: (info) => <span className="text-slate-500">{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="text-slate-500">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('vendor_name', {
         header: 'Nhà Cung Cấp',

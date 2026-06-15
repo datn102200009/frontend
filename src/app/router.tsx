@@ -139,7 +139,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'finance/invoices',
+        path: 'invoices',
         element: (
           <Suspense fallback={<PageLoader />}>
             <PermissionGuard requiredPermissions={['finance.pay_invoice', 'finance.collect_sales_invoice']} operator="OR" fallback={<ForbiddenPage />}>
@@ -149,7 +149,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'finance/fixed-assets',
+        path: 'fixed-assets',
         element: (
           <Suspense fallback={<PageLoader />}>
             <PermissionGuard requiredPermission="finance.view_fixed_asset" fallback={<ForbiddenPage />}>
@@ -157,6 +157,14 @@ export const router = createBrowserRouter([
             </PermissionGuard>
           </Suspense>
         ),
+      },
+      {
+        path: 'finance/invoices',
+        element: <Navigate to="/invoices" replace />,
+      },
+      {
+        path: 'finance/fixed-assets',
+        element: <Navigate to="/fixed-assets" replace />,
       },
       {
         path: 'customers',

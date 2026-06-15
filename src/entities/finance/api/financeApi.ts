@@ -33,6 +33,16 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/finance/cash-flows/${queryArg.pk}/approve/`, method: 'POST' }),
     }),
+    postFinanceCashFlowsByPkReject: build.mutation<
+      PostFinanceCashFlowsByPkRejectApiResponse,
+      PostFinanceCashFlowsByPkRejectApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/cash-flows/${queryArg.pk}/reject/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
+    }),
     getFinanceFixedAssets: build.query<
       GetFinanceFixedAssetsApiResponse,
       GetFinanceFixedAssetsApiArg
@@ -42,6 +52,8 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           limit: queryArg.limit,
           page: queryArg.page,
+          status__in: queryArg.statusIn,
+          assignable: queryArg.assignable,
         },
       }),
     }),
@@ -52,7 +64,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/finance/fixed-assets/`,
         method: 'POST',
-        body: queryArg.fixedAssetInput,
+        body: queryArg.fixedAssetPurchaseInput,
       }),
     }),
     getFinanceFixedAssetsByPk: build.query<
@@ -76,6 +88,16 @@ const injectedRtkApi = api.injectEndpoints({
       DeleteFinanceFixedAssetsByPkApiArg
     >({
       query: (queryArg) => ({ url: `/finance/fixed-assets/${queryArg.pk}/`, method: 'DELETE' }),
+    }),
+    postFinanceFixedAssetsByPkRequestDispose: build.mutation<
+      PostFinanceFixedAssetsByPkRequestDisposeApiResponse,
+      PostFinanceFixedAssetsByPkRequestDisposeApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/fixed-assets/${queryArg.pk}/request-dispose/`,
+        method: 'POST',
+        body: queryArg.fixedAssetRequestDisposeInput,
+      }),
     }),
     postFinanceFixedAssetsDepreciation: build.mutation<
       PostFinanceFixedAssetsDepreciationApiResponse,
@@ -189,6 +211,15 @@ export type PostFinanceCashFlowsByPkApproveApiResponse =
 export type PostFinanceCashFlowsByPkApproveApiArg = {
   pk: string
 }
+export type PostFinanceCashFlowsByPkRejectApiResponse =
+  /** status 200 Cash flow transaction successfully rejected. */ CashFlowTransaction
+export type PostFinanceCashFlowsByPkRejectApiArg = {
+  pk: string
+  body: {
+    /** Optional reason for rejecting the transaction. */
+    remarks?: string
+  }
+}
 export type GetFinanceFixedAssetsApiResponse = /** status 200 A paginated list of fixed assets. */ {
   count?: number
   total_pages?: number
@@ -198,11 +229,15 @@ export type GetFinanceFixedAssetsApiResponse = /** status 200 A paginated list o
 export type GetFinanceFixedAssetsApiArg = {
   limit?: number
   page?: number
+  /** Comma-separated list of statuses to filter by. */
+  statusIn?: string
+  /** If true, only returns idle assets. */
+  assignable?: boolean
 }
 export type PostFinanceFixedAssetsApiResponse =
   /** status 201 Fixed asset successfully created. */ FixedAsset
 export type PostFinanceFixedAssetsApiArg = {
-  fixedAssetInput: FixedAssetInput
+  fixedAssetPurchaseInput: FixedAssetPurchaseInput
 }
 export type GetFinanceFixedAssetsByPkApiResponse = /** status 200 Fixed asset details. */ FixedAsset
 export type GetFinanceFixedAssetsByPkApiArg = {
@@ -220,6 +255,12 @@ export type DeleteFinanceFixedAssetsByPkApiResponse =
   }
 export type DeleteFinanceFixedAssetsByPkApiArg = {
   pk: string
+}
+export type PostFinanceFixedAssetsByPkRequestDisposeApiResponse =
+  /** status 200 Fixed asset disposal request successfully registered. */ FixedAsset
+export type PostFinanceFixedAssetsByPkRequestDisposeApiArg = {
+  pk: string
+  fixedAssetRequestDisposeInput: FixedAssetRequestDisposeInput
 }
 export type PostFinanceFixedAssetsDepreciationApiResponse =
   /** status 201 Depreciation successfully processed. Returns logs generated. */ FixedAssetDepreciationLog[]
@@ -323,34 +364,41 @@ export type FixedAsset = {
   original_value?: string
   salvage_value?: string
   depreciation_method?: 'straight_line' | 'unit_of_production'
-  useful_life_months?: number
-  remaining_life_months?: number
+  useful_life_months?: number | null
+  remaining_life_months?: number | null
   designed_capacity?: number | null
   accumulated_depreciation?: string
   remaining_value?: string
   department?: string | null
+  status?: 'pending_receive' | 'idle' | 'active' | 'pending_dispose' | 'disposed'
+  purchase_date?: string | null
+  disposal_date?: string | null
+  disposal_value?: string | null
+  vendor_name?: string | null
+  payment_method?: string | null
   is_active?: boolean
   created_at?: string
   updated_at?: string
 }
-export type FixedAssetInput = {
-  asset_code: string
+export type FixedAssetPurchaseInput = {
   asset_name: string
   original_value: string
   salvage_value?: string
   depreciation_method: 'straight_line' | 'unit_of_production'
-  useful_life_months: number
+  useful_life_months?: number | null
   designed_capacity?: number | null
-  department?: string | null
+  purchase_date: string
+  vendor_name: string
+  payment_method?: 'cash' | 'bank_transfer'
 }
 export type FixedAssetUpdateInput = {
   asset_name?: string
-  original_value?: string
-  salvage_value?: string
-  depreciation_method?: 'straight_line' | 'unit_of_production'
   useful_life_months?: number
-  designed_capacity?: number | null
-  department?: string | null
+}
+export type FixedAssetRequestDisposeInput = {
+  disposal_date: string
+  disposal_value?: string
+  remarks?: string | null
 }
 export type FixedAssetDepreciationLog = {
   id?: string
@@ -429,11 +477,13 @@ export const {
   usePostFinanceCashFlowsMutation,
   useGetFinanceCashFlowsByPkQuery,
   usePostFinanceCashFlowsByPkApproveMutation,
+  usePostFinanceCashFlowsByPkRejectMutation,
   useGetFinanceFixedAssetsQuery,
   usePostFinanceFixedAssetsMutation,
   useGetFinanceFixedAssetsByPkQuery,
   usePatchFinanceFixedAssetsByPkMutation,
   useDeleteFinanceFixedAssetsByPkMutation,
+  usePostFinanceFixedAssetsByPkRequestDisposeMutation,
   usePostFinanceFixedAssetsDepreciationMutation,
   useGetFinanceFixedAssetsDepreciationLogsQuery,
   useGetFinanceInvoicesPurchaseQuery,

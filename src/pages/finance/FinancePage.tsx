@@ -4,15 +4,18 @@ import { CashFlowTable } from '@widgets/finance/CashFlowTable';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useToast } from '@shared/ui/Toast/Toast';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsByPkApproveMutation,
+  usePostFinanceCashFlowsByPkRejectMutation,
 } from '@entities/finance/api/financeApi';
 import { usePermission } from '@shared/hooks/usePermission';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
+import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { createColumnHelper } from '@tanstack/react-table';
 import type { CashFlowTransaction } from '@entities/finance/api/financeApi';
+import { shortId } from '@shared/lib/shortId';
 import styles from './FinancePage.module.css';
 
 const FinancePage: React.FC = () => {
@@ -57,6 +60,9 @@ const FinancePage: React.FC = () => {
   );
   
   const [approveCashFlow, { isLoading: isApproving }] = usePostFinanceCashFlowsByPkApproveMutation();
+  const [rejectCashFlow, { isLoading: isRejecting }] = usePostFinanceCashFlowsByPkRejectMutation();
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [remarks, setRemarks] = useState('');
   const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
@@ -74,11 +80,30 @@ const FinancePage: React.FC = () => {
     }
   };
 
+  const handleRejectClick = (id: string) => {
+    setRejectingId(id);
+    setRemarks('');
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectingId) return;
+    try {
+      await rejectCashFlow({ pk: rejectingId, body: { remarks } }).unwrap();
+      toast('success', 'Từ chối giao dịch dòng tiền thành công');
+      setRejectingId(null);
+      setRemarks('');
+      refetchApprovals();
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      toast('error', error?.data?.detail || 'Từ chối thất bại. Vui lòng kiểm tra lại.');
+    }
+  };
+
   const approvalColumnHelper = createColumnHelper<CashFlowTransaction>();
   const approvalColumns = useMemo(() => [
     approvalColumnHelper.accessor('id', {
       header: 'Mã Giao Dịch',
-      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{(info.getValue() || '').slice(0, 8).toUpperCase()}</span>,
+      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{shortId(info.getValue())}</span>,
     }),
     approvalColumnHelper.accessor('payment_type', {
       header: 'Loại',
@@ -118,17 +143,28 @@ const FinancePage: React.FC = () => {
       id: 'actions',
       header: 'Thao Tác',
       cell: (info) => (
-        <Button 
-          size="sm"
-          icon={<Check size={14} />}
-          onClick={() => handleApproveCashFlow(info.row.original.id!)}
-          disabled={isApproving}
-        >
-          Duyệt
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button 
+            size="sm"
+            icon={<Check size={14} />}
+            onClick={() => handleApproveCashFlow(info.row.original.id!)}
+            disabled={isApproving || isRejecting}
+          >
+            Duyệt
+          </Button>
+          <Button 
+            size="sm"
+            variant="danger"
+            icon={<X size={14} />}
+            onClick={() => handleRejectClick(info.row.original.id!)}
+            disabled={isApproving || isRejecting}
+          >
+            Từ chối
+          </Button>
+        </div>
       ),
     }),
-  ], [isApproving]);
+  ], [isApproving, isRejecting]);
 
   return (
     <div className={styles.page}>
@@ -211,6 +247,37 @@ const FinancePage: React.FC = () => {
           </div>
         )}
       </div>
+      <ConfirmModal
+        open={!!rejectingId}
+        title="Từ chối phê duyệt giao dịch"
+        message={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+            <span>Bạn có chắc chắn muốn từ chối giao dịch dòng tiền này? Hành động này sẽ chuyển trạng thái các tài sản liên quan hoặc xóa chúng nếu là đơn duyệt mua.</span>
+            <textarea
+              placeholder="Nhập lý do từ chối (tùy chọn)..."
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '80px',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid var(--clr-border)',
+                fontSize: 'var(--fs-sm)',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                marginTop: '8px',
+              }}
+            />
+          </div>
+        }
+        confirmText="Từ chối"
+        cancelText="Hủy"
+        confirmVariant="danger"
+        onConfirm={handleConfirmReject}
+        onCancel={() => setRejectingId(null)}
+        isLoading={isRejecting}
+      />
     </div>
   );
 };

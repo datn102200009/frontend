@@ -13,6 +13,7 @@ import {
   usePostManufacturingMaterialPreviewMutation,
 } from '@features/manufacturing/api/manufacturingApi';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
+import { WorkOrderFixedAssetsSection } from './WorkOrderFixedAssetsSection';
 
 const woSchema = z.object({
   name: z.string().min(1, 'Bắt buộc nhập tên/mã lệnh'),
@@ -26,6 +27,7 @@ const woSchema = z.object({
   planned_start_date: z.string().min(1, 'Bắt buộc chọn ngày bắt đầu'),
   planned_end_date: z.string().optional().nullable(),
   remarks: z.string().optional().nullable(),
+  fixed_asset_ids: z.array(z.string()),
 });
 
 type WoFormData = z.infer<typeof woSchema>;
@@ -84,6 +86,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
       planned_start_date: new Date().toISOString().slice(0, 10),
       planned_end_date: '',
       remarks: '',
+      fixed_asset_ids: [],
     },
   });
 
@@ -103,6 +106,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
         planned_start_date: new Date().toISOString().slice(0, 10),
         planned_end_date: '',
         remarks: '',
+        fixed_asset_ids: [],
       });
       setPreviewData([]);
     }
@@ -157,6 +161,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
           planned_start_date: data.planned_start_date,
           planned_end_date: data.planned_end_date || undefined,
           remarks: data.remarks || undefined,
+          fixed_asset_ids: data.fixed_asset_ids,
         },
       }).unwrap();
       
@@ -293,6 +298,18 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
             disabled={isCreating}
             error={errors.remarks?.message}
             {...register('remarks')}
+          />
+
+          <Controller
+            name="fixed_asset_ids"
+            control={control}
+            render={({ field }) => (
+              <WorkOrderFixedAssetsSection
+                value={field.value || []}
+                onChange={field.onChange}
+                isReadOnly={isCreating}
+              />
+            )}
           />
         </div>
 

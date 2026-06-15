@@ -147,6 +147,19 @@ export function WorkOrderDetailModal({
           </div>
         </div>
 
+        {workOrder.fixed_assets && workOrder.fixed_assets.length > 0 && (
+          <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--sp-4)' }}>
+            <div style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, marginBottom: 'var(--sp-2)' }}>Tài sản cố định sử dụng</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {workOrder.fixed_assets.map((fa: any) => (
+                <Badge key={fa.id || fa.fixed_asset_id} variant="neutral">
+                  {fa.asset_name} ({fa.asset_code})
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {workOrder.remarks && (
           <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--sp-4)' }}>
             <div style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, marginBottom: 'var(--sp-1)' }}>Ghi chú</div>

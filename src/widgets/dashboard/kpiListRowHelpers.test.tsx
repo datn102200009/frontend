@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildItemLink, shortId } from './kpiListRowHelpers';
+import { buildItemLink } from './kpiListRowHelpers';
+import { shortId } from '@shared/lib/shortId';
 
 describe('kpiListRowHelpers', () => {
   const mockItem = {

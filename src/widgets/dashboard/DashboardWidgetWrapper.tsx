@@ -30,6 +30,7 @@ import { ListMini } from './ListMini';
 import { KpiCard } from './KpiCard';
 import { KpiListCard } from './KpiListCard';
 import { ComponentTrackerCard } from './ComponentTrackerCard';
+import { FixedAssetTrackerCard } from './FixedAssetTrackerCard';
 import { ChartCard } from './ChartCard';
 import { GaugeCard } from './GaugeCard';
 import { DonutChartCard } from './DonutChartCard';
@@ -234,6 +235,14 @@ export function DashboardWidgetWrapper({
       {type === 'donut_chart' && (
         code === 'inventory_low_stock' ? (
           <ComponentTrackerCard
+            title={title}
+            code={code}
+            icon={getWidgetIcon(code)}
+            data={activeData}
+            quickLinks={quick_links}
+          />
+        ) : code === 'finance_depreciation_status' ? (
+          <FixedAssetTrackerCard
             title={title}
             code={code}
             icon={getWidgetIcon(code)}

@@ -22,7 +22,6 @@ export default function DashboardPage() {
     data: batchData,
     error: batchError,
     isLoading: batchLoading,
-    isFetching: batchFetching,
     refetch: refetchBatch,
   } = useGetDashboardWidgetsBatchDataQuery(
     {},

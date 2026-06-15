@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { formatVND } from '@shared/lib/formatVND';
+import { shortId } from '@shared/lib/shortId';
 import styles from './DashboardWidgets.module.css';
 
 function ProgressBar({ value, label, color }: { value: number; label: string; color: string }) {
@@ -27,10 +28,6 @@ export function formatDate(dateStr?: string | null): string {
 export function daysAgo(dateStr?: string | null): number {
   if (!dateStr) return 0;
   return Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)));
-}
-
-export function shortId(id?: string | null): string {
-  return id ? id.substring(0, 8).toUpperCase() : '—';
 }
 
 // Build link from item + code
@@ -75,13 +72,10 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     return { to: `/finance?tab=cashflow&search=${sid}`, display: sid };
   }
   if (code === 'finance_unpaid_purchase_invoices') {
-    return { to: `/finance/invoices?tab=purchase_invoices&id=${id}`, display: sid };
+    return { to: `/invoices?tab=purchase_invoices&id=${id}`, display: sid };
   }
   if (code === 'finance_unpaid_sales_invoices') {
-    return { to: `/finance/invoices?tab=sales_invoices&id=${id}`, display: sid };
-  }
-  if (code === 'finance_depreciation_status') {
-    return { to: `/finance/fixed-assets?assetCode=${item.asset_code}`, display: item.asset_code };
+    return { to: `/invoices?tab=sales_invoices&id=${id}`, display: sid };
   }
   if (code === 'hrm_payroll_lifecycle_status') {
     return {
@@ -126,9 +120,6 @@ export function buildItemTitle(item: any, code: string): ReactNode {
   }
   if (code === 'finance_cashflow_summary') {
     return <span className={styles.rowMainText}>{item.name}</span>;
-  }
-  if (code === 'finance_depreciation_status') {
-    return <span className={styles.rowMainText}>{item.asset_name}</span>;
   }
   if (code === 'hrm_payroll_lifecycle_status') {
     return null;
@@ -222,16 +213,6 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
   if (code === 'finance_cashflow_summary') {
     return <div className={styles.rowSubText}>{item.category || 'Khác'}</div>;
   }
-  if (code === 'finance_depreciation_status') {
-    const isDone = item.status === 'Đã hoàn tất';
-    return (
-      <div className={styles.rowSubText}>
-        <span className={isDone ? styles.colGreenText : styles.colOrangeText}>
-          {item.status}
-        </span>
-      </div>
-    );
-  }
   if (code === 'hrm_payroll_lifecycle_status') {
     const isApproved = item.status === 'approved';
     return (
@@ -313,16 +294,6 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
         style={{ fontWeight: 'var(--fw-bold)' }}
       >
         {isReceive ? '+' : '-'} {formatVND(item.amount)}
-      </div>
-    );
-  }
-  if (code === 'finance_depreciation_status') {
-    const value = item.latest_depreciation_amount ?? item.estimated_depreciation_amount;
-    const label = item.latest_depreciation_amount ? 'KH gần nhất' : 'KH ước tính';
-    return (
-      <div className={styles.colRightAlign}>
-        <div style={{ fontWeight: 'var(--fw-medium)' }}>{formatVND(value)}</div>
-        <div className={styles.rowSubText}>{label}</div>
       </div>
     );
   }

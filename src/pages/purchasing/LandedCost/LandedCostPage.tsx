@@ -16,6 +16,7 @@ import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Plus, Package, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { shortId } from '@shared/lib/shortId';
 import styles from './LandedCostPage.module.css';
 
 // Schema validation for completing shipment
@@ -668,7 +669,7 @@ export const LandedCostPage: React.FC = () => {
                 <option value="">-- Chọn đơn mua hàng (PO) --</option>
                 {availablePurchaseOrders.map((po) => (
                   <option key={po.id} value={po.id}>
-                    {po.id?.substring(0, 8)}... (NCC: {po.vendor_name}, Trị giá: {po.total_amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(po.total_amount) : '---'})
+                    {shortId(po.id)}... (NCC: {po.vendor_name}, Trị giá: {po.total_amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(po.total_amount) : '---'})
                   </option>
                 ))}
               </select>

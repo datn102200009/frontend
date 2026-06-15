@@ -8,6 +8,7 @@ import type { PurchaseOrder } from '@entities/purchasing/model/types';
 import { Eye, Edit, Printer } from 'lucide-react';
 import { usePurchaseOrderFilters } from '@entities/purchasing/lib/usePurchaseOrderFilters';
 import { PurchaseOrderStatusFilter } from '@entities/purchasing/ui/PurchaseOrderStatusFilter';
+import { shortId } from '@shared/lib/shortId';
 
 interface PurchaseOrderTableProps {
   onView?: (id: string) => void;
@@ -28,7 +29,7 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
     return [
       helper.accessor('id', {
         header: 'Mã Đơn',
-        cell: (info) => <span className="font-medium text-indigo-900">{info.getValue().slice(0, 8).toUpperCase()}</span>,
+        cell: (info) => <span className="font-medium text-indigo-900">{shortId(info.getValue())}</span>,
       }),
       helper.accessor('vendor_name', {
         header: 'Nhà Cung Cấp',

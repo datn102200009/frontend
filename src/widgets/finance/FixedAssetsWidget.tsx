@@ -1,30 +1,38 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Trash2, Calendar, Plus, ChevronDown } from 'lucide-react';
+import { Pencil, Plus, ChevronDown, Recycle } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { useToast } from '@shared/ui/Toast/Toast';
 import { formatDateTime } from '@shared/lib/formatDate';
+import { useCurrentUser } from '@shared/lib/permissionContext';
 import {
   useGetFinanceFixedAssetsQuery,
   useGetFinanceFixedAssetsDepreciationLogsQuery,
   type FixedAsset,
   type FixedAssetDepreciationLog,
 } from '@entities/finance/api/financeApi';
-import { AssetFormModal } from '@features/finance/fixed-assets/ui/AssetFormModal';
-import { DepreciationRunModal } from '@features/finance/fixed-assets/ui/DepreciationRunModal';
-import { AssetDeleteModal } from '@features/finance/fixed-assets/ui/AssetDeleteModal';
+import { AssetEditModal } from '@features/finance/fixed-assets/ui/AssetEditModal';
+import { AssetPurchaseModal } from '@features/finance/fixed-assets/ui/AssetPurchaseModal';
+import { AssetDisposeModal } from '@features/finance/fixed-assets/ui/AssetDisposeModal';
 import styles from './FixedAssetsWidget.module.css';
 import clsx from 'clsx';
+import { shortAssetCode } from '@shared/lib/shortId';
 
 export function FixedAssetsWidget() {
   const [subTab, setSubTab] = useState<'list' | 'logs'>('list');
-  const { toast } = useToast();
+  const currentUser = useCurrentUser();
+  const hasPermission = (perm: string) => currentUser?.permissions?.includes(perm) || false;
+
+  // Status Filter State
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
   // Fixed Asset queries
-  const { data: assetsData, isLoading: isLoadingAssets, refetch: refetchAssets } = useGetFinanceFixedAssetsQuery({ limit: 1000 });
+  const { data: assetsData, isLoading: isLoadingAssets, refetch: refetchAssets } = useGetFinanceFixedAssetsQuery({
+    statusIn: statusFilter || undefined,
+    limit: 1000,
+  });
   const assets = assetsData?.results || [];
 
   // Depreciation log queries
@@ -45,10 +53,26 @@ export function FixedAssetsWidget() {
   const logs = logsData?.results || [];
 
   // Modal States
-  const [showCreate, setShowCreate] = useState(false);
+  const [showPurchase, setShowPurchase] = useState(false);
   const [editingAsset, setEditingAsset] = useState<FixedAsset | null>(null);
-  const [deletingAsset, setDeletingAsset] = useState<FixedAsset | null>(null);
-  const [showRunDepreciation, setShowRunDepreciation] = useState(false);
+  const [disposingAsset, setDisposingAsset] = useState<FixedAsset | null>(null);
+
+  // Handle updates success
+  const handlePurchaseSuccess = () => {
+    setShowPurchase(false);
+    refetchAssets();
+  };
+
+  const handleEditSuccess = () => {
+    setEditingAsset(null);
+    refetchAssets();
+  };
+
+  const handleDisposeSuccess = () => {
+    setDisposingAsset(null);
+    refetchAssets();
+    refetchLogs();
+  };
 
   const currentYear = useMemo(() => new Date().getFullYear(), []);
   const years = useMemo(() => {
@@ -59,33 +83,15 @@ export function FixedAssetsWidget() {
     return list;
   }, [currentYear]);
 
-  // Handle updates success
-  const handleSaveSuccess = () => {
-    setShowCreate(false);
-    setEditingAsset(null);
-    refetchAssets();
-  };
-
-  const handleDeleteSuccess = () => {
-    setDeletingAsset(null);
-    refetchAssets();
-  };
-
-  const handleRunDepreciationSuccess = (count: number, period: string) => {
-    if (count > 0) {
-      toast('success', `Đã trích khấu hao thành công cho ${count} tài sản trong kỳ ${period}`);
-    } else {
-      toast('info', `Không có tài sản nào phát sinh khấu hao trong kỳ ${period}`);
-    }
-    setShowRunDepreciation(false);
-    refetchAssets();
-    refetchLogs();
-  };
-
   // Columns for Fixed Asset Table
   const assetColumns = useMemo<ColumnDef<FixedAsset, unknown>[]>(
     () => [
-      { accessorKey: 'asset_code', header: 'Mã Tài Sản', size: 100 },
+      {
+        accessorKey: 'asset_code',
+        header: 'Mã Tài Sản',
+        size: 100,
+        cell: ({ row }) => shortAssetCode(row.original.asset_code),
+      },
       { accessorKey: 'asset_name', header: 'Tên Tài Sản' },
       {
         accessorKey: 'depreciation_method',
@@ -104,56 +110,85 @@ export function FixedAssetsWidget() {
         cell: ({ row }) => Number(row.original.original_value ?? 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }),
       },
       {
-        accessorKey: 'salvage_value',
-        header: 'Giá Trị Thanh Lý',
-        cell: ({ row }) => Number(row.original.salvage_value ?? 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }),
-      },
-      {
         accessorKey: 'accumulated_depreciation',
         header: 'Lũy kế khấu hao',
         cell: ({ row }) => Number(row.original.accumulated_depreciation ?? 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }),
       },
       {
-        accessorKey: 'remaining_value',
-        header: 'Giá Trị Còn Lại',
+        header: 'Thời gian / Sản lượng KH',
         cell: ({ row }) => {
-          const rem = Number(row.original.remaining_value ?? 0);
-          return rem.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+          const asset = row.original;
+          if (asset.depreciation_method === 'straight_line') {
+            return `${asset.remaining_life_months}/${asset.useful_life_months} tháng`;
+          } else {
+            const originalVal = Number(asset.original_value || 0);
+            const salvageVal = Number(asset.salvage_value || 0);
+            const depreciableValue = originalVal - salvageVal;
+            const designCap = Number(asset.designed_capacity || 0);
+            const accumulatedDep = Number(asset.accumulated_depreciation || 0);
+
+            let prodDepQty = 0;
+            if (depreciableValue > 0 && designCap > 0) {
+              prodDepQty = accumulatedDep / (depreciableValue / designCap);
+            }
+            return `${prodDepQty.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}/${designCap.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} sp`;
+          }
         },
       },
       {
-        header: 'Thời gian khấu hao',
-        cell: ({ row }) => `${row.original.remaining_life_months}/${row.original.useful_life_months} thg`,
+        accessorKey: 'status',
+        header: 'Trạng Thái',
+        cell: ({ row }) => {
+          const status = row.original.status;
+          if (status === 'pending_receive') return <Badge variant="warning">Chờ duyệt mua</Badge>;
+          if (status === 'idle') return <Badge variant="info">Đang nhàn rỗi</Badge>;
+          if (status === 'active') return <Badge variant="success">Đang hoạt động</Badge>;
+          if (status === 'pending_dispose') return <Badge variant="warning">Chờ duyệt thanh lý</Badge>;
+          if (status === 'disposed') return <Badge variant="error">Đã thanh lý</Badge>;
+          return <Badge variant="info">{status}</Badge>;
+        },
       },
-      { accessorKey: 'department', header: 'Bộ Phận', size: 100 },
       {
         id: 'actions',
         header: 'Thao Tác',
-        size: 100,
-        cell: ({ row }) => (
-          <TableActions>
-            <ActionButton
-              icon={<Pencil size={16} />}
-              title="Chỉnh sửa"
-              onClick={() => setEditingAsset(row.original)}
-            />
-            <ActionButton
-              icon={<Trash2 size={16} />}
-              title="Xóa"
-              variant="danger"
-              onClick={() => setDeletingAsset(row.original)}
-            />
-          </TableActions>
-        ),
+        size: 120,
+        cell: ({ row }) => {
+          const asset = row.original;
+          const status = asset.status;
+          return (
+            <TableActions>
+              {status === 'idle' && (
+                <ActionButton
+                  icon={<Pencil size={16} />}
+                  title="Chỉnh sửa"
+                  onClick={() => setEditingAsset(asset)}
+                />
+              )}
+              {status === 'idle' && hasPermission('finance.update_fixed_asset') && (
+                <ActionButton
+                  icon={<Recycle size={16} />}
+                  title="Yêu cầu thanh lý"
+                  variant="danger"
+                  onClick={() => setDisposingAsset(asset)}
+                />
+              )}
+            </TableActions>
+          );
+        },
       },
     ],
-    [],
+    [currentUser],
   );
 
   // Columns for Depreciation Logs Table
   const logColumns = useMemo<ColumnDef<FixedAssetDepreciationLog, unknown>[]>(
     () => [
-      { accessorKey: 'asset_code', header: 'Mã Tài Sản', size: 100 },
+      {
+        accessorKey: 'asset_code',
+        header: 'Mã Tài Sản',
+        size: 100,
+        cell: ({ row }) => shortAssetCode(row.original.asset_code),
+      },
       { accessorKey: 'asset_name', header: 'Tên Tài Sản' },
       { accessorKey: 'period', header: 'Kỳ Khấu Hao', size: 100 },
       {
@@ -200,22 +235,33 @@ export function FixedAssetsWidget() {
         <div className={styles.container}>
           <div className={styles.header}>
             <div>
-              <h3 className={styles.title}>Tài Sản Cố Định</h3>
-              <p className={styles.subtitle}>Danh sách khuôn mẫu và máy móc trích khấu hao</p>
+              <h3 className={styles.title}>Quản Lí Tài Sản Cố Định</h3>
             </div>
-            <div className={styles.actions}>
-              <Button
-                variant="outline"
-                icon={<Calendar size={16} />}
-                onClick={() => setShowRunDepreciation(true)}
-              >
-                Trích Khấu Hao Tháng
-              </Button>
+            <div className={styles.actions} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)', whiteSpace: 'nowrap' }}>Trạng thái:</span>
+                <div className="filterSelectWrapper">
+                  <select
+                    className="filterSelectInput"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    style={{ minWidth: '160px', paddingRight: '24px' }}
+                  >
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="pending_receive">Chờ duyệt mua</option>
+                    <option value="pending_dispose">Chờ duyệt thanh lý</option>
+                    <option value="idle">Đang nhàn rỗi</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="disposed">Đã thanh lý</option>
+                  </select>
+                  <ChevronDown size={14} className="filterSelectIcon" style={{ right: '8px' }} />
+                </div>
+              </div>
               <Button
                 icon={<Plus size={16} />}
-                onClick={() => setShowCreate(true)}
+                onClick={() => setShowPurchase(true)}
               >
-                Thêm Tài Sản
+                Mua TSCĐ
               </Button>
             </div>
           </div>
@@ -297,37 +343,36 @@ export function FixedAssetsWidget() {
         </div>
       )}
 
-      {/* Form Modal */}
-      {(showCreate || editingAsset) && (
-        <AssetFormModal
-          open={showCreate || !!editingAsset}
+      {/* Purchase Modal */}
+      {showPurchase && (
+        <AssetPurchaseModal
+          open={showPurchase}
+          onClose={() => setShowPurchase(false)}
+          onSave={handlePurchaseSuccess}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {editingAsset && (
+        <AssetEditModal
+          open={!!editingAsset}
           editingAsset={editingAsset}
-          onClose={() => {
-            setShowCreate(false);
-            setEditingAsset(null);
-          }}
-          onSave={handleSaveSuccess}
+          onClose={() => setEditingAsset(null)}
+          onSave={handleEditSuccess}
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {deletingAsset && (
-        <AssetDeleteModal
-          open={!!deletingAsset}
-          asset={deletingAsset}
-          onClose={() => setDeletingAsset(null)}
-          onConfirm={handleDeleteSuccess}
+      {/* Dispose Confirmation Modal */}
+      {disposingAsset && (
+        <AssetDisposeModal
+          open={!!disposingAsset}
+          asset={disposingAsset}
+          onClose={() => setDisposingAsset(null)}
+          onConfirm={handleDisposeSuccess}
         />
       )}
 
-      {/* Run Depreciation Modal */}
-      {showRunDepreciation && (
-        <DepreciationRunModal
-          open={showRunDepreciation}
-          onClose={() => setShowRunDepreciation(false)}
-          onSuccess={handleRunDepreciationSuccess}
-        />
-      )}
+
     </div>
   );
 }

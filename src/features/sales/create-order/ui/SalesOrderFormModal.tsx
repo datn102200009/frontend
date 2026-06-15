@@ -18,6 +18,7 @@ import { Plus, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { shortId } from '@shared/lib/shortId';
 import styles from './SalesOrderFormModal.module.css';
 
 
@@ -273,8 +274,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const modalTitle = !orderId 
     ? "Thêm Đơn Bán Hàng Mới" 
     : isDraft 
-      ? `Chi Tiết Đơn Bán Nháp - ${(orderData?.id || '').slice(0, 8).toUpperCase()}`
-      : `Chi Tiết Đơn Bán Hàng - ${(orderData?.id || '').slice(0, 8).toUpperCase()}`;
+      ? `Chi Tiết Đơn Bán Nháp - ${shortId(orderData?.id)}`
+      : `Chi Tiết Đơn Bán Hàng - ${shortId(orderData?.id)}`;
 
   return (
     <>
@@ -504,7 +505,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                         {orderData.invoices.map(inv => (
                           <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--clr-background)' }}>
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>
-                              INV-{inv.id?.slice(0, 8).toUpperCase()}
+                              INV-{shortId(inv.id)}
                             </span>
                             <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getInvoiceStatusColor(inv.status) }}>
                               {getInvoiceStatusLabel(inv.status)}
