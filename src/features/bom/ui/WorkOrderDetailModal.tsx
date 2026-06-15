@@ -2,11 +2,13 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { formatDateShort } from '@shared/lib/formatDate';
+import { PlayCircle, XCircle, ArrowRightCircle, CheckCircle } from 'lucide-react';
 
-const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' | 'error' }> = {
-  pending_approval: { label: 'Chờ duyệt', variant: 'neutral' },
-  in_progress: { label: 'Đang thực hiện', variant: 'warning' },
-  completed: { label: 'Hoàn thành', variant: 'success' },
+const STATUS_MAP: Record<string, { label: string; variant: 'neutral' | 'warning' | 'success' | 'error' | 'info' }> = {
+  pending_approval: { label: 'Nháp', variant: 'neutral' },
+  in_progress: { label: 'Đang sản xuất', variant: 'warning' },
+  pending_production_complete: { label: 'Chờ nghiệm thu', variant: 'info' },
+  completed: { label: 'Hoàn tất', variant: 'success' },
   cancelled: { label: 'Đã hủy', variant: 'error' },
 };
 
@@ -15,9 +17,29 @@ interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workOrder: any;
   onClose: () => void;
+  onApprove: (workOrder: any) => void;
+  onCancel: (workOrder: any) => void;
+  onDeclare: (workOrder: any) => void;
+  onComplete: (workOrder: any) => void;
+  canApprove?: boolean;
+  canCancel?: boolean;
+  canDeclare?: boolean;
+  canComplete?: boolean;
 }
 
-export function WorkOrderDetailModal({ open, workOrder, onClose }: Props) {
+export function WorkOrderDetailModal({
+  open,
+  workOrder,
+  onClose,
+  onApprove,
+  onCancel,
+  onDeclare,
+  onComplete,
+  canApprove = false,
+  canCancel = false,
+  canDeclare = false,
+  canComplete = false,
+}: Props) {
   if (!workOrder) return null;
 
   const statusInfo = STATUS_MAP[workOrder.status] || { label: workOrder.status, variant: 'neutral' };
@@ -30,7 +52,68 @@ export function WorkOrderDetailModal({ open, workOrder, onClose }: Props) {
       onClose={onClose}
       title={`Chi Tiết Lệnh Sản Xuất: ${workOrder.name}`}
       size="md"
-      footer={<Button onClick={onClose}>Đóng</Button>}
+      footer={
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
+          {workOrder.status === 'pending_approval' && canApprove && (
+            <Button
+              variant="primary"
+              onClick={() => {
+                onApprove(workOrder);
+                onClose();
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <PlayCircle size={16} />
+                Phê Duyệt
+              </div>
+            </Button>
+          )}
+          {(workOrder.status === 'pending_approval' || workOrder.status === 'in_progress') && canCancel && (
+            <Button
+              variant="danger"
+              onClick={() => {
+                onCancel(workOrder);
+                onClose();
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <XCircle size={16} />
+                Hủy
+              </div>
+            </Button>
+          )}
+          {workOrder.status === 'in_progress' && (workOrder.produced_qty || 0) < (workOrder.quantity || 0) && canDeclare && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                onDeclare(workOrder);
+                onClose();
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <ArrowRightCircle size={16} />
+                Nhập Liệu
+              </div>
+            </Button>
+          )}
+          {((workOrder.status === 'in_progress' && (workOrder.produced_qty || 0) >= (workOrder.quantity || 0)) ||
+            workOrder.status === 'pending_production_complete') && canComplete && (
+            <Button
+              variant="primary"
+              onClick={() => {
+                onComplete(workOrder);
+                onClose();
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CheckCircle size={16} />
+                Xác Nhận Hoàn Thành
+              </div>
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onClose}>Đóng</Button>
+        </div>
+      }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-4)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>

@@ -18,6 +18,11 @@ export interface ComponentTrackerCardProps {
       uom: string;
       status: string; // 'critical' | 'warning' | 'normal'
       reason: string;
+      alerts: Array<{
+        category: 'dos' | 'below_threshold' | 'projected_shortage';
+        level: 'critical' | 'warning' | 'normal';
+        reason: string;
+      }>;
     }>;
     product_distribution: Record<string, Record<string, string>>; // product_id -> warehouse_id -> balance
     warehouses: Array<{ id: string; name: string }>;
@@ -121,14 +126,70 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
       <div className={styles.cardBody}>
         <div className={styles.componentTrackerSelect}>
           <SearchableSelect
-            options={items.map((i) => ({
-              value: i.id,
-              label: i.item_name,
-            }))}
+            options={items.map((i) => {
+              const belowAlert = i.alerts.find((a) => a.category === 'below_threshold');
+              const shortageAlert = i.alerts.find((a) => a.category === 'projected_shortage');
+              return {
+                value: i.id,
+                label: i.item_name,
+                meta: {
+                  status: i.status,
+                  belowActive: !!belowAlert,
+                  belowLevel: belowAlert?.level,
+                  shortageActive: !!shortageAlert,
+                  shortageLevel: shortageAlert?.level,
+                },
+              };
+            })}
             value={selectedProductId}
             onChange={(val) => setSelectedProductId(val)}
             ariaLabel="Chọn sản phẩm theo dõi"
             placeholder="Tìm và chọn sản phẩm..."
+            renderOption={(opt) => {
+              const meta = opt.meta || {};
+              const belowActive = meta.belowActive as boolean;
+              const belowLevel = meta.belowLevel as string;
+              const shortageActive = meta.shortageActive as boolean;
+              const hasAlerts = 'belowActive' in meta;
+
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {hasAlerts ? (
+                    <>
+                      {belowActive && (
+                        <AlertTriangle
+                          size={14}
+                          style={{
+                            color: belowLevel === 'critical' ? 'var(--clr-error)' : 'var(--clr-warning)',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      {shortageActive && (
+                        <AlertTriangle
+                          size={14}
+                          style={{
+                            color: 'var(--clr-warning)',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                    </>
+                  ) : (
+                    (meta.status === 'critical' || meta.status === 'warning') && (
+                      <AlertTriangle
+                        size={14}
+                        style={{
+                          color: meta.status === 'critical' ? 'var(--clr-error)' : 'var(--clr-warning)',
+                          flexShrink: 0,
+                        }}
+                      />
+                    )
+                  )}
+                  <span>{opt.label}</span>
+                </div>
+              );
+            }}
           />
         </div>
 
@@ -188,19 +249,25 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
             </div>
           </div>
 
-          {selectedItem && (selectedItem.status === 'critical' || selectedItem.status === 'warning') && (() => {
-            const isCritical = selectedItem.status === 'critical';
-            const isFallback = selectedItem.reason.includes('Dưới ngưỡng tối thiểu');
-            const className = isCritical
-              ? (isFallback ? styles.componentTrackerWarningCriticalFallback : styles.componentTrackerWarning)
-              : styles.componentTrackerWarningWarning;
-            return (
-              <div className={className}>
-                <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-                <span>{selectedItem.reason}</span>
-              </div>
-            );
-          })()}
+          {selectedItem && (
+            <div className={styles.componentTrackerAlerts}>
+              {selectedItem.alerts.map((alert, idx) => {
+                const isCritical = alert.level === 'critical';
+                const isProjected = alert.category === 'projected_shortage';
+                const variantClass = isCritical
+                  ? styles.componentTrackerAlertCritical
+                  : isProjected
+                    ? styles.componentTrackerAlertProjected
+                    : styles.componentTrackerAlertBelow;
+                return (
+                  <div key={`${alert.category}-${idx}`} className={variantClass}>
+                    <AlertTriangle size={18} style={{ flexShrink: 0 }} />
+                    <span>{alert.reason}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

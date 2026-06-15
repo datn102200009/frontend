@@ -29,8 +29,7 @@ Bộ kiểm thử Playwright cho trang Dashboard đã được viết lại hoà
 | 22 | hrm_today_attendance_rate | Theo dõi vắng mặt | gauge | `test_gauge_card` | `/hrm?tab=attendance` |
 | 23 | manufacturing_pending_wo_approval | Lệnh sản xuất chờ duyệt | kpi_list | `test_kpi_list_card` | `/bom?tab=wo&status=pending_approval` |
 | 24 | manufacturing_active_wos | Lệnh sản xuất đang thực hiện | stacked_progress | `test_stacked_progress_card` | `/bom?tab=wo&status=in_progress` |
-| 25 | manufacturing_pending_declarations | Lệnh sản xuất sắp trễ hạn | kpi_list | `test_kpi_list_card` | `/bom?tab=wo&status=in_progress` |
-| 26 | manufacturing_pending_completion | Lệnh sản xuất chờ nghiệm thu | kpi_list | `test_kpi_list_card` | `/bom?tab=wo&status=in_progress` |
+| 25 | manufacturing_pending_completion | Lệnh sản xuất chờ nghiệm thu | kpi_list | `test_kpi_list_card` | `/bom?tab=wo&status=pending_production_complete` |
 
 ## 2. Các Helper Functions Mới Thiết Kế
 

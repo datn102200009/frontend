@@ -96,8 +96,6 @@ function getWidgetIcon(code: string): ReactNode {
       return <Wrench size={16} />;
     case 'manufacturing_active_wos':
       return <Hammer size={16} />;
-    case 'manufacturing_pending_declarations':
-      return <Wrench size={16} />;
     case 'manufacturing_pending_completion':
       return <CheckCircle size={16} />;
     default:
@@ -309,6 +307,7 @@ export function DashboardWidgetWrapper({
           data={activeData}
           totalCount={activeTotalCount}
           quickLinks={quick_links}
+          enableSort={code === 'manufacturing_active_wos'}
         />
       )}
 

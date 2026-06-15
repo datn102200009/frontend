@@ -123,6 +123,8 @@ export type Item = {
   vat_group?: string | null
   is_import?: boolean
   status?: 'active' | 'inactive' | 'discontinued'
+  /** Ngưỡng tồn kho tối thiểu */
+  minimum_threshold?: string | null
   description?: string | null
   created_at?: string
   updated_at?: string
@@ -138,6 +140,8 @@ export type ItemCreateInput = {
   vat_group?: string | null
   is_import?: boolean
   status?: 'active' | 'inactive' | 'discontinued'
+  /** Ngưỡng tồn kho tối thiểu */
+  minimum_threshold?: string | null
   description?: string | null
 }
 export type ItemUpdateInput = {
@@ -150,6 +154,8 @@ export type ItemUpdateInput = {
   vat_group?: string | null
   is_import?: boolean
   status?: 'active' | 'inactive' | 'discontinued'
+  /** Ngưỡng tồn kho tối thiểu */
+  minimum_threshold?: string | null
   description?: string | null
 }
 export const {

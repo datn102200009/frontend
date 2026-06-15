@@ -1198,8 +1198,16 @@
 .stackedRowHeader {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
   font-size: var(--fs-sm);
+}
+
+.stackedRowInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
 }
 
 .stackedRowName {
@@ -1213,6 +1221,14 @@
   font-weight: var(--fw-bold);
   font-family: var(--font-heading);
   font-variant-numeric: tabular-nums;
+}
+
+.stackedRowPctGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .stackedRowSubtext {
@@ -1525,40 +1541,121 @@
   min-width: 120px;
 }
 
-.componentTrackerWarning {
+.componentTrackerAlerts {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 3px solid var(--clr-error-500);
-  border-radius: var(--radius-sm);
-  font-size: var(--fs-sm);
-  background-color: var(--clr-error-50);
-  color: var(--clr-error-700);
 }
 
-.componentTrackerWarningCriticalFallback {
+.componentTrackerAlertCritical {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-left: 4px solid var(--clr-error);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  background-color: var(--clr-error-bg);
+  color: #991b1b;
+}
+
+/* Below threshold — cam đậm (thực tế đang thấp) */
+.componentTrackerAlertBelow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-left: 4px solid #d97706;     /* amber-600 */
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  background-color: #fef3c7;          /* amber-100 */
+  color: #92400e;
+}
+
+/* Projected shortage — vàng chanh (dự báo tương lai) */
+.componentTrackerAlertProjected {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border-left: 3px solid var(--clr-error-700);
+  border-left: 3px solid #ca8a04;     /* yellow-600 */
   border-radius: var(--radius-sm);
   font-size: var(--fs-sm);
-  background: linear-gradient(90deg, var(--clr-error-100), var(--clr-error-50));
-  color: var(--clr-error-800);
+  background-color: #fef9c3;          /* yellow-100 */
+  color: #713f12;
+}
+
+/* Stacked Progress: sort filter buttons */
+.stackedSortFilter {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-2);
+  padding: 2px;
+  background: var(--clr-bg);
+  border-radius: var(--radius-md);
+}
+
+.stackedSortBtn {
+  flex: 1;
+  padding: 4px var(--sp-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.stackedSortBtn:hover {
+  background: var(--clr-surface);
+  color: var(--clr-text);
+}
+
+.stackedSortBtnActive {
+  background: var(--clr-primary-500);
+  color: var(--clr-on-primary, #fff);
+}
+
+.stackedSortBtnActive:hover {
+  background: var(--clr-primary-600);
+  color: var(--clr-on-primary, #fff);
+}
+
+/* Stacked Progress: deadline chip */
+.stackedRowDeadline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--clr-text-secondary);
+}
+
+.stackedRowDeadlineLate {
+  color: var(--clr-error-700);
   font-weight: var(--fw-semibold);
 }
 
-.componentTrackerWarningWarning {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 3px solid var(--clr-warning-600);
-  border-radius: var(--radius-sm);
-  font-size: var(--fs-sm);
-  background-color: var(--clr-warning-50);
-  color: var(--clr-warning-800);
+.stackedRowDeadlineToday {
+  color: var(--clr-warning-700);
+  font-weight: var(--fw-semibold);
 }
+
+.stackedRowDeadlineSoon {
+  color: var(--clr-warning-600);
+}
+
+.stackedRowDeadlineOk {
+  color: var(--clr-text-secondary);
+}
+
+.stackedRowDeadlineNeutral {
+  color: var(--clr-text-muted);
+  font-style: italic;
+}
+
 

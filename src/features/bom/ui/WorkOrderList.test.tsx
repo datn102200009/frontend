@@ -60,9 +60,9 @@ describe('WorkOrderList', () => {
     // Wait for data to load
     expect(await screen.findByText('WO-PENDING')).toBeInTheDocument();
 
-    expect(screen.getAllByText('Chờ duyệt').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Đang thực hiện').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Hoàn thành').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Nháp').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Đang sản xuất').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Hoàn tất').length).toBeGreaterThan(0);
   });
 
   it('handles approve action', async () => {

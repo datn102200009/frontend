@@ -78,6 +78,11 @@ export type WidgetKpiListData = {
   pending_completion_count?: number
   total_produced_qty?: string
 }
+export type InventoryLowStockAlert = {
+  category?: 'dos' | 'below_threshold' | 'projected_shortage'
+  level?: 'critical' | 'warning' | 'normal'
+  reason?: string
+}
 export type InventoryLowStockLine = {
   id?: string
   item_code?: string
@@ -85,6 +90,7 @@ export type InventoryLowStockLine = {
   uom?: string
   status?: string
   reason?: string
+  alerts?: InventoryLowStockAlert[]
 }
 export type WidgetLowStockData = {
   items?: InventoryLowStockLine[]
@@ -215,6 +221,8 @@ export type HrmExpiringContractLine = {
   contract_no?: string
   contract_type?: string
   end_date?: string
+  employee_id?: string | null
+  days_left?: number | null
   created_at?: string
 }
 export type HrmTodayAbsentLine = {
@@ -242,18 +250,9 @@ export type ManufacturingActiveWoLine = {
   quantity?: string
   produced_qty?: string
   planned_start_date?: string
-  created_at?: string
-}
-export type ManufacturingPendingDeclarationLine = {
-  id?: string
-  name?: string
-  production_item_name?: string
-  quantity?: string
-  produced_qty?: string
-  planned_start_date?: string
-  planned_end_date?: string
-  status?: string
+  planned_end_date?: string | null
   days_left?: number | null
+  target_warehouse_name?: string | null
   created_at?: string
 }
 export type ManufacturingPendingCompletionLine = {
@@ -296,7 +295,6 @@ export type WidgetBatchDataResult = {
                 | HrmTodayAbsentLine
                 | ManufacturingPendingWoApprovalLine
                 | ManufacturingActiveWoLine
-                | ManufacturingPendingDeclarationLine
                 | ManufacturingPendingCompletionLine
               )[]
             | null

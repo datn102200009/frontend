@@ -40,26 +40,26 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
   const sid = shortId(id);
 
   if (code === 'sales_pending_fulfillment') {
-    return { to: `/sales?tab=orders&status=pending&id=${id}`, display: `SO-${sid}` };
+    return { to: `/sales?tab=orders&status=pending&id=${id}`, display: sid };
   }
   if (code.startsWith('sales_')) {
     let status = '';
     if (code === 'sales_draft_orders') status = 'draft';
     else if (code === 'sales_pending_credit_bypass') status = 'pending_credit_approval';
     const q = status ? `&status=${status}` : '';
-    return { to: `/sales?tab=orders${q}&id=${id}`, display: `SO-${sid}` };
+    return { to: `/sales?tab=orders${q}&id=${id}`, display: sid };
   }
   if (code === 'purchasing_draft_orders' || code === 'purchasing_active_po_count') {
     let status = '';
     if (code === 'purchasing_draft_orders') status = 'draft';
     const q = status ? `&status=${status}` : '';
-    return { to: `/purchasing?tab=orders${q}&id=${id}`, display: `PO-${sid}` };
+    return { to: `/purchasing?tab=orders${q}&id=${id}`, display: sid };
   }
   if (code === 'purchasing_pending_logistic_fees') {
     return { to: `/purchasing?tab=shipment&id=${id}`, display: item.shipment_num || 'QC' };
   }
   if (code === 'purchasing_blocked_invoices') {
-    return { to: `/purchasing?status=blocked&tab=invoices&id=${id}`, display: `INV-${sid}` };
+    return { to: `/purchasing?status=blocked&tab=invoices&id=${id}`, display: sid };
   }
   if (code === 'inventory_low_stock') {
     return { to: `/inventory?tab=ledger&search=${item.item_code}`, display: item.item_code };
@@ -72,13 +72,13 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     };
   }
   if (code === 'finance_cashflow_summary') {
-    return { to: `/finance?tab=cashflow&search=${sid}`, display: `TX-${sid}` };
+    return { to: `/finance?tab=cashflow&search=${sid}`, display: sid };
   }
   if (code === 'finance_unpaid_purchase_invoices') {
-    return { to: `/finance?tab=purchase_invoices&id=${id}`, display: `INV-${sid}` };
+    return { to: `/finance?tab=purchase_invoices&id=${id}`, display: sid };
   }
   if (code === 'finance_unpaid_sales_invoices') {
-    return { to: `/finance?tab=sales_invoices&id=${id}`, display: `INV-${sid}` };
+    return { to: `/finance?tab=sales_invoices&id=${id}`, display: sid };
   }
   if (code === 'finance_depreciation_status') {
     return { to: `/finance/fixed-assets?assetCode=${item.asset_code}`, display: item.asset_code };
@@ -93,14 +93,16 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     return { to: `/hrm?tab=leave&id=${id}`, display: item.employee_name };
   }
   if (code === 'hrm_expiring_contracts') {
-    return { to: `/hrm?tab=employees&id=${id}`, display: item.contract_no || `CON-${sid}` };
+    return { to: `/hrm?tab=employees&id=${item.employee_id || id}`, display: item.contract_no || sid };
   }
   if (code === 'hrm_today_attendance_rate') {
     return { to: `/hrm?tab=attendance&id=${id}`, display: item.employee_id };
   }
   if (code.startsWith('manufacturing_')) {
-    const mStatus = code === 'manufacturing_pending_wo_approval' ? 'pending_approval' : 'in_progress';
-    return { to: `/bom?status=${mStatus}&tab=wo&id=${id}`, display: item.name || `WO-${sid}` };
+    let mStatus = 'in_progress';
+    if (code === 'manufacturing_pending_wo_approval') mStatus = 'pending_approval';
+    else if (code === 'manufacturing_pending_completion') mStatus = 'pending_production_complete';
+    return { to: `/bom?status=${mStatus}&tab=wo&id=${id}`, display: item.name || sid };
   }
   return { to: '#', display: sid };
 }
@@ -247,19 +249,10 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
       </div>
     );
   }
-  if (code === 'hrm_expiring_contracts') {
-    return <div className={styles.rowSubText}>{item.contract_type}</div>;
-  }
   if (code === 'hrm_today_attendance_rate') {
     return <div className={styles.rowSubText}>{item.department}</div>;
   }
-  if (code === 'manufacturing_pending_declarations') {
-    return (
-      <div className={styles.rowSubText}>
-        Đã làm: {item.produced_qty}/{item.quantity}
-      </div>
-    );
-  }
+
   if (code === 'manufacturing_pending_wo_approval') {
     return (
       <div className={styles.rowSubText}>
@@ -386,75 +379,9 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
     );
   }
   if (code === 'manufacturing_pending_wo_approval') {
-    const daysToStart = item.days_to_start ?? 0;
-    let badgeClass = styles.kpiPillNeutral;
-    let badgeText = '';
-
-    if (daysToStart < 0) {
-      badgeClass = styles.kpiPillDown;
-      badgeText = `Trễ ${Math.abs(daysToStart)} ngày`;
-    } else if (daysToStart === 0) {
-      badgeClass = styles.kpiPillDown;
-      badgeText = 'Hôm nay';
-    } else if (daysToStart <= 3) {
-      badgeClass = styles.kpiPillWarning;
-      badgeText = `Còn ${daysToStart} ngày`;
-    } else {
-      badgeClass = styles.kpiPillNeutral;
-      badgeText = `Còn ${daysToStart} ngày`;
-    }
-
-    return (
-      <div
-        className={styles.colRightAlign}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: '2px',
-        }}
-      >
-        <span className={`${styles.kpiPill} ${styles.kpiPillSm} ${badgeClass}`}>
-          {badgeText}
-        </span>
-        <div className={styles.rowSubText} style={{ fontSize: '10px' }}>
-          Bắt đầu: {formatDate(item.planned_start_date)}
-        </div>
-      </div>
-    );
+    return null;
   }
-  if (code === 'manufacturing_pending_declarations') {
-    const dl = item.days_left;
-    let txt = 'Không rõ hạn';
-    let color = 'var(--clr-text-secondary)';
-    if (dl !== undefined && dl !== null) {
-      if (dl < 0) {
-        txt = `Trễ ${Math.abs(dl)} ngày`;
-        color = 'var(--clr-error)';
-      } else if (dl === 0) {
-        txt = 'Hạn hôm nay';
-        color = 'var(--clr-warning)';
-      } else {
-        txt = `Còn ${dl} ngày`;
-        color = 'var(--clr-text-secondary)';
-      }
-    }
-    return (
-      <div className={styles.colRightAlign}>
-        <span
-          style={{
-            fontSize: 'var(--fs-xs)',
-            padding: '1px 6px',
-            borderRadius: '4px',
-            background: 'var(--clr-bg)',
-            color,
-          }}
-        >
-          {txt}
-        </span>
-      </div>
-    );
-  }
+
   if (code === 'manufacturing_pending_completion') {
     return (
       <div className={styles.colRightAlign}>

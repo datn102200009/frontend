@@ -189,7 +189,7 @@ export type GetManufacturingWorkOrderListApiResponse =
   /** status 200 Success */ WorkOrderListResponse
 export type GetManufacturingWorkOrderListApiArg = {
   search?: string
-  status?: 'pending_approval' | 'in_progress' | 'completed' | 'cancelled'
+  status?: 'pending_approval' | 'in_progress' | 'pending_production_complete' | 'completed' | 'cancelled'
   limit?: number
   offset?: number
 }
@@ -274,7 +274,7 @@ export type WorkOrder = {
   source_warehouse?: string
   target_warehouse?: string
   production_warehouse?: string
-  status?: 'pending_approval' | 'in_progress' | 'completed' | 'cancelled'
+  status?: 'pending_approval' | 'in_progress' | 'pending_production_complete' | 'completed' | 'cancelled'
   planned_start_date?: string
   planned_end_date?: string | null
   actual_end_date?: string | null

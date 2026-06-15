@@ -6,6 +6,8 @@ import './Select.scss';
 export interface Option {
   label: string;
   value: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta?: any;
 }
 
 interface Props {
@@ -18,6 +20,7 @@ interface Props {
   disabled?: boolean;
   required?: boolean;
   ariaLabel?: string;
+  renderOption?: (option: Option) => React.ReactNode;
 }
 
 export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
@@ -32,6 +35,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
       disabled,
       required,
       ariaLabel,
+      renderOption,
     },
     ref
   ) => {
@@ -148,7 +152,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
                     role="option"
                     aria-selected={opt.value === value}
                   >
-                    {opt.label}
+                    {renderOption ? renderOption(opt) : opt.label}
                     {opt.value === value && <Check size={16} className="check-icon" />}
                   </li>
                 ))
