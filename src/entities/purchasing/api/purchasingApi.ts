@@ -110,17 +110,7 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.landedCostAllocationInput,
       }),
     }),
-    getPurchasingReportsApAging: build.query<
-      GetPurchasingReportsApAgingApiResponse,
-      GetPurchasingReportsApAgingApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/purchasing/reports/ap-aging/`,
-        params: {
-          supplier_id: queryArg.supplierId,
-        },
-      }),
-    }),
+
   }),
   overrideExisting: false,
 })
@@ -192,11 +182,7 @@ export type PostPurchasingShipmentsAllocateApiResponse =
 export type PostPurchasingShipmentsAllocateApiArg = {
   landedCostAllocationInput: LandedCostAllocationInput
 }
-export type GetPurchasingReportsApAgingApiResponse =
-  /** status 200 Bảng báo cáo tuổi nợ. */ ApAging[]
-export type GetPurchasingReportsApAgingApiArg = {
-  supplierId?: string
-}
+
 export type PurchaseOrderLine = {
   id?: string
   item?: string
@@ -311,15 +297,7 @@ export type LandedCostAllocationInput = {
   shipment_id: string
   total_logistic_fees: number
 }
-export type ApAging = {
-  vendor_id?: string
-  vendor_code?: string
-  vendor_name?: string
-  total_unpaid?: number
-  not_due?: number
-  overdue_1_30?: number
-  overdue_above_30?: number
-}
+
 export const {
   useGetPurchasingOrdersQuery,
   usePostPurchasingOrdersMutation,
@@ -335,5 +313,4 @@ export const {
   usePutPurchasingShipmentsByPkMutation,
   usePostPurchasingShipmentsByPkCompleteMutation,
   usePostPurchasingShipmentsAllocateMutation,
-  useGetPurchasingReportsApAgingQuery,
 } = injectedRtkApi

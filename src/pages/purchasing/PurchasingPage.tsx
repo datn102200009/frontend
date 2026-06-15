@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PurchaseOrderTable } from '@widgets/purchasing/PurchaseOrderTable';
 import { LandedCostPage } from './LandedCost/LandedCostPage';
-import { ApAgingPage } from './ApAging/ApAgingPage';
 import { PurchaseOrderFormModal } from '@features/purchasing/create-order/ui/PurchaseOrderFormModal';
 import { Button } from '@shared/ui/Button/Button';
 import { Plus } from 'lucide-react';
@@ -11,7 +10,7 @@ import clsx from 'clsx';
 
 export const PurchasingPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'shipment' | 'ap-aging';
+  const activeTab = (searchParams.get('tab') || 'orders') as 'orders' | 'shipment';
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const queryId = searchParams.get('id');
   const editOrderId = activeTab === 'orders' ? queryId : null;
@@ -37,22 +36,11 @@ export const PurchasingPage = () => {
         >
           Quản Lý Lô Hàng
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'ap-aging'}
-          className={clsx(styles.tab, activeTab === 'ap-aging' && styles.active)}
-          onClick={() => setSearchParams({ tab: 'ap-aging' })}
-        >
-          Báo Cáo Công Nợ
-        </button>
       </div>
 
       <div className={styles.content}>
         {activeTab === 'shipment' ? (
           <LandedCostPage />
-        ) : activeTab === 'ap-aging' ? (
-          <ApAgingPage />
         ) : (
           <div className={styles.container}>
             <div className={styles.header}>

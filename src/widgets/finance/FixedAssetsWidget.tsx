@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Plus, ChevronDown, Recycle } from 'lucide-react';
+import { Pencil, Plus, ChevronDown, Recycle, Eye } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
@@ -16,6 +16,7 @@ import {
 import { AssetEditModal } from '@features/finance/fixed-assets/ui/AssetEditModal';
 import { AssetPurchaseModal } from '@features/finance/fixed-assets/ui/AssetPurchaseModal';
 import { AssetDisposeModal } from '@features/finance/fixed-assets/ui/AssetDisposeModal';
+import { AssetViewModal } from '@features/finance/fixed-assets/ui/AssetViewModal';
 import styles from './FixedAssetsWidget.module.css';
 import clsx from 'clsx';
 import { shortAssetCode } from '@shared/lib/shortId';
@@ -56,6 +57,7 @@ export function FixedAssetsWidget() {
   const [showPurchase, setShowPurchase] = useState(false);
   const [editingAsset, setEditingAsset] = useState<FixedAsset | null>(null);
   const [disposingAsset, setDisposingAsset] = useState<FixedAsset | null>(null);
+  const [viewingAsset, setViewingAsset] = useState<FixedAsset | null>(null);
 
   // Handle updates success
   const handlePurchaseSuccess = () => {
@@ -157,6 +159,11 @@ export function FixedAssetsWidget() {
           const status = asset.status;
           return (
             <TableActions>
+              <ActionButton
+                icon={<Eye size={16} />}
+                title="Xem chi tiết"
+                onClick={() => setViewingAsset(asset)}
+              />
               {status === 'idle' && (
                 <ActionButton
                   icon={<Pencil size={16} />}
@@ -369,6 +376,15 @@ export function FixedAssetsWidget() {
           asset={disposingAsset}
           onClose={() => setDisposingAsset(null)}
           onConfirm={handleDisposeSuccess}
+        />
+      )}
+
+      {/* View Modal */}
+      {viewingAsset && (
+        <AssetViewModal
+          open={!!viewingAsset}
+          asset={viewingAsset}
+          onClose={() => setViewingAsset(null)}
         />
       )}
 

@@ -61,6 +61,8 @@ export type KpiCardData =
   | Record<string, unknown>;
 
 export interface KpiCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -68,10 +70,10 @@ export interface KpiCardProps {
   data: KpiCardData;
 }
 
-function EmptyCard({ title, icon, quickLinks }: { title: string; icon?: ReactNode; quickLinks?: string[] }) {
+function EmptyCard({title, icon, quickLinks, onRefresh, isRefreshing}: {title: string; icon?: ReactNode; quickLinks?: string[]; onRefresh?: () => void; isRefreshing?: boolean}) {
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
       <div className={styles.cardBody}>
         <div className={styles.emptyState}>
           <span>Chưa có dữ liệu</span>
@@ -81,9 +83,9 @@ function EmptyCard({ title, icon, quickLinks }: { title: string; icon?: ReactNod
   );
 }
 
-export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
+export function KpiCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: KpiCardProps) {
   if (!data) {
-    return <EmptyCard title={title} icon={icon} quickLinks={quickLinks} />;
+    return <EmptyCard title={title} icon={icon} quickLinks={quickLinks} onRefresh={onRefresh} isRefreshing={isRefreshing} />;
   }
 
   // ───────────────────────────────────────────────────────────────────────
@@ -94,7 +96,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
     const count = d.active_po_count ?? 0;
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
@@ -121,7 +123,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
     const isHigh = count > 5;
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
@@ -152,7 +154,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
     const isDone = d.is_done === true;
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.metricContent}>
             <div className={styles.depreciationHero}>
@@ -208,7 +210,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
 
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.metricContent}>
             <div className={`${styles.metricValue} ${statusClass}`} style={{ fontSize: 'var(--fs-lg)' }}>
@@ -235,7 +237,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
     const topExpiring = Array.isArray(d.top_items) ? d.top_items : [];
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
@@ -282,7 +284,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
     const d = data as KpiCardManufacturingPendingCompletion;
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.kpiEnhanced}>
             <div className={styles.kpiHero}>
@@ -308,7 +310,7 @@ export function KpiCard({ title, code, icon, data, quickLinks }: KpiCardProps) {
   const d = data as KpiCardGeneric;
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
       <div className={styles.cardBody}>
         <div className={styles.metricContent}>
           <div className={styles.metricValue}>

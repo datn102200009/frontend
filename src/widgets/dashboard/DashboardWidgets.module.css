@@ -1658,4 +1658,35 @@
   font-style: italic;
 }
 
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  background: var(--clr-bg-accent, #f1f5f9);
+  color: var(--clr-primary);
+}
+
+.refreshBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
 

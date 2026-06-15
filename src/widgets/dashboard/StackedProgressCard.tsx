@@ -20,6 +20,8 @@ export interface StackedProgressLine {
 export type StackedProgressSortKey = 'deadline' | 'progress';
 
 export interface StackedProgressCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -36,8 +38,7 @@ export function StackedProgressCard({
   icon,
   data,
   quickLinks,
-  enableSort = false,
-}: StackedProgressCardProps) {
+  enableSort = false, onRefresh, isRefreshing}: StackedProgressCardProps) {
   const items = Array.isArray(data) ? data : [];
   const [sortKey, setSortKey] = useState<StackedProgressSortKey>('deadline');
 
@@ -65,7 +66,7 @@ export function StackedProgressCard({
   if (sortedItems.length === 0) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Không có lệnh sản xuất đang chạy</span>
@@ -77,7 +78,7 @@ export function StackedProgressCard({
 
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         {enableSort && (

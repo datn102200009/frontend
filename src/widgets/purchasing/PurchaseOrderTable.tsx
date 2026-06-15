@@ -5,7 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetPurchasingOrdersQuery } from '@entities/purchasing/api/purchasingApi';
 import type { PurchaseOrder } from '@entities/purchasing/model/types';
-import { Eye, Edit, Printer } from 'lucide-react';
+import { Eye, Edit } from 'lucide-react';
 import { usePurchaseOrderFilters } from '@entities/purchasing/lib/usePurchaseOrderFilters';
 import { PurchaseOrderStatusFilter } from '@entities/purchasing/ui/PurchaseOrderStatusFilter';
 import { shortId } from '@shared/lib/shortId';
@@ -110,7 +110,7 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
       helper.display({
         id: 'actions',
         header: 'Thao Tác',
-        size: 140,
+        size: 100,
         cell: (info) => {
           const order = info.row.original;
           return (
@@ -119,7 +119,6 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
               {order.status === 'draft' && (
                 <ActionButton icon={<Edit size={15} />} title="Chỉnh sửa" onClick={() => onEdit?.(order)} />
               )}
-              <ActionButton icon={<Printer size={15} />} title="In đơn hàng" />
             </TableActions>
           );
         },

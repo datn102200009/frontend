@@ -4,7 +4,7 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import type { SalesInvoice } from '@entities/finance/api/financeApi';
-import { Eye, Printer, DollarSign } from 'lucide-react';
+import { Eye, DollarSign } from 'lucide-react';
 import { shortId } from '@shared/lib/shortId';
 
 interface SalesInvoiceTableProps {
@@ -81,7 +81,7 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
       helper.display({
         id: 'actions',
         header: 'Thao Tác',
-        size: 150,
+        size: 100,
         enableSorting: false,
         cell: (info) => {
           const inv = info.row.original;
@@ -97,7 +97,6 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
                   onClick={() => onCollect({ id: inv.id!, amount: remaining, name: inv.customer_name })} 
                 />
               )}
-              <ActionButton icon={<Printer size={15} />} title="In hóa đơn" />
             </TableActions>
           );
         },

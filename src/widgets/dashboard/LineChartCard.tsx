@@ -16,6 +16,8 @@ import {
 import styles from './DashboardWidgets.module.css';
 
 export interface LineChartCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -46,14 +48,14 @@ const formatShortDate = (dateStr: string) => {
   return dateStr;
 };
 
-export function LineChartCard({ title, code, icon, data, quickLinks }: LineChartCardProps) {
+export function LineChartCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: LineChartCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   if (code !== 'sales_today_revenue' || !data || !Array.isArray(data.points) || data.points.length === 0) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu biểu đồ doanh thu</span>
@@ -137,7 +139,7 @@ export function LineChartCard({ title, code, icon, data, quickLinks }: LineChart
 
   return (
     <div className={styles.card} style={{ position: 'relative' }}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.kpiHero} style={{ marginBottom: 'var(--sp-4)' }}>

@@ -4,7 +4,7 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import type { PurchaseInvoice } from '@entities/finance/api/financeApi';
-import { Eye, Printer, CreditCard } from 'lucide-react';
+import { Eye, CreditCard } from 'lucide-react';
 import { shortId } from '@shared/lib/shortId';
 
 interface PurchaseInvoiceTableProps {
@@ -83,7 +83,7 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
       helper.display({
         id: 'actions',
         header: 'Thao Tác',
-        size: 150,
+        size: 100,
         enableSorting: false,
         cell: (info) => {
           const inv = info.row.original;
@@ -99,7 +99,6 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
                   onClick={() => onPay({ id: inv.id!, amount: remaining })} 
                 />
               )}
-              <ActionButton icon={<Printer size={15} />} title="In hóa đơn" />
             </TableActions>
           );
         },

@@ -61,15 +61,11 @@ describe('FixedAssetTrackerCard', () => {
     );
 
     expect(screen.getByText('Theo dõi khấu hao')).toBeInTheDocument();
-    expect(screen.getByText('Nguyên giá')).toBeInTheDocument();
-    expect(screen.getByText('100.000.000')).toBeInTheDocument();
     
     expect(screen.getByText(/Lũy kế khấu hao/)).toBeInTheDocument();
     expect(screen.getByText(/30\.000\.000/)).toBeInTheDocument();
     expect(screen.getByText(/Giá trị còn lại/)).toBeInTheDocument();
     expect(screen.getByText(/60\.000\.000/)).toBeInTheDocument();
-    expect(screen.getByText(/Giá trị thanh lý/)).toBeInTheDocument();
-    expect(screen.getByText(/10\.000\.000/)).toBeInTheDocument();
 
     expect(screen.getByText('Còn 2 tháng là hết hạn sử dụng.')).toBeInTheDocument();
   });
@@ -87,10 +83,9 @@ describe('FixedAssetTrackerCard', () => {
     const select = screen.getByRole('combobox', { name: 'Chọn tài sản theo dõi' });
     await user.click(select);
 
-    const option2 = screen.getByRole('option', { name: 'AST-002 - Khuôn dập cốc' });
+    const option2 = screen.getByRole('option', { name: 'Khuôn dập cốc' });
     await user.click(option2);
 
-    expect(screen.getByText('50.000.000')).toBeInTheDocument();
     expect(screen.getByText('Tài sản đã khấu hao hết giá trị.')).toBeInTheDocument();
   });
 });

@@ -5,7 +5,7 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetSalesOrdersQuery } from '@entities/sales/api/salesApi';
 import type { SalesOrder } from '@entities/sales/model/types';
-import { Eye, Printer } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useSalesOrderFilters } from '@entities/sales/lib/useSalesOrderFilters';
 import { SalesOrderStatusFilter } from '@entities/sales/ui/SalesOrderStatusFilter';
 import { shortId } from '@shared/lib/shortId';
@@ -70,12 +70,11 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
       helper.display({
         id: 'actions',
         header: 'Thao Tác',
-        size: 140,
+        size: 100,
         enableSorting: false,
         cell: ({ row }) => (
           <TableActions>
             <ActionButton icon={<Eye size={15} />} title="Xem chi tiết" onClick={() => onView?.(row.original.id)} />
-            <ActionButton icon={<Printer size={15} />} title="In đơn hàng" />
           </TableActions>
         ),
       }),

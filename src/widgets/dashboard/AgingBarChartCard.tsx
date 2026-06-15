@@ -11,6 +11,8 @@ export interface AgingBucket {
 }
 
 export interface AgingBarChartCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -26,11 +28,11 @@ const COLOR_BY_KEY: Record<string, string> = {
   critical: '#7F1D1D',  // đỏ đậm/maroon
 };
 
-export function AgingBarChartCard({ title, code, icon, data, quickLinks }: AgingBarChartCardProps) {
+export function AgingBarChartCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: AgingBarChartCardProps) {
   if (!data || !Array.isArray(data.buckets)) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu phân tích nợ</span>
@@ -71,7 +73,7 @@ export function AgingBarChartCard({ title, code, icon, data, quickLinks }: Aging
 
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         {/* Total Outstanding Header */}

@@ -16,6 +16,8 @@ import {
 import styles from './DashboardWidgets.module.css';
 
 export interface ChartCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -37,14 +39,14 @@ interface WeekData {
 
 
 
-export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProps) {
+export function ChartCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: ChartCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   if (code !== 'finance_cashflow_chart' || !data || !Array.isArray(data.weeks)) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu biểu đồ</span>
@@ -129,7 +131,7 @@ export function ChartCard({ title, code, icon, data, quickLinks }: ChartCardProp
 
   return (
     <div className={styles.card} style={{ position: 'relative' }}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={chartLegend} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks} meta={chartLegend}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.chartContainer}>

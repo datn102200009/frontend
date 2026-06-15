@@ -3,6 +3,8 @@ import { CardHeader } from './CardHeader';
 import styles from './DashboardWidgets.module.css';
 
 export interface GaugeCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -11,11 +13,11 @@ export interface GaugeCardProps {
   data: any;
 }
 
-export function GaugeCard({ title, icon, data, quickLinks }: GaugeCardProps) {
+export function GaugeCard({ title, icon, data, quickLinks, onRefresh, isRefreshing}: GaugeCardProps) {
   if (!data) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu</span>
@@ -40,7 +42,7 @@ export function GaugeCard({ title, icon, data, quickLinks }: GaugeCardProps) {
 
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.gaugeWrapper} data-testid="gauge-svg">

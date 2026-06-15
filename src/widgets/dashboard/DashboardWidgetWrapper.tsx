@@ -219,6 +219,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -229,6 +231,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -240,6 +244,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         ) : code === 'finance_depreciation_status' ? (
           <FixedAssetTrackerCard
@@ -248,6 +254,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         ) : code === 'finance_unpaid_purchase_invoices' || code === 'finance_unpaid_sales_invoices' ? (
           <AgingBarChartCard
@@ -256,6 +264,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         ) : (
           <DonutChartCard
@@ -264,6 +274,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         )
       )}
@@ -275,6 +287,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -285,6 +299,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -295,6 +311,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -305,6 +323,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -317,6 +337,8 @@ export function DashboardWidgetWrapper({
           totalCount={activeTotalCount}
           quickLinks={quick_links}
           enableSort={code === 'manufacturing_active_wos'}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -327,6 +349,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -338,6 +362,8 @@ export function DashboardWidgetWrapper({
           data={activeData}
           quickLinks={quick_links}
           totalCount={activeTotalCount}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 

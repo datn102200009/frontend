@@ -10,6 +10,8 @@ export interface DonutSegment {
 }
 
 export interface DonutChartCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -24,11 +26,11 @@ const COLOR_BY_KEY: Record<string, string> = {
   normal: 'var(--clr-success)',
 };
 
-export function DonutChartCard({ title, icon, data, quickLinks }: DonutChartCardProps) {
+export function DonutChartCard({ title, icon, data, quickLinks, onRefresh, isRefreshing}: DonutChartCardProps) {
   if (!data || !Array.isArray(data.segments)) {
   return (
   <div className={styles.card}>
-  <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+  <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
   <div className={styles.cardBody}>
   <div className={styles.emptyState}>
   <span>Chưa có dữ liệu</span>
@@ -69,7 +71,7 @@ export function DonutChartCard({ title, icon, data, quickLinks }: DonutChartCard
 
   return (
   <div className={styles.card}>
-  <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={alertsBadge} />
+  <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks} meta={alertsBadge}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
   <div className={styles.cardBody}>
   <div className={styles.donutWrapper} data-testid="donut-svg">
