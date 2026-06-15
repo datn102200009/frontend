@@ -222,9 +222,9 @@ export const handlers = [
   http.get('*/api/v1/finance/fixed-assets/', () => {
     return HttpResponse.json({
       results: [
-        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'active', depreciation_method: 'unit_of_production' },
-        { id: 'asset-2', asset_code: 'MOLD-002', asset_name: 'Khuôn mẫu 02', status: 'active', depreciation_method: 'straight_line' },
-        { id: 'asset-3', asset_code: 'MOLD-003', asset_name: 'Khuôn mẫu 03', status: 'active', depreciation_method: 'unit_of_production' }
+        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'idle', depreciation_method: 'unit_of_production' },
+        { id: 'asset-2', asset_code: 'MOLD-002', asset_name: 'Khuôn mẫu 02', status: 'idle', depreciation_method: 'straight_line' },
+        { id: 'asset-3', asset_code: 'MOLD-003', asset_name: 'Khuôn mẫu 03', status: 'idle', depreciation_method: 'unit_of_production' }
       ]
     });
   }),

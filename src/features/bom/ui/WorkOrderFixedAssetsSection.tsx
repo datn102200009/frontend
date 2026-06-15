@@ -11,24 +11,28 @@ interface Props {
 }
 
 export function WorkOrderFixedAssetsSection({ value, onChange, isReadOnly = false }: Props) {
-  const { data: fixedAssetsResp, isLoading } = useGetFinanceFixedAssetsQuery({ limit: 1000 });
+  const { data: fixedAssetsResp, isLoading } = useGetFinanceFixedAssetsQuery({
+    statusIn: 'idle,active',
+    depreciationMethod: 'unit_of_production',
+    limit: 200,
+  });
   const [selectedToSelect, setSelectedToSelect] = useState<string>('');
 
   const assets = fixedAssetsResp?.results || [];
   
-  // Filter active UOP assets
-  const activeUopAssets = assets.filter(
-    (a) => a.depreciation_method === 'unit_of_production' && a.status === 'active'
+  // Filter UOP assets
+  const uopAssets = assets.filter(
+    (a) => a.depreciation_method === 'unit_of_production'
   );
 
   // Map to get currently selected assets details
   const selectedAssets = value
-    .map((id) => activeUopAssets.find((a) => a.id === id))
+    .map((id) => uopAssets.find((a) => a.id === id))
     .filter((a): a is NonNullable<typeof a> => !!a);
 
-  // Available options: active UOP assets not yet selected
-  const availableOptions = activeUopAssets
-    .filter((a) => !value.includes(a.id || ''))
+  // Available options: idle UOP assets not yet selected
+  const availableOptions = uopAssets
+    .filter((a) => a.status === 'idle' && !value.includes(a.id || ''))
     .map((a) => ({
       label: `${a.asset_code} - ${a.asset_name}`,
       value: a.id || '',

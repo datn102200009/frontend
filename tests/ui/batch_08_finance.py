@@ -28,7 +28,7 @@ def run():
             wait_for_page_ready(page)
             try:
                 # Expect to see heading
-                expect(page.locator("h2:has-text('Quản Lý Tài Chính & Dòng Tiền')")).to_be_visible()
+                expect(page.locator("h2:has-text('Quản Lý Dòng Tiền')")).to_be_visible()
                 runner.log("WF-10", 1, "PASS", "Truy cập /finance thành công và thấy tiêu đề trang", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf10_s1")
@@ -84,44 +84,62 @@ def run():
                 page.goto(f"{BASE_URL}/finance/fixed-assets")
                 wait_for_page_ready(page)
                 # Confirm we see fixed assets page title
-                expect(page.get_by_role("heading", name="Tài Sản Cố Định")).to_be_visible()
+                expect(page.get_by_role("heading", name="Quản Lí Tài Sản Cố Định")).to_be_visible()
                 runner.log("WF-10", 8, "PASS", "Chuyển sang trang Quản lý tài sản cố định thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf10_s8")
                 runner.log("WF-10", 8, "FAIL", "Chuyển sang trang Quản lý tài sản cố định thành công", str(e), url=page.url)
 
-            # ── Step 9: Click "Thêm Tài Sản" -> Create "Máy tiện CNC-001" ──
+            # ── Step 9: Click "Mua TSCĐ" -> Create "Máy tiện CNC-001" ──
             try:
-                page.get_by_role("button", name="Thêm Tài Sản").click()
+                page.get_by_role("button", name="Mua TSCĐ").click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
                 
                 # Fill fields using robust name selectors
-                asset_code_suffix = int(time.time()) % 10000
-                page.locator("input[name='asset_code']").fill(f"CNC-{asset_code_suffix}")
                 page.locator("input[name='asset_name']").fill("Máy tiện CNC-001")
                 page.locator("input[name='original_value']").fill("200000000")
                 page.locator("input[name='salvage_value']").fill("0")
-                page.get_by_role("dialog").locator("select").select_option("straight_line")
+                page.get_by_role("dialog").locator("select").first.select_option("straight_line")
                 page.locator("input[name='useful_life_months']").fill("60")
-                page.locator("input[name='department']").fill("Xưởng Cơ Khí")
+                page.locator("input[name='vendor_name']").fill("Nhà cung cấp CNC")
 
                 # Save
-                page.get_by_role("button", name="Lưu").click()
+                page.get_by_role("button", name="Ghi nhận mua").click()
                 time.sleep(1)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
-                runner.log("WF-10", 9, "PASS", "Khai báo tài sản cố định Máy tiện CNC-001 (200M VND, 5 năm) thành công", url=page.url)
+                
+                # Approve the cash flow transaction associated with this asset to activate it (status = idle)
+                approved = page.evaluate("""async () => {
+                    const token = localStorage.getItem('access_token');
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : '',
+                    };
+                    const resList = await fetch('http://localhost:8000/api/v1/finance/cash-flows/?status=pending_approval', { headers });
+                    const data = await resList.json();
+                    const results = data.results || [];
+                    const tx = results.find(t => t.remarks && t.remarks.includes('Máy tiện CNC-001'));
+                    if (tx) {
+                        const resApprove = await fetch(`http://localhost:8000/api/v1/finance/cash-flows/${tx.id}/approve/`, {
+                            method: 'POST',
+                            headers,
+                        });
+                        return resApprove.status === 200;
+                    }
+                    return false;
+                }""")
+                
+                if approved:
+                    runner.log("WF-10", 9, "PASS", "Khai báo và duyệt mua tài sản cố định Máy tiện CNC-001 thành công", url=page.url)
+                else:
+                    raise Exception("Không tìm thấy hoặc không thể duyệt phiếu chi mua tài sản")
             except Exception as e:
                 runner.screenshot(page, "wf10_s9")
-                runner.log("WF-10", 9, "FAIL", "Khai báo tài sản cố định Máy tiện CNC-001 (200M VND, 5 năm) thành công", str(e), url=page.url)
+                runner.log("WF-10", 9, "FAIL", "Khai báo tài sản cố định Máy tiện CNC-001 thành công", str(e), url=page.url)
 
             # ── Step 10: Run monthly depreciation ──
             try:
-                # Trigger modal
-                page.get_by_role("button", name="Trích Khấu Hao Tháng").click()
-                time.sleep(0.5)
-                expect(page.get_by_role("dialog")).to_be_visible()
-
                 # Get next month/year instead of current to avoid duplicate period error (from seed data)
                 today = datetime.date.today()
                 next_month = today.month + 1
@@ -131,15 +149,29 @@ def run():
                     next_year += 1
                 month_str = f"{next_month:02d}"
                 year_str = str(next_year)
+                period_str = f"{year_str}-{month_str}"
 
-                page.locator("#run-month-select").select_option(month_str)
-                page.locator("#run-year-select").select_option(year_str)
+                # Trigger depreciation run via API request directly (since UI modal was removed in refactoring)
+                result = page.evaluate("""async (period) => {
+                    const token = localStorage.getItem('access_token');
+                    const response = await fetch('http://localhost:8000/api/v1/finance/fixed-assets/depreciation/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token ? `Bearer ${token}` : '',
+                        },
+                        body: JSON.stringify({ period })
+                    });
+                    const text = await response.text();
+                    return { status: response.status, text };
+                }""", period_str)
 
-                # Submit
-                page.get_by_role("button", name="Thực hiện").click()
-                time.sleep(2)
-                expect(page.get_by_role("dialog")).not_to_be_visible()
-                runner.log("WF-10", 10, "PASS", f"Chạy trích khấu hao tự động kỳ {month_str}/{year_str} thành công", url=page.url)
+                status = result['status']
+                text = result['text']
+                if status == 201:
+                    runner.log("WF-10", 10, "PASS", f"Chạy trích khấu hao tự động kỳ {month_str}/{year_str} thành công", url=page.url)
+                else:
+                    raise Exception(f"API returned status code {status}. Body: {text}")
             except Exception as e:
                 runner.screenshot(page, "wf10_s10")
                 runner.log("WF-10", 10, "FAIL", "Chạy trích khấu hao tự động thành công", str(e), url=page.url)

@@ -54,6 +54,7 @@ const injectedRtkApi = api.injectEndpoints({
           page: queryArg.page,
           status__in: queryArg.statusIn,
           assignable: queryArg.assignable,
+          depreciation_method: queryArg.depreciationMethod,
         },
       }),
     }),
@@ -233,6 +234,8 @@ export type GetFinanceFixedAssetsApiArg = {
   statusIn?: string
   /** If true, only returns idle assets. */
   assignable?: boolean
+  /** Depreciation method to filter by. */
+  depreciationMethod?: 'straight_line' | 'unit_of_production'
 }
 export type PostFinanceFixedAssetsApiResponse =
   /** status 201 Fixed asset successfully created. */ FixedAsset
@@ -338,6 +341,8 @@ export type CashFlowTransaction = {
   sales_order?: string | null
   purchase_invoice?: string | null
   sales_invoice?: string | null
+  fixed_asset?: string | null
+  fixed_asset_code?: string | null
   status?: 'draft' | 'pending_approval' | 'posted' | 'rejected'
   approved_by?: string | null
   approved_by_username?: string | null

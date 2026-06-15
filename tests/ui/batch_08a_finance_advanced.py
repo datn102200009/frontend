@@ -54,33 +54,56 @@ def run():
 
             # ── Step 4: Cập nhật TSCĐ chưa khấu hao ──
             try:
-                page.get_by_role("button", name="Thêm Tài Sản").click()
+                page.get_by_role("button", name="Mua TSCĐ").click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 
-                page.locator("input[name='asset_code']").fill(asset_code)
                 page.locator("input[name='asset_name']").fill(f"Tài sản thử nghiệm {rand_id}")
                 page.locator("input[name='original_value']").fill("50000000")
                 page.locator("input[name='salvage_value']").fill("0")
                 page.locator("input[name='useful_life_months']").fill("24")
-                page.locator("input[name='department']").fill("Văn Phòng")
+                page.locator("input[name='vendor_name']").fill("Supplier Advanced")
 
-                page.get_by_role("button", name="Lưu").click()
+                page.get_by_role("button", name="Ghi nhận mua").click()
                 time.sleep(1.5)
                 expect(page.get_by_role("dialog")).not_to_be_visible()
 
-                # Find the asset in list and click Edit
+                # Approve the cash flow transaction associated with this asset to activate it (status = idle)
+                page.evaluate("""async (assetName) => {
+                    const token = localStorage.getItem('access_token');
+                    const headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : '',
+                    };
+                    const resList = await fetch('http://localhost:8000/api/v1/finance/cash-flows/?status=pending_approval', { headers });
+                    const data = await resList.json();
+                    const results = data.results || [];
+                    const tx = results.find(t => t.remarks && t.remarks.includes(assetName));
+                    if (tx) {
+                        await fetch(`http://localhost:8000/api/v1/finance/cash-flows/${tx.id}/approve/`, {
+                            method: 'POST',
+                            headers,
+                        });
+                    }
+                }""", f"Tài sản thử nghiệm {rand_id}")
+                time.sleep(1.5)
+                page.reload()
+                wait_for_page_ready(page)
+
+                # Find the asset in list by name and click Edit
                 search = page.get_by_placeholder("Tìm theo mã hoặc tên tài sản...")
-                search.fill(asset_code)
+                search.fill(f"Tài sản thử nghiệm {rand_id}")
                 time.sleep(0.5)
+
+                # Get the generated code from table
+                asset_code = page.locator("tbody tr").first.locator("td").first.inner_text()
 
                 page.get_by_title("Chỉnh sửa").first.click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 
-                # Update name & department
+                # Update name
                 page.locator("input[name='asset_name']").fill(f"Tài sản thử nghiệm {rand_id} Cập Nhật")
-                page.locator("input[name='department']").fill("Phòng IT")
 
                 page.get_by_role("button", name="Lưu").click()
                 time.sleep(1.5)
@@ -89,7 +112,7 @@ def run():
                 runner.log("WF-10", 4, "PASS", f"Cập nhật tài sản cố định {asset_code} thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "step4_fail")
-                runner.log("WF-10", 4, "FAIL", f"Cập nhật tài sản cố định {asset_code} thành công", str(e), url=page.url)
+                runner.log("WF-10", 4, "FAIL", "Cập nhật tài sản cố định thành công", str(e), url=page.url)
 
             # Reset search
             search.fill("")

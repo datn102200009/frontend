@@ -31,7 +31,7 @@ export function FixedAssetsWidget() {
   // Fixed Asset queries
   const { data: assetsData, isLoading: isLoadingAssets, refetch: refetchAssets } = useGetFinanceFixedAssetsQuery({
     statusIn: statusFilter || undefined,
-    limit: 1000,
+    limit: 200,
   });
   const assets = assetsData?.results || [];
 

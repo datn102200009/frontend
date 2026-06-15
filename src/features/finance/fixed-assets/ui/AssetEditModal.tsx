@@ -47,6 +47,7 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
   });
 
   const watchDepreciationMethod = watch('depreciation_method');
+  const isCoreFieldsDisabled = editingAsset ? (Number(editingAsset.accumulated_depreciation) || 0) > 0 : false;
 
   useEffect(() => {
     if (editingAsset) {
@@ -108,6 +109,21 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
         </>
       }
     >
+      {editingAsset && isCoreFieldsDisabled && (
+        <div
+          style={{
+            marginBottom: '16px',
+            padding: '12px',
+            borderRadius: 'var(--radius-sm)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            color: 'var(--clr-error)',
+            fontSize: 'var(--fs-xs)',
+          }}
+        >
+          ⚠️ Tài sản đã phát sinh trích khấu hao. Một số thông tin cốt lõi (nguyên giá, phương pháp khấu hao, số tháng sử dụng hữu ích) sẽ bị khóa chỉnh sửa.
+        </div>
+      )}
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
         <div className={styles.row}>
           <Input
@@ -154,6 +170,7 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
               label="Số tháng khấu hao hữu ích"
               type="number"
               required
+              disabled={isCoreFieldsDisabled}
               error={errors.useful_life_months?.message}
               {...register('useful_life_months', {
                 required: watchDepreciationMethod === 'straight_line' ? 'Số tháng khấu hao là bắt buộc' : false,
