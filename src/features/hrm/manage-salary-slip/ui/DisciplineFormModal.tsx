@@ -6,6 +6,7 @@ import { DISCIPLINE_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { disciplineSchema, type DisciplineFormValues } from '../model/reward-discipline.schema';
 import styles from './DisciplineFormModal.module.css';
 
@@ -38,6 +39,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     formState: { errors },
     reset,
     watch,
+    control,
   } = useForm<DisciplineFormValues>({
     resolver: zodResolver(disciplineSchema) as unknown as Resolver<DisciplineFormValues>,
     defaultValues: {
@@ -144,33 +146,23 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
         )}
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="incident_date">
-              Ngày xảy ra sự việc <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="incident_date"
-              type="date"
-              className={styles.input}
-              {...register('incident_date')}
-              disabled={isLoading}
-            />
-            {errors.incident_date && <span className={styles.errorText}>{errors.incident_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="incident_date"
+            label="Ngày xảy ra sự việc"
+            control={control}
+            error={errors.incident_date?.message}
+            required
+            disabled={isLoading}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="discipline_date">
-              Ngày quyết định <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="discipline_date"
-              type="date"
-              className={styles.input}
-              {...register('discipline_date')}
-              disabled={isLoading}
-            />
-            {errors.discipline_date && <span className={styles.errorText}>{errors.discipline_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="discipline_date"
+            label="Ngày quyết định"
+            control={control}
+            error={errors.discipline_date?.message}
+            required
+            disabled={isLoading}
+          />
         </div>
 
         <div className={styles.row}>

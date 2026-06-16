@@ -2,7 +2,6 @@ import type {
   Employee as GenEmployee,
   EmployeeDetail as GenEmployeeDetail,
   EmploymentContract as GenEmploymentContract,
-  EmploymentHistory as GenEmploymentHistory,
   Attendance as GenAttendance,
   LeaveRequest as GenLeaveRequest,
   SalarySlip as GenSalarySlip,
@@ -24,7 +23,6 @@ export type EmployeeDetail = GenEmployeeDetail & {
   full_name: string;
   employment_status: 'active' | 'inactive';
   contracts: EmploymentContract[];
-  employment_histories: EmploymentHistory[];
   rewards: RewardRecord[];
   disciplines: DisciplineRecord[];
 };
@@ -35,12 +33,6 @@ export type EmploymentContract = GenEmploymentContract & {
   contract_type: 'probation' | 'definite_term' | 'indefinite_term' | 'other';
   status: 'active' | 'expired' | 'terminated';
   start_date: string;
-};
-
-export type EmploymentHistory = GenEmploymentHistory & {
-  id: string;
-  change_type: 'salary_change' | 'title_change' | 'department_transfer' | 'other';
-  effective_date: string;
 };
 
 export type Attendance = GenAttendance & {

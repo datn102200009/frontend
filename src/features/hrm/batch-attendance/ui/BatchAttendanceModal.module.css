@@ -184,3 +184,24 @@
   color: var(--clr-success, #16a34a);
 }
 
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.inputWithIcon input {
+  padding-right: 36px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.inputIcon {
+  position: absolute;
+  right: 12px;
+  color: var(--clr-text-secondary);
+  pointer-events: none;
+}
+
+

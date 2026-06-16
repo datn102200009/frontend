@@ -15,14 +15,10 @@ function ProgressBar({ value, label, color }: { value: number; label: string; co
   );
 }
 
+import { formatDateVN } from '@shared/lib/formatDate';
+
 export function formatDate(dateStr?: string | null): string {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('vi-VN');
-  } catch {
-    return dateStr;
-  }
+  return formatDateVN(dateStr);
 }
 
 export function daysAgo(dateStr?: string | null): number {

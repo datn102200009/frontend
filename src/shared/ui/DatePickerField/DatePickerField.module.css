@@ -1,13 +1,8 @@
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
 .formGroup {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
+  width: 100%;
 }
 
 .label {
@@ -20,7 +15,7 @@
   color: var(--clr-danger);
 }
 
-.input, .select {
+.input {
   width: 100%;
   padding: 8px 12px;
   border: 1.5px solid var(--clr-border);
@@ -31,13 +26,13 @@
   transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 
-.input:focus, .select:focus {
+.input:focus {
   outline: none;
   border-color: var(--clr-primary-400);
   box-shadow: 0 0 0 3px var(--clr-primary-50);
 }
 
-.input:disabled, .select:disabled {
+.input:disabled {
   background: var(--clr-surface-muted);
   color: var(--clr-text-muted);
   cursor: not-allowed;
@@ -49,11 +44,21 @@
   margin-top: 2px;
 }
 
-.errorSection {
-  background-color: var(--clr-error-bg);
-  border: 1px solid var(--clr-error);
-  padding: var(--sp-3);
-  border-radius: var(--radius-md);
-  color: var(--clr-error);
-  font-size: var(--fs-sm);
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.inputWithIcon input {
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.inputIcon {
+  position: absolute;
+  right: 12px;
+  color: var(--clr-text-secondary);
+  pointer-events: none;
 }

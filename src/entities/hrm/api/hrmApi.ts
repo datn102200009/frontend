@@ -31,45 +31,12 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
-    postHrmEmployeesByIdUpdateSalaryTitle: build.mutation<
-      PostHrmEmployeesByIdUpdateSalaryTitleApiResponse,
-      PostHrmEmployeesByIdUpdateSalaryTitleApiArg
+    postHrmEmployeesByIdAdjustSalary: build.mutation<
+      PostHrmEmployeesByIdAdjustSalaryApiResponse,
+      PostHrmEmployeesByIdAdjustSalaryApiArg
     >({
       query: (queryArg) => ({
-        url: `/hrm/employees/${queryArg.id}/update-salary-title/`,
-        method: 'POST',
-        body: queryArg.body,
-      }),
-    }),
-    getHrmEmploymentHistories: build.query<
-      GetHrmEmploymentHistoriesApiResponse,
-      GetHrmEmploymentHistoriesApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/employment-histories/`,
-        params: {
-          status: queryArg.status,
-          employee_id: queryArg.employeeId,
-          limit: queryArg.limit,
-          offset: queryArg.offset,
-        },
-      }),
-    }),
-    postHrmEmploymentHistoriesByIdApprove: build.mutation<
-      PostHrmEmploymentHistoriesByIdApproveApiResponse,
-      PostHrmEmploymentHistoriesByIdApproveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/employment-histories/${queryArg.id}/approve/`,
-        method: 'POST',
-      }),
-    }),
-    postHrmEmploymentHistoriesByIdReject: build.mutation<
-      PostHrmEmploymentHistoriesByIdRejectApiResponse,
-      PostHrmEmploymentHistoriesByIdRejectApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/employment-histories/${queryArg.id}/reject/`,
+        url: `/hrm/employees/${queryArg.id}/adjust-salary/`,
         method: 'POST',
         body: queryArg.body,
       }),
@@ -87,12 +54,12 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
-    postHrmContractsByIdHandleExpiration: build.mutation<
-      PostHrmContractsByIdHandleExpirationApiResponse,
-      PostHrmContractsByIdHandleExpirationApiArg
+    postHrmContractsByIdRenew: build.mutation<
+      PostHrmContractsByIdRenewApiResponse,
+      PostHrmContractsByIdRenewApiArg
     >({
       query: (queryArg) => ({
-        url: `/hrm/contracts/${queryArg.id}/handle-expiration/`,
+        url: `/hrm/contracts/${queryArg.id}/renew/`,
         method: 'POST',
         body: queryArg.body,
       }),
@@ -390,11 +357,13 @@ export type GetHrmEmployeesApiArg = {
 export type PostHrmEmployeesCreateApiResponse = /** status 201 Tạo thành công */ Employee
 export type PostHrmEmployeesCreateApiArg = {
   body: {
-    employee_id: string
+    /** Mã nhân viên (nếu để trống, hệ thống tự động sinh theo format NV####) */
+    employee_id?: string
     full_name: string
     department?: string
     position_title?: string
-    salary_base?: number
+    /** Lương cơ bản của hợp đồng */
+    contract_salary_base?: number
     email?: string
     phone?: string
     gender?: 'male' | 'female' | 'other'
@@ -422,45 +391,16 @@ export type PatchHrmEmployeesByIdUpdateApiArg = {
     employment_status?: 'active' | 'inactive'
   }
 }
-export type PostHrmEmployeesByIdUpdateSalaryTitleApiResponse =
-  /** status 200 Cập nhật thành công */ Employee
-export type PostHrmEmployeesByIdUpdateSalaryTitleApiArg = {
-  id: string
-  body: {
-    change_type: 'salary_change' | 'title_change' | 'department_transfer' | 'other'
-    new_salary_base?: number
-    new_title?: string
-    new_department?: string
-    effective_date: string
-    reason?: string
+export type PostHrmEmployeesByIdAdjustSalaryApiResponse =
+  /** status 200 Điều chỉnh lương thành công */ {
+    contract?: EmploymentContract
+    affected_payslips?: SalarySlip[]
   }
-}
-export type GetHrmEmploymentHistoriesApiResponse = /** status 200 Thành công */ {
-  count?: number
-  total_pages?: number
-  next?: string | null
-  previous?: string | null
-  results?: EmploymentHistory[]
-}
-export type GetHrmEmploymentHistoriesApiArg = {
-  /** Lọc theo trạng thái phê duyệt. */
-  status?: 'pending_approval' | 'approved' | 'rejected'
-  /** Lọc theo ID nhân viên. */
-  employeeId?: string
-  limit?: number
-  offset?: number
-}
-export type PostHrmEmploymentHistoriesByIdApproveApiResponse =
-  /** status 200 Phê duyệt thành công */ EmploymentHistory
-export type PostHrmEmploymentHistoriesByIdApproveApiArg = {
-  id: string
-}
-export type PostHrmEmploymentHistoriesByIdRejectApiResponse =
-  /** status 200 Từ chối thành công */ EmploymentHistory
-export type PostHrmEmploymentHistoriesByIdRejectApiArg = {
+export type PostHrmEmployeesByIdAdjustSalaryApiArg = {
   id: string
   body: {
-    reason: string
+    new_salary_base: number
+    reason?: string
   }
 }
 export type PostHrmContractsApiResponse = /** status 201 Tạo thành công */ EmploymentContract
@@ -473,6 +413,8 @@ export type PostHrmContractsApiArg = {
     end_date?: string
     note?: string
     file_url?: string
+    /** Lương cơ bản của hợp đồng */
+    salary_base?: number
   }
 }
 export type PostHrmContractsByIdTerminateApiResponse =
@@ -493,22 +435,24 @@ export type PostHrmContractsByIdTerminateApiArg = {
     unnotified_days?: number
   }
 }
-export type PostHrmContractsByIdHandleExpirationApiResponse = /** status 200 Xử lý thành công */ {
+export type PostHrmContractsByIdRenewApiResponse = /** status 201 Gia hạn thành công */ {
   contract?: EmploymentContract
-  history?: EmploymentHistory
 }
-export type PostHrmContractsByIdHandleExpirationApiArg = {
+export type PostHrmContractsByIdRenewApiArg = {
   id: string
   body: {
-    action: 'renew' | 'renew_with_salary_change' | 'terminate' | 'defer'
-    /** Lương cơ bản mới (bắt buộc khi action=renew_with_salary_change) */
-    new_salary_base?: number
-    /** Chức danh mới (optional) */
-    new_title?: string
+    /** Số hợp đồng mới (optional, mặc định tự sinh) */
+    new_contract_no?: string
+    /** Loại hợp đồng mới (optional, mặc định lấy loại cũ) */
+    new_contract_type?: 'probation' | 'definite_term' | 'indefinite_term' | 'other'
     /** Ngày bắt đầu của hợp đồng mới (optional, mặc định là ngày kết thúc cũ + 1 ngày) */
     start_date?: string
-    /** Lý do (optional) */
-    reason?: string
+    /** Lương cơ bản mới nếu có điều chỉnh (optional) */
+    new_salary_base?: number
+    /** Đường dẫn file scan hợp đồng (optional) */
+    file_url?: string
+    /** Ghi chú (optional) */
+    note?: string
   }
 }
 export type GetHrmAttendancesApiResponse = /** status 200 Thành công */ {
@@ -805,8 +749,8 @@ export type Employee = {
   full_name?: string
   department?: string | null
   position_title?: string | null
-  /** Lương cơ bản dạng Decimal */
-  salary_base?: string | null
+  /** Lương cơ bản hiện tại của nhân viên (đọc từ hợp đồng active) */
+  current_salary_base?: string | null
   email?: string | null
   phone?: string | null
   gender?: ('male' | 'female' | 'other') | null
@@ -831,27 +775,10 @@ export type EmploymentContract = {
   status?: 'active' | 'expired' | 'terminated'
   note?: string | null
   file_url?: string | null
+  /** Lương cơ bản của hợp đồng */
+  salary_base?: string | null
   created_at?: string
   updated_at?: string
-}
-export type EmploymentHistory = {
-  id?: string
-  employee_id?: string
-  employee_code?: string | null
-  employee_name?: string | null
-  change_type?: 'salary_change' | 'title_change' | 'department_transfer' | 'other'
-  old_salary_base?: string | null
-  new_salary_base?: string | null
-  old_title?: string | null
-  new_title?: string | null
-  old_department?: string | null
-  new_department?: string | null
-  effective_date?: string
-  approved_by_id?: string | null
-  approved_by_username?: string | null
-  reason?: string | null
-  status?: 'pending_approval' | 'approved' | 'rejected'
-  created_at?: string
 }
 export type EmployeeDocument = {
   id?: string
@@ -903,40 +830,9 @@ export type DisciplineRecord = {
 }
 export type EmployeeDetail = Employee & {
   contracts?: EmploymentContract[]
-  employment_histories?: EmploymentHistory[]
   documents?: EmployeeDocument[]
   rewards?: RewardRecord[]
   disciplines?: DisciplineRecord[]
-}
-export type Attendance = {
-  id?: string
-  employee_id?: string
-  employee_code?: string
-  employee_name?: string
-  date?: string
-  status?: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday'
-  work_hours?: string
-  overtime_hours?: string
-  remarks?: string | null
-  created_at?: string
-  updated_at?: string
-}
-export type LeaveRequest = {
-  id?: string
-  employee_id?: string
-  employee_code?: string
-  employee_name?: string
-  leave_type?: 'paid' | 'unpaid'
-  start_date?: string
-  end_date?: string
-  days?: string
-  reason?: string | null
-  status?: 'pending' | 'approved' | 'rejected'
-  approved_by_id?: string | null
-  approved_by_username?: string | null
-  approved_at?: string | null
-  created_at?: string
-  updated_at?: string
 }
 export type SalarySlip = {
   id?: string
@@ -980,6 +876,36 @@ export type SalarySlip = {
   created_at?: string
   updated_at?: string
 }
+export type Attendance = {
+  id?: string
+  employee_id?: string
+  employee_code?: string
+  employee_name?: string
+  date?: string
+  status?: 'working' | 'paid_leave' | 'unpaid_leave' | 'holiday'
+  work_hours?: string
+  overtime_hours?: string
+  remarks?: string | null
+  created_at?: string
+  updated_at?: string
+}
+export type LeaveRequest = {
+  id?: string
+  employee_id?: string
+  employee_code?: string
+  employee_name?: string
+  leave_type?: 'paid' | 'unpaid'
+  start_date?: string
+  end_date?: string
+  days?: string
+  reason?: string | null
+  status?: 'pending' | 'approved' | 'rejected'
+  approved_by_id?: string | null
+  approved_by_username?: string | null
+  approved_at?: string | null
+  created_at?: string
+  updated_at?: string
+}
 export type PublicHoliday = {
   id?: string
   name?: string
@@ -994,13 +920,10 @@ export const {
   usePostHrmEmployeesCreateMutation,
   useGetHrmEmployeesByIdQuery,
   usePatchHrmEmployeesByIdUpdateMutation,
-  usePostHrmEmployeesByIdUpdateSalaryTitleMutation,
-  useGetHrmEmploymentHistoriesQuery,
-  usePostHrmEmploymentHistoriesByIdApproveMutation,
-  usePostHrmEmploymentHistoriesByIdRejectMutation,
+  usePostHrmEmployeesByIdAdjustSalaryMutation,
   usePostHrmContractsMutation,
   usePostHrmContractsByIdTerminateMutation,
-  usePostHrmContractsByIdHandleExpirationMutation,
+  usePostHrmContractsByIdRenewMutation,
   useGetHrmAttendancesQuery,
   usePostHrmAttendancesBatchMutation,
   useGetHrmLeaveRequestsQuery,

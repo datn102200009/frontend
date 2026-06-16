@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TerminateContractModal } from './TerminateContractModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -39,9 +39,9 @@ describe('TerminateContractModal', () => {
     renderWithProviders(<TerminateContractModal {...defaultProps} />);
     const user = userEvent.setup();
 
-    // Clear termination_date
-    const termDateInput = screen.getByLabelText(/Ngày chấm dứt/i);
-    await user.clear(termDateInput);
+    // Clear termination_date via hidden input
+    const termHiddenInput = document.querySelector('input[name="termination_date"]') as HTMLInputElement;
+    fireEvent.change(termHiddenInput, { target: { value: '' } });
 
     await user.click(screen.getByRole('button', { name: 'Xác nhận chấm dứt' }));
 

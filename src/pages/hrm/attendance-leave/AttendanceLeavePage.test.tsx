@@ -28,7 +28,7 @@ describe('AttendanceLeavePage', () => {
     // Verify banner is shown
     const banner = await screen.findByTestId('public-holiday-banner');
     expect(banner).toBeInTheDocument();
-    expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 30/04/2026 là ngày nghỉ Lễ/Tết Ngày Chiến thắng');
+    expect(banner).toHaveTextContent('Thông báo nghỉ lễ: Ngày 30-04-2026 là ngày nghỉ Lễ/Tết Ngày Chiến thắng');
 
     // Verify Chấm Công button is not disabled (unlocked)
     const batchButton = screen.getByRole('button', { name: 'Chấm Công' });
@@ -85,7 +85,7 @@ describe('AttendanceLeavePage', () => {
     // Should show compensatory banner
     const compBanner = await screen.findByTestId('compensatory-holiday-banner');
     expect(compBanner).toBeInTheDocument();
-    expect(compBanner).toHaveTextContent('Thông báo nghỉ bù: Ngày 03/06/2026 là ngày nghỉ bù cho ngày lễ Nghỉ Lễ Dài Ngày');
+    expect(compBanner).toHaveTextContent('Thông báo nghỉ bù: Ngày 03-06-2026 là ngày nghỉ bù cho ngày lễ Nghỉ Lễ Dài Ngày');
   });
 
   it('automatically opens leave request details modal when id is in URL query params', async () => {

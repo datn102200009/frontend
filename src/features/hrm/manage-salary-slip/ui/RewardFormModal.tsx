@@ -6,6 +6,7 @@ import { REWARD_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { rewardSchema, type RewardFormValues } from '../model/reward-discipline.schema';
 import styles from './RewardFormModal.module.css';
 
@@ -48,6 +49,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
+    control,
   } = useForm<RewardFormValues>({
     resolver: zodResolver(rewardSchema) as unknown as Resolver<RewardFormValues>,
     defaultValues: {
@@ -145,19 +147,14 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
         )}
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="reward_date">
-              Ngày quyết định <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="reward_date"
-              type="date"
-              className={styles.input}
-              {...register('reward_date')}
-              disabled={isLoading}
-            />
-            {errors.reward_date && <span className={styles.errorText}>{errors.reward_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="reward_date"
+            label="Ngày quyết định"
+            control={control}
+            error={errors.reward_date?.message}
+            required
+            disabled={isLoading}
+          />
 
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="reward_type">

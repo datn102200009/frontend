@@ -4,12 +4,6 @@
   gap: var(--sp-4);
 }
 
-.row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-}
-
 .formGroup {
   display: flex;
   flex-direction: column;
@@ -50,31 +44,19 @@
 }
 
 .errorText {
-  color: var(--clr-error);
+  color: var(--clr-danger);
   font-size: var(--fs-xs);
   margin-top: 2px;
 }
 
 .errorSection {
-  background-color: var(--clr-error-bg);
-  border: 1px solid var(--clr-error);
+  background-color: var(--clr-danger-50, #fef2f2);
+  border: 1px solid var(--clr-danger);
   padding: var(--sp-3);
   border-radius: var(--radius-md);
-  color: var(--clr-error);
+  color: var(--clr-danger);
   font-size: var(--fs-sm);
-}
-
-@media (max-width: 640px) {
-  .row {
-    grid-template-columns: 1fr;
-  }
-}
-
-.checkboxGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
+  margin-bottom: var(--sp-3);
 }
 
 .infoBox {
@@ -85,5 +67,48 @@
   border-radius: var(--radius-md);
   font-size: var(--fs-xs);
   line-height: 1.5;
-  margin-top: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.diffTable {
+  width: 100%;
+  margin-bottom: var(--sp-4);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.diffTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.diffTable th {
+  background-color: var(--clr-surface-muted, #f9fafb);
+  color: var(--clr-text-secondary);
+  font-weight: 500;
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.diffTable td {
+  padding: var(--sp-3);
+  border-bottom: 1px solid var(--clr-border);
+  color: var(--clr-text);
+}
+
+.diffTable tr:last-child td {
+  border-bottom: none;
+}
+
+.positive {
+  color: var(--clr-success, #16a34a);
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--clr-danger, #dc2626);
+  font-weight: 600;
 }

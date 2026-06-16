@@ -31,7 +31,7 @@ describe('RewardEditModal', () => {
   it('renders edit form with pre-populated values', () => {
     renderWithProviders(<RewardEditModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: /Sửa Quyết Định Khen Thưởng - Nguyễn Văn An/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Ngày quyết định/i)).toHaveValue('2026-06-10');
+    expect(screen.getByLabelText(/Ngày quyết định/i)).toHaveValue('10-06-2026');
     expect(screen.getByLabelText(/Loại khen thưởng/i)).toHaveValue('performance_bonus');
     expect(screen.getByLabelText(/Số tiền thưởng/i)).toHaveValue(1500000);
     expect(screen.getByLabelText(/Lý do\/Mô tả thành tích/i)).toHaveValue('Thưởng quý 2');

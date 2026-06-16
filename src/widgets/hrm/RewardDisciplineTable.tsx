@@ -3,7 +3,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { Plus, Gift, AlertTriangle, Eye, Edit2, XCircle, Trash2, Check } from 'lucide-react';
+import { Plus, Gift, AlertTriangle, Eye, Edit2, XCircle, Trash2, Check, Calendar } from 'lucide-react';
 import {
   useGetHrmRewardsQuery,
   useGetHrmDisciplinesQuery,
@@ -34,6 +34,8 @@ import {
   DISCIPLINE_TYPE_OPTIONS,
 } from '@shared/constants/hrmRewardDiscipline';
 import styles from './RewardDisciplineTable.module.css';
+import { formatDateVN } from '@shared/lib/formatDate';
+import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
 
 export const RewardDisciplineTable: React.FC = () => {
   const [subTab, setSubTab] = useState<'rewards' | 'disciplines'>('rewards');
@@ -43,6 +45,8 @@ export const RewardDisciplineTable: React.FC = () => {
   // Filters state
   const [employeeId, setEmployeeId] = useState('');
   const [status, setStatus] = useState('');
+  const [isFromOpen, setIsFromOpen] = useState(false);
+  const [isToOpen, setIsToOpen] = useState(false);
   const [rewardType, setRewardType] = useState('');
   const [disciplineType, setDisciplineType] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -255,7 +259,7 @@ export const RewardDisciplineTable: React.FC = () => {
       }),
       helper.accessor('reward_date', {
         header: 'Ngày quyết định',
-        cell: (info) => info.getValue() || '-',
+        cell: (info) => formatDateVN(info.getValue()),
       }),
       helper.accessor('reward_type', {
         header: 'Loại khen thưởng',
@@ -355,11 +359,11 @@ export const RewardDisciplineTable: React.FC = () => {
       }),
       helper.accessor('incident_date', {
         header: 'Ngày xảy ra',
-        cell: (info) => info.getValue() || '-',
+        cell: (info) => formatDateVN(info.getValue()),
       }),
       helper.accessor('discipline_date', {
         header: 'Ngày quyết định',
-        cell: (info) => info.getValue() || '-',
+        cell: (info) => formatDateVN(info.getValue()),
       }),
       helper.accessor('discipline_type', {
         header: 'Hình thức kỷ luật',
@@ -569,22 +573,62 @@ export const RewardDisciplineTable: React.FC = () => {
 
         <div className={styles.filterGroup}>
           <span className={styles.filterLabel}>Từ ngày</span>
-          <input
-            type="date"
-            className={styles.filterInput}
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-          />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              type="text"
+              readOnly
+              placeholder="DD-MM-YYYY"
+              className={styles.filterInput}
+              value={formatDateVN(dateFrom)}
+              onClick={() => setIsFromOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsFromOpen(true);
+                }
+              }}
+              style={{ paddingRight: '30px', cursor: 'pointer' }}
+            />
+            <Calendar
+              size={14}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                color: 'var(--clr-text-secondary)',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
         </div>
 
         <div className={styles.filterGroup}>
           <span className={styles.filterLabel}>Đến ngày</span>
-          <input
-            type="date"
-            className={styles.filterInput}
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-          />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              type="text"
+              readOnly
+              placeholder="DD-MM-YYYY"
+              className={styles.filterInput}
+              value={formatDateVN(dateTo)}
+              onClick={() => setIsToOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setIsToOpen(true);
+                }
+              }}
+              style={{ paddingRight: '30px', cursor: 'pointer' }}
+            />
+            <Calendar
+              size={14}
+              style={{
+                position: 'absolute',
+                right: '8px',
+                color: 'var(--clr-text-secondary)',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
         </div>
 
         <Button
@@ -711,6 +755,20 @@ export const RewardDisciplineTable: React.FC = () => {
           onConfirm={handleConfirmCancelDiscipline}
         />
       )}
+
+      <DatePickerModal
+        open={isFromOpen}
+        onClose={() => setIsFromOpen(false)}
+        value={dateFrom}
+        onChange={(newDate) => setDateFrom(newDate)}
+      />
+
+      <DatePickerModal
+        open={isToOpen}
+        onClose={() => setIsToOpen(false)}
+        value={dateTo}
+        onChange={(newDate) => setDateTo(newDate)}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LeaveRequestFormModal } from './LeaveRequestFormModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -34,18 +34,16 @@ describe('LeaveRequestFormModal', () => {
   });
 
   it('auto-calculates days when dates change', async () => {
-    renderWithProviders(<LeaveRequestFormModal {...defaultProps} />);
-    const user = userEvent.setup();
+    const { container } = renderWithProviders(<LeaveRequestFormModal {...defaultProps} />);
 
-    const startDateInput = screen.getByLabelText(/Từ ngày/i);
-    const endDateInput = screen.getByLabelText(/Đến ngày/i);
     const daysInput = screen.getByLabelText(/Số ngày nghỉ thực tế/i) as HTMLInputElement;
 
-    // Change start date and end date
-    await user.clear(startDateInput);
-    await user.type(startDateInput, '2026-06-01');
-    await user.clear(endDateInput);
-    await user.type(endDateInput, '2026-06-05');
+    // Change start date and end date via hidden inputs
+    const hiddenStart = container.querySelector('input[name="start_date"]') as HTMLInputElement;
+    const hiddenEnd = container.querySelector('input[name="end_date"]') as HTMLInputElement;
+
+    fireEvent.change(hiddenStart, { target: { value: '2026-06-01' } });
+    fireEvent.change(hiddenEnd, { target: { value: '2026-06-05' } });
 
     // 2026-06-01 to 2026-06-05 inclusive is 5 days
     await waitFor(() => {
