@@ -60,11 +60,11 @@ export type LeaveRequest = GenLeaveRequest & {
   days: string;
 };
 
-export type SalarySlip = GenSalarySlip & {
+export type SalarySlip = Omit<GenSalarySlip, 'status'> & {
   id: string;
   employee_id: string;
   salary_period: string;
-  status: 'draft' | 'calculated' | 'approved' | 'paid';
+  status: 'draft' | 'calculated' | 'pending_finance_review' | 'submitted' | 'approved' | 'paid';
 };
 
 export type RewardRecord = GenRewardRecord & {

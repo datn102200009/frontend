@@ -1,21 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus } from 'lucide-react';
-import { Button } from '@shared/ui/Button/Button';
-
-// Tables
 import { SalarySlipTable } from '@widgets/hrm/SalarySlipTable';
+import styles from '../hrm/HrmPage.module.css';
 
-// Modals
-import { InitializeSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/InitializeSalarySlipModal';
-
-import styles from '../HrmPage.module.css';
-
-const PayrollPage: React.FC = () => {
+const PayrollApprovalPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // Modals States
-  const [isInitializeSalarySlipOpen, setIsInitializeSalarySlipOpen] = useState(false);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(() => {
     const periodParam = searchParams.get('period');
@@ -47,13 +36,10 @@ const PayrollPage: React.FC = () => {
         <div className={styles.container}>
           <div className={styles.header}>
             <div>
-              <h2 className={styles.title}>Bảng Lương & Tính Lương</h2>
-              <p className={styles.subtitle}>Tính toán, tổng kết lương nhân sự. Finance sẽ phê duyệt và chi trả.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button icon={<Plus size={16} />} onClick={() => setIsInitializeSalarySlipOpen(true)}>
-                Khởi Tạo Kỳ Lương
-              </Button>
+              <h2 className={styles.title}>Phê Duyệt & Chi Trả Lương</h2>
+              <p className={styles.subtitle}>
+                Xem xét, phê duyệt và thanh toán các bảng lương đã tính toán từ bộ phận nhân sự.
+              </p>
             </div>
           </div>
           <SalarySlipTable
@@ -62,17 +48,8 @@ const PayrollPage: React.FC = () => {
           />
         </div>
       </div>
-
-      {/* Salary Slip Modals */}
-      {isInitializeSalarySlipOpen && (
-        <InitializeSalarySlipModal
-          open={isInitializeSalarySlipOpen}
-          onClose={() => setIsInitializeSalarySlipOpen(false)}
-          onSuccess={() => setIsInitializeSalarySlipOpen(false)}
-        />
-      )}
     </div>
   );
 };
 
-export default PayrollPage;
+export default PayrollApprovalPage;

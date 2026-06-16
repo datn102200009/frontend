@@ -9,6 +9,7 @@ import { useToast } from '@shared/ui/Toast/Toast';
 import { Check } from 'lucide-react';
 import styles from './EmployeeDetailsModal.module.css';
 import { extractApiError } from '@shared/lib/extractApiError';
+import { HandleContractExpirationModal } from '../../handle-contract-expiration/ui/HandleContractExpirationModal';
 
 interface EmployeeDetailsModalProps {
   open: boolean;
@@ -26,6 +27,17 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   onTerminateContract,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('general');
+  const [expiringContract, setExpiringContract] = useState<any | null>(null);
+
+  const isContractExpiringWithin30Days = (endDateStr: string) => {
+    const endDate = new Date(endDateStr);
+    const now = new Date();
+    endDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 30;
+  };
 
   const { data: detail, isLoading, refetch } = useGetHrmEmployeesByIdQuery(
     { id: employee.id },
@@ -269,14 +281,26 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                         {getContractStatusBadge(contract.status)}
                         {contract.status === 'active' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onTerminateContract(employee, contract.id || '')}
-                            style={{ color: 'var(--clr-error)', borderColor: 'var(--clr-error)', padding: '4px 8px', fontSize: '11px' }}
-                          >
-                            Chấm dứt HĐ
-                          </Button>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            {contract.end_date && isContractExpiringWithin30Days(contract.end_date) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setExpiringContract(contract)}
+                                style={{ color: 'var(--clr-warning)', borderColor: 'var(--clr-warning)', padding: '4px 8px', fontSize: '11px' }}
+                              >
+                                Xử lý hết hạn
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onTerminateContract(employee, contract.id || '')}
+                              style={{ color: 'var(--clr-error)', borderColor: 'var(--clr-error)', padding: '4px 8px', fontSize: '11px' }}
+                            >
+                              Chấm dứt HĐ
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -393,6 +417,24 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </>
         )}
       </div>
+      {expiringContract && (
+        <HandleContractExpirationModal
+          open={!!expiringContract}
+          onClose={() => setExpiringContract(null)}
+          onSuccess={() => {
+            setExpiringContract(null);
+            refetch();
+          }}
+          contract={expiringContract}
+          employee={{
+            id: employee.id,
+            full_name: employee.full_name,
+            employee_id: employee.employee_id,
+            salary_base: detail?.salary_base,
+            position_title: employee.position_title,
+          }}
+        />
+      )}
     </Modal>
   );
 };

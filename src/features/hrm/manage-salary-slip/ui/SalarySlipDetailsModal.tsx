@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   usePostHrmSalarySlipsByIdCalculateMutation,
+  usePostHrmSalarySlipsByIdSubmitForReviewMutation,
 } from '@entities/hrm/api/hrmApi';
-import { usePostFinanceSalarySlipsByIdApproveMutation } from '@entities/finance/api/financeApi';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -20,10 +20,11 @@ interface SalarySlipDetailsModalProps {
 export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (props) => {
   const { open, onClose, onSuccess, onCalculateSuccess, salarySlip } = props;
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
-  const [approveSalary, { isLoading: isApproving }] = usePostFinanceSalarySlipsByIdApproveMutation();
-  const canApprove = usePermission('finance.payroll_approve');
+  const [submitSalary, { isLoading: isSubmitting }] = usePostHrmSalarySlipsByIdSubmitForReviewMutation();
+  const canSubmit = usePermission('hrm.payroll_submit');
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isSegmentsOpen, setIsSegmentsOpen] = useState(false);
 
   const [prevOpen, setPrevOpen] = useState(open);
   const [prevSalarySlipId, setPrevSalarySlipId] = useState(salarySlip.id);
@@ -33,6 +34,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
     setPrevSalarySlipId(salarySlip.id);
     if (open) {
       setApiError(null);
+      setIsSegmentsOpen(false);
     }
   }
 
@@ -62,9 +64,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
     };
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
-  const handleApprove = () => {
+  const handleSubmitForReview = () => {
     if (!salarySlip.id) return;
-    approveSalary({
+    submitSalary({
       id: salarySlip.id,
     })
       .unwrap()
@@ -72,9 +74,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
         onSuccess();
       })
       .catch((err: unknown) => {
-        console.error('Failed to approve salary slip', err);
+        console.error('Failed to submit salary slip', err);
         const apiErr = err as { data?: { detail?: string } };
-        setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi phê duyệt lương. Vui lòng kiểm tra lại.');
+        setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi gửi duyệt bảng lương. Vui lòng kiểm tra lại.');
       });
   };
 
@@ -131,9 +133,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
-          {salarySlip.status === 'calculated' && canApprove && (
-            <Button variant="primary" onClick={handleApprove} loading={isApproving}>
-              Phê duyệt lương
+          {salarySlip.status === 'calculated' && canSubmit && (
+            <Button variant="primary" onClick={handleSubmitForReview} loading={isSubmitting}>
+              Gửi Finance Duyệt
             </Button>
           )}
           <Button variant="outline" onClick={onClose}>
@@ -201,6 +203,33 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
             </div>
           </div>
         </div>
+
+        {salarySlip.breakdown?.salary_segments && salarySlip.breakdown.salary_segments.length > 1 && (
+          <div className={styles.segmentsSection}>
+            <button
+              type="button"
+              className={styles.segmentsToggle}
+              onClick={() => setIsSegmentsOpen(!isSegmentsOpen)}
+            >
+              <span>{isSegmentsOpen ? '▼ Ẩn chi tiết chặng lương (Prorated)' : '▶ Xem chi tiết chặng lương (Prorated)'}</span>
+            </button>
+            {isSegmentsOpen && (
+              <div className={styles.segmentsList}>
+                {salarySlip.breakdown.salary_segments.map((seg: any, idx: number) => (
+                  <div key={idx} className={styles.segmentItem}>
+                    <div className={styles.segmentHeader}>
+                      <span>Chặng {idx + 1}: {seg.start_date} ~ {seg.end_date}</span>
+                      <strong>{formatVND(seg.earned)}</strong>
+                    </div>
+                    <div className={styles.segmentMeta}>
+                      Mức lương chặng: {formatVND(seg.salary_base)} | Số ngày công: {seg.work_days} ngày
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {salarySlip.remarks && (
           <div className={styles.remarksSection}>

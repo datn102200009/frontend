@@ -764,6 +764,13 @@ export type SalarySlip = {
       name?: string
       amount?: number
     }[]
+    salary_segments?: {
+      start_date?: string
+      end_date?: string
+      salary_base?: number
+      work_days?: number
+      earned?: number
+    }[]
   } | null
   created_at?: string
   updated_at?: string

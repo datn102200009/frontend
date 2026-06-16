@@ -18,6 +18,7 @@ import {
   Award,
   CalendarDays,
   Wallet,
+  CheckSquare,
 } from 'lucide-react';
 import type { RootState } from '@app/store';
 import { logout } from '@features/auth/model/authSlice';
@@ -83,6 +84,7 @@ const NAV_SECTIONS: NavSection[] = [
       { to: '/finance', icon: <CircleDollarSign size={20} />, label: 'Dòng Tiền', permission: 'finance.view_cash_flow' },
       { to: '/invoices', icon: <FileText size={20} />, label: 'Hoá Đơn Mua/Bán', permission: ['finance.pay_invoice', 'finance.collect_sales_invoice'] },
       { to: '/fixed-assets', icon: <Briefcase size={20} />, label: 'Tài Sản Cố Định', permission: 'finance.view_fixed_asset' },
+      { to: '/finance/payroll-approval', icon: <CheckSquare size={20} />, label: 'Phê Duyệt Lương', permission: 'finance.payroll_approve' },
     ],
   },
   {

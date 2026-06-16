@@ -424,6 +424,28 @@ export const handlers = [
     return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'paid' });
   }),
 
+  // HRM new contract expiration and submit/recall mocks
+  http.post('*/api/v1/hrm/contracts/:id/handle-expiration/', async ({ request }) => {
+    const data = await request.json() as Record<string, any>;
+    return HttpResponse.json({
+      contract: data.action === 'terminate' || data.action === 'defer' ? null : { id: 'new-contract-123', contract_no: 'RENEW-123', status: 'active' },
+      history: data.action === 'renew_with_salary_change' ? { id: 'hist-123', status: 'pending_approval' } : null
+    }, { status: 200 });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/partial/', async ({ request }) => {
+    const data = await request.json() as Record<string, any>;
+    return HttpResponse.json({ id: 'partial-slip-123', employee_id: data.employee_id, status: 'draft' }, { status: 201 });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/:id/submit-for-review/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, status: 'pending_finance_review' });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/:id/recall/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, status: 'calculated' });
+  }),
+
   // Public Holidays mocks
   http.get('*/api/v1/hrm/public-holidays/', () => {
     return HttpResponse.json([
