@@ -15,8 +15,7 @@ import { EmployeeDetailsModal } from '@features/hrm/create-employee/ui/EmployeeD
 import { UpdateSalaryTitleModal } from '@features/hrm/update-salary-title/ui/UpdateSalaryTitleModal';
 import { ContractFormModal } from '@features/hrm/manage-contract/ui/ContractFormModal';
 import { TerminateContractModal } from '@features/hrm/manage-contract/ui/TerminateContractModal';
-import { RewardFormModal } from '@features/hrm/manage-salary-slip/ui/RewardFormModal';
-import { DisciplineFormModal } from '@features/hrm/manage-salary-slip/ui/DisciplineFormModal';
+
 
 // Hooks & Types
 import { useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
@@ -60,8 +59,7 @@ const EmployeesPage: React.FC = () => {
   const [selectedEmployeeForUpdate, setSelectedEmployeeForUpdate] = useState<Employee | null>(null);
   const [selectedEmployeeForSalaryUpdate, setSelectedEmployeeForSalaryUpdate] = useState<Employee | null>(null);
   const [selectedEmployeeForContractCreate, setSelectedEmployeeForContractCreate] = useState<Employee | null>(null);
-  const [selectedEmployeeForReward, setSelectedEmployeeForReward] = useState<Employee | null>(null);
-  const [selectedEmployeeForDiscipline, setSelectedEmployeeForDiscipline] = useState<Employee | null>(null);
+
   const [terminationState, setTerminationState] = useState<{ employee: Employee; contractId: string } | null>(null);
 
   const handleTerminateContractTrigger = (emp: Employee, contractId: string) => {
@@ -132,8 +130,6 @@ const EmployeesPage: React.FC = () => {
                 onEdit={(emp) => setSelectedEmployeeForUpdate(emp)}
                 onUpdateSalary={(emp) => setSelectedEmployeeForSalaryUpdate(emp)}
                 onCreateContract={(emp) => setSelectedEmployeeForContractCreate(emp)}
-                onReward={(emp) => setSelectedEmployeeForReward(emp)}
-                onDiscipline={(emp) => setSelectedEmployeeForDiscipline(emp)}
               />
             </>
           )}
@@ -197,23 +193,7 @@ const EmployeesPage: React.FC = () => {
         />
       )}
 
-      {selectedEmployeeForReward && (
-        <RewardFormModal
-          open={!!selectedEmployeeForReward}
-          onClose={() => setSelectedEmployeeForReward(null)}
-          onSuccess={() => setSelectedEmployeeForReward(null)}
-          employee={selectedEmployeeForReward}
-        />
-      )}
 
-      {selectedEmployeeForDiscipline && (
-        <DisciplineFormModal
-          open={!!selectedEmployeeForDiscipline}
-          onClose={() => setSelectedEmployeeForDiscipline(null)}
-          onSuccess={() => setSelectedEmployeeForDiscipline(null)}
-          employee={selectedEmployeeForDiscipline}
-        />
-      )}
 
       {terminationState && (
         <TerminateContractModal

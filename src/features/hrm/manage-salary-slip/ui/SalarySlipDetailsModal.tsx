@@ -6,6 +6,7 @@ import {
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
 import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalarySlipDetailsModal.module.css';
 
@@ -64,8 +65,15 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
     };
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
+  const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+
   const handleSubmitForReview = () => {
+    setIsSubmitConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = () => {
     if (!salarySlip.id) return;
+    setIsSubmitConfirmOpen(false);
     submitSalary({
       id: salarySlip.id,
     })
@@ -94,6 +102,8 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
         return 'Đã phê duyệt';
       case 'calculated':
         return 'Đã tính toán';
+      case 'pending_finance_review':
+        return 'Chờ phê duyệt';
       case 'draft':
       default:
         return 'Bản nháp';
@@ -107,6 +117,8 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       case 'approved':
         return `${styles.badge} ${styles.approved}`;
       case 'calculated':
+        return `${styles.badge} ${styles.calculated}`;
+      case 'pending_finance_review':
         return `${styles.badge} ${styles.calculated}`;
       case 'draft':
       default:
@@ -231,7 +243,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
           </div>
         )}
 
-        {salarySlip.remarks && (
+  {salarySlip.remarks && salarySlip.status !== 'approved' && salarySlip.status !== 'paid' && (
           <div className={styles.remarksSection}>
             <h4 className={styles.sectionTitle}>Ghi chú / Giải trình chi tiết</h4>
             <div className={styles.remarksContent}>
@@ -260,6 +272,16 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={isSubmitConfirmOpen}
+        onClose={() => setIsSubmitConfirmOpen(false)}
+        onConfirm={handleConfirmSubmit}
+        title="Xác nhận gửi duyệt"
+        message="Gửi phiếu lương này sang Finance duyệt? Hành động không thể hoàn tác."
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        loading={isSubmitting}
+      />
     </Modal>
   );
 };

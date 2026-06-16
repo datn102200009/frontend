@@ -1,36 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { usePostHrmDisciplinesMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
+import { usePatchHrmDisciplinesByIdMutation } from '@entities/hrm/api/hrmApi';
 import { DISCIPLINE_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
-import type { Employee } from '@entities/hrm/model/types';
+import type { DisciplineRecord } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { disciplineSchema, type DisciplineFormValues } from '../model/reward-discipline.schema';
 import styles from './DisciplineFormModal.module.css';
 
-interface DisciplineFormModalProps {
+interface DisciplineEditModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  employee?: Employee;
-  salarySlipId?: string;
+  record: DisciplineRecord;
 }
 
-export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
+export const DisciplineEditModal: React.FC<DisciplineEditModalProps> = ({
   open,
   onClose,
   onSuccess,
-  employee,
-  salarySlipId,
+  record,
 }) => {
-  const [createDiscipline, { isLoading }] = usePostHrmDisciplinesMutation();
+  const [updateDiscipline, { isLoading }] = usePatchHrmDisciplinesByIdMutation();
   const [apiError, setApiError] = useState<string | null>(null);
-
-  const { data: employeesData, isLoading: isEmployeesLoading } = useGetHrmEmployeesQuery(
-    { status: 'active', limit: 100 },
-    { skip: !!employee }
-  );
 
   const {
     register,
@@ -41,13 +34,13 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
   } = useForm<DisciplineFormValues>({
     resolver: zodResolver(disciplineSchema) as unknown as Resolver<DisciplineFormValues>,
     defaultValues: {
-      employee_id: employee?.id || '',
-      incident_date: new Date().toISOString().split('T')[0],
-      discipline_date: new Date().toISOString().split('T')[0],
-      discipline_type: 'warning',
-      description: '',
-      penalty_amount: 0,
-      file_url: '',
+      employee_id: record.employee_id || '',
+      incident_date: record.incident_date || '',
+      discipline_date: record.discipline_date || '',
+      discipline_type: (record.discipline_type as DisciplineFormValues['discipline_type']) || 'warning',
+      description: record.description || '',
+      penalty_amount: record.penalty_amount ? Number(record.penalty_amount) : 0,
+      file_url: record.file_url || '',
     },
   });
 
@@ -55,45 +48,42 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      reset({
-        employee_id: employee?.id || '',
-        incident_date: new Date().toISOString().split('T')[0],
-        discipline_date: new Date().toISOString().split('T')[0],
-        discipline_type: 'warning',
-        description: '',
-        penalty_amount: 0,
-        file_url: '',
-      });
       setApiError(null);
+      reset({
+        employee_id: record.employee_id || '',
+        incident_date: record.incident_date || '',
+        discipline_date: record.discipline_date || '',
+        discipline_type: (record.discipline_type as DisciplineFormValues['discipline_type']) || 'warning',
+        description: record.description || '',
+        penalty_amount: record.penalty_amount ? Number(record.penalty_amount) : 0,
+        file_url: record.file_url || '',
+      });
     }
-  }, [open, employee, reset]);
+  }, [open, record, reset]);
 
   const onSubmit = async (values: DisciplineFormValues) => {
     setApiError(null);
-    const targetEmployeeId = employee?.id || values.employee_id;
-    if (!targetEmployeeId) {
-      setApiError('Vui lòng chọn nhân viên.');
-      return;
-    }
-
     try {
-      const body = {
-        employee_id: targetEmployeeId,
-        incident_date: values.incident_date,
-        discipline_date: values.discipline_date,
-        discipline_type: values.discipline_type,
-        description: values.description,
-        penalty_amount: values.discipline_type === 'salary_deduction' ? Number(values.penalty_amount) : undefined,
-        salary_slip_id: salarySlipId || undefined,
-        file_url: values.file_url || undefined,
-      };
-
-      await createDiscipline({ body }).unwrap();
+      await updateDiscipline({
+        id: record.id!,
+        body: {
+          incident_date: values.incident_date,
+          discipline_date: values.discipline_date,
+          discipline_type: values.discipline_type,
+          description: values.description,
+          penalty_amount: values.discipline_type === 'salary_deduction' ? Number(values.penalty_amount) : 0,
+          file_url: values.file_url || undefined,
+        },
+      }).unwrap();
       onSuccess();
     } catch (err: unknown) {
-      console.error('Failed to create discipline record', err);
-      const error = err as { data?: { detail?: string } };
-      setApiError(error?.data?.detail || 'Có lỗi xảy ra khi ghi nhận kỷ luật. Vui lòng kiểm tra lại.');
+      console.error('Failed to update discipline record', err);
+      const apiErr = err as { data?: { detail?: string; error?: string } };
+      setApiError(
+        apiErr?.data?.error || 
+        apiErr?.data?.detail || 
+        'Có lỗi xảy ra khi cập nhật kỷ luật. Vui lòng kiểm tra lại.'
+      );
     }
   };
 
@@ -101,7 +91,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={employee ? `Ghi Nhận Kỷ Luật - ${employee.full_name}` : 'Ghi Nhận Kỷ Luật'}
+      title={`Sửa Quyết Định Kỷ Luật - ${record.employee_name}`}
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -109,7 +99,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
             Hủy
           </Button>
           <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={isLoading}>
-            Ghi nhận kỷ luật
+            Lưu thay đổi
           </Button>
         </div>
       }
@@ -121,32 +111,20 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
           </div>
         )}
 
-        {!employee && (
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="employee_id">
-              Nhân viên <span className={styles.required}>*</span>
-            </label>
-            <select
-              id="employee_id"
-              className={styles.select}
-              {...register('employee_id')}
-              disabled={isLoading || isEmployeesLoading}
-            >
-              <option value="">-- Chọn nhân viên --</option>
-              {employeesData?.results?.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.employee_id} - {emp.full_name}
-                </option>
-              ))}
-            </select>
-            {errors.employee_id && <span className={styles.errorText}>{errors.employee_id.message}</span>}
-          </div>
-        )}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Nhân viên</label>
+          <input
+            type="text"
+            className={styles.input}
+            value={`${record.employee_code} - ${record.employee_name}`}
+            disabled
+          />
+        </div>
 
         <div className={styles.row}>
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="incident_date">
-              Ngày xảy ra sự việc <span className={styles.required}>*</span>
+              Ngày xảy ra vi phạm <span className={styles.required}>*</span>
             </label>
             <input
               id="incident_date"
@@ -192,46 +170,45 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
             </select>
           </div>
 
-          {disciplineType === 'salary_deduction' && (
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="penalty_amount">
-                Số tiền khấu trừ (VND) <span className={styles.required}>*</span>
-              </label>
-              <input
-                id="penalty_amount"
-                type="number"
-                min={0}
-                step={10000}
-                className={styles.input}
-                {...register('penalty_amount')}
-                disabled={isLoading}
-              />
-              {errors.penalty_amount && <span className={styles.errorText}>{errors.penalty_amount.message}</span>}
-            </div>
-          )}
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="penalty_amount">
+              Số tiền phạt (VND)
+            </label>
+            <input
+              id="penalty_amount"
+              type="number"
+              min={0}
+              step={50000}
+              className={styles.input}
+              {...register('penalty_amount')}
+              disabled={isLoading || disciplineType !== 'salary_deduction'}
+            />
+            {errors.penalty_amount && <span className={styles.errorText}>{errors.penalty_amount.message}</span>}
+          </div>
         </div>
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="file_url">
-            Link biên bản/Quyết định kỷ luật (PDF/Image)
+            Link đính kèm tài liệu
           </label>
           <input
             id="file_url"
             type="text"
-            placeholder="https://storage.example.com/documents/discipline_hdld.pdf"
+            placeholder="https://example.com/file.pdf"
             className={styles.input}
             {...register('file_url')}
             disabled={isLoading}
           />
+          {errors.file_url && <span className={styles.errorText}>{errors.file_url.message}</span>}
         </div>
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="description">
-            Nội dung vi phạm <span className={styles.required}>*</span>
+            Nội dung vi phạm / Lý do kỷ luật <span className={styles.required}>*</span>
           </label>
           <textarea
             id="description"
-            placeholder="Mô tả chi tiết hành vi vi phạm kỷ luật..."
+            placeholder="Mô tả chi tiết hành vi vi phạm..."
             className={styles.textarea}
             {...register('description')}
             disabled={isLoading}

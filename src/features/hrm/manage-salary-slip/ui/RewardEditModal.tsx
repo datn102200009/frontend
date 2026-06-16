@@ -1,47 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { usePostHrmRewardsMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
+import { usePatchHrmRewardsByIdMutation } from '@entities/hrm/api/hrmApi';
 import { REWARD_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
-import type { Employee } from '@entities/hrm/model/types';
+import type { RewardRecord } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { rewardSchema, type RewardFormValues } from '../model/reward-discipline.schema';
 import styles from './RewardFormModal.module.css';
 
-interface RewardFormModalProps {
+interface RewardEditModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  employee?: Employee;
-  salarySlipId?: string;
+  record: RewardRecord;
 }
 
-export const RewardFormModal: React.FC<RewardFormModalProps> = ({
+export const RewardEditModal: React.FC<RewardEditModalProps> = ({
   open,
   onClose,
   onSuccess,
-  employee,
-  salarySlipId,
+  record,
 }) => {
-  const [createReward, { isLoading }] = usePostHrmRewardsMutation();
+  const [updateReward, { isLoading }] = usePatchHrmRewardsByIdMutation();
   const [apiError, setApiError] = useState<string | null>(null);
-
-  const [prevOpen, setPrevOpen] = useState(open);
-  const [prevEmployee, setPrevEmployee] = useState(employee);
-
-  if (open !== prevOpen || employee !== prevEmployee) {
-    setPrevOpen(open);
-    setPrevEmployee(employee);
-    if (open) {
-      setApiError(null);
-    }
-  }
-
-  const { data: employeesData, isLoading: isEmployeesLoading } = useGetHrmEmployeesQuery(
-    { status: 'active', limit: 100 },
-    { skip: !!employee }
-  );
 
   const {
     register,
@@ -51,50 +33,48 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
   } = useForm<RewardFormValues>({
     resolver: zodResolver(rewardSchema) as unknown as Resolver<RewardFormValues>,
     defaultValues: {
-      employee_id: employee?.id || '',
-      reward_date: new Date().toISOString().split('T')[0],
-      reward_type: 'performance_bonus',
-      amount: 1000000,
-      description: '',
+      employee_id: record.employee_id || '',
+      reward_date: record.reward_date || '',
+      reward_type: (record.reward_type as RewardFormValues['reward_type']) || 'performance_bonus',
+      amount: record.amount ? Number(record.amount) : 0,
+      description: record.description || '',
     },
   });
 
   useEffect(() => {
     if (open) {
+      setApiError(null);
       reset({
-        employee_id: employee?.id || '',
-        reward_date: new Date().toISOString().split('T')[0],
-        reward_type: 'performance_bonus',
-        amount: 1000000,
-        description: '',
+        employee_id: record.employee_id || '',
+        reward_date: record.reward_date || '',
+        reward_type: (record.reward_type as RewardFormValues['reward_type']) || 'performance_bonus',
+        amount: record.amount ? Number(record.amount) : 0,
+        description: record.description || '',
       });
     }
-  }, [open, employee, reset]);
+  }, [open, record, reset]);
 
   const onSubmit = async (values: RewardFormValues) => {
     setApiError(null);
-    const targetEmployeeId = employee?.id || values.employee_id;
-    if (!targetEmployeeId) {
-      setApiError('Vui lòng chọn nhân viên.');
-      return;
-    }
-
     try {
-      const body = {
-        employee_id: targetEmployeeId,
-        reward_date: values.reward_date,
-        reward_type: values.reward_type,
-        amount: Number(values.amount),
-        description: values.description,
-        salary_slip_id: salarySlipId || undefined,
-      };
-
-      await createReward({ body }).unwrap();
+      await updateReward({
+        id: record.id!,
+        body: {
+          reward_date: values.reward_date,
+          reward_type: values.reward_type,
+          amount: Number(values.amount),
+          description: values.description,
+        },
+      }).unwrap();
       onSuccess();
     } catch (err: unknown) {
-      console.error('Failed to create reward record', err);
-      const apiErr = err as { data?: { detail?: string } };
-      setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi ghi nhận khen thưởng. Vui lòng kiểm tra lại.');
+      console.error('Failed to update reward record', err);
+      const apiErr = err as { data?: { detail?: string; error?: string } };
+      setApiError(
+        apiErr?.data?.error || 
+        apiErr?.data?.detail || 
+        'Có lỗi xảy ra khi cập nhật khen thưởng. Vui lòng kiểm tra lại.'
+      );
     }
   };
 
@@ -102,7 +82,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={employee ? `Khen Thưởng Nhân Viên - ${employee.full_name}` : 'Ghi Nhận Khen Thưởng'}
+      title={`Sửa Quyết Định Khen Thưởng - ${record.employee_name}`}
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -110,7 +90,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             Hủy
           </Button>
           <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={isLoading}>
-            Ghi nhận thưởng
+            Lưu thay đổi
           </Button>
         </div>
       }
@@ -122,27 +102,15 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
           </div>
         )}
 
-        {!employee && (
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="employee_id">
-              Nhân viên <span className={styles.required}>*</span>
-            </label>
-            <select
-              id="employee_id"
-              className={styles.select}
-              {...register('employee_id')}
-              disabled={isLoading || isEmployeesLoading}
-            >
-              <option value="">-- Chọn nhân viên --</option>
-              {employeesData?.results?.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.employee_id} - {emp.full_name}
-                </option>
-              ))}
-            </select>
-            {errors.employee_id && <span className={styles.errorText}>{errors.employee_id.message}</span>}
-          </div>
-        )}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Nhân viên</label>
+          <input
+            type="text"
+            className={styles.input}
+            value={`${record.employee_code} - ${record.employee_name}`}
+            disabled
+          />
+        </div>
 
         <div className={styles.row}>
           <div className={styles.formGroup}>

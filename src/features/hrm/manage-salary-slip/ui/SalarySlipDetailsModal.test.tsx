@@ -135,4 +135,79 @@ describe('SalarySlipDetailsModal', () => {
     expect(screen.getByText(/Chặng 1: 2026-05-01 ~ 2026-05-15/i)).toBeInTheDocument();
     expect(screen.getByText(/Chặng 2: 2026-05-16 ~ 2026-05-31/i)).toBeInTheDocument();
   });
+
+  it('does not render remarks section when status is approved or paid', () => {
+    const approvedSlip: SalarySlip = {
+      ...mockDraftSalarySlip,
+      status: 'approved',
+      remarks: 'Đây là ghi chú',
+    };
+    const { rerender } = renderWithProviders(
+      <SalarySlipDetailsModal {...defaultProps} salarySlip={approvedSlip} />
+    );
+    expect(screen.queryByText('Ghi chú / Giải trình chi tiết')).not.toBeInTheDocument();
+    expect(screen.queryByText('Đây là ghi chú')).not.toBeInTheDocument();
+
+    const paidSlip: SalarySlip = {
+      ...mockDraftSalarySlip,
+      status: 'paid',
+      remarks: 'Đây là ghi chú',
+    };
+    rerender(<SalarySlipDetailsModal {...defaultProps} salarySlip={paidSlip} />);
+    expect(screen.queryByText('Ghi chú / Giải trình chi tiết')).not.toBeInTheDocument();
+    expect(screen.queryByText('Đây là ghi chú')).not.toBeInTheDocument();
+  });
+
+  it('renders remarks section when status is calculated and remarks is present', () => {
+    const calculatedSlip: SalarySlip = {
+      ...mockDraftSalarySlip,
+      status: 'calculated',
+      remarks: 'Đây là ghi chú calculated',
+    };
+    renderWithProviders(
+      <SalarySlipDetailsModal {...defaultProps} salarySlip={calculatedSlip} />
+    );
+    expect(screen.getByText('Ghi chú / Giải trình chi tiết')).toBeInTheDocument();
+    expect(screen.getByText('Đây là ghi chú calculated')).toBeInTheDocument();
+  });
+
+  it('opens ConfirmDialog when clicking "Gửi Finance Duyệt" and triggers onSuccess after confirming', async () => {
+    const calculatedSlip: SalarySlip = {
+      ...mockDraftSalarySlip,
+      status: 'calculated',
+    };
+    renderWithProviders(
+      <SalarySlipDetailsModal {...defaultProps} salarySlip={calculatedSlip} />,
+      {
+        preloadedState: {
+          auth: {
+            user: {
+              id: 'user-123',
+              username: 'admin',
+              full_name: 'Admin User',
+              role: 'admin',
+              permissions: ['hrm.payroll_submit'],
+            },
+            token: 'mock-token',
+            isAuthenticated: true,
+          },
+        },
+      }
+    );
+
+    const submitBtn = screen.getByRole('button', { name: 'Gửi Finance Duyệt' });
+    const user = userEvent.setup();
+    await user.click(submitBtn);
+
+    // Dialog should open
+    expect(screen.getByText('Xác nhận gửi duyệt')).toBeInTheDocument();
+    expect(screen.getByText('Gửi phiếu lương này sang Finance duyệt? Hành động không thể hoàn tác.')).toBeInTheDocument();
+
+    // Click confirm button
+    const confirmBtn = screen.getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmBtn);
+
+    // onSuccess should be called
+    expect(defaultProps.onSuccess).toHaveBeenCalled();
+  });
 });

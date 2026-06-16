@@ -90,7 +90,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/hrm/employees', icon: <Users size={20} />, label: 'Nhân Viên', permission: 'hrm.view_employee' },
       { to: '/hrm/attendance-leave', icon: <CalendarCheck size={20} />, label: 'Chấm Công & Nghỉ Phép', permission: ['hrm.view_attendance', 'hrm.view_leaverequest'] },
-      { to: '/hrm/rewards-disciplines', icon: <Award size={20} />, label: 'Khen Thưởng & Kỷ Luật', permission: 'hrm.view_rewarddiscipline' },
+      { to: '/hrm/rewards-disciplines', icon: <Award size={20} />, label: 'Khen Thưởng & Kỷ Luật', permission: ['hrm.view_rewardrecord', 'hrm.view_disciplinerecord'] },
       { to: '/hrm/holidays', icon: <CalendarDays size={20} />, label: 'Ngày Nghỉ Lễ', permission: 'hrm.view_publicholiday' },
       { to: '/hrm/payroll', icon: <Wallet size={20} />, label: 'Bảng Lương', permission: 'finance.view_salaryslip' },
     ],

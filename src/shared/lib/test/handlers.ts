@@ -388,9 +388,26 @@ export const handlers = [
   }),
 
   http.get('*/api/v1/hrm/rewards/', () => {
-    return HttpResponse.json([
-      { id: 'reward-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', reward_date: '2026-04-30', reward_type: 'performance_bonus', amount: '1000000', description: 'Thành tích xuất sắc quý 1' }
-    ]);
+    return HttpResponse.json({
+      count: 1,
+      results: [
+        { id: 'reward-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', reward_date: '2026-04-30', reward_type: 'performance_bonus', amount: '1000000', description: 'Thành tích xuất sắc quý 1', status: 'pending_approval' }
+      ]
+    });
+  }),
+
+  http.patch('*/api/v1/hrm/rewards/:id/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, ...data });
+  }),
+
+  http.delete('*/api/v1/hrm/rewards/:id/', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post('*/api/v1/hrm/rewards/:id/cancel/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, status: 'cancelled', ...data });
   }),
 
   http.post('*/api/v1/hrm/disciplines/', async ({ request }) => {
@@ -399,9 +416,26 @@ export const handlers = [
   }),
 
   http.get('*/api/v1/hrm/disciplines/', () => {
-    return HttpResponse.json([
-      { id: 'discipline-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', incident_date: '2026-03-10', discipline_date: '2026-03-12', discipline_type: 'warning', penalty_amount: '200000', description: 'Đi muộn nhiều lần' }
-    ]);
+    return HttpResponse.json({
+      count: 1,
+      results: [
+        { id: 'discipline-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', incident_date: '2026-03-10', discipline_date: '2026-03-12', discipline_type: 'warning', penalty_amount: '200000', description: 'Đi muộn nhiều lần', status: 'pending_approval' }
+      ]
+    });
+  }),
+
+  http.patch('*/api/v1/hrm/disciplines/:id/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, ...data });
+  }),
+
+  http.delete('*/api/v1/hrm/disciplines/:id/', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post('*/api/v1/hrm/disciplines/:id/cancel/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, status: 'cancelled', ...data });
   }),
 
   http.post('*/api/v1/finance/salary-slips/bulk-approve-pay/', async ({ request }) => {
@@ -436,6 +470,14 @@ export const handlers = [
   http.post('*/api/v1/hrm/salary-slips/partial/', async ({ request }) => {
     const data = await request.json() as Record<string, any>;
     return HttpResponse.json({ id: 'partial-slip-123', employee_id: data.employee_id, status: 'draft' }, { status: 201 });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/bulk-calculate/', async () => {
+    return HttpResponse.json({ count: 1, slip_ids: ['slip-1'] });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/bulk-submit-for-review/', async () => {
+    return HttpResponse.json({ count: 1, slip_ids: ['slip-1'] });
   }),
 
   http.post('*/api/v1/hrm/salary-slips/:id/submit-for-review/', async ({ params }) => {

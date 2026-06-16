@@ -14,6 +14,7 @@ import { useSalaryPeriods } from '@entities/hrm/lib/useSalaryPeriods';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Eye, ChevronDown, Send } from 'lucide-react';
 import { SalarySlipDetailsModal } from '@features/hrm/manage-salary-slip/ui/SalarySlipDetailsModal';
+import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
 
 interface SalarySlipTableProps {
   onViewDetails?: (salarySlip: SalarySlip) => void;
@@ -30,6 +31,9 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
   const [searchParams, setSearchParams] = useSearchParams();
   const querySlipId = searchParams.get('id');
   const selectedSlipId = querySlipId || null;
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [slipToSubmit, setSlipToSubmit] = useState<SalarySlip | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
 
@@ -75,7 +79,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
       case 'approved':
         return <Badge variant="info">Đã phê duyệt</Badge>;
       case 'pending_finance_review':
-        return <Badge variant="warning">Chờ Finance duyệt</Badge>;
+        return <Badge variant="warning">Chờ phê duyệt</Badge>;
       case 'calculated':
         return <Badge variant="warning">Đã tính toán</Badge>;
       case 'draft':
@@ -84,14 +88,24 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
     }
   };
 
-  const handleSubmit = async (slip: SalarySlip) => {
+  const handleConfirmSubmit = async () => {
+    if (!slipToSubmit) return;
+    setIsSubmitting(true);
     try {
-      await submitForReview({ id: slip.id }).unwrap();
+      await submitForReview({ id: slipToSubmit.id }).unwrap();
       toast('success', 'Gửi duyệt phiếu lương thành công');
+      setIsConfirmOpen(false);
       refetch();
     } catch (err) {
       toast('error', 'Gửi duyệt phiếu lương thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleSubmitClick = (slip: SalarySlip) => {
+    setSlipToSubmit(slip);
+    setIsConfirmOpen(true);
   };
 
 
@@ -107,9 +121,9 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
         header: 'Họ và Tên',
         cell: (info) => <span className="font-medium text-slate-700">{info.row.original.employee_name || 'N/A'}</span>,
       }),
-      helper.accessor('salary_period', {
-        header: 'Kỳ lương',
-        cell: (info) => info.getValue() || '-',
+      helper.accessor('updated_at', {
+        header: 'Cập nhật vào',
+        cell: (info) => info.getValue() ? new Date(info.getValue()!).toLocaleString('vi-VN') : '-',
       }),
       helper.accessor('base_salary', {
         header: 'Lương cơ bản',
@@ -157,7 +171,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
                 <ActionButton
                   icon={<Send size={15} />}
                   title="Gửi Finance Duyệt"
-                  onClick={() => handleSubmit(slip as SalarySlip)}
+                  onClick={() => handleSubmitClick(slip as SalarySlip)}
                 />
               )}
             </TableActions>
@@ -276,6 +290,14 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
         />
       )}
 
+      <ConfirmDialog
+        open={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmSubmit}
+        loading={isSubmitting}
+        title="Gửi duyệt phiếu lương"
+        message="Gửi phiếu lương này sang Finance duyệt? Hành động không thể hoàn tác."
+      />
     </div>
   );
 };
