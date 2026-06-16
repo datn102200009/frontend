@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   usePostHrmSalarySlipsByIdCalculateMutation,
-  usePostHrmSalarySlipsByIdApproveMutation,
+  usePostHrmSalarySlipsByIdSubmitForReviewMutation,
 } from '@entities/hrm/api/hrmApi';
 import type { SalarySlip } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
 import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalarySlipDetailsModal.module.css';
 
@@ -20,10 +21,11 @@ interface SalarySlipDetailsModalProps {
 export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (props) => {
   const { open, onClose, onSuccess, onCalculateSuccess, salarySlip } = props;
   const [calculateSalary, { isLoading: isCalculating }] = usePostHrmSalarySlipsByIdCalculateMutation();
-  const [approveSalary, { isLoading: isApproving }] = usePostHrmSalarySlipsByIdApproveMutation();
-  const canApprove = usePermission('hrm.payroll_approve');
+  const [submitSalary, { isLoading: isSubmitting }] = usePostHrmSalarySlipsByIdSubmitForReviewMutation();
+  const canSubmit = usePermission('hrm.payroll_submit');
 
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isSegmentsOpen, setIsSegmentsOpen] = useState(false);
 
   const [prevOpen, setPrevOpen] = useState(open);
   const [prevSalarySlipId, setPrevSalarySlipId] = useState(salarySlip.id);
@@ -33,6 +35,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
     setPrevSalarySlipId(salarySlip.id);
     if (open) {
       setApiError(null);
+      setIsSegmentsOpen(false);
     }
   }
 
@@ -62,9 +65,16 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
     };
   }, [open, salarySlip.id, salarySlip.status, calculateSalary, onCalculateSuccess]);
 
-  const handleApprove = () => {
+  const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+
+  const handleSubmitForReview = () => {
+    setIsSubmitConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = () => {
     if (!salarySlip.id) return;
-    approveSalary({
+    setIsSubmitConfirmOpen(false);
+    submitSalary({
       id: salarySlip.id,
     })
       .unwrap()
@@ -72,9 +82,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
         onSuccess();
       })
       .catch((err: unknown) => {
-        console.error('Failed to approve salary slip', err);
+        console.error('Failed to submit salary slip', err);
         const apiErr = err as { data?: { detail?: string } };
-        setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi phê duyệt lương. Vui lòng kiểm tra lại.');
+        setApiError(apiErr?.data?.detail || 'Có lỗi xảy ra khi gửi duyệt bảng lương. Vui lòng kiểm tra lại.');
       });
   };
 
@@ -92,6 +102,8 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
         return 'Đã phê duyệt';
       case 'calculated':
         return 'Đã tính toán';
+      case 'pending_finance_review':
+        return 'Chờ phê duyệt';
       case 'draft':
       default:
         return 'Bản nháp';
@@ -105,6 +117,8 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       case 'approved':
         return `${styles.badge} ${styles.approved}`;
       case 'calculated':
+        return `${styles.badge} ${styles.calculated}`;
+      case 'pending_finance_review':
         return `${styles.badge} ${styles.calculated}`;
       case 'draft':
       default:
@@ -121,7 +135,6 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
 
   const breakdownDeductions = salarySlip.breakdown?.deductions || [
     { name: 'Phạt kỷ luật/Khấu trừ', amount: parseFloat(salarySlip.discipline_deduction_total || '0') },
-    { name: 'Phí công đoàn (2%)', amount: parseFloat(salarySlip.union_fee_2pct || '0') },
   ];
 
   return (
@@ -132,9 +145,9 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
-          {salarySlip.status === 'calculated' && canApprove && (
-            <Button variant="primary" onClick={handleApprove} loading={isApproving}>
-              Phê duyệt lương
+          {salarySlip.status === 'calculated' && canSubmit && (
+            <Button variant="primary" onClick={handleSubmitForReview} loading={isSubmitting}>
+              Gửi Finance Duyệt
             </Button>
           )}
           <Button variant="outline" onClick={onClose}>
@@ -203,7 +216,34 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
           </div>
         </div>
 
-        {salarySlip.remarks && (
+        {salarySlip.breakdown?.salary_segments && salarySlip.breakdown.salary_segments.length > 1 && (
+          <div className={styles.segmentsSection}>
+            <button
+              type="button"
+              className={styles.segmentsToggle}
+              onClick={() => setIsSegmentsOpen(!isSegmentsOpen)}
+            >
+              <span>{isSegmentsOpen ? '▼ Ẩn chi tiết chặng lương (Prorated)' : '▶ Xem chi tiết chặng lương (Prorated)'}</span>
+            </button>
+            {isSegmentsOpen && (
+              <div className={styles.segmentsList}>
+                {salarySlip.breakdown.salary_segments.map((seg: any, idx: number) => (
+                  <div key={idx} className={styles.segmentItem}>
+                    <div className={styles.segmentHeader}>
+                      <span>Chặng {idx + 1}: {seg.start_date} ~ {seg.end_date}</span>
+                      <strong>{formatVND(seg.earned)}</strong>
+                    </div>
+                    <div className={styles.segmentMeta}>
+                      Mức lương chặng: {formatVND(seg.salary_base)} | Số ngày công: {seg.work_days} ngày
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+  {salarySlip.remarks && salarySlip.status !== 'approved' && salarySlip.status !== 'paid' && (
           <div className={styles.remarksSection}>
             <h4 className={styles.sectionTitle}>Ghi chú / Giải trình chi tiết</h4>
             <div className={styles.remarksContent}>
@@ -232,6 +272,16 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={isSubmitConfirmOpen}
+        onClose={() => setIsSubmitConfirmOpen(false)}
+        onConfirm={handleConfirmSubmit}
+        title="Xác nhận gửi duyệt"
+        message="Gửi phiếu lương này sang Finance duyệt? Hành động không thể hoàn tác."
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        loading={isSubmitting}
+      />
     </Modal>
   );
 };

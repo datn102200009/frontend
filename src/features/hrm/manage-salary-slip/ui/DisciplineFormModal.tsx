@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmDisciplinesMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
+import { DISCIPLINE_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -183,11 +184,11 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
               {...register('discipline_type')}
               disabled={isLoading}
             >
-              <option value="reprimand">Phê bình/Nhắc nhở</option>
-              <option value="warning">Khiển trách bằng văn bản</option>
-              <option value="salary_deduction">Khấu trừ lương/Phạt tiền</option>
-              <option value="termination">Sa thải/Chấm dứt hợp đồng</option>
-              <option value="other">Khác</option>
+              {DISCIPLINE_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 

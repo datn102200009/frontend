@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmRewardsMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
+import { REWARD_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
@@ -168,10 +169,11 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
               {...register('reward_type')}
               disabled={isLoading}
             >
-              <option value="performance_bonus">Thưởng hiệu quả công việc</option>
-              <option value="initiative">Thưởng sáng kiến/cải tiến</option>
-              <option value="holiday_bonus">Thưởng lễ tết</option>
-              <option value="other">Thưởng khác</option>
+              {REWARD_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>

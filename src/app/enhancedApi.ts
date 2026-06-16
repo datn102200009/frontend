@@ -188,6 +188,18 @@ financeApi.enhanceEndpoints({
     postFinanceInvoicesSalesByPkCollect: {
       invalidatesTags: ['Invoices', 'SalesOrders', 'CashFlows'],
     },
+    postFinanceSalarySlipsBulkApprovePay: {
+      invalidatesTags: ['SalarySlips', 'CashFlows'],
+    },
+    postFinanceSalarySlipsByIdApprove: {
+      invalidatesTags: ['SalarySlips'],
+    },
+    postFinanceSalarySlipsByIdReject: {
+      invalidatesTags: ['SalarySlips'],
+    },
+    postFinanceSalarySlipsByIdPay: {
+      invalidatesTags: ['SalarySlips', 'CashFlows'],
+    },
   },
 });
 
@@ -280,9 +292,6 @@ hrmApi.enhanceEndpoints({
     },
     postHrmSalarySlipsByIdCalculate: {
       invalidatesTags: ['SalarySlips'],
-    },
-    postHrmSalarySlipsBulkConfirmPay: {
-      invalidatesTags: ['SalarySlips', 'CashFlows'],
     },
     getHrmRewards: {
       providesTags: ['Rewards'],

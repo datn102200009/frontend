@@ -5,15 +5,13 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
-import { Eye, Edit, DollarSign, FileText, Gift, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Eye, Edit, DollarSign, FileText, ChevronDown } from 'lucide-react';
 
 interface EmployeeTableProps {
   onView?: (employee: Employee) => void;
   onEdit?: (employee: Employee) => void;
   onUpdateSalary?: (employee: Employee) => void;
   onCreateContract?: (employee: Employee) => void;
-  onReward?: (employee: Employee) => void;
-  onDiscipline?: (employee: Employee) => void;
 }
 
 export const EmployeeTable: React.FC<EmployeeTableProps> = ({
@@ -21,8 +19,6 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onEdit,
   onUpdateSalary,
   onCreateContract,
-  onReward,
-  onDiscipline,
 }) => {
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
 
@@ -110,16 +106,6 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     title="Gia hạn hợp đồng"
                     onClick={() => onCreateContract?.(emp)}
                   />
-                  <ActionButton
-                    icon={<Gift size={15} />}
-                    title="Khen thưởng"
-                    onClick={() => onReward?.(emp)}
-                  />
-                  <ActionButton
-                    icon={<AlertTriangle size={15} />}
-                    title="Kỷ luật"
-                    onClick={() => onDiscipline?.(emp)}
-                  />
                 </>
               )}
             </TableActions>
@@ -127,7 +113,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         },
       }),
     ];
-  }, [onView, onEdit, onUpdateSalary, onCreateContract, onReward, onDiscipline]);
+  }, [onView, onEdit, onUpdateSalary, onCreateContract]);
 
   return (
     <div>

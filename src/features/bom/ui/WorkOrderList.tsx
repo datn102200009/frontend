@@ -204,6 +204,7 @@ export function WorkOrderList() {
                     <ActionButton
                       icon={<PlayCircle size={18} />}
                       title="Phê duyệt"
+                      variant="info"
                       onClick={() => handleApprove(row.original)}
                       disabled={isApproving}
                     />
@@ -225,6 +226,7 @@ export function WorkOrderList() {
                     <ActionButton
                       icon={<ArrowRightCircle size={18} />}
                       title="Nhập liệu"
+                      variant="warning"
                       onClick={() => {
                         setDeclaringWo(row.original);
                         setProducedQty('');
@@ -235,6 +237,7 @@ export function WorkOrderList() {
                     <ActionButton
                       icon={<CheckCircle size={18} />}
                       title="Hoàn thành"
+                      variant="success"
                       onClick={() => handleComplete(row.original)}
                       disabled={isCompleting}
                     />
@@ -247,6 +250,7 @@ export function WorkOrderList() {
                     <ActionButton
                       icon={<CheckCircle size={18} />}
                       title="Phê duyệt hoàn tất"
+                      variant="success"
                       onClick={() => handleComplete(row.original)}
                       disabled={isCompleting}
                     />

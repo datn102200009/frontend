@@ -220,7 +220,7 @@ export const router = createBrowserRouter([
         path: 'hrm/rewards-disciplines',
         element: (
           <Suspense fallback={<PageLoader />}>
-            <PermissionGuard requiredPermission="hrm.view_rewarddiscipline" fallback={<ForbiddenPage />}>
+            <PermissionGuard requiredPermissions={['hrm.view_rewardrecord', 'hrm.view_disciplinerecord']} operator="OR" fallback={<ForbiddenPage />}>
               <RewardsDisciplinesPage />
             </PermissionGuard>
           </Suspense>

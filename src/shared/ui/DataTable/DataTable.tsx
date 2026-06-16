@@ -24,6 +24,7 @@ interface DataTableProps<TData> {
   onSearch?: (value: string) => void;
   initialSearch?: string;
   filterSlot?: React.ReactNode;
+  showSearch?: boolean;
 }
 
 export function DataTable<TData>({
@@ -37,6 +38,7 @@ export function DataTable<TData>({
   onSearch,
   initialSearch = '',
   filterSlot,
+  showSearch = true,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState(initialSearch);
@@ -66,23 +68,25 @@ export function DataTable<TData>({
   return (
     <div className={styles.wrapper}>
       {/* Search Bar */}
-      <div className={styles.toolbar}>
-        <div className={styles.searchWrap}>
-          <Search size={16} className={styles.searchIcon} />
-          <input
-            type="search"
-            className={styles.searchInput}
-            placeholder={searchPlaceholder}
-            value={globalFilter}
-            onChange={(e) => {
-              setGlobalFilter(e.target.value);
-              onSearch?.(e.target.value);
-            }}
-            aria-label={searchPlaceholder}
-          />
+      {showSearch && (
+        <div className={styles.toolbar}>
+          <div className={styles.searchWrap}>
+            <Search size={16} className={styles.searchIcon} />
+            <input
+              type="search"
+              className={styles.searchInput}
+              placeholder={searchPlaceholder}
+              value={globalFilter}
+              onChange={(e) => {
+                setGlobalFilter(e.target.value);
+                onSearch?.(e.target.value);
+              }}
+              aria-label={searchPlaceholder}
+            />
+          </div>
+          {filterSlot && <div style={{ marginLeft: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>{filterSlot}</div>}
         </div>
-        {filterSlot && <div style={{ marginLeft: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>{filterSlot}</div>}
-      </div>
+      )}
 
       {/* Table */}
       <div className={styles.tableContainer}>

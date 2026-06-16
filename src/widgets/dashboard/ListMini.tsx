@@ -12,6 +12,8 @@ import {
 } from './kpiListRowHelpers';
 
 export interface ListMiniProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -21,7 +23,7 @@ export interface ListMiniProps {
   totalCount?: number;
 }
 
-export function ListMini({ title, code, icon, data, quickLinks }: ListMiniProps) {
+export function ListMini({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: ListMiniProps) {
   const items = Array.isArray(data) ? data : [];
   const [activeTab, setActiveTab] = useState<'all' | 'receipt' | 'issue' | 'transfer'>('all');
 
@@ -32,7 +34,7 @@ export function ListMini({ title, code, icon, data, quickLinks }: ListMiniProps)
   });
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         {code === 'inventory_pending_entries' && (

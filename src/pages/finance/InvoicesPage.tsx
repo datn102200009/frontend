@@ -16,6 +16,9 @@ import { SalesInvoiceTable } from '@features/finance/sales-invoice/ui/SalesInvoi
 import { SalesInvoiceDetailsModal } from '@features/finance/sales-invoice/ui/SalesInvoiceDetailsModal';
 import { SalesInvoiceCollectionModal } from '@features/finance/sales-invoice/ui/SalesInvoiceCollectionModal';
 
+import { InvoiceStatusFilter } from '@entities/finance/ui/InvoiceStatusFilter';
+import { useInvoiceFilters } from '@entities/finance/lib/useInvoiceFilters';
+
 const InvoicesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab') || 'purchase_invoices';
@@ -39,17 +42,25 @@ const InvoicesPage: React.FC = () => {
     }, { replace: true });
   };
 
+  const { status, setStatus } = useInvoiceFilters();
+
+  // Reset page to 1 when status filter changes
+  useEffect(() => {
+    setPageAP(1);
+    setPageAR(1);
+  }, [status]);
+
   // Pagination & query state for AP
   const [pageAP, setPageAP] = useState(1);
   const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetFinanceInvoicesPurchaseQuery(
-    { status: 'unpaid,partial', page: pageAP, limit: 10 },
+    { status: status || undefined, page: pageAP, limit: 10 },
     { skip: activeTab !== 'purchase_invoices' }
   );
 
   // Pagination & query state for AR
   const [pageAR, setPageAR] = useState(1);
   const { data: arData, isLoading: isLoadingAR, refetch: refetchAR } = useGetFinanceInvoicesSalesQuery(
-    { status: 'unpaid,partial', page: pageAR, limit: 10 },
+    { status: status || undefined, page: pageAR, limit: 10 },
     { skip: activeTab !== 'sales_invoices' }
   );
 
@@ -134,6 +145,7 @@ const InvoicesPage: React.FC = () => {
               loading={isLoadingAP}
               onView={(id) => setSelectedAPDetailsId(id)}
               onPay={(inv) => setSelectedAPInvoice(inv)}
+              filterSlot={<InvoiceStatusFilter value={status} onChange={setStatus} />}
             />
 
             {/* Pagination for AP */}
@@ -174,6 +186,7 @@ const InvoicesPage: React.FC = () => {
               loading={isLoadingAR}
               onView={(id) => setSelectedARDetailsId(id)}
               onCollect={(inv) => setSelectedARInvoice(inv)}
+              filterSlot={<InvoiceStatusFilter value={status} onChange={setStatus} />}
             />
 
             {/* Pagination for AR */}

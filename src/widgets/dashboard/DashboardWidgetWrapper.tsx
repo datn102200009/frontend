@@ -85,6 +85,8 @@ function getWidgetIcon(code: string): ReactNode {
       return <ArrowDownRight size={16} />;
     case 'finance_depreciation_status':
       return <BadgePercent size={16} />;
+    case 'finance_pending_cashflow_approval':
+      return <CircleDollarSign size={16} />;
     case 'hrm_payroll_lifecycle_status':
       return <Users size={16} />;
     case 'hrm_pending_leave_requests':
@@ -219,6 +221,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -229,6 +233,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -240,6 +246,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         ) : code === 'finance_depreciation_status' ? (
           <FixedAssetTrackerCard
@@ -248,6 +256,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         ) : code === 'finance_unpaid_purchase_invoices' || code === 'finance_unpaid_sales_invoices' ? (
           <AgingBarChartCard
@@ -256,6 +266,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         ) : (
           <DonutChartCard
@@ -264,6 +276,8 @@ export function DashboardWidgetWrapper({
             icon={getWidgetIcon(code)}
             data={activeData}
             quickLinks={quick_links}
+            onRefresh={handleRetry}
+            isRefreshing={isFetchingDetail}
           />
         )
       )}
@@ -275,6 +289,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -285,6 +301,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -295,6 +313,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -305,6 +325,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -317,6 +339,8 @@ export function DashboardWidgetWrapper({
           totalCount={activeTotalCount}
           quickLinks={quick_links}
           enableSort={code === 'manufacturing_active_wos'}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -327,6 +351,8 @@ export function DashboardWidgetWrapper({
           icon={getWidgetIcon(code)}
           data={activeData}
           quickLinks={quick_links}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 
@@ -338,6 +364,8 @@ export function DashboardWidgetWrapper({
           data={activeData}
           quickLinks={quick_links}
           totalCount={activeTotalCount}
+          onRefresh={handleRetry}
+          isRefreshing={isFetchingDetail}
         />
       )}
 

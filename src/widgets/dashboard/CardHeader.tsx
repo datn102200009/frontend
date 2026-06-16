@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import baseStyles from './DashboardWidgets.module.css';
 import styles from './CardHeader.module.css';
 
@@ -15,6 +15,8 @@ export interface CardHeaderProps {
   quickLinks?: string[];
   /** Optional badge/children rendered between the title and the icon. */
   meta?: ReactNode;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -28,7 +30,7 @@ export interface CardHeaderProps {
  * If `quickLinks` is empty/missing, both the title and the icon are rendered
  * as plain elements so the card still works as a static display.
  */
-export function CardHeader({ title, icon, quickLinks = [], meta }: CardHeaderProps) {
+export function CardHeader({ title, icon, quickLinks = [], meta, onRefresh, isRefreshing }: CardHeaderProps) {
   const href = quickLinks.length > 0 ? quickLinks[0] : null;
   const ariaLabel = `Mở chi tiết: ${title}`;
 
@@ -46,7 +48,17 @@ export function CardHeader({ title, icon, quickLinks = [], meta }: CardHeaderPro
         {meta}
       </div>
       <div className={baseStyles.cardActions}>
-        {icon ? (
+        {onRefresh ? (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Làm mới dữ liệu widget"
+            className={baseStyles.refreshBtn}
+          >
+            <RefreshCw size={14} className={isRefreshing ? baseStyles.spinner : ''} />
+          </button>
+        ) : icon ? (
           href ? (
             <Link to={href} className={styles.iconLink} aria-label={ariaLabel}>
               {icon}
@@ -59,3 +71,4 @@ export function CardHeader({ title, icon, quickLinks = [], meta }: CardHeaderPro
     </div>
   );
 }
+

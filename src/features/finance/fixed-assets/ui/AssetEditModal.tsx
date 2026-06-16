@@ -19,7 +19,6 @@ interface AssetEditFormData {
   depreciation_method: 'straight_line' | 'unit_of_production';
   useful_life_months: number;
   designed_capacity: number | '';
-  department: string;
 }
 
 interface AssetEditModalProps {
@@ -42,7 +41,6 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
       depreciation_method: 'straight_line',
       useful_life_months: 12,
       designed_capacity: '',
-      department: '',
     },
   });
 
@@ -59,7 +57,6 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
         depreciation_method: (editingAsset.depreciation_method as 'straight_line' | 'unit_of_production') || 'straight_line',
         useful_life_months: editingAsset.useful_life_months || 0,
         designed_capacity: editingAsset.designed_capacity || '',
-        department: editingAsset.department || '',
       });
     }
   }, [editingAsset, open, reset]);
@@ -194,11 +191,7 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
           ) : (
             <div />
           )}
-          <Input
-            label="Bộ phận sử dụng"
-            disabled
-            {...register('department')}
-          />
+          <div />
         </div>
       </form>
     </Modal>

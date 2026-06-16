@@ -6,6 +6,8 @@ import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
 import styles from './DashboardWidgets.module.css';
 
 export interface ComponentTrackerCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string; // 'inventory_low_stock'
   icon?: ReactNode;
@@ -40,7 +42,7 @@ const COLORS = [
   'var(--clr-accent)',
 ];
 
-export function ComponentTrackerCard({ title, icon, data, quickLinks }: ComponentTrackerCardProps) {
+export function ComponentTrackerCard({ title, icon, data, quickLinks, onRefresh, isRefreshing}: ComponentTrackerCardProps) {
   const items = Array.isArray(data?.items) ? data.items : [];
   
   const [selectedProductId, setSelectedProductId] = useState<string>(
@@ -50,7 +52,7 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
   if (items.length === 0) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu theo dõi linh kiện</span>
@@ -121,7 +123,7 @@ export function ComponentTrackerCard({ title, icon, data, quickLinks }: Componen
 
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={alertBadge} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks} meta={alertBadge}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.componentTrackerSelect}>

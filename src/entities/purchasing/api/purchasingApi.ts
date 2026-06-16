@@ -261,6 +261,10 @@ export type Shipment = {
     item_code?: string
     item_name?: string
     quantity?: number
+    /** Số lượng còn lại có thể tiếp nhận (đã trừ các shipment đã posted trước đó) */
+    remaining_quantity?: number
+    /** Tổng số lượng đã nhận từ tất cả các shipment trước */
+    received_quantity?: number
     unit?: string
   }[]
   total_logistic_fees?: number

@@ -19,7 +19,7 @@ describe('SalarySlipTable', () => {
 
     // Wait for the salary slip to load
     expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument();
-    expect(screen.getByText('2026-05')).toBeInTheDocument();
+    expect(screen.getByText('Cập nhật vào')).toBeInTheDocument();
     expect(screen.getAllByText('Bản nháp')[0]).toBeInTheDocument();
   });
 

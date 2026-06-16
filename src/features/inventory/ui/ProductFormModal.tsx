@@ -23,10 +23,8 @@ const productSchema = z.object({
   is_import: z.boolean(),
   minimum_threshold: z
     .union([z.string(), z.number()])
-    .optional()
-    .nullable()
     .refine(
-      (v) => v === '' || v === null || v === undefined || (!isNaN(Number(v)) && Number(v) >= 0),
+      (v) => v !== '' && v !== null && v !== undefined && !isNaN(Number(v)) && Number(v) >= 0,
       'Ngưỡng tối thiểu phải là số không âm'
     ),
 });
@@ -96,9 +94,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
-      const thresholdVal = data.minimum_threshold !== '' && data.minimum_threshold != null
-        ? String(data.minimum_threshold)
-        : null;
+      const thresholdVal = String(data.minimum_threshold);
 
       if (isEdit && product?.item_code) {
         const updatePayload: ItemUpdateInput = {
@@ -170,10 +166,10 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
           type="number"
           step="0.001"
           min="0"
+          required
           disabled={isLoading}
           error={errors.minimum_threshold?.message}
           {...register('minimum_threshold')}
-          placeholder="Để trống sẽ dùng mặc định theo UOM"
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>

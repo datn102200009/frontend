@@ -9,8 +9,6 @@ describe('EmployeeTable', () => {
     onEdit: vi.fn(),
     onUpdateSalary: vi.fn(),
     onCreateContract: vi.fn(),
-    onReward: vi.fn(),
-    onDiscipline: vi.fn(),
   };
 
   beforeEach(() => {

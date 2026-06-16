@@ -13,6 +13,8 @@ import {
 } from './kpiListRowHelpers';
 
 export interface KpiListCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -39,7 +41,7 @@ function getKpiListConfig(code: string): { heroColor?: string } {
   }
 }
 
-export function KpiListCard({ title, code, icon, data, quickLinks }: KpiListCardProps) {
+export function KpiListCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: KpiListCardProps) {
   const isPendingEntries = code === 'inventory_pending_entries';
   const [activeTab, setActiveTab] = useState<'all' | 'receipt' | 'issue' | 'transfer'>('all');
 
@@ -74,7 +76,7 @@ export function KpiListCard({ title, code, icon, data, quickLinks }: KpiListCard
 
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody} style={{ position: 'relative' }}>
         {isPendingEntries && (

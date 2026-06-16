@@ -16,6 +16,8 @@ import {
 import styles from './DashboardWidgets.module.css';
 
 export interface CashflowOverviewCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -38,14 +40,14 @@ export interface CashflowOverviewCardProps {
 
 
 
-export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: CashflowOverviewCardProps) {
+export function CashflowOverviewCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: CashflowOverviewCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   if (code !== 'finance_cashflow_overview' || !data || !data.summary || !Array.isArray(data.weeks)) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu dòng tiền</span>
@@ -119,7 +121,7 @@ export function CashflowOverviewCard({ title, code, icon, data, quickLinks }: Ca
 
   return (
     <div className={styles.card} style={{ position: 'relative' }}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.cashflowOverviewBody}>

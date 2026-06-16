@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGetManufacturingBomListQuery, useDeleteManufacturingBomByBomIdDeleteMutation } from '@features/manufacturing/api/manufacturingApi';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Trash2, Eye, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
@@ -75,11 +75,10 @@ export function BomList() {
       {
         id: 'actions',
         header: 'Thao Tác',
-        size: 120,
+        size: 100,
         enableSorting: false,
         cell: ({ row }) => (
           <TableActions>
-            <ActionButton icon={<Eye size={18} />} title="Xem chi tiết" />
             {canUpdate && (
               <ActionButton icon={<Pencil size={18} />} title="Chỉnh sửa"
                 onClick={() => setEditingBom(row.original)} />

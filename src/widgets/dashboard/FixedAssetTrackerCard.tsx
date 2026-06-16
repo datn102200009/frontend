@@ -6,6 +6,8 @@ import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
 import styles from './DashboardWidgets.module.css';
 
 export interface FixedAssetTrackerCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
@@ -36,12 +38,12 @@ export interface FixedAssetTrackerCardProps {
 }
 
 const COLORS = {
-  accumulated: 'var(--clr-primary-500)', // Blue
-  remaining: 'var(--clr-success)',      // Green
-  salvage: 'var(--clr-info)',          // Cyan
+  accumulated: 'var(--clr-gray-500, #9ca3af)', // Xám
+  remaining: 'var(--clr-success)',              // Green
+  salvage: 'var(--clr-info)',                  // Cyan
 };
 
-export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAssetTrackerCardProps) {
+export function FixedAssetTrackerCard({ title, icon, data, quickLinks, onRefresh, isRefreshing}: FixedAssetTrackerCardProps) {
   const items = Array.isArray(data?.items) ? data.items : [];
   
   const [selectedAssetId, setSelectedAssetId] = useState<string>(
@@ -51,7 +53,7 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
   if (items.length === 0) {
     return (
       <div className={styles.card}>
-        <CardHeader title={title} icon={icon} quickLinks={quickLinks} />
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu theo dõi khấu hao tài sản cố định</span>
@@ -65,7 +67,6 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
 
   const originalVal = parseFloat(selectedItem.original_value || '0');
   const accumulatedVal = parseFloat(selectedItem.accumulated_depreciation || '0');
-  const salvageVal = parseFloat(selectedItem.salvage_value || '0');
   const remainingVal = parseFloat(selectedItem.remaining_value || '0');
 
   const segments = [
@@ -80,14 +81,6 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
       color: COLORS.remaining,
     },
   ];
-
-  if (salvageVal > 0) {
-    segments.push({
-      label: 'Giá trị thanh lý',
-      value: salvageVal,
-      color: COLORS.salvage,
-    });
-  }
 
   const total = originalVal;
 
@@ -111,26 +104,6 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
       return { ...seg, dashArray, dashOffset };
     });
 
-  const alertCount = items.filter((i) => 
-    i.alerts.some(a => a.level === 'critical' || a.level === 'warning')
-  ).length;
-
-  const alertBadge =
-    alertCount > 0 ? (
-      <span
-        className="shared-badge"
-        style={{
-          background: 'var(--clr-error-bg)',
-          color: 'var(--clr-error)',
-          fontSize: 'var(--fs-xs)',
-          fontWeight: 'bold',
-          padding: '1px 6px',
-          borderRadius: '10px',
-        }}
-      >
-        {alertCount} cảnh báo
-      </span>
-    ) : null;
 
   const formatVnd = (num: number) => {
     return num.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
@@ -138,7 +111,7 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
 
   return (
     <div className={styles.card}>
-      <CardHeader title={title} icon={icon} quickLinks={quickLinks} meta={alertBadge} />
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.componentTrackerSelect}>
@@ -149,7 +122,7 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
               const status = criticalAlert ? 'critical' : warningAlert ? 'warning' : 'normal';
               return {
                 value: i.id,
-                label: `${i.asset_code} - ${i.asset_name}`,
+                label: i.asset_name,
                 meta: { status },
               };
             })}
@@ -206,14 +179,7 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
                     />
                   ))}
               </svg>
-              <div className={styles.donutCenter}>
-                <span className={styles.donutTotal} style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
-                  Nguyên giá
-                </span>
-                <span className={styles.donutLabel} style={{ fontSize: 'var(--fs-sm)', fontWeight: 600 }}>
-                  {total.toLocaleString('vi-VN')}
-                </span>
-              </div>
+              <div className={styles.donutCenter} aria-hidden="true" />
             </div>
 
             <div className={styles.componentTrackerLegend}>
@@ -231,7 +197,9 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks }: FixedAs
 
           {selectedItem && (
             <div className={styles.componentTrackerAlerts}>
-              {selectedItem.alerts.map((alert, idx) => {
+              {selectedItem.alerts
+                .filter((alert) => alert.category !== 'uop_unassigned')
+                .map((alert, idx) => {
                 const isCritical = alert.level === 'critical';
                 const isNormal = alert.level === 'normal';
                 const variantClass = isCritical
