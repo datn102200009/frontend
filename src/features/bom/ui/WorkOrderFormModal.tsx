@@ -7,6 +7,7 @@ import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import {
   useGetManufacturingBomListQuery,
   usePostManufacturingWorkOrderCreateMutation,
@@ -276,20 +277,20 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
           />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>
-            <Input
+            <DatePickerField
+              name="planned_start_date"
               label="Ngày bắt đầu (Dự kiến)"
-              type="date"
+              control={control}
+              error={errors.planned_start_date?.message}
               required
               disabled={isCreating}
-              error={errors.planned_start_date?.message}
-              {...register('planned_start_date')}
             />
-            <Input
+            <DatePickerField
+              name="planned_end_date"
               label="Ngày kết thúc (Dự kiến)"
-              type="date"
-              disabled={isCreating}
+              control={control}
               error={errors.planned_end_date?.message}
-              {...register('planned_end_date')}
+              disabled={isCreating}
             />
           </div>
           

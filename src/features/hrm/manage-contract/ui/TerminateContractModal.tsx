@@ -5,6 +5,7 @@ import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './TerminateContractModal.module.css';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 
 interface TerminateContractModalProps {
   open: boolean;
@@ -40,6 +41,7 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
     formState: { errors },
     reset,
     watch,
+    control,
   } = useForm<FormValues>({
     defaultValues: {
       termination_date: new Date().toISOString().split('T')[0],
@@ -123,21 +125,14 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
         )}
 
         <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="termination_date">
-              Ngày chấm dứt <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="termination_date"
-              type="date"
-              className={styles.input}
-              {...register('termination_date', { required: 'Ngày chấm dứt là bắt buộc' })}
-              disabled={isLoading}
-            />
-            {errors.termination_date && (
-              <span className={styles.errorText}>{errors.termination_date.message}</span>
-            )}
-          </div>
+          <DatePickerField
+            name="termination_date"
+            label="Ngày chấm dứt"
+            control={control}
+            error={errors.termination_date?.message}
+            required={true}
+            disabled={isLoading}
+          />
 
           <div className={styles.formGroup} style={{ justifyContent: 'center' }}>
             <div className={styles.checkboxGroup}>

@@ -260,10 +260,13 @@ hrmApi.enhanceEndpoints({
     patchHrmEmployeesByIdUpdate: {
       invalidatesTags: (_result, _error, arg) => ['Employees', { type: 'Employees' as const, id: arg.id }],
     },
-    postHrmEmployeesByIdUpdateSalaryTitle: {
+    postHrmEmployeesByIdAdjustSalary: {
       invalidatesTags: (_result, _error, arg) => ['Employees', { type: 'Employees' as const, id: arg.id }],
     },
     postHrmContracts: {
+      invalidatesTags: ['Employees'],
+    },
+    postHrmContractsByIdRenew: {
       invalidatesTags: ['Employees'],
     },
     postHrmContractsByIdTerminate: {

@@ -9,8 +9,7 @@ import type { PublicHoliday } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
-import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
-import { Calendar } from 'lucide-react';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import styles from './PublicHolidayFormModal.module.css';
 
 interface PublicHolidayFormModalProps {
@@ -27,15 +26,7 @@ interface FormValues {
   description: string;
 }
 
-const formatDateToDMY = (isoDateStr: string): string => {
-  if (!isoDateStr) return '';
-  const cleanDateStr = isoDateStr.split('T')[0];
-  const parts = cleanDateStr.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  }
-  return isoDateStr;
-};
+
 
 export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
   open,
@@ -48,7 +39,6 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
   const isLoading = isCreating || isUpdating;
 
   const [apiError, setApiError] = useState<string | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const { toast } = useToast();
 
   const {
@@ -56,8 +46,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
-    setValue,
-    watch,
+    control,
   } = useForm<FormValues>({
     defaultValues: {
       name: '',
@@ -67,7 +56,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
     },
   });
 
-  const watchStartDate = watch('start_date');
+
 
   useEffect(() => {
     if (open) {
@@ -183,56 +172,32 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           {errors.name && <span className={styles.errorText}>{errors.name.message}</span>}
         </div>
 
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="start_date_display">
-            Ngày bắt đầu <span className={styles.required}>*</span>
-          </label>
-          <div className={styles.inputWithIcon}>
-            <input
-              id="start_date_display"
-              type="text"
-              readOnly
-              placeholder="DD/MM/YYYY"
-              value={formatDateToDMY(watchStartDate)}
-              onClick={() => !(isLoading || isPastOrOngoing) && setIsDatePickerOpen(true)}
-              onKeyDown={(e) => {
-                if (!(isLoading || isPastOrOngoing) && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  setIsDatePickerOpen(true);
-                }
-              }}
-              className={styles.input}
-              disabled={isLoading || isPastOrOngoing}
-              style={{ cursor: isPastOrOngoing ? 'not-allowed' : 'pointer' }}
-            />
-            <Calendar className={styles.inputIcon} size={16} />
-          </div>
-          <input
-            type="hidden"
-            {...register('start_date', {
-              required: 'Ngày bắt đầu là bắt buộc',
-              validate: (value) => {
-                if (holiday && holiday.start_date === value) {
-                  return true;
-                }
-                const parts = value.split('-');
-                if (parts.length === 3) {
-                  const y = parseInt(parts[0], 10);
-                  const m = parseInt(parts[1], 10) - 1;
-                  const d = parseInt(parts[2], 10);
-                  const parsedSelected = new Date(y, m, d);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  if (parsedSelected < today) {
-                    return 'Không được chọn ngày nghỉ lễ trong quá khứ';
-                  }
-                }
-                return true;
-              },
-            })}
-          />
-          {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
-        </div>
+        <DatePickerField
+          name="start_date"
+          label="Ngày bắt đầu"
+          control={control}
+          error={errors.start_date?.message}
+          required={true}
+          disabled={isLoading || isPastOrOngoing}
+          validate={(value) => {
+            if (holiday && holiday.start_date === value) {
+              return true;
+            }
+            const parts = value.split('-');
+            if (parts.length === 3) {
+              const y = parseInt(parts[0], 10);
+              const m = parseInt(parts[1], 10) - 1;
+              const d = parseInt(parts[2], 10);
+              const parsedSelected = new Date(y, m, d);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              if (parsedSelected < today) {
+                return 'Không được chọn ngày nghỉ lễ trong quá khứ';
+              }
+            }
+            return true;
+          }}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="days">
@@ -275,14 +240,7 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           />
         </div>
       </form>
-      <DatePickerModal
-        open={isDatePickerOpen}
-        onClose={() => setIsDatePickerOpen(false)}
-        value={watchStartDate}
-        onChange={(newDate) => {
-          setValue('start_date', newDate, { shouldValidate: true, shouldDirty: true });
-        }}
-      />
+
     </Modal>
   );
 };

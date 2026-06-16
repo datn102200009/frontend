@@ -6,6 +6,7 @@ import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions
 import { useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Eye, Edit, DollarSign, FileText, ChevronDown } from 'lucide-react';
+import { formatDateVN } from '@shared/lib/formatDate';
 
 interface EmployeeTableProps {
   onView?: (employee: Employee) => void;
@@ -48,15 +49,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         header: 'Họ và Tên',
         cell: (info) => <span className="font-medium text-slate-700">{info.getValue() || 'N/A'}</span>,
       }),
-      helper.accessor('department', {
-        header: 'Bộ phận',
-        cell: (info) => info.getValue() || '-',
-      }),
-      helper.accessor('position_title', {
-        header: 'Chức vụ',
-        cell: (info) => info.getValue() || '-',
-      }),
-      helper.accessor('salary_base', {
+      helper.accessor('current_salary_base', {
         header: 'Lương cơ bản',
         cell: (info) => formatVND(info.getValue()),
       }),
@@ -73,7 +66,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       }),
       helper.accessor('join_date', {
         header: 'Ngày vào làm',
-        cell: (info) => info.getValue() || '-',
+        cell: (info) => formatDateVN(info.getValue()),
       }),
       helper.display({
         id: 'actions',
@@ -98,7 +91,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   />
                   <ActionButton
                     icon={<DollarSign size={15} />}
-                    title="Điều chỉnh lương/chức danh"
+                    title="Điều chỉnh lương"
                     onClick={() => onUpdateSalary?.(emp)}
                   />
                   <ActionButton

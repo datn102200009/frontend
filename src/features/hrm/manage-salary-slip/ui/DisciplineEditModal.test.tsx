@@ -33,8 +33,8 @@ describe('DisciplineEditModal', () => {
   it('renders edit form with pre-populated values', () => {
     renderWithProviders(<DisciplineEditModal {...defaultProps} />);
     expect(screen.getByRole('heading', { name: /Sửa Quyết Định Kỷ Luật - Nguyễn Văn An/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/Ngày xảy ra vi phạm/i)).toHaveValue('2026-06-08');
-    expect(screen.getByLabelText(/Ngày quyết định/i)).toHaveValue('2026-06-10');
+    expect(screen.getByLabelText(/Ngày xảy ra vi phạm/i)).toHaveValue('08-06-2026');
+    expect(screen.getByLabelText(/Ngày quyết định/i)).toHaveValue('10-06-2026');
     expect(screen.getByLabelText(/Hình thức kỷ luật/i)).toHaveValue('warning');
     expect(screen.getByLabelText(/Số tiền phạt/i)).toHaveValue(0);
     expect(screen.getByLabelText(/Nội dung vi phạm/i)).toHaveValue('Đi muộn nhiều lần');

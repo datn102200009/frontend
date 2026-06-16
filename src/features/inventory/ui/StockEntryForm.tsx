@@ -4,6 +4,7 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
 import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { usePostInventoryStockInCreateMutation, usePostInventoryStockIssueCreateMutation, usePostInventoryStockTransferCreateMutation, useGetInventoryStockLedgerBalanceQuery } from '@features/inventory/api/inventoryApi';
 import { useGetMasterDataItemsListQuery, useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 
@@ -82,7 +83,14 @@ export function StockEntryForm({ open, type, onClose, onSuccess }: Props) {
       <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <Input label="Tên phiếu" required error={errors.name?.message} {...register('name', { required: 'Bắt buộc' })} />
-          <Input label="Ngày ghi sổ" type="date" required error={errors.posting_date?.message} {...register('posting_date', { required: 'Bắt buộc' })} />
+          <DatePickerField
+            name="posting_date"
+            label="Ngày ghi sổ"
+            control={control}
+            error={errors.posting_date?.message}
+            required
+            disabled={isLoading}
+          />
         </div>
         {(type === 'stock_issue' || type === 'internal_transfer') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>

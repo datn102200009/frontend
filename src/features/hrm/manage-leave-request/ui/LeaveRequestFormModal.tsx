@@ -5,6 +5,7 @@ import { usePostHrmLeaveRequestsCreateMutation, useGetHrmEmployeesQuery } from '
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { leaveRequestSchema, type LeaveRequestFormValues } from '../model/leave-request.schema';
 import styles from './LeaveRequestFormModal.module.css';
 
@@ -35,6 +36,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     reset,
     setValue,
     watch,
+    control,
   } = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestSchema) as unknown as Resolver<LeaveRequestFormValues>,
     defaultValues: {
@@ -173,33 +175,23 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
         </div>
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="start_date">
-              Từ ngày <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="start_date"
-              type="date"
-              className={styles.input}
-              {...register('start_date')}
-              disabled={isLoading}
-            />
-            {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="start_date"
+            label="Từ ngày"
+            control={control}
+            error={errors.start_date?.message}
+            required
+            disabled={isLoading}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="end_date">
-              Đến ngày <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="end_date"
-              type="date"
-              className={styles.input}
-              {...register('end_date')}
-              disabled={isLoading}
-            />
-            {errors.end_date && <span className={styles.errorText}>{errors.end_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="end_date"
+            label="Đến ngày"
+            control={control}
+            error={errors.end_date?.message}
+            required
+            disabled={isLoading}
+          />
         </div>
 
         <div className={styles.formGroup}>

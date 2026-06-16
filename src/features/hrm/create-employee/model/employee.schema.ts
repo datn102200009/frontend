@@ -3,9 +3,7 @@ import { z } from 'zod';
 export const employeeSchema = z.object({
   employee_id: z.string().min(1, 'Mã nhân viên là bắt buộc'),
   full_name: z.string().min(1, 'Họ tên là bắt buộc'),
-  department: z.string().optional().or(z.literal('')),
-  position_title: z.string().optional().or(z.literal('')),
-  salary_base: z.coerce.number().min(0, 'Lương cơ bản không được âm'),
+  contract_salary_base: z.coerce.number().min(0, 'Lương cơ bản không được âm'),
   email: z.string().email('Địa chỉ email không hợp lệ').optional().or(z.literal('')),
   phone: z.string().optional().or(z.literal('')),
   gender: z.enum(['male', 'female', 'other']),
@@ -16,6 +14,16 @@ export const employeeSchema = z.object({
   username: z.string().optional().or(z.literal('')),
   password: z.string().optional().or(z.literal('')),
   role_id: z.string().optional().or(z.literal('')),
+  // Contract fields
+  create_contract: z.boolean().default(true),
+  contract_no: z.string().min(1, 'Số hợp đồng là bắt buộc'),
+  contract_type: z.enum(['probation', 'definite_term', 'indefinite_term', 'other'], {
+    message: 'Loại hợp đồng là bắt buộc',
+  }),
+  contract_start_date: z.string().min(1, 'Ngày bắt đầu hợp đồng là bắt buộc'),
+  contract_end_date: z.string().optional().or(z.literal('')),
+  contract_note: z.string().optional().or(z.literal('')),
+  contract_file_url: z.string().optional().or(z.literal('')),
 }).superRefine((data, ctx) => {
   if (data.create_user) {
     if (!data.username || data.username.trim() === '') {
@@ -76,6 +84,23 @@ export const employeeSchema = z.object({
         message: 'Vai trò là bắt buộc khi tạo tài khoản User',
       });
     }
+  }
+
+  if (data.contract_type && data.contract_type !== 'indefinite_term' && data.contract_type !== 'other') {
+    if (!data.contract_end_date || data.contract_end_date === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['contract_end_date'],
+        message: 'Ngày kết thúc là bắt buộc cho loại hợp đồng này',
+      });
+    }
+  }
+  if (data.contract_end_date && data.contract_start_date && data.contract_end_date <= data.contract_start_date) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['contract_end_date'],
+      message: 'Ngày kết thúc phải sau ngày bắt đầu hợp đồng',
+    });
   }
 });
 

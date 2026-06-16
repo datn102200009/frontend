@@ -234,8 +234,8 @@ export const handlers = [
     return HttpResponse.json({
       count: 2,
       results: [
-        { id: 'emp-1', employee_id: 'NV001', full_name: 'Nguyễn Văn An', department: 'Hành chính', position_title: 'Nhân viên', salary_base: '10000000', email: 'an.nv@company.com', phone: '0901234567', gender: 'male', date_of_birth: '1995-01-01', join_date: '2026-01-01', employment_status: 'active' },
-        { id: 'emp-2', employee_id: 'NV002', full_name: 'Trần Thị Bình', department: 'Kinh doanh', position_title: 'Trưởng nhóm', salary_base: '15000000', email: 'binh.tt@company.com', phone: '0907654321', gender: 'female', date_of_birth: '1992-05-15', join_date: '2025-06-01', employment_status: 'active' }
+        { id: 'emp-1', employee_id: 'NV001', full_name: 'Nguyễn Văn An', salary_base: '10000000', email: 'an.nv@company.com', phone: '0901234567', gender: 'male', date_of_birth: '1995-01-01', join_date: '2026-01-01', employment_status: 'active' },
+        { id: 'emp-2', employee_id: 'NV002', full_name: 'Trần Thị Bình', salary_base: '15000000', email: 'binh.tt@company.com', phone: '0907654321', gender: 'female', date_of_birth: '1992-05-15', join_date: '2025-06-01', employment_status: 'active' }
       ]
     });
   }),
@@ -253,8 +253,6 @@ export const handlers = [
       id: params.id,
       employee_id: 'NV001',
       full_name: 'Nguyễn Văn An',
-      department: 'Hành chính',
-      position_title: 'Nhân viên',
       salary_base: '10000000',
       email: 'an.nv@company.com',
       phone: '0901234567',
@@ -285,7 +283,7 @@ export const handlers = [
     return HttpResponse.json({ id: params.id, ...data });
   }),
 
-  http.post('*/api/v1/hrm/employees/:id/update-salary-title/', async ({ params, request }) => {
+  http.post('*/api/v1/hrm/employees/:id/adjust-salary/', async ({ params, request }) => {
     const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: params.id, ...data });
   }),

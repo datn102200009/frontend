@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { usePostHrmContractsMutation } from '@entities/hrm/api/hrmApi';
+import { usePostHrmContractsMutation, usePostHrmContractsByIdRenewMutation } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { contractSchema, type ContractFormValues } from '../model/contract.schema';
 import styles from './ContractFormModal.module.css';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 
 interface ContractFormModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
   employee: Employee;
+  oldContractId?: string;
 }
 
 export const ContractFormModal: React.FC<ContractFormModalProps> = ({
@@ -20,8 +22,11 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
   onClose,
   onSuccess,
   employee,
+  oldContractId,
 }) => {
-  const [createContract, { isLoading }] = usePostHrmContractsMutation();
+  const [createContract, { isLoading: isCreating }] = usePostHrmContractsMutation();
+  const [renewContract, { isLoading: isRenewing }] = usePostHrmContractsByIdRenewMutation();
+  const isLoading = isCreating || isRenewing;
   const [apiError, setApiError] = useState<string | null>(null);
 
   const {
@@ -30,8 +35,9 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
     formState: { errors },
     reset,
     watch,
+    control,
   } = useForm<ContractFormValues>({
-    resolver: zodResolver(contractSchema),
+    resolver: zodResolver(contractSchema) as unknown as Resolver<ContractFormValues>,
     defaultValues: {
       contract_no: '',
       contract_type: 'definite_term',
@@ -39,10 +45,15 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
       end_date: '',
       note: '',
       file_url: '',
+      salary_base: '',
+      adjust_salary: false,
+      new_salary_base: '',
+      is_renewal: !!oldContractId,
     },
   });
 
   const contractType = watch('contract_type');
+  const adjustSalary = watch('adjust_salary');
 
   useEffect(() => {
     if (open && employee) {
@@ -53,6 +64,10 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
         end_date: '',
         note: '',
         file_url: '',
+        salary_base: '',
+        adjust_salary: false,
+        new_salary_base: '',
+        is_renewal: !!oldContractId,
       });
       setApiError(null);
     }
@@ -63,22 +78,34 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
     if (!employee.id) return;
 
     try {
-      const body = {
-        employee_id: employee.id,
-        contract_no: values.contract_no,
-        contract_type: values.contract_type,
-        start_date: values.start_date,
-        end_date: values.end_date || undefined,
-        note: values.note || undefined,
-        file_url: values.file_url || undefined,
-      };
-
-      await createContract({ body }).unwrap();
+      if (oldContractId) {
+        const body = {
+          new_contract_no: values.contract_no,
+          new_contract_type: values.contract_type,
+          start_date: values.start_date,
+          new_salary_base: values.adjust_salary && values.new_salary_base ? Number(values.new_salary_base) : undefined,
+          file_url: values.file_url || undefined,
+          note: values.note || undefined,
+        };
+        await renewContract({ id: oldContractId, body }).unwrap();
+      } else {
+        const body = {
+          employee_id: employee.id,
+          contract_no: values.contract_no,
+          contract_type: values.contract_type,
+          start_date: values.start_date,
+          end_date: values.end_date || undefined,
+          salary_base: values.salary_base ? Number(values.salary_base) : undefined,
+          note: values.note || undefined,
+          file_url: values.file_url || undefined,
+        };
+        await createContract({ body }).unwrap();
+      }
       onSuccess();
     } catch (err: unknown) {
-      console.error('Failed to create contract', err);
+      console.error('Failed to save contract', err);
       const error = err as { data?: { detail?: string } };
-      setApiError(error?.data?.detail || 'Có lỗi xảy ra khi tạo hợp đồng. Vui lòng kiểm tra lại.');
+      setApiError(error?.data?.detail || 'Có lỗi xảy ra khi lưu hợp đồng. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -86,7 +113,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
     <Modal
       open={open}
       onClose={onClose}
-      title={`Tạo Mới / Gia Hạn Hợp Đồng - ${employee.full_name}`}
+      title={oldContractId ? `Gia Hạn Hợp Đồng - ${employee.full_name}` : `Tạo Mới Hợp Đồng - ${employee.full_name}`}
       size="md"
       footer={
         <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', gap: '8px' }}>
@@ -94,7 +121,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
             Hủy
           </Button>
           <Button variant="primary" onClick={handleSubmit(onSubmit)} loading={isLoading}>
-            Tạo hợp đồng
+            {oldContractId ? 'Gia hạn hợp đồng' : 'Tạo hợp đồng'}
           </Button>
         </div>
       }
@@ -142,35 +169,85 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
 
         <div className={styles.row}>
           <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="start_date">
-              Ngày bắt đầu <span className={styles.required}>*</span>
-            </label>
+            <label className={styles.label} htmlFor="start_date_read_only">Ngày bắt đầu</label>
             <input
-              id="start_date"
-              type="date"
+              id="start_date_read_only"
+              type="text"
               className={styles.input}
-              {...register('start_date')}
-              disabled={isLoading}
+              value={`Hôm nay (${new Date().toLocaleDateString('vi-VN')})`}
+              disabled={true}
             />
-            {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
+            <input
+              type="hidden"
+              {...register('start_date')}
+            />
           </div>
 
           {contractType !== 'indefinite_term' && (
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="end_date">
-                Ngày kết thúc {contractType !== 'other' && <span className={styles.required}>*</span>}
-              </label>
-              <input
-                id="end_date"
-                type="date"
-                className={styles.input}
-                {...register('end_date')}
-                disabled={isLoading}
-              />
-              {errors.end_date && <span className={styles.errorText}>{errors.end_date.message}</span>}
-            </div>
+            <DatePickerField
+              name="end_date"
+              label="Ngày kết thúc"
+              control={control}
+              error={errors.end_date?.message}
+              required={contractType !== 'other'}
+              disabled={isLoading}
+            />
           )}
         </div>
+
+        {!oldContractId && (
+          <div className={styles.formGroup}>
+            <label className={styles.label} htmlFor="salary_base">
+              Lương cơ bản theo hợp đồng (VND) <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="salary_base"
+              type="number"
+              min={0}
+              step={100000}
+              placeholder="VD: 10000000"
+              className={styles.input}
+              {...register('salary_base', {
+                required: 'Lương cơ bản theo hợp đồng là bắt buộc',
+              })}
+              disabled={isLoading}
+            />
+            {errors.salary_base && <span className={styles.errorText}>{errors.salary_base.message}</span>}
+          </div>
+        )}
+
+        {oldContractId && (
+          <>
+            <div className={styles.checkboxGroup}>
+              <input
+                id="adjust_salary"
+                type="checkbox"
+                {...register('adjust_salary')}
+                disabled={isLoading}
+              />
+              <label className={styles.label} style={{ cursor: 'pointer' }} htmlFor="adjust_salary">
+                Có điều chỉnh lương cơ bản đi kèm hợp đồng
+              </label>
+            </div>
+
+            {adjustSalary && (
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="new_salary_base">
+                  Mức lương mới (VND) <span className={styles.required}>*</span>
+                </label>
+                <input
+                  id="new_salary_base"
+                  type="number"
+                  placeholder="VD: 12000000"
+                  className={styles.input}
+                  {...register('new_salary_base')}
+                  disabled={isLoading}
+                />
+                {errors.new_salary_base && <span className={styles.errorText}>{errors.new_salary_base.message}</span>}
+              </div>
+            )}
+          </>
+        )}
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="file_url">
@@ -196,6 +273,10 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
             {...register('note')}
             disabled={isLoading}
           />
+        </div>
+
+        <div className={styles.infoBox}>
+          ℹ️ Hợp đồng sẽ có hiệu lực từ hôm nay ({new Date().toLocaleDateString('vi-VN')}). Hợp đồng cũ đang hoạt động của nhân viên (nếu có) sẽ tự động chuyển sang trạng thái "expired".
         </div>
       </form>
     </Modal>

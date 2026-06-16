@@ -21,8 +21,6 @@ describe('EmployeeTable', () => {
     // Wait for the active employees list to load from mock handlers
     expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument();
     expect(screen.getByText('Trần Thị Bình')).toBeInTheDocument();
-    expect(screen.getByText('Hành chính')).toBeInTheDocument();
-    expect(screen.getByText('Kinh doanh')).toBeInTheDocument();
   });
 
   it('invokes onView action when viewing details', async () => {
