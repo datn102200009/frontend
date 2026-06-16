@@ -24,7 +24,7 @@ export interface KpiCardFinanceDepreciation extends KpiCardBaseData {
 }
 
 export interface KpiCardHRMPayroll extends KpiCardBaseData {
-  status?: 'draft' | 'calculated' | 'submitted' | 'approved' | 'paid';
+  status?: 'draft' | 'calculated' | 'pending_finance_review' | 'approved' | 'paid';
   salary_period?: string;
   calculated_slips_count?: number;
   net_pay_total?: string | number;
@@ -197,7 +197,7 @@ export function KpiCard({ title, code, icon, data, quickLinks, onRefresh, isRefr
     } else if (statusVal === 'calculated') {
       statusDisplay = 'Chờ tính toán lương';
       statusClass = styles.colOrangeText;
-    } else if (statusVal === 'submitted') {
+    } else if (statusVal === 'pending_finance_review') {
       statusDisplay = `Chờ duyệt: ${d.calculated_slips_count || 0} phiếu lương`;
       statusClass = styles.colOrangeText;
     } else if (statusVal === 'approved') {
