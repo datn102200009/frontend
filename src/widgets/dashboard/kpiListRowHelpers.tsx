@@ -77,6 +77,15 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
   if (code === 'finance_unpaid_sales_invoices') {
     return { to: `/invoices?tab=sales_invoices&id=${id}`, display: sid };
   }
+  if (code === 'finance_pending_cashflow_approval') {
+    if (item.purchase_order_id) {
+      return { to: `/purchasing?tab=orders&id=${item.purchase_order_id}`, display: shortId(item.purchase_order_id) };
+    }
+    if (item.sales_order_id) {
+      return { to: `/sales?tab=orders&id=${item.sales_order_id}`, display: shortId(item.sales_order_id) };
+    }
+    return { to: `/finance?tab=approvals&id=${id}`, display: sid };
+  }
   if (code === 'hrm_payroll_lifecycle_status') {
     return {
       to: `/hrm/payroll?period=${item.salary_period}&status=${item.status}`,
@@ -118,7 +127,7 @@ export function buildItemTitle(item: any, code: string): ReactNode {
   if (code === 'inventory_pending_entry_count' || code === 'inventory_pending_entries') {
     return <span className={styles.rowMainText}>{item.route_desc}</span>;
   }
-  if (code === 'finance_cashflow_summary') {
+  if (code === 'finance_cashflow_summary' || code === 'finance_pending_cashflow_approval') {
     return <span className={styles.rowMainText}>{item.name}</span>;
   }
   if (code === 'hrm_payroll_lifecycle_status') {
@@ -213,6 +222,14 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
   if (code === 'finance_cashflow_summary') {
     return <div className={styles.rowSubText}>{item.category || 'Khác'}</div>;
   }
+  if (code === 'finance_pending_cashflow_approval') {
+    const typeLabel = item.payment_type === 'receive' ? '📥 Thu' : '📤 Chi';
+    return (
+      <div className={styles.rowSubText}>
+        {typeLabel} • {item.payment_method}
+      </div>
+    );
+  }
   if (code === 'hrm_payroll_lifecycle_status') {
     const isApproved = item.status === 'approved';
     return (
@@ -294,6 +311,20 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
         style={{ fontWeight: 'var(--fw-bold)' }}
       >
         {isReceive ? '+' : '-'} {formatVND(item.amount)}
+      </div>
+    );
+  }
+  if (code === 'finance_pending_cashflow_approval') {
+    const isReceive = item.payment_type === 'receive';
+    return (
+      <div className={styles.colRightAlign}>
+        <div
+          className={`${styles.colRightAlign} ${isReceive ? styles.textGreen : styles.textRed}`}
+          style={{ fontWeight: 'var(--fw-bold)' }}
+        >
+          {isReceive ? '+' : '-'} {formatVND(item.amount)}
+        </div>
+        {item.category && <div className={styles.rowSubText}>{item.category}</div>}
       </div>
     );
   }

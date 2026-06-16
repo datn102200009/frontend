@@ -85,6 +85,8 @@ function getWidgetIcon(code: string): ReactNode {
       return <ArrowDownRight size={16} />;
     case 'finance_depreciation_status':
       return <BadgePercent size={16} />;
+    case 'finance_pending_cashflow_approval':
+      return <CircleDollarSign size={16} />;
     case 'hrm_payroll_lifecycle_status':
       return <Users size={16} />;
     case 'hrm_pending_leave_requests':
