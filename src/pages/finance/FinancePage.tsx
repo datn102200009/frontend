@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CashFlowTable } from '@widgets/finance/CashFlowTable';
+import { FinanceSalaryApprovalTable } from '@widgets/finance/FinanceSalaryApprovalTable';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useToast } from '@shared/ui/Toast/Toast';
@@ -34,8 +35,8 @@ const FinancePage: React.FC = () => {
   }, [rawTab, navigate, searchParams]);
 
   const activeTab = useMemo(() => {
-    if (['cashflow', 'approvals'].includes(rawTab)) {
-      return rawTab as 'cashflow' | 'approvals';
+    if (['cashflow', 'approvals', 'payroll'].includes(rawTab)) {
+      return rawTab as 'cashflow' | 'approvals' | 'payroll';
     }
     return 'cashflow';
   }, [rawTab]);
@@ -51,6 +52,7 @@ const FinancePage: React.FC = () => {
 
   // Permissions
   const hasApprovePermission = usePermission('finance.approve_cash_flow');
+  const hasPayrollApprovalPermission = usePermission('finance.payroll_approve');
 
   // Pagination & query state for Approvals
   const [pageApprovals, setPageApprovals] = useState(1);
@@ -196,6 +198,17 @@ const FinancePage: React.FC = () => {
             Duyệt Giao Dịch
           </button>
         )}
+        {hasPayrollApprovalPermission && (
+          <button 
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'payroll'}
+            className={`${styles.tab} ${activeTab === 'payroll' ? styles.active : ''}`}
+            onClick={() => setActiveTab('payroll')}
+          >
+            Duyệt Lương
+          </button>
+        )}
       </div>
 
       <div className={styles.content}>
@@ -244,6 +257,12 @@ const FinancePage: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'payroll' && hasPayrollApprovalPermission && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <FinanceSalaryApprovalTable />
           </div>
         )}
       </div>
