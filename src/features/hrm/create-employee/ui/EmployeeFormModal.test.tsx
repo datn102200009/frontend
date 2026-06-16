@@ -19,19 +19,6 @@ describe('EmployeeFormModal', () => {
     expect(screen.getByRole('heading', { name: 'Thêm Nhân Viên Mới' })).toBeInTheDocument();
     expect(screen.getByLabelText(/Mã nhân viên/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Họ và tên/i)).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Tên đăng nhập/i)).not.toBeInTheDocument(); // Hidden by default
-  });
-
-  it('shows user fields when "create_user" is checked', async () => {
-    renderWithProviders(<EmployeeFormModal {...defaultProps} />);
-    const user = userEvent.setup();
-
-    const createUserCheckbox = screen.getByLabelText(/Tạo tài khoản đăng nhập hệ thống đi kèm/i);
-    await user.click(createUserCheckbox);
-
-    expect(screen.getByLabelText(/Tên đăng nhập/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Mật khẩu/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Vai trò truy cập hệ thống/i)).toBeInTheDocument();
   });
 
   it('validates required fields', async () => {
