@@ -141,7 +141,7 @@ describe('CustomersPage', () => {
     // Edit button click
     const row = await screen.findByText('CUS-001');
     const actionButtons = within(row.closest('tr')!).getAllByRole('button');
-    const editBtn = actionButtons[1]; // index 0 is "Xem chi tiết", index 1 is "Chỉnh sửa"
+    const editBtn = actionButtons[0]; // index 0 is "Chỉnh sửa"
     await user.click(editBtn);
 
     // Edit modal should open
@@ -229,7 +229,7 @@ describe('CustomersPage', () => {
     // Edit button click
     const row = await screen.findByText('CUS-001');
     const actionButtons = within(row.closest('tr')!).getAllByRole('button');
-    const editBtn = actionButtons[1];
+    const editBtn = actionButtons[0]; // index 0 is "Chỉnh sửa"
     await user.click(editBtn);
 
     // Edit modal opens
