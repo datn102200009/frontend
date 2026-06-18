@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { CardHeader } from './CardHeader';
 import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
+import { formatVND } from '@shared/lib/formatVND';
 import styles from './DashboardWidgets.module.css';
 
 export interface FixedAssetTrackerCardProps {
@@ -105,9 +106,7 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks, onRefresh
     });
 
 
-  const formatVnd = (num: number) => {
-    return num.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
-  };
+
 
   return (
     <div className={styles.card}>
@@ -188,7 +187,7 @@ export function FixedAssetTrackerCard({ title, icon, data, quickLinks, onRefresh
                   <span className={styles.donutLegendDot} style={{ background: seg.color }} />
                   <span className={styles.donutLegendLabel}>{seg.label}</span>
                   <span className={styles.donutLegendValue}>
-                    {formatVnd(seg.value)}
+                    {formatVND(seg.value)}
                   </span>
                 </div>
               ))}

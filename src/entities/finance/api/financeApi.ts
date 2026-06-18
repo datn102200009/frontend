@@ -428,6 +428,7 @@ export type FixedAsset = {
   asset_code?: string
   asset_name?: string
   original_value?: string
+  /** DEPRECATED - giá trị này không còn ý nghĩa nghiệp vụ */
   salvage_value?: string
   depreciation_method?: 'straight_line' | 'unit_of_production'
   useful_life_months?: number | null
@@ -449,11 +450,9 @@ export type FixedAsset = {
 export type FixedAssetPurchaseInput = {
   asset_name: string
   original_value: string
-  salvage_value?: string
   depreciation_method: 'straight_line' | 'unit_of_production'
   useful_life_months?: number | null
   designed_capacity?: number | null
-  purchase_date: string
   vendor_name: string
   payment_method?: 'cash' | 'bank_transfer'
 }
@@ -462,7 +461,6 @@ export type FixedAssetUpdateInput = {
   useful_life_months?: number
 }
 export type FixedAssetRequestDisposeInput = {
-  disposal_date: string
   disposal_value?: string
   remarks?: string | null
 }

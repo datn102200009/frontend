@@ -4,6 +4,7 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { useGetFinanceCashFlowsQuery } from '@entities/finance/api/financeApi';
 import type { CashFlowTransaction } from '@entities/finance/model/types';
+import { formatVND } from '@shared/lib/formatVND';
 import { shortId } from '@shared/lib/shortId';
 
 
@@ -33,7 +34,7 @@ export const CashFlowTable: React.FC = () => {
         header: 'Số Tiền',
         cell: (info) => {
           const type = info.row.original.payment_type;
-          const formatted = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue());
+          const formatted = formatVND(info.getValue());
           return <span className={type === 'receive' ? 'text-emerald-700' : 'text-rose-700'}>{formatted}</span>;
         },
       }),

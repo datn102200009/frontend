@@ -147,6 +147,7 @@ export const CashFlowFormModal: React.FC<CashFlowFormModalProps> = ({ open, onCl
         <Input 
           label="Số Tiền" 
           type="number" 
+          decimals={0}
           min="0"
           {...register('amount', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số tiền tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
           error={errors.amount?.message}

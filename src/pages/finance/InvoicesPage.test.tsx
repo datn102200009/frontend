@@ -78,8 +78,13 @@ describe('InvoicesPage', () => {
     await user.clear(payAmountInput);
     await user.type(payAmountInput, '6000000');
 
-    // Submit payment
-    const confirmBtn = within(payModal).getByRole('button', { name: /Xác nhận thanh toán/i });
+    // Submit payment form
+    const submitBtn = within(payModal).getByRole('button', { name: /Xác nhận thanh toán/i });
+    await user.click(submitBtn);
+
+    // ConfirmModal appears
+    const confirmModal = await screen.findByRole('dialog', { name: /Xác nhận thanh toán hóa đơn/i });
+    const confirmBtn = within(confirmModal).getByRole('button', { name: /Xác nhận thanh toán/i });
     await user.click(confirmBtn);
 
     // Verify correct payment payload and modal closed

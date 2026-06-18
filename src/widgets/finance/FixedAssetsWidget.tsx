@@ -7,6 +7,8 @@ import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { formatDateTime } from '@shared/lib/formatDate';
 import { useCurrentUser } from '@shared/lib/permissionContext';
+import { formatVND } from '@shared/lib/formatVND';
+import { formatNumber } from '@shared/lib/formatNumber';
 import {
   useGetFinanceFixedAssetsQuery,
   useGetFinanceFixedAssetsDepreciationLogsQuery,
@@ -109,23 +111,26 @@ export function FixedAssetsWidget() {
       {
         accessorKey: 'original_value',
         header: 'Nguyên Giá',
-        cell: ({ row }) => Number(row.original.original_value ?? 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }),
+        cell: ({ row }) => formatVND(row.original.original_value),
       },
       {
         accessorKey: 'accumulated_depreciation',
         header: 'Lũy kế khấu hao',
-        cell: ({ row }) => Number(row.original.accumulated_depreciation ?? 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }),
+        cell: ({ row }) => formatVND(row.original.accumulated_depreciation),
       },
       {
         header: 'Thời gian / Sản lượng KH',
         cell: ({ row }) => {
           const asset = row.original;
           if (asset.depreciation_method === 'straight_line') {
-            return `${asset.remaining_life_months}/${asset.useful_life_months} tháng`;
+            const useful = asset.useful_life_months || 0;
+            const remaining = asset.remaining_life_months || 0;
+            const elapsed = Math.max(0, useful - remaining);
+            return `${elapsed}/${useful} tháng`;
           } else {
             const originalVal = Number(asset.original_value || 0);
-            const salvageVal = Number(asset.salvage_value || 0);
-            const depreciableValue = originalVal - salvageVal;
+            // NOTE: salvage_value is ignored in depreciation calculations as per 2026-06 requirements
+            const depreciableValue = originalVal;
             const designCap = Number(asset.designed_capacity || 0);
             const accumulatedDep = Number(asset.accumulated_depreciation || 0);
 
@@ -133,7 +138,7 @@ export function FixedAssetsWidget() {
             if (depreciableValue > 0 && designCap > 0) {
               prodDepQty = accumulatedDep / (depreciableValue / designCap);
             }
-            return `${prodDepQty.toLocaleString('vi-VN', { maximumFractionDigits: 2 })}/${designCap.toLocaleString('vi-VN', { maximumFractionDigits: 2 })} sp`;
+            return `${formatNumber(prodDepQty, 0)}/${formatNumber(designCap, 0)} sp`;
           }
         },
       },

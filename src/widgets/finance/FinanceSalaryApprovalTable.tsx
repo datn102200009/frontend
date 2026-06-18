@@ -210,12 +210,6 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="filterToolbar" style={{ borderBottom: '1px solid var(--clr-border)', padding: '12px 16px' }}>
-        <span style={{ color: 'var(--clr-text-secondary)', fontSize: 'var(--fs-sm)' }}>
-          📋 Hiển thị các phiếu lương đã được HRM gửi lên (chờ duyệt) hoặc đã phê duyệt (chờ chi trả).
-        </span>
-      </div>
-
       <DataTable
         columns={columns as any}
         data={displaySlips}
