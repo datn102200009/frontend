@@ -41,6 +41,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
   ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [dropUp, setDropUp] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const labelId = useId();
     const listboxId = useId();
@@ -50,6 +51,21 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
     const filteredOptions = options.filter((opt) =>
       opt.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    useEffect(() => {
+      if (isOpen && containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        if (spaceBelow < 260 && spaceAbove > spaceBelow) {
+          setDropUp(true);
+        } else {
+          setDropUp(false);
+        }
+      } else if (!isOpen) {
+        setDropUp(false);
+      }
+    }, [isOpen]);
 
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -127,7 +143,7 @@ export const SearchableSelect = React.forwardRef<HTMLInputElement, Props>(
         </div>
 
         {isOpen && (
-          <div className="select-dropdown">
+          <div className={clsx('select-dropdown', { 'drop-up': dropUp })}>
             <div className="select-search">
               <Search size={16} className="search-icon" />
               <input

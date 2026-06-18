@@ -89,6 +89,16 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.workOrderDeclareInput,
       }),
     }),
+    postManufacturingWorkOrderByWorkOrderIdDeclarePreview: build.mutation<
+      PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiResponse,
+      PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/manufacturing/work-order/${queryArg.workOrderId}/declare-preview/`,
+        method: 'POST',
+        body: queryArg.workOrderDeclarePreviewRequest,
+      }),
+    }),
     postManufacturingWorkOrderByWorkOrderIdComplete: build.mutation<
       PostManufacturingWorkOrderByWorkOrderIdCompleteApiResponse,
       PostManufacturingWorkOrderByWorkOrderIdCompleteApiArg
@@ -105,6 +115,15 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/manufacturing/work-order/${queryArg.workOrderId}/cancel/`,
         method: 'POST',
+      }),
+    }),
+    deleteManufacturingWorkOrderByWorkOrderIdPendingDelete: build.mutation<
+      DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiResponse,
+      DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/manufacturing/work-order/${queryArg.workOrderId}/pending-delete/`,
+        method: 'DELETE',
       }),
     }),
     getManufacturingWorkOrderList: build.query<
@@ -185,6 +204,14 @@ export type PostManufacturingWorkOrderByWorkOrderIdDeclareApiArg = {
   workOrderId: string
   workOrderDeclareInput: WorkOrderDeclareInput
 }
+export type PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiResponse =
+  /** status 200 Success */ {
+    results?: MaterialPreviewDeclareItem[]
+  }
+export type PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiArg = {
+  workOrderId: string
+  workOrderDeclarePreviewRequest: WorkOrderDeclarePreviewRequest
+}
 export type PostManufacturingWorkOrderByWorkOrderIdCompleteApiResponse =
   /** status 200 Completed */ WorkOrder
 export type PostManufacturingWorkOrderByWorkOrderIdCompleteApiArg = {
@@ -193,6 +220,10 @@ export type PostManufacturingWorkOrderByWorkOrderIdCompleteApiArg = {
 export type PostManufacturingWorkOrderByWorkOrderIdCancelApiResponse =
   /** status 200 Cancelled */ WorkOrder
 export type PostManufacturingWorkOrderByWorkOrderIdCancelApiArg = {
+  workOrderId: string
+}
+export type DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiResponse = unknown
+export type DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiArg = {
   workOrderId: string
 }
 export type GetManufacturingWorkOrderListApiResponse =
@@ -272,6 +303,7 @@ export type MaterialPreviewItem = {
   item_id?: string
   item_code?: string
   item_name?: string
+  uom?: string | null
   required_qty?: number
   available_qty?: number
   missing_qty?: number
@@ -280,6 +312,14 @@ export type MaterialPreviewInput = {
   bom_id: string
   quantity: number
   source_warehouse_id: string
+}
+export type WorkOrderMaterial = {
+  item_id?: string
+  item_code?: string
+  item_name?: string
+  uom?: string | null
+  required_qty?: number
+  consumed_qty?: number
 }
 export type WorkOrder = {
   id?: string
@@ -308,6 +348,10 @@ export type WorkOrder = {
     asset_name?: string
     depreciation_method?: string
   }[]
+  production_item_code?: string
+  production_item_name?: string
+  production_uom?: string | null
+  materials?: WorkOrderMaterial[]
   created_at?: string
   updated_at?: string
 }
@@ -324,6 +368,19 @@ export type WorkOrderInput = {
   fixed_asset_ids?: string[]
 }
 export type WorkOrderDeclareInput = {
+  produced_qty: number
+}
+export type MaterialPreviewDeclareItem = {
+  item_id?: string
+  item_code?: string
+  item_name?: string
+  uom?: string | null
+  required_qty?: number
+  available_qty?: number
+  missing_qty?: number
+  is_sufficient?: boolean
+}
+export type WorkOrderDeclarePreviewRequest = {
   produced_qty: number
 }
 export type WorkOrderListResponse = {
@@ -345,8 +402,10 @@ export const {
   usePostManufacturingWorkOrderCreateMutation,
   usePostManufacturingWorkOrderByWorkOrderIdApproveMutation,
   usePostManufacturingWorkOrderByWorkOrderIdDeclareMutation,
+  usePostManufacturingWorkOrderByWorkOrderIdDeclarePreviewMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCompleteMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCancelMutation,
+  useDeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteMutation,
   useGetManufacturingWorkOrderListQuery,
   useGetManufacturingWorkOrderByWorkOrderIdQuery,
   usePutManufacturingWorkOrderByWorkOrderIdFixedAssetsMutation,

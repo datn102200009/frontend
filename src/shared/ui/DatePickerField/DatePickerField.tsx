@@ -15,6 +15,8 @@ export interface DatePickerFieldProps {
   validate?: (value: string) => string | true;
   placeholder?: string;
   defaultValue?: string;
+  minDate?: string | null;
+  maxDate?: string | null;
 }
 
 export const DatePickerField: React.FC<DatePickerFieldProps> = ({
@@ -27,6 +29,8 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({
   validate,
   placeholder = 'DD-MM-YYYY',
   defaultValue = '',
+  minDate,
+  maxDate,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -71,6 +75,8 @@ export const DatePickerField: React.FC<DatePickerFieldProps> = ({
               onClose={() => setOpen(false)}
               value={field.value || ''}
               onChange={(d) => field.onChange(d)}
+              minDate={minDate}
+              maxDate={maxDate}
             />
           </>
         )}

@@ -12,6 +12,8 @@ import { useToast } from '@shared/ui/Toast/Toast';
 import { usePermission } from '@shared/hooks/usePermission';
 import { type Bom } from '@features/manufacturing/api/manufacturingApi';
 import { formatDateTime } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
+import { extractApiError } from '@shared/lib/extractApiError';
 import styles from './BomList.module.css';
 
 export function BomList() {
@@ -40,8 +42,8 @@ export function BomList() {
       setDeletingBom(null);
       refetch();
      
-    } catch {
-      toast('error', 'Có lỗi xảy ra khi xóa định mức');
+    } catch (err) {
+      toast('error', extractApiError(err, 'Có lỗi xảy ra khi xóa định mức'));
     }
   };
 
@@ -61,7 +63,7 @@ export function BomList() {
         header: 'Linh Kiện',
         cell: ({ row }) => (
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <Badge variant="info">{(row.original as any).items_count || 0} mục</Badge>
+          <Badge variant="info">{formatNumber((row.original as any).items_count || 0, 0)} mục</Badge>
         ),
         enableSorting: false,
       },
@@ -99,7 +101,7 @@ export function BomList() {
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Danh Sách Định Mức (BOM)</h2>
-          <p className={styles.subtitle}>{boms.length} định mức</p>
+          <p className={styles.subtitle}>{formatNumber(boms.length, 0)} định mức</p>
         </div>
         {canCreate && (
           <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>

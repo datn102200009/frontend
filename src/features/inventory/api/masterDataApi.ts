@@ -12,6 +12,8 @@ const injectedRtkApi = api.injectEndpoints({
       GetMasterDataUomsListApiArg
     >({
       query: () => ({ url: `/master-data/uoms/list/` }),
+      keepUnusedDataFor: 86400, // 24 hours
+      providesTags: ['Uoms'],
     }),
     getMasterDataItemsList: build.query<
       GetMasterDataItemsListApiResponse,

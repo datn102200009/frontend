@@ -115,4 +115,28 @@ describe('DatePickerModal', () => {
     // It should also have options around 2010
     expect(screen.getByRole('option', { name: 'Năm 2010' })).toBeInTheDocument();
   });
+
+  it('disables days before minDate and after maxDate', async () => {
+    const minMaxProps = {
+      ...defaultProps,
+      minDate: '2026-05-24',
+      maxDate: '2026-05-28',
+    };
+    renderWithProviders(<DatePickerModal {...minMaxProps} />);
+
+    // Day 23 should be disabled
+    const day23 = screen.getByRole('button', { name: '23 Tháng 5 Năm 2026' });
+    expect(day23).toBeDisabled();
+    expect(day23.className).toContain('disabled');
+
+    // Day 25 should be enabled
+    const day25 = screen.getByRole('button', { name: '25 Tháng 5 Năm 2026' });
+    expect(day25).not.toBeDisabled();
+    expect(day25.className).not.toContain('disabled');
+
+    // Day 29 should be disabled
+    const day29 = screen.getByRole('button', { name: '29 Tháng 5 Năm 2026' });
+    expect(day29).toBeDisabled();
+    expect(day29.className).toContain('disabled');
+  });
 });

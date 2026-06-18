@@ -7,7 +7,10 @@ import { useToast } from '@shared/ui/Toast/Toast';
 import { Plus, Trash2 } from 'lucide-react';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
+import { TextArea } from '@shared/ui/Input/TextArea';
 import { Button } from '@shared/ui/Button/Button';
+import { extractApiError } from '@shared/lib/extractApiError';
+import { getDecimalsForUom } from '@shared/lib/uomDecimals';
 import styles from './BomFormModal.module.css';
 
 interface BomFormData {
@@ -59,6 +62,10 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
   const watchItems = watch('items');
 
   const onSubmit = async (data: BomFormData) => {
+    if (!data.items || data.items.length === 0) {
+      toast('error', 'Định mức phải có ít nhất một linh kiện');
+      return;
+    }
     try {
       if (isEdit) {
         await updateBom({
@@ -86,7 +93,7 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
       onSave();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra');
+      toast('error', extractApiError(error, 'Có lỗi xảy ra'));
     }
   };
 
@@ -100,38 +107,32 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
       }
     >
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
-        <div className={styles.row}>
-          <Input label="Tên định mức" required error={errors.name?.message} disabled={isCreating || isUpdating}
-            {...register('name', { required: 'Bắt buộc' })} />
+        <Input label="Tên định mức" required error={errors.name?.message} disabled={isCreating || isUpdating}
+          {...register('name', { required: 'Bắt buộc' })} />
             
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', flex: 1 }}>
-            <Controller
-              control={control}
-              name="product_code"
-              rules={{ required: 'Bắt buộc' }}
-              render={({ field }) => (
-                <SearchableSelect
-                  label="Sản phẩm"
-                  required
-                  placeholder="-- Chọn sản phẩm --"
-                  options={itemsList.map(item => ({
-                    label: `${item.item_code} - ${item.item_name}`,
-                    value: item.item_code || ''
-                  }))}
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={errors.product_code?.message}
-                  disabled={isEdit || isCreating || isUpdating}
-                />
-              )}
+        <Controller
+          control={control}
+          name="product_code"
+          rules={{ required: 'Bắt buộc' }}
+          render={({ field }) => (
+            <SearchableSelect
+              label="Sản phẩm"
+              required
+              placeholder="-- Chọn sản phẩm --"
+              options={itemsList.map(item => ({
+                label: `${item.item_name} - ${item.item_code}`,
+                value: item.item_code || ''
+              }))}
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.product_code?.message}
+              disabled={isEdit || isCreating || isUpdating}
             />
-          </div>
-        </div>
+          )}
+        />
 
-        <div className={styles.row}>
-          <Input label="Ghi chú" {...register('notes')} />
-          <div style={{ flex: 1 }} />
-        </div>
+        <TextArea label="Ghi chú" disabled={isCreating || isUpdating} error={errors.notes?.message}
+          {...register('notes')} />
 
         <div className={styles.itemsSection}>
           <div className={styles.itemsHeader}>
@@ -143,17 +144,26 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
           </div>
 
           <div className={styles.itemsTable}>
-            <div className={styles.itemRow} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 100px 32px', gap: '8px', padding: '8px 0', borderBottom: '1px solid var(--clr-border)', fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 100px 1fr 32px', gap: '8px', padding: '8px 0', borderBottom: '1px solid var(--clr-border)', fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
               <span>Linh kiện</span>
-              <span>ĐVT</span>
               <span>Số lượng</span>
+              <span>ĐVT</span>
               <span />
             </div>
             {fields.map((field, index) => {
               const selectedItemCode = watchItems?.[index]?.item_code;
               const selectedItem = itemsList.find((i) => i.item_code === selectedItemCode);
+
+              const selectedCodes = watchItems
+                ?.map((it, i) => (i !== index ? it.item_code : null))
+                .filter((code): code is string => !!code) ?? [];
+              
+              const availableItems = itemsList.filter(
+                (item) => item.item_code && !selectedCodes.includes(item.item_code)
+              );
+
               return (
-              <div key={field.id} className={styles.itemRow} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 100px 32px', gap: '8px', padding: '8px 0', alignItems: 'center' }}>
+              <div key={field.id} style={{ display: 'grid', gridTemplateColumns: '2fr 100px 1fr 32px', gap: '8px', padding: '8px 0', alignItems: 'center' }}>
                 <Controller
                   control={control}
                   name={`items.${index}.item_code` as const}
@@ -162,8 +172,8 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
                     <SearchableSelect
                       placeholder="-- Chọn linh kiện --"
                       ariaLabel="Mã linh kiện"
-                      options={itemsList.map(item => ({
-                        label: `${item.item_code} - ${item.item_name}`,
+                      options={availableItems.map(item => ({
+                        label: `${item.item_name} - ${item.item_code}`,
                         value: item.item_code || ''
                       }))}
                       value={field.value}
@@ -172,8 +182,27 @@ export function BomFormModal({ open, bomId, onClose, onSave }: BomFormModalProps
                     />
                   )}
                 />
-                <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)' }}>{selectedItem?.stock_uom_name || '-'}</span>
-                <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`items.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0.01, message: 'Số lượng tối thiểu là 0.01' }, validate: val => !isNaN(val) || 'Bắt buộc' })} disabled={isCreating || isUpdating} />
+                
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  size="sm"
+                  decimals={getDecimalsForUom(selectedItem?.stock_uom_name)}
+                  disabled={isCreating || isUpdating}
+                  error={errors.items?.[index]?.quantity?.message}
+                  {...register(`items.${index}.quantity` as const, {
+                    valueAsNumber: true,
+                    required: 'Bắt buộc',
+                    validate: {
+                      required: (v) => !isNaN(v) || 'Bắt buộc nhập số lượng',
+                      positive: (v) => v > 0 || 'Số lượng phải lớn hơn 0',
+                    },
+                  })}
+                />
+
+                <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)', paddingLeft: '4px' }}>{selectedItem?.stock_uom_name || '-'}</span>
+                
                 <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa linh kiện"
                   disabled={fields.length <= 1 || isCreating || isUpdating} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--clr-text-muted)' }}>
                   <Trash2 size={16} />

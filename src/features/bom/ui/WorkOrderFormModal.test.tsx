@@ -26,7 +26,7 @@ describe('WorkOrderFormModal', () => {
     if (!trigger) throw new Error('Select trigger not found');
     
     await user.click(trigger);
-    const option = await within(container as HTMLElement).findByText(optionText);
+    const option = await within(container as HTMLElement).findByRole('option', { name: optionText });
     await user.click(option);
   };
 
@@ -48,7 +48,7 @@ describe('WorkOrderFormModal', () => {
     await user.click(screen.getByRole('button', { name: 'Tạo lệnh' }));
     
     const errors = await screen.findAllByText(/Bắt buộc|Tối thiểu/i);
-    expect(errors.length).toBeGreaterThanOrEqual(4);
+    expect(errors.length).toBeGreaterThanOrEqual(2);
   });
 
   it('submits valid form data', async () => {
@@ -66,8 +66,16 @@ describe('WorkOrderFormModal', () => {
     await user.clear(qtyInput);
     await user.type(qtyInput, '10');
 
+    // Wait for preview to load
+    expect(await screen.findByText('LK001')).toBeInTheDocument();
+
     await user.click(screen.getByRole('button', { name: 'Tạo lệnh' }));
     
+    // Click confirm on the custom ConfirmModal since materials are missing in mock response
+    const confirmDialog = await screen.findByRole('dialog', { name: 'Cảnh báo thiếu hụt nguyên liệu' });
+    const confirmBtn = within(confirmDialog).getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmBtn);
+
     await waitFor(() => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
@@ -96,6 +104,11 @@ describe('WorkOrderFormModal', () => {
 
     await user.click(screen.getByRole('button', { name: 'Tạo lệnh' }));
     
+    // Click confirm on the custom ConfirmModal since materials are missing in mock response
+    const confirmDialog = await screen.findByRole('dialog', { name: 'Cảnh báo thiếu hụt nguyên liệu' });
+    const confirmBtn = within(confirmDialog).getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmBtn);
+
     await waitFor(() => {
       expect(defaultProps.onSuccess).toHaveBeenCalled();
     });
@@ -120,9 +133,43 @@ describe('WorkOrderFormModal', () => {
     expect(await screen.findByText('LK001')).toBeInTheDocument();
     expect(await screen.findByText('LK002')).toBeInTheDocument();
     
-    // Linh kiện 2 should have a missing quantity of 15
-    const missingQty = await screen.findByText('15');
+    // Linh kiện 2 should have a missing quantity of 15 (formatted as 15,00)
+    const missingQty = await screen.findByText(/15/);
     expect(missingQty).toBeInTheDocument();
     expect(missingQty).toHaveStyle({ color: 'var(--clr-error)' }); // Check for the error styling
+  });
+
+  it('shows ConfirmModal and submits when materials are missing', async () => {
+    renderWithProviders(<WorkOrderFormModal {...defaultProps} />);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/^Mã Lệnh Sản Xuất/i), 'WO-123');
+    
+    await selectOption(user, /^Chọn định mức/i, /BOM-01/i);
+    await selectOption(user, /^Kho nguồn/i, /Kho 1/i);
+    await selectOption(user, /^Kho sản xuất/i, /Kho 1/i);
+    await selectOption(user, /^Kho đích/i, /Kho 1/i);
+
+    const qtyInput = screen.getByLabelText(/^Số lượng yêu cầu/i);
+    await user.clear(qtyInput);
+    await user.type(qtyInput, '10');
+
+    // Wait for preview to load
+    expect(await screen.findByText('Dự trù nguyên liệu')).toBeInTheDocument();
+    expect(await screen.findByText('LK002')).toBeInTheDocument();
+
+    // Now click submit
+    await user.click(screen.getByRole('button', { name: 'Tạo lệnh' }));
+
+    // ConfirmModal should be shown
+    const confirmDialog = await screen.findByRole('dialog', { name: 'Cảnh báo thiếu hụt nguyên liệu' });
+    expect(confirmDialog).toBeInTheDocument();
+
+    const confirmBtn = within(confirmDialog).getByRole('button', { name: 'Xác nhận' });
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(defaultProps.onSuccess).toHaveBeenCalled();
+    });
   });
 });

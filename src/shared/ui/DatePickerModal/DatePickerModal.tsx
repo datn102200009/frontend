@@ -9,6 +9,8 @@ interface DatePickerModalProps {
   onClose: () => void;
   value: string; // YYYY-MM-DD format
   onChange: (date: string) => void; // returns YYYY-MM-DD format
+  minDate?: string | null;
+  maxDate?: string | null;
 }
 
 const parseISODate = (str: string): Date => {
@@ -35,6 +37,8 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
   onClose,
   value,
   onChange,
+  minDate,
+  maxDate,
 }) => {
   // Parsed initial date from props
   const initialDate = useMemo(() => parseISODate(value), [value]);
@@ -160,6 +164,13 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     return isSameDate(d, today);
   };
 
+  const isDisabled = (d: Date): boolean => {
+    const iso = formatToISODate(d);
+    if (minDate && iso < minDate) return true;
+    if (maxDate && iso > maxDate) return true;
+    return false;
+  };
+
   return (
     <Modal
       open={open}
@@ -241,12 +252,15 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
             {daysInGrid.map(({ date, isCurrentMonth }, idx) => {
               const selected = isSameDate(date, selectedDate);
               const today = isToday(date);
+              const disabled = isDisabled(date);
               
               return (
                 <button
                   key={idx}
                   type="button"
+                  disabled={disabled}
                   onClick={() => {
+                    if (disabled) return;
                     setSelectedDate(date);
                     // Also bring view to match the clicked day's month/year
                     setViewMonth(date.getMonth());
@@ -256,7 +270,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
                     !isCurrentMonth ? styles.outside : ''
                   } ${selected ? styles.selected : ''} ${
                     today ? styles.today : ''
-                  }`}
+                  } ${disabled ? styles.disabled : ''}`}
                   aria-label={`${date.getDate()} Tháng ${
                     date.getMonth() + 1
                   } Năm ${date.getFullYear()}`}
