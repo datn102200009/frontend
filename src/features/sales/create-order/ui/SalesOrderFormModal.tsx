@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { 
   usePostSalesOrdersMutation, 
   useGetSalesOrdersByPkQuery,
@@ -17,6 +17,10 @@ import { Button } from '@shared/ui/Button/Button';
 import { Plus, Trash2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
+import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
+import { Input } from '@shared/ui/Input/Input';
+import { getDecimalsForUom } from '@shared/lib/uomDecimals';
+import { formatNumber } from '@shared/lib/formatNumber';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { shortId } from '@shared/lib/shortId';
 import styles from './SalesOrderFormModal.module.css';
@@ -88,10 +92,17 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const isWorking = isCreating || isUpdating || isDeleting || isApproving || isBypassing || isCancelling || isLoadingOrder;
 
   const itemMap = React.useMemo(() => {
-    const map = new Map<string, { id?: string; item_name?: string; item_code?: string }>();
+    const map = new Map<string, { id?: string; item_name?: string; item_code?: string; stock_uom_name?: string | null }>();
     if (itemsData?.results) {
       itemsData.results.forEach(item => {
-        if (item.id) map.set(item.id, item);
+        if (item.id) {
+          map.set(item.id, {
+            id: item.id,
+            item_name: item.item_name,
+            item_code: item.item_code,
+            stock_uom_name: item.stock_uom_name,
+          });
+        }
       });
     }
     return map;
@@ -159,9 +170,15 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     }
   }, [orderId, orderData, reset, itemsData, customersData]);
 
-  const getSelectableItems = (currentFieldItemId?: string) => {
-    const list = [...(itemsData?.results || [])];
-    if (currentFieldItemId && !list.some(item => item.id === currentFieldItemId)) {
+  const getSelectableItems = (index: number, currentFieldItemId?: string) => {
+    const watchLines = watch('lines') || [];
+    const selectedIds = watchLines
+      .map((line, i) => (i !== index ? line.item_id : null))
+      .filter((id): id is string => !!id);
+    
+    const list = (itemsData?.results || []).filter(item => item.id && !selectedIds.includes(item.id)) as any[];
+    const existsInMaster = (itemsData?.results || []).some(item => item.id === currentFieldItemId);
+    if (currentFieldItemId && !existsInMaster) {
       const originalLine = orderData?.lines?.find(l => l.item === currentFieldItemId);
       list.push({
         id: currentFieldItemId,
@@ -379,8 +396,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                 {!isReadOnly && (
                   <Button variant="outline" size="sm" icon={<Plus size={14} />}
                     onClick={() => {
-                      const firstItemId = itemsData?.results?.[0]?.id || '';
-                      append({ item_id: firstItemId, quantity: 1, unit_price: 0 });
+                      append({ item_id: '', quantity: 1, unit_price: 0 });
                     }}
                     disabled={isWorking}>
                     Thêm
@@ -389,41 +405,121 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
               </div>
  
               <div className={styles.itemsTable}>
-                <div className={styles.itemRow} style={{ padding: '8px 0', borderBottom: '1px solid var(--clr-border)', fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
+                <div className={styles.itemRow} style={{ padding: '8px 0', borderBottom: '1px solid var(--clr-border)', fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)', gridTemplateColumns: isReadOnly ? '1fr 100px 150px 100px 100px' : '1fr 140px 150px 36px' }}>
                   <span>Sản Phẩm</span>
                   <span>Số Lượng</span>
                   <span>Đơn Giá</span>
+                  {isReadOnly && (
+                    <>
+                      <span>Đã Giao</span>
+                      <span>% Đã Giao</span>
+                    </>
+                  )}
                   {!isReadOnly && <span />}
                 </div>
                 {fields.map((field, index) => {
                   const originalLine = orderData?.lines?.[index];
-                  const displayName = itemMap.get(field.item_id)?.item_name || originalLine?.item_name || 'Sản Phẩm Khác';
-                  const displayCode = itemMap.get(field.item_id)?.item_code || originalLine?.item_code || 'OTHER';
+                  const selectedItem = itemMap.get(field.item_id);
+                  const displayName = selectedItem?.item_name || originalLine?.item_name || 'Sản Phẩm Khác';
+                  const displayCode = selectedItem?.item_code || originalLine?.item_code || 'OTHER';
                   return (
-                    <div key={field.id} className={styles.itemRow} style={{ padding: '8px 0', gridTemplateColumns: isReadOnly ? '1fr 100px 150px' : '1fr 100px 150px 36px' }}>
+                    <div key={field.id} className={styles.itemRow} style={{ padding: '8px 0', gridTemplateColumns: isReadOnly ? '1fr 100px 150px 100px 100px' : '1fr 140px 150px 36px' }}>
                       {isReadOnly ? (
                         <>
                           <div className={styles.staticText}>
                             {displayName} ({displayCode})
                           </div>
                           <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
-                            {field.quantity}
+                            {formatNumber(field.quantity, getDecimalsForUom(selectedItem?.stock_uom_name))} {selectedItem?.stock_uom_name || ''}
                           </div>
                           <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
                             {formatVND(field.unit_price)}
                           </div>
+                          <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
+                            {formatNumber(field.quantity * (Number(originalLine?.receipt_fulfillment_rate || 0) / 100), getDecimalsForUom(selectedItem?.stock_uom_name))} {selectedItem?.stock_uom_name || ''}
+                          </div>
+                          <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start', width: '100%' }}>
+                              <span style={{
+                                fontWeight: 600,
+                                fontSize: 'var(--fs-xs)',
+                                color: Number(originalLine?.receipt_fulfillment_rate || 0) === 100
+                                  ? 'var(--clr-success)'
+                                  : 'var(--clr-warning)'
+                              }}>
+                                {Number(originalLine?.receipt_fulfillment_rate || 0)}%
+                              </span>
+                              <div style={{ width: '100%', height: 4, background: 'var(--clr-border)', borderRadius: 2, overflow: 'hidden' }}>
+                                <div style={{
+                                  width: `${Math.min(Number(originalLine?.receipt_fulfillment_rate || 0), 100)}%`,
+                                  height: '100%',
+                                  background: Number(originalLine?.receipt_fulfillment_rate || 0) === 100
+                                    ? 'var(--clr-success)'
+                                    : 'var(--clr-warning)',
+                                  transition: 'width 0.3s ease',
+                                }} />
+                              </div>
+                            </div>
+                          </div>
                         </>
                       ) : (
                         <>
-                          <select className={styles.itemInput} {...register(`lines.${index}.item_id` as const, { required: 'Bắt buộc' })} disabled={isWorking}>
-                            {getSelectableItems(field.item_id).map(item => (
-                              <option key={item.id} value={item.id}>
-                                {item.item_name} ({item.item_code})
-                              </option>
-                            ))}
-                          </select>
-                          <input className={styles.itemInput} type="number" min={1} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 1, message: 'Số lượng tối thiểu là 1' }, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking} />
-                          <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true, required: 'Bắt buộc', min: { value: 0, message: 'Đơn giá tối thiểu là 0' }, validate: v => !isNaN(v) || 'Bắt buộc' })} disabled={isWorking} />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <Controller
+                              control={control}
+                              name={`lines.${index}.item_id` as const}
+                              rules={{ required: 'Sản phẩm là bắt buộc' }}
+                              render={({ field: selectField }) => (
+                                <SearchableSelect
+                                  placeholder="-- Chọn sản phẩm --"
+                                  options={getSelectableItems(index, selectField.value).map(item => ({
+                                    label: `${item.item_name} (${item.item_code})`,
+                                    value: item.id || ''
+                                  }))}
+                                  value={selectField.value}
+                                  onChange={selectField.onChange}
+                                  disabled={isWorking}
+                                  error={errors.lines?.[index]?.item_id?.message}
+                                />
+                              )}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <Input
+                              type="number"
+                              min={0}
+                              size="sm"
+                              decimals={getDecimalsForUom(selectedItem?.stock_uom_name)}
+                              disabled={isWorking}
+                              error={errors.lines?.[index]?.quantity?.message}
+                              {...register(`lines.${index}.quantity` as const, {
+                                valueAsNumber: true,
+                                required: 'Bắt buộc',
+                                validate: {
+                                  required: (v) => !isNaN(v) || 'Bắt buộc nhập số lượng',
+                                  positive: (v) => v > 0 || 'Số lượng phải lớn hơn 0',
+                                },
+                              })}
+                            />
+                            <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', minWidth: '36px', whiteSpace: 'nowrap' }}>
+                              {selectedItem?.stock_uom_name || '-'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <Input
+                              type="number"
+                              min={0}
+                              size="sm"
+                              step={1000}
+                              disabled={isWorking}
+                              error={errors.lines?.[index]?.unit_price?.message}
+                              {...register(`lines.${index}.unit_price` as const, {
+                                valueAsNumber: true,
+                                required: 'Bắt buộc',
+                                min: { value: 0, message: 'Đơn giá tối thiểu là 0' }
+                              })}
+                            />
+                          </div>
                           <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa sản phẩm"
                             disabled={fields.length <= 1 || isWorking} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Trash2 size={16} />
@@ -478,6 +574,29 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
                 </div>
               </div>
             </div>
+            
+            {isReadOnly && orderData && (
+              <div style={{ marginTop: '20px', padding: '16px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', backgroundColor: 'var(--clr-background)' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: 'var(--fs-sm)' }}>
+                    <span style={{ fontWeight: 500 }}>Tiến độ Giao Hàng</span>
+                    <span style={{ fontWeight: 600, color: 'var(--clr-success)' }}>{Number(orderData.receipt_fulfillment_rate || 0)}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'var(--clr-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(Number(orderData.receipt_fulfillment_rate || 0), 100)}%`, height: '100%', background: 'var(--clr-success)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: 'var(--fs-sm)' }}>
+                    <span style={{ fontWeight: 500 }}>Tiến độ Thanh Toán</span>
+                    <span style={{ fontWeight: 600, color: 'var(--clr-primary)' }}>{Number(orderData.payment_fulfillment_rate || 0)}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'var(--clr-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(Number(orderData.payment_fulfillment_rate || 0), 100)}%`, height: '100%', background: 'var(--clr-primary)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+              </div>
+            )}
             
             {isReadOnly && (orderData?.stock_entries?.length || orderData?.invoices?.length) ? (
               <div style={{ marginTop: '24px', borderTop: '1px dashed var(--clr-border)', paddingTop: '16px' }}>

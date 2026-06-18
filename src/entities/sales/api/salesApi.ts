@@ -106,6 +106,7 @@ export type SalesOrderLine = {
   quantity?: number
   unit_price?: number
   line_total?: number
+  receipt_fulfillment_rate?: number
 }
 export type SalesOrder = {
   id?: string
@@ -121,6 +122,8 @@ export type SalesOrder = {
     | 'cancelled'
   total_amount?: number
   advance_paid_amount?: number
+  receipt_fulfillment_rate?: number
+  payment_fulfillment_rate?: number
   created_at?: string
   updated_at?: string
   lines?: SalesOrderLine[]

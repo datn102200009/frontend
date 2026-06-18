@@ -9,6 +9,7 @@ import { Eye } from 'lucide-react';
 import { useSalesOrderFilters } from '@entities/sales/lib/useSalesOrderFilters';
 import { SalesOrderStatusFilter } from '@entities/sales/ui/SalesOrderStatusFilter';
 import { shortId } from '@shared/lib/shortId';
+import { formatVND } from '@shared/lib/formatVND';
 
 interface SalesOrderTableProps {
   onView?: (id: string) => void;
@@ -36,7 +37,53 @@ export const SalesOrderTable: React.FC<SalesOrderTableProps> = ({ onView }) => {
       }),
       helper.accessor('total_amount', {
         header: 'Tổng Tiền',
-        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue()),
+        cell: (info) => formatVND(info.getValue()),
+      }),
+      helper.accessor('receipt_fulfillment_rate', {
+        header: 'Giao Hàng',
+        cell: (info) => {
+          const val = Number(info.getValue() || 0);
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px' }}>
+              <div style={{ flex: 1, backgroundColor: 'var(--clr-border)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    backgroundColor: 'var(--clr-success)', 
+                    height: '100%', 
+                    width: `${Math.min(val, 100)}%`,
+                    transition: 'width 0.3s ease'
+                  }} 
+                />
+              </div>
+              <span style={{ fontSize: 'var(--fs-xs)', fontWeight: 'var(--fw-semibold)', color: 'var(--clr-text-secondary)', minWidth: '32px', textAlign: 'right' }}>
+                {val}%
+              </span>
+            </div>
+          );
+        },
+      }),
+      helper.accessor('payment_fulfillment_rate', {
+        header: 'Thanh Toán',
+        cell: (info) => {
+          const val = Number(info.getValue() || 0);
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px' }}>
+              <div style={{ flex: 1, backgroundColor: 'var(--clr-border)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
+                <div 
+                  style={{ 
+                    backgroundColor: 'var(--clr-primary)', 
+                    height: '100%', 
+                    width: `${Math.min(val, 100)}%`,
+                    transition: 'width 0.3s ease'
+                  }} 
+                />
+              </div>
+              <span style={{ fontSize: 'var(--fs-xs)', fontWeight: 'var(--fw-semibold)', color: 'var(--clr-text-secondary)', minWidth: '32px', textAlign: 'right' }}>
+                {val}%
+              </span>
+            </div>
+          );
+        },
       }),
       helper.accessor('status', {
         header: 'Trạng Thái',
