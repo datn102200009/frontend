@@ -10,7 +10,7 @@ export function getDecimalsForUom(uomName?: string | null): number {
   
   // Các ĐVT không thể chia lẻ (chỉ nhận số nguyên)
   const integerUoms = [
-    'cái', 'bộ', 'chiếc', 'hộp', 'thùng', 'cuộn', 'cặp', 'quyển', 'bao', 'can', 'chai', 'viên', 'tờ', 'gói', 'khay', 'vỉ'
+    'cái', 'bộ', 'chiếc', 'hộp', 'thùng', 'cuộn', 'cặp', 'quyển', 'bao', 'can', 'chai', 'viên', 'tờ', 'gói', 'khay', 'vỉ', 'pcs', 'pc'
   ];
 
   if (integerUoms.includes(lowerName)) {

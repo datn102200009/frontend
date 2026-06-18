@@ -94,6 +94,15 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.stockEntryUpdateInput,
       }),
     }),
+    postInventoryStockEntryByStockEntryIdDelete: build.mutation<
+      PostInventoryStockEntryByStockEntryIdDeleteApiResponse,
+      PostInventoryStockEntryByStockEntryIdDeleteApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/inventory/stock-entry/${queryArg.stockEntryId}/delete/`,
+        method: 'POST',
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -143,6 +152,10 @@ export type PostInventoryStockEntryByStockEntryIdUpdateApiArg = {
   stockEntryId: string
   stockEntryUpdateInput: StockEntryUpdateInput
 }
+export type PostInventoryStockEntryByStockEntryIdDeleteApiResponse = unknown
+export type PostInventoryStockEntryByStockEntryIdDeleteApiArg = {
+  stockEntryId: string
+}
 export type StockEntryDetail = {
   id?: string
   item_id?: string
@@ -167,10 +180,12 @@ export type StockEntry = {
   id?: string
   name?: string
   purpose?: 'receipt' | 'issue' | 'transfer' | 'manufacture' | 'adjustment'
-  posting_date?: string
-  posting_date_formatted?: string
+  posting_date?: string | null
+  posting_date_formatted?: string | null
+  posted_at?: string | null
+  posted_at_formatted?: string | null
   remarks?: string | null
-  status?: 'draft' | 'submitted' | 'posted'
+  status?: 'draft' | 'submitted' | 'posted' | 'cancelled'
   purchase_order_id?: string | null
   sales_order_id?: string | null
   vendor_name?: string | null
@@ -187,7 +202,6 @@ export type ErrorResponse = {
 }
 export type StockEntryInputBase = {
   name: string
-  posting_date: string
   remarks?: string | null
 }
 export type StockInInput = StockEntryInputBase & {
@@ -246,4 +260,5 @@ export const {
   useGetInventoryStockLedgerBalanceQuery,
   useGetInventoryStockEntryListQuery,
   usePostInventoryStockEntryByStockEntryIdUpdateMutation,
+  usePostInventoryStockEntryByStockEntryIdDeleteMutation,
 } = injectedRtkApi

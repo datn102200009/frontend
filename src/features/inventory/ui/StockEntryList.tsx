@@ -6,11 +6,12 @@ import {
   usePostInventoryStockIssueByStockEntryIdApproveMutation, 
   usePostInventoryStockTransferByStockEntryIdApproveMutation,
   useGetInventoryStockLedgerBalanceQuery,
-  usePostInventoryStockEntryByStockEntryIdUpdateMutation
+  usePostInventoryStockEntryByStockEntryIdUpdateMutation,
+  usePostInventoryStockEntryByStockEntryIdDeleteMutation
 } from '@features/inventory/api/inventoryApi';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Plus, CheckCircle, Eye, ChevronDown } from 'lucide-react';
+import { Plus, CheckCircle, Eye, ChevronDown, XCircle } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
@@ -20,6 +21,8 @@ import { useToast } from '@shared/ui/Toast/Toast';
 import { StockEntryForm } from './StockEntryForm';
 import { StockEntryDetailModal } from './StockEntryDetailModal';
 import { formatDateTime } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
+import { getDecimalsForUom } from '@shared/lib/uomDecimals';
 import type { StockEntry, StockEntryDetail, StockBalance } from '@features/inventory/api/inventoryApi';
 
 
@@ -49,10 +52,12 @@ const STATUS_LABELS: Record<string, { label: string; variant: 'neutral' | 'succe
 export function StockEntryList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusParam = searchParams.get('status');
-  const initialStatus = statusParam === 'draft' ? 'draft' : statusParam === 'posted' ? 'posted' : 'all';
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted'>(initialStatus);
+  const initialStatus = (statusParam === 'draft' || statusParam === 'posted' || statusParam === 'cancelled') ? statusParam : 'all';
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'posted' | 'cancelled'>(initialStatus);
+  const [purposeFilter, setPurposeFilter] = useState<'all' | 'receipt' | 'issue' | 'transfer' | 'manufacture' | 'adjustment'>('all');
   const { data: entriesData, isLoading, refetch } = useGetInventoryStockEntryListQuery({
     status: statusFilter === 'all' ? undefined : statusFilter,
+    purpose: purposeFilter === 'all' ? undefined : purposeFilter,
     limit: 100
   });
   const entries = (entriesData && 'results' in entriesData) ? (entriesData.results || []) : (Array.isArray(entriesData) ? entriesData : []);
@@ -60,6 +65,8 @@ export function StockEntryList() {
   const { data: warehouses } = useGetMasterDataWarehousesListQuery();
   const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({ detailed: true });
   const [updateStockEntry, { isLoading: isUpdating }] = usePostInventoryStockEntryByStockEntryIdUpdateMutation();
+  const [deleteStockEntry, { isLoading: isDeleting }] = usePostInventoryStockEntryByStockEntryIdDeleteMutation();
+  const [cancelling, setCancelling] = useState<StockEntry | null>(null);
 
   const [approveStockIn, { isLoading: isApprovingIn }] = usePostInventoryStockInByStockEntryIdApproveMutation();
   const [approveStockIssue, { isLoading: isApprovingIssue }] = usePostInventoryStockIssueByStockEntryIdApproveMutation();
@@ -70,7 +77,7 @@ export function StockEntryList() {
   const [showCreate, setShowCreate] = useState<'stock_in' | 'stock_issue' | 'internal_transfer' | null>(null);
   const { toast } = useToast();
   
-  const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer || isUpdating;
+  const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer || isUpdating || isDeleting;
 
   const queryId = searchParams.get('id');
   const searchQuery = searchParams.get('search') || '';
@@ -149,6 +156,20 @@ export function StockEntryList() {
     }
   };
 
+  const confirmCancel = async () => {
+    if (!cancelling) return;
+    try {
+      await deleteStockEntry({ stockEntryId: cancelling.id! }).unwrap();
+      toast('success', `Đã hủy phiếu ${cancelling.name}`);
+      setCancelling(null);
+      refetch();
+    } catch (error: unknown) {
+      const err = error as { data?: { error?: string; detail?: string } };
+      const errMsg = err?.data?.error || err?.data?.detail || 'Có lỗi xảy ra khi hủy phiếu';
+      toast('error', errMsg);
+    }
+  };
+
   const columns = useMemo<ColumnDef<StockEntry, unknown>[]>(
     () => [
       { accessorKey: 'name', header: 'Mã Phiếu', size: 140 },
@@ -186,7 +207,7 @@ export function StockEntryList() {
       {
         id: 'actions',
         header: 'Thao Tác',
-        size: 100,
+        size: 130,
         enableSorting: false,
         cell: ({ row }) => (
           <TableActions>
@@ -204,11 +225,18 @@ export function StockEntryList() {
               }}
             />
             {row.original.status === 'draft' && (
-              <ActionButton
-                icon={<CheckCircle size={18} />}
-                title="Duyệt"
-                onClick={() => handleApprove(row.original)}
-              />
+              <>
+                <ActionButton
+                  icon={<CheckCircle size={18} />}
+                  title="Duyệt"
+                  onClick={() => handleApprove(row.original)}
+                />
+                <ActionButton
+                  icon={<XCircle size={18} color="var(--clr-error)" />}
+                  title="Hủy"
+                  onClick={() => setCancelling(row.original)}
+                />
+              </>
             )}
           </TableActions>
         )
@@ -237,7 +265,7 @@ export function StockEntryList() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'var(--fs-lg)', fontWeight: 600, margin: 0 }}>Phiếu Kho</h2>
-          <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)', marginTop: 2 }}>{entries.length} phiếu</p>
+          <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)', marginTop: 2 }}>{formatNumber(entries.length, 0)} phiếu</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <Button icon={<Plus size={16} />} onClick={() => setShowCreate('stock_in')}>Nhập Kho</Button>
@@ -253,13 +281,34 @@ export function StockEntryList() {
           <div className="filterSelectWrapper">
             <select
               value={statusFilter}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'posted')}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'posted' | 'cancelled')}
               className="filterSelectInput"
               aria-label="Lọc trạng thái phiếu kho"
             >
               <option value="all">Tất cả phiếu kho</option>
               <option value="draft">Chờ duyệt (Nháp)</option>
               <option value="posted">Đã duyệt (Ghi sổ)</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+            <ChevronDown size={14} className="filterSelectIcon" />
+          </div>
+        </div>
+
+        <div className="filterGroup">
+          <span className="filterLabel">Loại phiếu:</span>
+          <div className="filterSelectWrapper">
+            <select
+              value={purposeFilter}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPurposeFilter(e.target.value as any)}
+              className="filterSelectInput"
+              aria-label="Lọc loại phiếu kho"
+            >
+              <option value="all">Tất cả loại</option>
+              <option value="receipt">Nhập kho</option>
+              <option value="issue">Xuất kho</option>
+              <option value="transfer">Chuyển kho</option>
+              <option value="manufacture">Sản xuất</option>
+              <option value="adjustment">Điều chỉnh</option>
             </select>
             <ChevronDown size={14} className="filterSelectIcon" />
           </div>
@@ -273,7 +322,7 @@ export function StockEntryList() {
           open
           onClose={() => setApproving(null)}
           title="Xác Nhận Phê Duyệt"
-          size={approving.purpose === 'issue' ? 'md' : 'sm'}
+          size="md"
           footer={
             <>
               <Button variant="ghost" onClick={() => setApproving(null)}>Hủy</Button>
@@ -285,6 +334,100 @@ export function StockEntryList() {
             <p style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text)', margin: 0 }}>
               Bạn có chắc chắn muốn phê duyệt phiếu <strong>"{approving.name}"</strong> không? Hành động này sẽ ghi sổ cái và không thể hoàn tác.
             </p>
+
+            <div style={{
+              padding: 'var(--sp-3)',
+              background: 'var(--clr-surface-alt)',
+              border: '1px solid var(--clr-border)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--fs-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}>
+              <div style={{ fontWeight: 600, fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Thông tin tóm tắt phiếu
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '6px', fontSize: 'var(--fs-xs)' }}>
+                <span style={{ color: 'var(--clr-text-muted)' }}>Loại phiếu:</span>
+                <span style={{ fontWeight: 500 }}>
+                  {approving.purpose === 'issue' && approving.sales_order_id ? 'Xuất kho' : (PURPOSE_LABELS[approving.purpose || ''] || approving.purpose)}
+                </span>
+                
+                {approving.purpose === 'transfer' && (
+                  <>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>Từ kho:</span>
+                    <span style={{ fontWeight: 500 }}>
+                      {approving.details?.[0]?.source_warehouse_name || '—'}
+                    </span>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>Đến kho:</span>
+                    <span style={{ fontWeight: 500 }}>
+                      {approving.details?.[0]?.target_warehouse_name || '—'}
+                    </span>
+                  </>
+                )}
+
+                {approving.purpose === 'receipt' && !selectedWarehouseId && (
+                  <>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>Kho nhận:</span>
+                    <span style={{ fontWeight: 500 }}>
+                      {approving.details?.[0]?.target_warehouse_name || '—'}
+                    </span>
+                  </>
+                )}
+
+                {approving.purpose === 'issue' && !selectedWarehouseId && (
+                  <>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>Kho xuất:</span>
+                    <span style={{ fontWeight: 500 }}>
+                      {approving.details?.[0]?.source_warehouse_name || '—'}
+                    </span>
+                  </>
+                )}
+                
+                {selectedWarehouseId && (
+                  <>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>Kho chỉ định:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--clr-primary)' }}>
+                      {(warehouses || []).find(w => w.id === selectedWarehouseId)?.name || '—'}
+                    </span>
+                  </>
+                )}
+
+                {approving.remarks && (
+                  <>
+                    <span style={{ color: 'var(--clr-text-muted)' }}>Ghi chú:</span>
+                    <span style={{ fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>{approving.remarks}</span>
+                  </>
+                )}
+              </div>
+
+              <div style={{ marginTop: '4px', borderTop: '1px solid var(--clr-border)', paddingTop: '8px' }}>
+                <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--clr-text-secondary)', marginBottom: '4px' }}>Danh sách vật tư ({formatNumber(approving.details?.length || 0, 0)}):</div>
+                <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--fs-xs)' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--clr-border)', textAlign: 'left', color: 'var(--clr-text-secondary)' }}>
+                        <th style={{ padding: '4px 0' }}>Vật tư</th>
+                        <th style={{ padding: '4px 0', textAlign: 'right' }}>Số lượng</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(approving.details || []).map((detail, idx) => (
+                        <tr key={idx} style={{ borderBottom: idx < (approving.details || []).length - 1 ? '1px dashed var(--clr-border)' : 'none' }}>
+                          <td style={{ padding: '5px 0', color: 'var(--clr-text)' }}>
+                            {detail.item_name || detail.item_code}
+                          </td>
+                          <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }}>
+                            {formatNumber(detail.quantity, getDecimalsForUom(detail.uom_name))} {detail.uom_name || ''}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
 
             {(approving.purpose === 'receipt' || approving.purpose === 'issue') && (
               <div>
@@ -339,14 +482,14 @@ export function StockEntryList() {
                           return (
                             <tr key={idx} style={{ borderBottom: idx < (approving.details || []).length - 1 ? '1px solid var(--clr-border)' : 'none' }}>
                               <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code}</td>
-                              <td style={{ padding: '8px 12px', textAlign: 'right' }}>{detail.quantity} {detail.uom_name || ''}</td>
-                              <td style={{ padding: '8px 12px', textAlign: 'right', color: isSufficient ? 'inherit' : 'var(--clr-error)' }}>{balance}</td>
+                              <td style={{ padding: '8px 12px', textAlign: 'right' }}>{formatNumber(detail.quantity, getDecimalsForUom(detail.uom_name))} {detail.uom_name || ''}</td>
+                              <td style={{ padding: '8px 12px', textAlign: 'right', color: isSufficient ? 'inherit' : 'var(--clr-error)' }}>{formatNumber(balance, getDecimalsForUom(detail.uom_name))}</td>
                               <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                                 <span style={{
                                   color: isSufficient ? 'var(--clr-success)' : 'var(--clr-error)',
                                   fontWeight: 600
                                 }}>
-                                  {isSufficient ? 'Đủ hàng' : `Thiếu ${(detail.quantity || 0) - balance}`}
+                                  {isSufficient ? 'Đủ hàng' : `Thiếu ${formatNumber((detail.quantity || 0) - balance, getDecimalsForUom(detail.uom_name))}`}
                                 </span>
                               </td>
                             </tr>
@@ -388,6 +531,39 @@ export function StockEntryList() {
                 Vui lòng chọn kho trước khi phê duyệt.
               </div>
             )}
+          </div>
+        </Modal>
+      )}
+
+      {cancelling && (
+        <Modal
+          open
+          onClose={() => setCancelling(null)}
+          title="Xác Nhận Hủy Phiếu"
+          size="sm"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setCancelling(null)} disabled={isDeleting}>Đóng</Button>
+              <Button variant="danger" onClick={confirmCancel} disabled={isDeleting}>
+                {isDeleting ? 'Đang hủy...' : 'Xác nhận Hủy'}
+              </Button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
+            <p style={{ margin: 0 }}>
+              Bạn có chắc chắn muốn <strong style={{ color: 'var(--clr-error)' }}>HỦY</strong> phiếu{' '}
+              <strong>"{cancelling.name}"</strong> không?
+            </p>
+            <div style={{
+              padding: 'var(--sp-2) var(--sp-3)',
+              background: 'var(--clr-warning-bg)',
+              color: 'var(--clr-warning)',
+              fontSize: 'var(--fs-xs)',
+              borderRadius: 'var(--radius-md)',
+            }}>
+              ⚠️ Hành động này sẽ xóa vĩnh viễn phiếu khỏi hệ thống và không thể khôi phục.
+            </div>
           </div>
         </Modal>
       )}
