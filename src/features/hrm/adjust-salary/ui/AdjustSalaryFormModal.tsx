@@ -4,6 +4,7 @@ import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './AdjustSalaryModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
 
 interface AdjustSalaryFormModalProps {
   open: boolean;
@@ -59,26 +60,22 @@ export const AdjustSalaryFormModal: React.FC<AdjustSalaryFormModalProps> = ({
       }
     >
       <form onSubmit={(e) => e.preventDefault()}>
-        <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
-          <label className={styles.label} htmlFor="new_salary_base">
-            Mức lương cơ bản mới (VND) <span className={styles.required}>*</span>
-          </label>
-          <input
+        <div style={{ marginBottom: '16px' }}>
+          <Input
             id="new_salary_base"
             type="number"
+            label="Mức lương cơ bản mới (VND)"
+            required={true}
             min={0}
-            step={100000}
-            className={styles.input}
+            decimals={0}
             {...register('new_salary_base', {
               required: 'Lương cơ bản mới là bắt buộc',
               valueAsNumber: true,
               validate: (val) =>
                 (val !== undefined && val !== null && !isNaN(val)) || 'Lương cơ bản mới là bắt buộc',
             })}
+            error={errors.new_salary_base?.message}
           />
-          {errors.new_salary_base && (
-            <span className={styles.errorText}>{errors.new_salary_base.message}</span>
-          )}
         </div>
         <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
           <label className={styles.label} htmlFor="reason">

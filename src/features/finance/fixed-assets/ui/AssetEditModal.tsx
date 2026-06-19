@@ -15,7 +15,6 @@ interface AssetEditFormData {
   asset_code: string;
   asset_name: string;
   original_value: string;
-  salvage_value: string;
   depreciation_method: 'straight_line' | 'unit_of_production';
   useful_life_months: number;
   designed_capacity: number | '';
@@ -37,7 +36,6 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
       asset_code: '',
       asset_name: '',
       original_value: '0',
-      salvage_value: '0',
       depreciation_method: 'straight_line',
       useful_life_months: 12,
       designed_capacity: '',
@@ -45,7 +43,24 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
   });
 
   const watchDepreciationMethod = watch('depreciation_method');
-  const isCoreFieldsDisabled = editingAsset ? (Number(editingAsset.accumulated_depreciation) || 0) > 0 : false;
+
+  const isCoreFieldsDisabled = (() => {
+    if (!editingAsset) return false;
+    const hasAccumulated = (Number(editingAsset.accumulated_depreciation) || 0) > 0;
+    const isUOP = editingAsset.depreciation_method === 'unit_of_production';
+    return hasAccumulated || isUOP;
+  })();
+
+  const usefulLifeHelperText = (() => {
+    if (!editingAsset) return undefined;
+    if (editingAsset.depreciation_method === 'unit_of_production') {
+      return 'TSCĐ khấu hao theo sản lượng không sửa được số tháng sử dụng hữu ích.';
+    }
+    if ((Number(editingAsset.accumulated_depreciation) || 0) > 0) {
+      return 'TSCĐ đã phát sinh khấu hao — không thể thay đổi số tháng sử dụng hữu ích.';
+    }
+    return undefined;
+  })();
 
   useEffect(() => {
     if (editingAsset) {
@@ -53,7 +68,6 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
         asset_code: editingAsset.asset_code || '',
         asset_name: editingAsset.asset_name || '',
         original_value: editingAsset.original_value || '0',
-        salvage_value: editingAsset.salvage_value || '0',
         depreciation_method: (editingAsset.depreciation_method as 'straight_line' | 'unit_of_production') || 'straight_line',
         useful_life_months: editingAsset.useful_life_months || 0,
         designed_capacity: editingAsset.designed_capacity || '',
@@ -67,7 +81,7 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
       const fixedAssetUpdateInput: { asset_name?: string; useful_life_months?: number } = {
         asset_name: data.asset_name,
       };
-      if (data.depreciation_method === 'straight_line') {
+      if (data.depreciation_method === 'straight_line' && !isCoreFieldsDisabled) {
         fixedAssetUpdateInput.useful_life_months = Number(data.useful_life_months);
       }
       await updateAsset({
@@ -118,7 +132,7 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
             fontSize: 'var(--fs-xs)',
           }}
         >
-          ⚠️ Tài sản đã phát sinh trích khấu hao. Một số thông tin cốt lõi (nguyên giá, phương pháp khấu hao, số tháng sử dụng hữu ích) sẽ bị khóa chỉnh sửa.
+          ⚠️ Tài sản đã phát sinh trích khấu hao hoặc khấu hao theo sản lượng. Số tháng sử dụng hữu ích sẽ bị khóa chỉnh sửa.
         </div>
       )}
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
@@ -139,19 +153,11 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
         <div className={styles.row}>
           <Input
             label="Nguyên giá (VND)"
-            type="text"
+            type="number"
+            decimals={0}
             disabled
             {...register('original_value')}
           />
-          <Input
-            label="Giá trị thanh lý ước tính (VND)"
-            type="text"
-            disabled
-            {...register('salvage_value')}
-          />
-        </div>
-
-        <div className={styles.row}>
           <FormSelect
             label="Phương pháp khấu hao"
             disabled
@@ -162,12 +168,17 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
             value={watchDepreciationMethod}
             onChange={() => {}}
           />
+        </div>
+
+        <div className={styles.row}>
           {watchDepreciationMethod === 'straight_line' ? (
             <Input
               label="Số tháng khấu hao hữu ích"
               type="number"
+              decimals={0}
               required
               disabled={isCoreFieldsDisabled}
+              helperText={usefulLifeHelperText}
               error={errors.useful_life_months?.message}
               {...register('useful_life_months', {
                 required: watchDepreciationMethod === 'straight_line' ? 'Số tháng khấu hao là bắt buộc' : false,
@@ -176,20 +187,13 @@ export function AssetEditModal({ open, editingAsset, onClose, onSave }: AssetEdi
               })}
             />
           ) : (
-            <div />
-          )}
-        </div>
-
-        <div className={styles.row}>
-          {watchDepreciationMethod === 'unit_of_production' ? (
             <Input
               label="Công suất thiết kế (Tổng sản lượng)"
               type="number"
+              decimals={0}
               disabled
               {...register('designed_capacity')}
             />
-          ) : (
-            <div />
           )}
           <div />
         </div>

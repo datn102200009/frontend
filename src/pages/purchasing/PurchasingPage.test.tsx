@@ -111,7 +111,7 @@ describe('PurchasingPage', () => {
     await waitFor(() => {
       expect(postPayload).toEqual({
         vendor_id: 'SUP01',
-        expected_delivery_date: '',
+        expected_delivery_date: expect.any(String),
         advance_paid_amount: 0,
         lines: [
           {

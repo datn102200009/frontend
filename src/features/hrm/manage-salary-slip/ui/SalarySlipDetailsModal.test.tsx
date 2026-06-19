@@ -60,9 +60,8 @@ describe('SalarySlipDetailsModal', () => {
 
   it('renders standard days input as read-only with a value of 26 by default', () => {
     renderWithProviders(<SalarySlipDetailsModal {...defaultProps} />);
-    const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
-    expect(standardDaysInput).toHaveValue(26);
-    expect(standardDaysInput).toHaveAttribute('readonly');
+    expect(screen.getByText(/Số ngày công tiêu chuẩn tháng:/i)).toBeInTheDocument();
+    expect(screen.getByText('26')).toBeInTheDocument();
   });
 
   it('renders standard days input as read-only with dynamic standard working days from breakdown', () => {
@@ -77,9 +76,8 @@ describe('SalarySlipDetailsModal', () => {
     renderWithProviders(
       <SalarySlipDetailsModal {...defaultProps} salarySlip={customSlip} />
     );
-    const standardDaysInput = screen.getByLabelText(/Số ngày công tiêu chuẩn tháng:/i);
-    expect(standardDaysInput).toHaveValue(24);
-    expect(standardDaysInput).toHaveAttribute('readonly');
+    expect(screen.getByText(/Số ngày công tiêu chuẩn tháng:/i)).toBeInTheDocument();
+    expect(screen.getByText('24')).toBeInTheDocument();
   });
 
   it('renders "Gửi Finance Duyệt" button when status is calculated and hrm.payroll_submit permission is present', () => {

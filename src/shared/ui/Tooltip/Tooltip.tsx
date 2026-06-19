@@ -35,8 +35,6 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children }) => {
       className={styles.tooltipContainer}
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
-      onFocus={showTooltip}
-      onBlur={hideTooltip}
     >
       {children}
       {visible &&

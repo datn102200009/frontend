@@ -95,6 +95,12 @@ const NAV_SECTIONS: NavSection[] = [
       { to: '/hrm/payroll', icon: <Wallet size={20} />, label: 'Bảng Lương', permission: 'finance.view_salaryslip' },
     ],
   },
+  {
+    label: 'Hệ Thống',
+    items: [
+      { to: '/accounts', icon: <Users size={20} />, label: 'Quản lý Tài Khoản', permission: 'accounts.view_user' },
+    ],
+  },
 ];
 
 export function Sidebar({ open, onClose }: SidebarProps) {

@@ -192,6 +192,26 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.salarySlipBulkApprovePayInput,
       }),
     }),
+    postFinanceSalarySlipsBulkApprove: build.mutation<
+      PostFinanceSalarySlipsBulkApproveApiResponse,
+      PostFinanceSalarySlipsBulkApproveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/bulk-approve/`,
+        method: 'POST',
+        body: queryArg.salarySlipBulkApproveInput,
+      }),
+    }),
+    postFinanceSalarySlipsBulkPay: build.mutation<
+      PostFinanceSalarySlipsBulkPayApiResponse,
+      PostFinanceSalarySlipsBulkPayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/bulk-pay/`,
+        method: 'POST',
+        body: queryArg.salarySlipBulkPayInput,
+      }),
+    }),
     postFinanceSalarySlipsByIdApprove: build.mutation<
       PostFinanceSalarySlipsByIdApproveApiResponse,
       PostFinanceSalarySlipsByIdApproveApiArg
@@ -373,6 +393,16 @@ export type PostFinanceSalarySlipsBulkApprovePayApiResponse =
 export type PostFinanceSalarySlipsBulkApprovePayApiArg = {
   salarySlipBulkApprovePayInput: SalarySlipBulkApprovePayInput
 }
+export type PostFinanceSalarySlipsBulkApproveApiResponse =
+  /** status 200 Phê duyệt thành công. */ SalarySlip[]
+export type PostFinanceSalarySlipsBulkApproveApiArg = {
+  salarySlipBulkApproveInput: SalarySlipBulkApproveInput
+}
+export type PostFinanceSalarySlipsBulkPayApiResponse =
+  /** status 200 Chi trả thành công. */ SalarySlip[]
+export type PostFinanceSalarySlipsBulkPayApiArg = {
+  salarySlipBulkPayInput: SalarySlipBulkPayInput
+}
 export type PostFinanceSalarySlipsByIdApproveApiResponse =
   /** status 200 Phê duyệt thành công. */ SalarySlip
 export type PostFinanceSalarySlipsByIdApproveApiArg = {
@@ -428,6 +458,7 @@ export type FixedAsset = {
   asset_code?: string
   asset_name?: string
   original_value?: string
+  /** DEPRECATED - giá trị này không còn ý nghĩa nghiệp vụ */
   salvage_value?: string
   depreciation_method?: 'straight_line' | 'unit_of_production'
   useful_life_months?: number | null
@@ -449,11 +480,9 @@ export type FixedAsset = {
 export type FixedAssetPurchaseInput = {
   asset_name: string
   original_value: string
-  salvage_value?: string
   depreciation_method: 'straight_line' | 'unit_of_production'
   useful_life_months?: number | null
   designed_capacity?: number | null
-  purchase_date: string
   vendor_name: string
   payment_method?: 'cash' | 'bank_transfer'
 }
@@ -462,7 +491,6 @@ export type FixedAssetUpdateInput = {
   useful_life_months?: number
 }
 export type FixedAssetRequestDisposeInput = {
-  disposal_date: string
   disposal_value?: string
   remarks?: string | null
 }
@@ -575,6 +603,13 @@ export type SalarySlipBulkApprovePayInput = {
   salary_period: string
   payment_method?: 'cash' | 'bank_transfer'
 }
+export type SalarySlipBulkApproveInput = {
+  salary_period: string
+}
+export type SalarySlipBulkPayInput = {
+  salary_period: string
+  payment_method?: 'cash' | 'bank_transfer'
+}
 export type SalarySlipRejectInput = {
   reason: string
 }
@@ -602,6 +637,8 @@ export const {
   useGetFinanceInvoicesSalesByPkQuery,
   usePostFinanceInvoicesSalesByPkCollectMutation,
   usePostFinanceSalarySlipsBulkApprovePayMutation,
+  usePostFinanceSalarySlipsBulkApproveMutation,
+  usePostFinanceSalarySlipsBulkPayMutation,
   usePostFinanceSalarySlipsByIdApproveMutation,
   usePostFinanceSalarySlipsByIdRejectMutation,
   usePostFinanceSalarySlipsByIdPayMutation,

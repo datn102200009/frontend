@@ -6,6 +6,7 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './EmployeeFormModal.module.css';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { shiftYears } from '@shared/lib/dateLimits';
 
 interface EmployeeUpdateModalProps {
   open: boolean;
@@ -48,6 +49,9 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
       date_of_birth: '',
     },
   });
+
+  const minBirth = shiftYears(-100);
+  const maxBirth = shiftYears(-16);
 
   const [prevOpen, setPrevOpen] = useState(open);
   const [prevEmployee, setPrevEmployee] = useState(employee);
@@ -154,6 +158,8 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
           label="Ngày sinh"
           control={control}
           error={errors.date_of_birth?.message}
+          minDate={minBirth}
+          maxDate={maxBirth}
           disabled={isLoading}
         />
 

@@ -143,6 +143,12 @@ describe('LandedCostPage - Centralized Shipment Workflow', () => {
     server.use(
       http.get('*/api/v1/purchasing/shipments/*', () => {
         return HttpResponse.json([inspectingShipment]);
+      }),
+      http.get('*/api/v1/master-data/warehouses/*', () => {
+        return HttpResponse.json([
+          { id: 'WH03', name: 'Kho Phụ Tùng X' },
+          { id: 'WH02', name: 'Kho Thành Phẩm B' }
+        ]);
       })
     );
 

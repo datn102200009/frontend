@@ -478,14 +478,14 @@
 }
 
 .itemCode {
-  font-family: monospace;
-  font-weight: var(--fw-semibold);
-  color: var(--clr-text);
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
 }
 
 .itemName {
-  font-size: var(--fs-xs);
-  color: var(--clr-text-muted);
+  font-family: inherit;
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text);
 }
 
 .inputNumber {
@@ -527,6 +527,21 @@
   background-color: var(--clr-bg-surface);
   color: var(--clr-text-muted);
   cursor: not-allowed;
+}
+
+.poSelect {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--br-md);
+  font-size: var(--fs-sm);
+  outline: none;
+  background-color: white;
+  transition: border-color 0.15s ease;
+}
+
+.poSelect:focus {
+  border-color: var(--clr-primary);
 }
 
 .qcBadge {

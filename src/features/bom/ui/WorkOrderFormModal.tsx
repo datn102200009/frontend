@@ -4,16 +4,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
+import { TextArea } from '@shared/ui/Input/TextArea';
 import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
+import { formatNumber } from '@shared/lib/formatNumber';
 import {
   useGetManufacturingBomListQuery,
   usePostManufacturingWorkOrderCreateMutation,
   usePostManufacturingMaterialPreviewMutation,
 } from '@features/manufacturing/api/manufacturingApi';
-import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
+import { useGetMasterDataWarehousesListQuery, useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
+import { extractApiError } from '@shared/lib/extractApiError';
+import { getDecimalsForUom } from '@shared/lib/uomDecimals';
 import { WorkOrderFixedAssetsSection } from './WorkOrderFixedAssetsSection';
 
 const woSchema = z.object({
@@ -21,7 +26,7 @@ const woSchema = z.object({
   bom_id: z.string().min(1, 'Bắt buộc chọn định mức (BOM)'),
   quantity: z.number()
     .refine((val) => !isNaN(val), 'Bắt buộc')
-    .refine((val) => val >= 1, 'Số lượng tối thiểu là 1'),
+    .refine((val) => val > 0, 'Số lượng phải lớn hơn 0'),
   source_warehouse_id: z.string().min(1, 'Bắt buộc chọn kho nguồn'),
   target_warehouse_id: z.string().min(1, 'Bắt buộc chọn kho đích'),
   production_warehouse_id: z.string().min(1, 'Bắt buộc chọn kho sản xuất'),
@@ -29,6 +34,14 @@ const woSchema = z.object({
   planned_end_date: z.string().optional().nullable(),
   remarks: z.string().optional().nullable(),
   fixed_asset_ids: z.array(z.string()),
+}).superRefine((data, ctx) => {
+  if (data.planned_end_date && data.planned_end_date !== '' && data.planned_start_date && data.planned_end_date < data.planned_start_date) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['planned_end_date'],
+      message: 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu',
+    });
+  }
 });
 
 type WoFormData = z.infer<typeof woSchema>;
@@ -64,9 +77,10 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
   const [getPreview, { isLoading: isPreviewing }] = usePostManufacturingMaterialPreviewMutation();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [previewData, setPreviewData] = useState<any[]>([]);
+  const [pendingFormData, setPendingFormData] = useState<WoFormData | null>(null);
 
-
-
+  const { data: itemsResponse } = useGetMasterDataItemsListQuery({ limit: 1000 });
+  const itemsList = itemsResponse?.results || [];
 
   const {
     register,
@@ -74,6 +88,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
     reset,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<WoFormData>({
     resolver: zodResolver(woSchema),
@@ -94,16 +109,33 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
   const watchBomId = watch('bom_id');
   const watchQty = watch('quantity');
   const watchSourceWH = watch('source_warehouse_id');
+  const selectedBom = boms.find((b: any) => b.id === watchBomId);
+  const selectedItem = itemsList.find((i: any) => i.id === selectedBom?.item);
 
   useEffect(() => {
     if (open) {
+      const defaultSource = warehouses.find((w: any) => {
+        const name = w.name.toLowerCase();
+        return name.includes('nguyên liệu') || name.includes('nguyên vật liệu') || name.includes('nguồn');
+      })?.id ?? warehouses[0]?.id ?? '';
+
+      const defaultProd = warehouses.find((w: any) => {
+        const name = w.name.toLowerCase();
+        return name.includes('bán thành phẩm') || name.includes('sản xuất') || name.includes('tạm giữ') || name.includes('wip');
+      })?.id ?? warehouses[0]?.id ?? '';
+
+      const defaultTarget = warehouses.find((w: any) => {
+        const name = w.name.toLowerCase();
+        return (name.includes('thành phẩm') && !name.includes('bán')) || name.includes('đích');
+      })?.id ?? warehouses.find((w: any) => w.id !== defaultSource)?.id ?? warehouses[0]?.id ?? '';
+
       reset({
         name: '',
         bom_id: '',
         quantity: 1,
-        source_warehouse_id: '',
-        target_warehouse_id: '',
-        production_warehouse_id: '',
+        source_warehouse_id: defaultSource,
+        target_warehouse_id: defaultTarget,
+        production_warehouse_id: defaultProd,
         planned_start_date: new Date().toISOString().slice(0, 10),
         planned_end_date: '',
         remarks: '',
@@ -111,7 +143,37 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
       });
       setPreviewData([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, reset]);
+
+  useEffect(() => {
+    if (open && warehouses.length > 0) {
+      const currentSource = watch('source_warehouse_id');
+      const currentProd = watch('production_warehouse_id');
+      const currentTarget = watch('target_warehouse_id');
+      
+      if (!currentSource || !currentProd || !currentTarget) {
+        const defaultSource = warehouses.find((w: any) => {
+          const name = w.name.toLowerCase();
+          return name.includes('nguyên liệu') || name.includes('nguyên vật liệu') || name.includes('nguồn');
+        })?.id ?? warehouses[0]?.id ?? '';
+
+        const defaultProd = warehouses.find((w: any) => {
+          const name = w.name.toLowerCase();
+          return name.includes('bán thành phẩm') || name.includes('sản xuất') || name.includes('tạm giữ') || name.includes('wip');
+        })?.id ?? warehouses[0]?.id ?? '';
+
+        const defaultTarget = warehouses.find((w: any) => {
+          const name = w.name.toLowerCase();
+          return (name.includes('thành phẩm') && !name.includes('bán')) || name.includes('đích');
+        })?.id ?? warehouses.find((w: any) => w.id !== defaultSource)?.id ?? warehouses[0]?.id ?? '';
+                              
+        if (!currentSource) setValue('source_warehouse_id', defaultSource);
+        if (!currentProd) setValue('production_warehouse_id', defaultProd);
+        if (!currentTarget) setValue('target_warehouse_id', defaultTarget);
+      }
+    }
+  }, [open, warehouses, setValue, watch]);
 
   useEffect(() => {
     const fetchPreview = async () => {
@@ -142,14 +204,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
     return () => clearTimeout(timer);
   }, [watchBomId, watchQty, watchSourceWH, getPreview]);
 
-  const onSubmit = async (data: WoFormData) => {
-    // Check if there are missing materials
-    const hasMissing = previewData.some(item => item.missing_qty > 0);
-    if (hasMissing) {
-      const confirmProceed = window.confirm("Cảnh báo: Có nguyên liệu bị thiếu hụt. Bạn có chắc chắn muốn tạo lệnh sản xuất?");
-      if (!confirmProceed) return;
-    }
-
+  const executeCreate = async (data: WoFormData) => {
     try {
       await createWo({
         workOrderInput: {
@@ -171,8 +226,18 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
       onClose();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast('error', error?.data?.detail || 'Có lỗi xảy ra khi tạo lệnh sản xuất');
+      toast('error', extractApiError(error, 'Có lỗi xảy ra khi tạo lệnh sản xuất'));
     }
+  };
+
+  const onSubmit = async (data: WoFormData) => {
+    // Check if there are missing materials
+    const hasMissing = previewData.some(item => item.missing_qty > 0);
+    if (hasMissing) {
+      setPendingFormData(data);
+      return;
+    }
+    await executeCreate(data);
   };
 
   return (
@@ -180,7 +245,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
       open={open}
       onClose={onClose}
       title="Tạo Lệnh Sản Xuất"
-      size="lg"
+      size="xl"
       footer={
         <>
           <Button variant="ghost" onClick={onClose} disabled={isCreating}>
@@ -206,23 +271,31 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
             name="bom_id"
             control={control}
             render={({ field }) => (
-              <SearchableSelect
-                label="Chọn định mức (BOM)"
-                required
-                options={bomOptions}
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.bom_id?.message}
-                disabled={isCreating || isLoadingBoms}
-              />
+              <div>
+                <SearchableSelect
+                  label="Chọn định mức (BOM)"
+                  required
+                  options={bomOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.bom_id?.message}
+                  disabled={isCreating || isLoadingBoms}
+                />
+                {selectedBom && (
+                  <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', marginTop: '4px' }}>
+                    Sản phẩm: <strong>{selectedBom.item_name}</strong>
+                  </div>
+                )}
+              </div>
             )}
           />
 
           <Input
             label="Số lượng yêu cầu"
             type="number"
-            step="0.01"
+            min={0}
             required
+            decimals={getDecimalsForUom(selectedItem?.stock_uom_name)}
             disabled={isCreating}
             error={errors.quantity?.message}
             {...register('quantity', { valueAsNumber: true })}
@@ -291,10 +364,11 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
               control={control}
               error={errors.planned_end_date?.message}
               disabled={isCreating}
+              minDate={watch('planned_start_date')}
             />
           </div>
           
-          <Input
+          <TextArea
             label="Ghi chú"
             disabled={isCreating}
             error={errors.remarks?.message}
@@ -332,7 +406,7 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--fs-sm)' }}>
                 <thead style={{ background: 'var(--clr-surface-alt)', textAlign: 'left' }}>
                   <tr>
-                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--clr-border)' }}>Mã</th>
+                    <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--clr-border)' }}>Linh kiện</th>
                     <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--clr-border)' }}>Cần</th>
                     <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--clr-border)' }}>Có</th>
                     <th style={{ padding: '8px 12px', borderBottom: '1px solid var(--clr-border)' }}>Thiếu</th>
@@ -341,13 +415,21 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
                 <tbody>
                   {previewData.map((item, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid var(--clr-border)' }}>
-                      <td style={{ padding: '8px 12px', fontWeight: 500 }} title={item.item_name}>{item.item_code}</td>
-                      <td style={{ padding: '8px 12px' }}>{item.required_qty}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <div style={{ fontWeight: 500 }} title={item.item_name}>{item.item_name}</div>
+                        <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)' }}>{item.item_code}</div>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(item.required_qty)}</span>
+                        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', marginLeft: 4 }}>{item.uom || ''}</span>
+                      </td>
                       <td style={{ padding: '8px 12px', color: item.available_qty < item.required_qty ? 'var(--clr-error)' : 'var(--clr-success)' }}>
-                        {item.available_qty}
+                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(item.available_qty)}</span>
+                        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', marginLeft: 4 }}>{item.uom || ''}</span>
                       </td>
                       <td style={{ padding: '8px 12px', color: item.missing_qty > 0 ? 'var(--clr-error)' : 'inherit', fontWeight: item.missing_qty > 0 ? 600 : 400 }}>
-                        {item.missing_qty}
+                        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatNumber(item.missing_qty)}</span>
+                        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', marginLeft: 4 }}>{item.uom || ''}</span>
                       </td>
                     </tr>
                   ))}
@@ -357,6 +439,23 @@ export function WorkOrderFormModal({ open, onClose, onSuccess }: Props) {
           )}
         </div>
       </form>
+      {pendingFormData && (
+        <ConfirmModal
+          open={!!pendingFormData}
+          title="Cảnh báo thiếu hụt nguyên liệu"
+          message="Có nguyên liệu bị thiếu hụt so với yêu cầu. Bạn có chắc chắn muốn tiếp tục tạo lệnh sản xuất này không?"
+          onConfirm={() => {
+            if (pendingFormData) {
+              executeCreate(pendingFormData);
+              setPendingFormData(null);
+            }
+          }}
+          onCancel={() => setPendingFormData(null)}
+          isLoading={isCreating}
+          nested
+          zIndex={1100}
+        />
+      )}
     </Modal>
   );
 }

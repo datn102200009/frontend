@@ -13,6 +13,7 @@ import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
 import { formatDateVN } from '@shared/lib/formatDate';
 import { batchAttendanceSchema } from '../model/batch-attendance.schema';
 import styles from './BatchAttendanceModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
 
 import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
@@ -329,12 +330,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                       </select>
                     </td>
                     <td className={styles.td}>
-                      <input
+                      <Input
                         aria-label={`Số giờ công của ${record.employee_name}`}
                         type="number"
                         min={0}
                         max={24}
-                        step={0.5}
+                        decimals={1}
                         value={record.work_hours}
                         onChange={(e) => handleFieldChange(idx, 'work_hours', Number(e.target.value))}
                         className={styles.numberInput}
@@ -342,12 +343,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                       />
                     </td>
                     <td className={styles.td}>
-                      <input
+                      <Input
                         aria-label={`Giờ OT của ${record.employee_name}`}
                         type="number"
                         min={0}
                         max={24}
-                        step={0.5}
+                        decimals={1}
                         value={record.overtime_hours}
                         onChange={(e) => handleFieldChange(idx, 'overtime_hours', Number(e.target.value))}
                         className={styles.numberInput}

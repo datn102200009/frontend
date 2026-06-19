@@ -13,6 +13,7 @@ import {
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
+import { TextArea } from '@shared/ui/Input/TextArea';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Plus, Package, AlertTriangle, ClipboardCheck } from 'lucide-react';
@@ -143,6 +144,15 @@ export const LandedCostPage: React.FC = () => {
     if (activeShipment) {
       setLogisticFees(activeShipment.total_logistic_fees ? String(activeShipment.total_logistic_fees) : '0');
       
+      const rawMaterialWarehouse = warehouses.find(
+        (w) =>
+          w.name === 'Kho Nguyên Vật Liệu' ||
+          w.name?.toLowerCase().includes('nguyên vật liệu') ||
+          w.name?.toLowerCase().includes('nguyen vat lieu') ||
+          w.name?.toLowerCase().includes('nguyên liệu') ||
+          w.name?.toLowerCase().includes('nguyen lieu')
+      );
+      
       const lines = activeShipment.purchase_order_lines || [];
       reset({
         total_logistic_fees: activeShipment.total_logistic_fees ? parseFloat(String(activeShipment.total_logistic_fees)) : 0,
@@ -161,7 +171,7 @@ export const LandedCostPage: React.FC = () => {
             received_quantity: received_qty,
             remaining_quantity: remaining_qty,
             quantity: matched ? parseFloat(String(matched.quantity)) : remaining_qty,
-            target_warehouse_id: matched ? (matched.target_warehouse_id || '') : '',
+            target_warehouse_id: matched ? (matched.target_warehouse_id || '') : (rawMaterialWarehouse?.id || ''),
           };
         }),
       });
@@ -682,11 +692,12 @@ export const LandedCostPage: React.FC = () => {
               required
             />
           </div>
-          <Input 
+          <TextArea 
             label="Ghi Chú" 
             placeholder="Ghi chú thêm về lô hàng..."
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
+            rows={3}
           />
 
           <div className={styles.selectEntriesBox}>
@@ -695,7 +706,7 @@ export const LandedCostPage: React.FC = () => {
             
             <div style={{ marginTop: '8px', marginBottom: '16px' }}>
               <select
-                className={styles.selectWarehouse}
+                className={styles.poSelect}
                 value={selectedPurchaseOrderId || ''}
                 onChange={(e) => setSelectedPurchaseOrderId(e.target.value || null)}
                 required

@@ -15,6 +15,8 @@ import type { SalarySlip } from '@entities/hrm/model/types';
 import { Eye, ChevronDown, Send } from 'lucide-react';
 import { SalarySlipDetailsModal } from '@features/hrm/manage-salary-slip/ui/SalarySlipDetailsModal';
 import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
+import { isCurrentPayrollPeriod } from '@entities/hrm/lib/payrollPeriod';
+import { formatNumber } from '@shared/lib/formatNumber';
 
 interface SalarySlipTableProps {
   onViewDetails?: (salarySlip: SalarySlip) => void;
@@ -66,11 +68,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
     return filteredSlips.find((s) => s.id === selectedSlipId);
   }, [filteredSlips, selectedSlipId]);
 
-  const formatVND = (value?: string | number | null) => {
-    if (value === undefined || value === null) return '0 đ';
-    const amount = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -127,19 +125,19 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
       }),
       helper.accessor('base_salary', {
         header: 'Lương cơ bản',
-        cell: (info) => formatVND(info.row.original.base_salary),
+        cell: (info) => formatNumber(info.row.original.base_salary, 0),
       }),
       helper.accessor('reward_amount_total', {
         header: 'Thưởng',
-        cell: (info) => formatVND(info.row.original.reward_amount_total),
+        cell: (info) => formatNumber(info.row.original.reward_amount_total, 0),
       }),
       helper.accessor('discipline_deduction_total', {
         header: 'Khấu trừ',
-        cell: (info) => formatVND(info.row.original.discipline_deduction_total),
+        cell: (info) => formatNumber(info.row.original.discipline_deduction_total, 0),
       }),
       helper.accessor('net_pay', {
         header: 'Thực nhận',
-        cell: (info) => <span className="font-semibold text-primary-600">{formatVND(info.row.original.net_pay)}</span>,
+        cell: (info) => <span className="font-semibold text-primary-600">{formatNumber(info.row.original.net_pay, 0)}</span>,
       }),
       helper.accessor('status', {
         header: 'Trạng thái',
@@ -151,6 +149,9 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
         size: 120,
         cell: (info) => {
           const slip = info.row.original;
+          const isCurrentPeriod = isCurrentPayrollPeriod(selectedPeriod);
+          const isFinalSlip = slip.name?.startsWith('FINAL-SALARY-') || false;
+          const isSubmitDisabled = isCurrentPeriod && !isFinalSlip;
           return (
             <TableActions>
               <ActionButton
@@ -170,7 +171,8 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
               {slip.status === 'calculated' && canSubmit && (
                 <ActionButton
                   icon={<Send size={15} />}
-                  title="Gửi Finance Duyệt"
+                  title={isSubmitDisabled ? `Không thể gửi duyệt kỳ ${selectedPeriod} (tháng hiện tại)` : "Gửi Finance Duyệt"}
+                  disabled={isSubmitDisabled}
                   onClick={() => handleSubmitClick(slip as SalarySlip)}
                 />
               )}
@@ -179,7 +181,7 @@ export const SalarySlipTable: React.FC<SalarySlipTableProps> = ({
         },
       }),
     ];
-  }, [onViewDetails, searchParams, canSubmit]);
+  }, [onViewDetails, searchParams, canSubmit, selectedPeriod]);
 
   const noPeriods = monthOptions.length === 0 || yearOptions.length === 0;
 

@@ -12,6 +12,7 @@ import {
 import type { PublicHoliday } from '@entities/hrm/model/types';
 import { Edit, Trash2 } from 'lucide-react';
 import { formatDateVN } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
 
 interface PublicHolidayTableProps {
   onEdit?: (holiday: PublicHoliday) => void;
@@ -69,7 +70,7 @@ export const PublicHolidayTable: React.FC<PublicHolidayTableProps> = ({ onEdit }
       }),
       helper.accessor('days', {
         header: 'Số ngày nghỉ',
-        cell: (info) => <span className="font-medium text-slate-700">{info.getValue() ?? 1}</span>,
+        cell: (info) => <span className="font-medium text-slate-700">{formatNumber(info.getValue() ?? 1, 0)}</span>,
       }),
       helper.accessor('name', {
         header: 'Tên ngày nghỉ lễ',

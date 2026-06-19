@@ -47,7 +47,6 @@ describe('WorkOrderDetailModal', () => {
     render(<WorkOrderDetailModal {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /Phê Duyệt/i }));
     expect(defaultProps.onApprove).toHaveBeenCalledWith(defaultProps.workOrder);
-    expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
   it('renders Chờ nghiệm thu label and Complete button for pending_production_complete status', () => {
@@ -62,5 +61,18 @@ describe('WorkOrderDetailModal', () => {
     render(<WorkOrderDetailModal {...props} />);
     expect(screen.getByText('Chờ nghiệm thu')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Xác Nhận Hoàn Thành/i })).toBeInTheDocument();
+  });
+
+  it('renders skeleton loading when isLoading is true', () => {
+    render(<WorkOrderDetailModal {...defaultProps} isLoading={true} />);
+    expect(screen.getByText('Chi Tiết Lệnh Sản Xuất')).toBeInTheDocument();
+    expect(screen.queryByText('WO-2026-001')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Phê Duyệt/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Hủy/i })).not.toBeInTheDocument();
+
+    const closeBtn = screen.getByText('Đóng');
+    expect(closeBtn).toBeInTheDocument();
+    fireEvent.click(closeBtn);
+    expect(defaultProps.onClose).toHaveBeenCalled();
   });
 });

@@ -39,6 +39,7 @@ const AttendanceLeavePage = lazy(() => import('../pages/hrm/attendance-leave/Att
 const RewardsDisciplinesPage = lazy(() => import('../pages/hrm/rewards-disciplines/RewardsDisciplinesPage'));
 const HolidaysPage = lazy(() => import('../pages/hrm/holidays/HolidaysPage'));
 const PayrollPage = lazy(() => import('../pages/hrm/payroll/PayrollPage'));
+const AccountsPage = lazy(() => import('../pages/accounts/AccountsPage'));
 
 function PageLoader() {
   return (
@@ -242,6 +243,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={<PageLoader />}>
             <PermissionGuard requiredPermission="finance.view_salaryslip" fallback={<ForbiddenPage />}>
               <PayrollPage />
+            </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'accounts',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <PermissionGuard requiredPermission="accounts.view_user" fallback={<ForbiddenPage />}>
+              <AccountsPage />
             </PermissionGuard>
           </Suspense>
         ),

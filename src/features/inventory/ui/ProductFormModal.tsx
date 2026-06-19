@@ -42,7 +42,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
   const { toast } = useToast();
   const [createItem, { isLoading: isCreating }] = usePostMasterDataItemsCreateMutation();
   const [updateItem, { isLoading: isUpdating }] = usePutMasterDataItemsByItemCodeUpdateMutation();
-  const { data: uomList } = useGetMasterDataUomsListQuery();
+  const { data: uomList } = useGetMasterDataUomsListQuery(undefined, { refetchOnMountOrArgChange: false });
 
   const isEdit = !!product;
   const isLoading = isCreating || isUpdating;

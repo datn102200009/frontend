@@ -59,6 +59,10 @@ describe('FinanceSalaryApprovalTable', () => {
         }
         return HttpResponse.json(mockSlips);
       }),
+      // Mock salary periods endpoint
+      http.get('*/api/v1/hrm/salary-periods/', () => {
+        return HttpResponse.json(['2026-05', '2026-04']);
+      }),
       // Mock auth/me to return the correct permissions
       http.get('*/api/v1/accounts/auth/me/', () => {
         return HttpResponse.json({
@@ -72,7 +76,10 @@ describe('FinanceSalaryApprovalTable', () => {
   });
 
   it('renders pending and approved salary slips', async () => {
-    renderWithProviders(<FinanceSalaryApprovalTable />, { preloadedState: testState });
+    renderWithProviders(<FinanceSalaryApprovalTable />, {
+      preloadedState: testState,
+      initialEntries: ['/finance?tab=payroll&period=2026-05'],
+    });
 
     // Wait for elements to load
     expect(await screen.findByText('Nguyễn Văn An')).toBeInTheDocument();
@@ -96,7 +103,10 @@ describe('FinanceSalaryApprovalTable', () => {
       })
     );
 
-    renderWithProviders(<FinanceSalaryApprovalTable />, { preloadedState: testState });
+    renderWithProviders(<FinanceSalaryApprovalTable />, {
+      preloadedState: testState,
+      initialEntries: ['/finance?tab=payroll&period=2026-05'],
+    });
     const user = userEvent.setup();
 
     const approveBtn = await screen.findByRole('button', { name: 'Phê Duyệt' });
@@ -119,10 +129,13 @@ describe('FinanceSalaryApprovalTable', () => {
       })
     );
 
-    renderWithProviders(<FinanceSalaryApprovalTable />, { preloadedState: testState });
+    renderWithProviders(<FinanceSalaryApprovalTable />, {
+      preloadedState: testState,
+      initialEntries: ['/finance?tab=payroll&period=2026-05'],
+    });
     const user = userEvent.setup();
 
-    const rejectBtn = await screen.findByRole('button', { name: 'Từ Chối' });
+    const rejectBtn = await screen.findByRole('button', { name: 'Từ Chiếu' });
     await user.click(rejectBtn);
 
     // Verify modal elements
@@ -152,7 +165,10 @@ describe('FinanceSalaryApprovalTable', () => {
       })
     );
 
-    renderWithProviders(<FinanceSalaryApprovalTable />, { preloadedState: testState });
+    renderWithProviders(<FinanceSalaryApprovalTable />, {
+      preloadedState: testState,
+      initialEntries: ['/finance?tab=payroll&period=2026-05'],
+    });
     const user = userEvent.setup();
 
     const payBtn = await screen.findByRole('button', { name: 'Chi Trả' });
@@ -160,7 +176,8 @@ describe('FinanceSalaryApprovalTable', () => {
 
     expect(screen.getByText('Xác nhận chi trả lương')).toBeInTheDocument();
 
-    const select = screen.getByRole('combobox');
+    // In the single pay modal, select option
+    const select = screen.getAllByRole('combobox')[2]; // index 2 because first two are month/year dropdowns
     await user.selectOptions(select, 'cash');
 
     const confirmBtn = screen.getByRole('button', { name: 'Xác nhận chi trả' });
@@ -171,4 +188,75 @@ describe('FinanceSalaryApprovalTable', () => {
       expect(paymentMethod).toBe('cash');
     });
   });
+
+  it('opens bulk approve modal and calls bulk approve API', async () => {
+    let approvedPeriod = '';
+    server.use(
+      http.post('*/api/v1/finance/salary-slips/bulk-approve/', async ({ request }) => {
+        const body = (await request.json()) as any;
+        approvedPeriod = body.salary_period;
+        return HttpResponse.json([mockSlips[0]]);
+      })
+    );
+
+    renderWithProviders(<FinanceSalaryApprovalTable />, {
+      preloadedState: testState,
+      initialEntries: ['/finance?tab=payroll&period=2026-05'],
+    });
+    const user = userEvent.setup();
+
+    const bulkApproveBtn = await screen.findByRole('button', { name: 'Phê Duyệt Toàn Bộ' });
+    await waitFor(() => {
+      expect(bulkApproveBtn).not.toBeDisabled();
+    });
+    await user.click(bulkApproveBtn);
+
+    expect(screen.getByText(/Bạn có chắc chắn muốn phê duyệt/)).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole('button', { name: 'Phê duyệt toàn bộ' });
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(approvedPeriod).toBe('2026-05');
+    });
+  });
+
+  it('opens bulk pay modal, selects payment method, and calls bulk pay API', async () => {
+    let paidPeriod = '';
+    let paidMethod = '';
+    server.use(
+      http.post('*/api/v1/finance/salary-slips/bulk-pay/', async ({ request }) => {
+        const body = (await request.json()) as any;
+        paidPeriod = body.salary_period;
+        paidMethod = body.payment_method;
+        return HttpResponse.json([mockSlips[1]]);
+      })
+    );
+
+    renderWithProviders(<FinanceSalaryApprovalTable />, {
+      preloadedState: testState,
+      initialEntries: ['/finance?tab=payroll&period=2026-05'],
+    });
+    const user = userEvent.setup();
+
+    const bulkPayBtn = await screen.findByRole('button', { name: 'Chi Trả Toàn Bộ' });
+    await waitFor(() => {
+      expect(bulkPayBtn).not.toBeDisabled();
+    });
+    await user.click(bulkPayBtn);
+
+    expect(screen.getByText(/Chi trả toàn bộ bảng lương kỳ/)).toBeInTheDocument();
+
+    const select = screen.getAllByRole('combobox')[2]; // third combobox in total
+    await user.selectOptions(select, 'cash');
+
+    const confirmBtn = screen.getByRole('button', { name: 'Xác nhận chi trả toàn bộ' });
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(paidPeriod).toBe('2026-05');
+      expect(paidMethod).toBe('cash');
+    });
+  });
 });
+

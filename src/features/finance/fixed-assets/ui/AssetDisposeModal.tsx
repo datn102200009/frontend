@@ -3,16 +3,15 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@shared/ui/Button/Button';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
+import { TextArea } from '@shared/ui/Input/TextArea';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { usePostFinanceFixedAssetsByPkRequestDisposeMutation, type FixedAsset } from '@entities/finance/api/financeApi';
-import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { shortAssetCode } from '@shared/lib/shortId';
 import { formatVND } from '@shared/lib/formatVND';
 import styles from './AssetFormModal.module.css';
 
 interface AssetDisposeFormData {
-  disposal_date: string;
   disposal_value: string;
   remarks: string;
 }
@@ -24,32 +23,18 @@ interface AssetDisposeModalProps {
   onConfirm: () => void;
 }
 
-const formatDateToDMY = (isoDateStr: string): string => {
-  if (!isoDateStr) return '';
-  const cleanDateStr = isoDateStr.split('T')[0];
-  const parts = cleanDateStr.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-  }
-  return isoDateStr;
-};
-
 export function AssetDisposeModal({ open, asset, onClose, onConfirm }: AssetDisposeModalProps) {
   const { toast } = useToast();
   const [requestDisposeAsset, { isLoading: isDisposing }] = usePostFinanceFixedAssetsByPkRequestDisposeMutation();
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [formData, setFormData] = useState<AssetDisposeFormData | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<AssetDisposeFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<AssetDisposeFormData>({
     defaultValues: {
-      disposal_date: new Date().toISOString().split('T')[0],
       disposal_value: '0',
       remarks: '',
     },
   });
-
-  const watchDisposalDate = watch('disposal_date');
 
   const handleFormSubmit = (data: AssetDisposeFormData) => {
     setFormData(data);
@@ -62,7 +47,6 @@ export function AssetDisposeModal({ open, asset, onClose, onConfirm }: AssetDisp
       await requestDisposeAsset({
         pk: asset.id!,
         fixedAssetRequestDisposeInput: {
-          disposal_date: formData.disposal_date,
           disposal_value: formData.disposal_value,
           remarks: formData.remarks || null,
         },
@@ -107,45 +91,27 @@ export function AssetDisposeModal({ open, asset, onClose, onConfirm }: AssetDisp
           <strong>{asset?.asset_name} ({shortAssetCode(asset?.asset_code)})</strong>. Trạng thái tài sản sẽ chuyển sang Chờ duyệt thanh lý.
         </div>
 
-        <div className={styles.row}>
-          <Input
-            label="Ngày thanh lý đề xuất"
-            required
-            readOnly
-            value={formatDateToDMY(watchDisposalDate)}
-            onClick={() => setIsDatePickerOpen(true)}
-            error={errors.disposal_date?.message}
-            style={{ cursor: 'pointer' }}
-          />
-          <Input
-            label="Giá trị thu về dự kiến (VND)"
-            type="text"
-            required
-            error={errors.disposal_value?.message}
-            {...register('disposal_value', {
-              required: 'Giá trị thu hồi là bắt buộc',
-              validate: (val) => !isNaN(Number(val)) && Number(val) >= 0 || 'Giá trị phải lớn hơn hoặc bằng 0',
-            })}
-          />
-        </div>
+        <Input
+          label="Giá trị thu về dự kiến (VND)"
+          type="number"
+          decimals={0}
+          required
+          error={errors.disposal_value?.message}
+          {...register('disposal_value', {
+            required: 'Giá trị thu hồi là bắt buộc',
+            validate: (val) => !isNaN(Number(val)) && Number(val) >= 0 || 'Giá trị phải lớn hơn hoặc bằng 0',
+          })}
+        />
 
-        <div className={styles.row}>
-          <Input
-            label="Ghi chú / Lý do thanh lý"
-            error={errors.remarks?.message}
-            {...register('remarks')}
-          />
-        </div>
+        <TextArea
+          label="Ghi chú / Lý do thanh lý"
+          rows={4}
+          maxLength={1000}
+          placeholder="Nhập chi tiết lý do thanh lý, tình trạng tài sản, đề xuất phương án xử lý..."
+          error={errors.remarks?.message}
+          {...register('remarks')}
+        />
       </form>
-
-      <DatePickerModal
-        open={isDatePickerOpen}
-        onClose={() => setIsDatePickerOpen(false)}
-        value={watchDisposalDate}
-        onChange={(newDate) => {
-          setValue('disposal_date', newDate, { shouldValidate: true, shouldDirty: true });
-        }}
-      />
 
       <ConfirmModal
         open={showConfirm}
@@ -161,9 +127,15 @@ export function AssetDisposeModal({ open, asset, onClose, onConfirm }: AssetDisp
                 .
               </p>
               <ul style={{ paddingLeft: '20px', listStyleType: 'disc' }}>
-                <li style={{ marginBottom: '4px' }}>
-                  Ngày thanh lý: {formatDateToDMY(formData.disposal_date)}
-                </li>
+                {Number(formData.disposal_value) === 0 ? (
+                  <li style={{ marginBottom: '4px' }}>
+                    Ngày thanh lý thực tế: Hôm nay (hệ thống tự động gán)
+                  </li>
+                ) : (
+                  <li style={{ marginBottom: '4px' }}>
+                    Ngày thanh lý thực tế: Sẽ được tự động gán khi CFO duyệt dòng tiền thanh lý
+                  </li>
+                )}
                 <li style={{ marginBottom: '4px' }}>
                   Giá trị thu hồi dự kiến: {formatVND(formData.disposal_value)}
                 </li>

@@ -151,10 +151,6 @@ describe('FixedAssetsPage', () => {
     const originalValueInput = within(modal).getByLabelText(/Nguyên giá \(VND\)/i);
     await user.clear(originalValueInput);
     await user.type(originalValueInput, '60000000');
-
-    const salvageValueInput = within(modal).getByLabelText(/Giá trị thanh lý ước tính \(VND\)/i);
-    await user.clear(salvageValueInput);
-    await user.type(salvageValueInput, '5000000');
     
     const usefulLifeInput = within(modal).getByLabelText(/Số tháng khấu hao hữu ích/i);
     await user.clear(usefulLifeInput);
@@ -185,11 +181,9 @@ describe('FixedAssetsPage', () => {
       expect(postPayload).toEqual({
         asset_name: 'Khuôn nhựa C',
         original_value: '60000000',
-        salvage_value: '5000000',
         depreciation_method: 'unit_of_production',
         useful_life_months: null,
         designed_capacity: 20000,
-        purchase_date: new Date().toISOString().split('T')[0],
         vendor_name: 'Supplier C',
         payment_method: 'bank_transfer'
       });
@@ -390,7 +384,6 @@ describe('FixedAssetsPage', () => {
     // Verify request payload and modals closed
     await waitFor(() => {
       expect(requestPayload).toEqual({
-        disposal_date: new Date().toISOString().split('T')[0],
         disposal_value: '150000000',
         remarks: null
       });

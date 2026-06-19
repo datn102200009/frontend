@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Calculator, Send } from 'lucide-react';
+import { Plus, RefreshCw, Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { usePermission } from '@shared/hooks/usePermission';
-import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
 import {
   usePostHrmSalarySlipsBulkCalculateMutation,
-  usePostHrmSalarySlipsBulkSubmitForReviewMutation,
   useGetHrmSalarySlipsQuery,
 } from '@entities/hrm/api/hrmApi';
+import { isCurrentPayrollPeriod } from '@entities/hrm/lib/payrollPeriod';
 
 // Tables
 import { SalarySlipTable } from '@widgets/hrm/SalarySlipTable';
 
 // Modals
 import { InitializeSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/InitializeSalarySlipModal';
+import { BulkSubmitSalarySlipModal } from '@features/hrm/manage-salary-slip/ui/BulkSubmitSalarySlipModal';
 
 import styles from '../HrmPage.module.css';
 
@@ -51,7 +51,6 @@ const PayrollPage: React.FC = () => {
   });
 
   const [bulkCalculate, { isLoading: isBulkCalculating }] = usePostHrmSalarySlipsBulkCalculateMutation();
-  const [bulkSubmit, { isLoading: isBulkSubmitting }] = usePostHrmSalarySlipsBulkSubmitForReviewMutation();
 
   const urlPeriod = searchParams.get('period');
   useEffect(() => {
@@ -80,20 +79,16 @@ const PayrollPage: React.FC = () => {
     }
   };
 
-  const handleBulkSubmit = async () => {
-    try {
-      const result = await bulkSubmit({ body: { salary_period: selectedPeriod } }).unwrap();
-      toast('success', `Gửi duyệt thành công ${result.count} phiếu lương.`);
-      setIsBulkConfirmOpen(false);
-      setJustCalculatedAt(null);
-      refetch();
-    } catch (err: any) {
-      toast('error', err?.data?.error || 'Gửi duyệt hàng loạt thất bại.');
-    }
+  const handleBulkSubmitSuccess = () => {
+    toast('success', 'Gửi duyệt bảng lương hàng loạt thành công.');
+    setIsBulkConfirmOpen(false);
+    setJustCalculatedAt(null);
+    refetch();
   };
 
   // Determine if we can bulk submit
-  const canSubmitBulk = justCalculatedAt !== null;
+  const isCurrentPeriod = isCurrentPayrollPeriod(selectedPeriod);
+  const canSubmitBulk = justCalculatedAt !== null && !isCurrentPeriod;
 
   return (
     <div className={styles.page}>
@@ -107,11 +102,11 @@ const PayrollPage: React.FC = () => {
             <div style={{ display: 'flex', gap: '8px' }}>
               {canBulkCalculate && (
                 <Button
-                  icon={<Calculator size={16} />}
+                  icon={<RefreshCw size={16} />}
                   onClick={handleBulkCalculate}
                   loading={isBulkCalculating}
                 >
-                  Tính Toán Nhanh
+                  Cập Nhật Bảng Lương
                 </Button>
               )}
               {canBulkSubmit && (
@@ -119,6 +114,7 @@ const PayrollPage: React.FC = () => {
                   icon={<Send size={16} />}
                   onClick={() => setIsBulkConfirmOpen(true)}
                   disabled={!canSubmitBulk}
+                  title={isCurrentPeriod ? `Không thể gửi duyệt kỳ ${selectedPeriod} (tháng hiện tại)` : undefined}
                 >
                   Phê Duyệt Nhanh
                 </Button>
@@ -128,6 +124,26 @@ const PayrollPage: React.FC = () => {
               </Button>
             </div>
           </div>
+          {isCurrentPeriod && (
+            <div className={styles.warningBanner} role="alert" data-testid="current-period-banner" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              backgroundColor: 'var(--clr-warning-bg)',
+              color: 'var(--clr-warning)',
+              border: '1.5px solid var(--clr-warning)',
+              borderRadius: 'var(--radius-md)',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              fontSize: 'var(--fs-sm)',
+              fontWeight: 500
+            }}>
+              <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+              <span>
+                Kỳ lương <strong>{selectedPeriod}</strong> đang là tháng hiện tại. Hệ thống không cho phép gửi duyệt các phiếu lương của tháng hiện tại. Vui lòng chờ đến tháng sau để gửi duyệt.
+              </span>
+            </div>
+          )}
           <SalarySlipTable
             selectedPeriod={selectedPeriod}
             onChangePeriod={setSelectedPeriod}
@@ -144,14 +160,14 @@ const PayrollPage: React.FC = () => {
         />
       )}
 
-      <ConfirmDialog
-        open={isBulkConfirmOpen}
-        onClose={() => setIsBulkConfirmOpen(false)}
-        onConfirm={handleBulkSubmit}
-        loading={isBulkSubmitting}
-        title="Phê duyệt nhanh bảng lương"
-        message={`Gửi TOÀN BỘ phiếu lương ở trạng thái 'calculated' trong kỳ ${selectedPeriod} sang Finance duyệt? Hành động không thể hoàn tác.`}
-      />
+      {isBulkConfirmOpen && (
+        <BulkSubmitSalarySlipModal
+          open={isBulkConfirmOpen}
+          onClose={() => setIsBulkConfirmOpen(false)}
+          onSuccess={handleBulkSubmitSuccess}
+          salaryPeriod={selectedPeriod}
+        />
+      )}
     </div>
   );
 };

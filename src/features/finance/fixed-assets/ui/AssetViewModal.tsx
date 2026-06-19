@@ -1,17 +1,13 @@
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import type { FixedAsset } from '@entities/finance/api/financeApi';
+import { formatVND } from '@shared/lib/formatVND';
 import styles from './AssetFormModal.module.css';
 
 interface AssetViewModalProps {
   open: boolean;
   asset: FixedAsset | null;
   onClose: () => void;
-}
-
-function fmtVND(v: string | number | null | undefined) {
-  if (v == null || v === '') return '0 ₫';
-  return Number(v).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,23 +57,14 @@ export function AssetViewModal({ open, asset, onClose }: AssetViewModalProps) {
 
         <div className={styles.row}>
           <div className={styles.infoField}>
+            <div className={styles.infoLabel}>Trạng thái</div>
+            <div className={styles.infoValue}>
+              {STATUS_LABELS[asset.status || ''] || asset.status || ''}
+            </div>
+          </div>
+          <div className={styles.infoField}>
             <div className={styles.infoLabel}>Nguyên giá</div>
-            <div className={styles.infoValue}>{fmtVND(asset.original_value)}</div>
-          </div>
-          <div className={styles.infoField}>
-            <div className={styles.infoLabel}>Giá trị thanh lý ước tính</div>
-            <div className={styles.infoValue}>{fmtVND(asset.salvage_value)}</div>
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.infoField}>
-            <div className={styles.infoLabel}>Lũy kế khấu hao</div>
-            <div className={styles.infoValue}>{fmtVND(asset.accumulated_depreciation)}</div>
-          </div>
-          <div className={styles.infoField}>
-            <div className={styles.infoLabel}>Giá trị còn lại</div>
-            <div className={styles.infoValue}>{fmtVND(asset.remaining_value)}</div>
+            <div className={styles.infoValue}>{formatVND(asset.original_value)}</div>
           </div>
         </div>
 
@@ -96,28 +83,26 @@ export function AssetViewModal({ open, asset, onClose }: AssetViewModalProps) {
           ) : (
             <div className={styles.infoField}>
               <div className={styles.infoLabel}>Công suất thiết kế (Tổng sản lượng)</div>
-              <div className={styles.infoValue}>{asset.designed_capacity || 0}</div>
+              <div className={styles.infoValue}>{asset.designed_capacity || 0} sp</div>
             </div>
           )}
         </div>
 
         <div className={styles.row}>
           <div className={styles.infoField}>
-            <div className={styles.infoLabel}>Trạng thái</div>
-            <div className={styles.infoValue}>
-              {STATUS_LABELS[asset.status || ''] || asset.status || ''}
-            </div>
+            <div className={styles.infoLabel}>Lũy kế khấu hao</div>
+            <div className={styles.infoValue}>{formatVND(asset.accumulated_depreciation)}</div>
           </div>
           <div className={styles.infoField}>
-            <div className={styles.infoLabel}>Nhà cung cấp</div>
-            <div className={styles.infoValue}>{asset.vendor_name || '-'}</div>
+            <div className={styles.infoLabel}>Giá trị còn lại</div>
+            <div className={styles.infoValue}>{formatVND(asset.remaining_value)}</div>
           </div>
         </div>
 
         <div className={styles.row}>
           <div className={styles.infoField}>
-            <div className={styles.infoLabel}>Ngày mua</div>
-            <div className={styles.infoValue}>{asset.purchase_date || '-'}</div>
+            <div className={styles.infoLabel}>Nhà cung cấp</div>
+            <div className={styles.infoValue}>{asset.vendor_name || '-'}</div>
           </div>
           <div className={styles.infoField}>
             <div className={styles.infoLabel}>Phương thức thanh toán</div>
@@ -135,7 +120,7 @@ export function AssetViewModal({ open, asset, onClose }: AssetViewModalProps) {
             </div>
             <div className={styles.infoField}>
               <div className={styles.infoLabel}>Giá trị thanh lý thực tế</div>
-              <div className={styles.infoValue}>{fmtVND(asset.disposal_value)}</div>
+              <div className={styles.infoValue}>{formatVND(asset.disposal_value)}</div>
             </div>
           </div>
         )}

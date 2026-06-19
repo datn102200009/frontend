@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StockEntryForm } from './StockEntryForm';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -47,15 +47,12 @@ describe('StockEntryForm', () => {
     await screen.findByRole('option', { name: /Kho 1/i });
     await user.selectOptions(await screen.findByRole('combobox', { name: /^Kho đích/i }), 'KHO_01');
     
-    await waitFor(async () => {
-      const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
-      expect(itemSelects.length).toBeGreaterThan(0);
-      const options = within(itemSelects[0]).queryAllByRole('option');
-      expect(options.length).toBeGreaterThan(1); // more than just the placeholder
-    }, { timeout: 3000 });
-
     const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
-    await user.selectOptions(itemSelects[0], 'VT001');
+    expect(itemSelects.length).toBeGreaterThan(0);
+
+    await user.click(itemSelects[0]);
+    const option = await screen.findByRole('option', { name: /VT001/ });
+    await user.click(option);
 
     await user.click(screen.getByRole('button', { name: 'Tạo mới' }));
 
@@ -73,15 +70,12 @@ describe('StockEntryForm', () => {
     await screen.findByRole('option', { name: /Kho 1/i });
     await user.selectOptions(await screen.findByRole('combobox', { name: /^Kho nguồn/i }), 'KHO_01');
     
-    await waitFor(async () => {
-      const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
-      expect(itemSelects.length).toBeGreaterThan(0);
-      const options = within(itemSelects[0]).queryAllByRole('option');
-      expect(options.length).toBeGreaterThan(1);
-    }, { timeout: 3000 });
-    
     const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
-    await user.selectOptions(itemSelects[0], 'VT001');
+    expect(itemSelects.length).toBeGreaterThan(0);
+    
+    await user.click(itemSelects[0]);
+    const option = await screen.findByRole('option', { name: /VT001/ });
+    await user.click(option);
     
     // The quantity inputs don't have aria-labels, we might have to select by role or placeholder.
     // The input is type="number" with min="1".
@@ -91,7 +85,7 @@ describe('StockEntryForm', () => {
     await user.click(screen.getByRole('button', { name: 'Tạo mới' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Không đủ tồn kho')).toBeInTheDocument();
+      expect(screen.getByText('Số lượng vượt quá tồn kho khả dụng tại kho nguồn')).toBeInTheDocument();
       expect(defaultProps.onSuccess).not.toHaveBeenCalled();
     });
   });
@@ -116,13 +110,12 @@ describe('StockEntryForm', () => {
     await screen.findByRole('option', { name: /Kho 1/i });
     await user.selectOptions(await screen.findByRole('combobox', { name: /^Kho nguồn/i }), 'KHO_01');
     
-    await waitFor(async () => {
-      const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
-      expect(itemSelects.length).toBeGreaterThan(0);
-    });
-    
     const itemSelects = await screen.findAllByRole('combobox', { name: /^Mã vật tư/i });
-    await user.selectOptions(itemSelects[0], 'VT001');
+    expect(itemSelects.length).toBeGreaterThan(0);
+    
+    await user.click(itemSelects[0]);
+    const option = await screen.findByRole('option', { name: /VT001/ });
+    await user.click(option);
 
     await user.click(screen.getByRole('button', { name: 'Tạo mới' }));
 

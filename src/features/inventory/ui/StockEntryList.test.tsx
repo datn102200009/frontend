@@ -92,12 +92,39 @@ describe('StockEntryList', () => {
     // Stock in
     await user.click(screen.getByRole('button', { name: 'Nhập Kho' }));
     expect(await screen.findByRole('heading', { name: 'Tạo Phiếu Nhập Kho' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Hủy' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Hủy' }));
 
     // Stock issue
     await user.click(screen.getByRole('button', { name: 'Xuất Kho' }));
     expect(await screen.findByRole('heading', { name: 'Tạo Phiếu Xuất Kho' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Hủy' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Hủy' }));
+  });
+
+  it('allows cancelling (deleting) a draft stock entry', async () => {
+    let deletedId = '';
+    server.use(
+      http.post('*/api/v1/inventory/stock-entry/:id/delete/', ({ params }) => {
+        deletedId = params.id as string;
+        return HttpResponse.json({}, { status: 204 });
+      })
+    );
+
+    renderWithProviders(<StockEntryList />);
+    const user = userEvent.setup();
+
+    await screen.findByText('ENTRY-001');
+    const row = screen.getByText('ENTRY-001').closest('tr');
+    const cancelBtn = within(row!).getByRole('button', { name: 'Hủy' });
+    await user.click(cancelBtn);
+
+    expect(await screen.findByText('Xác Nhận Hủy Phiếu')).toBeInTheDocument();
+
+    const confirmCancelBtn = screen.getByRole('button', { name: 'Xác nhận Hủy' });
+    await user.click(confirmCancelBtn);
+
+    await waitFor(() => {
+      expect(deletedId).toBe('1');
+    });
   });
 
   it('opens detail modal', async () => {

@@ -9,6 +9,7 @@ import { Eye, Edit } from 'lucide-react';
 import { usePurchaseOrderFilters } from '@entities/purchasing/lib/usePurchaseOrderFilters';
 import { PurchaseOrderStatusFilter } from '@entities/purchasing/ui/PurchaseOrderStatusFilter';
 import { shortId } from '@shared/lib/shortId';
+import { formatVND } from '@shared/lib/formatVND';
 
 interface PurchaseOrderTableProps {
   onView?: (id: string) => void;
@@ -37,7 +38,7 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
       }),
       helper.accessor('total_amount', {
         header: 'Tổng Tiền',
-        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue()),
+        cell: (info) => formatVND(info.getValue()),
       }),
       helper.accessor('expected_delivery_date', {
         header: 'Hẹn Giao',
@@ -51,14 +52,20 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
         cell: (info) => {
           const val = Number(info.getValue() || 0);
           return (
-            <div className="flex items-center gap-2 min-w-[100px]">
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px' }}>
+              <div style={{ flex: 1, backgroundColor: 'var(--clr-border)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
                 <div 
-                  className="bg-emerald-500 h-full transition-all duration-300" 
-                  style={{ width: `${Math.min(val, 100)}%` }}
+                  style={{ 
+                    backgroundColor: 'var(--clr-success)', 
+                    height: '100%', 
+                    width: `${Math.min(val, 100)}%`,
+                    transition: 'width 0.3s ease'
+                  }} 
                 />
               </div>
-              <span className="text-xs font-semibold text-slate-700">{val}%</span>
+              <span style={{ fontSize: 'var(--fs-xs)', fontWeight: 'var(--fw-semibold)', color: 'var(--clr-text-secondary)', minWidth: '32px', textAlign: 'right' }}>
+                {val}%
+              </span>
             </div>
           );
         },
@@ -68,14 +75,20 @@ export const PurchaseOrderTable: React.FC<PurchaseOrderTableProps> = ({ onView, 
         cell: (info) => {
           const val = Number(info.getValue() || 0);
           return (
-            <div className="flex items-center gap-2 min-w-[100px]">
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px' }}>
+              <div style={{ flex: 1, backgroundColor: 'var(--clr-border)', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
                 <div 
-                  className="bg-indigo-500 h-full transition-all duration-300" 
-                  style={{ width: `${Math.min(val, 100)}%` }}
+                  style={{ 
+                    backgroundColor: 'var(--clr-primary)', 
+                    height: '100%', 
+                    width: `${Math.min(val, 100)}%`,
+                    transition: 'width 0.3s ease'
+                  }} 
                 />
               </div>
-              <span className="text-xs font-semibold text-slate-700">{val}%</span>
+              <span style={{ fontSize: 'var(--fs-xs)', fontWeight: 'var(--fw-semibold)', color: 'var(--clr-text-secondary)', minWidth: '32px', textAlign: 'right' }}>
+                {val}%
+              </span>
             </div>
           );
         },

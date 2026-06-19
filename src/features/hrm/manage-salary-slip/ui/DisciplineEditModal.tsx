@@ -9,6 +9,8 @@ import { Button } from '@shared/ui/Button/Button';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { disciplineSchema, type DisciplineFormValues } from '../model/reward-discipline.schema';
 import styles from './DisciplineFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftDays } from '@shared/lib/dateLimits';
 
 interface DisciplineEditModalProps {
   open: boolean;
@@ -47,6 +49,12 @@ export const DisciplineEditModal: React.FC<DisciplineEditModalProps> = ({
   });
 
   const disciplineType = watch('discipline_type');
+  const incidentDate = watch('incident_date');
+
+  const minIncidentDate = shiftDays(-365);
+  const maxIncidentDate = todayISO();
+  const minDisciplineDate = incidentDate || undefined;
+  const maxDisciplineDate = todayISO();
 
   useEffect(() => {
     if (open) {
@@ -130,6 +138,8 @@ export const DisciplineEditModal: React.FC<DisciplineEditModalProps> = ({
             control={control}
             error={errors.incident_date?.message}
             required
+            minDate={minIncidentDate}
+            maxDate={maxIncidentDate}
             disabled={isLoading}
           />
 
@@ -139,6 +149,8 @@ export const DisciplineEditModal: React.FC<DisciplineEditModalProps> = ({
             control={control}
             error={errors.discipline_date?.message}
             required
+            minDate={minDisciplineDate}
+            maxDate={maxDisciplineDate}
             disabled={isLoading}
           />
         </div>
@@ -162,21 +174,16 @@ export const DisciplineEditModal: React.FC<DisciplineEditModalProps> = ({
             </select>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="penalty_amount">
-              Số tiền phạt (VND)
-            </label>
-            <input
-              id="penalty_amount"
-              type="number"
-              min={0}
-              step={50000}
-              className={styles.input}
-              {...register('penalty_amount')}
-              disabled={isLoading || disciplineType !== 'salary_deduction'}
-            />
-            {errors.penalty_amount && <span className={styles.errorText}>{errors.penalty_amount.message}</span>}
-          </div>
+          <Input
+            id="penalty_amount"
+            type="number"
+            label="Số tiền phạt (VND)"
+            min={0}
+            decimals={0}
+            {...register('penalty_amount')}
+            disabled={isLoading || disciplineType !== 'salary_deduction'}
+            error={errors.penalty_amount?.message}
+          />
         </div>
 
         <div className={styles.formGroup}>

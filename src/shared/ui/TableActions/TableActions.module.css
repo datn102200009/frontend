@@ -46,3 +46,13 @@
   width: 18px;
   height: 18px;
 }
+
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.actionBtn:disabled:hover {
+  background: transparent;
+  color: var(--clr-text-muted);
+}
