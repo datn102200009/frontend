@@ -102,6 +102,9 @@ describe('WorkOrderFormModal', () => {
 
     expect(await screen.findByText('Khuôn mẫu 01')).toBeInTheDocument();
 
+    // Wait for preview to load
+    expect(await screen.findByText('LK001')).toBeInTheDocument();
+
     await user.click(screen.getByRole('button', { name: 'Tạo lệnh' }));
     
     // Click confirm on the custom ConfirmModal since materials are missing in mock response
