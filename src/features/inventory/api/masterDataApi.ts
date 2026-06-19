@@ -12,6 +12,8 @@ const injectedRtkApi = api.injectEndpoints({
       GetMasterDataUomsListApiArg
     >({
       query: () => ({ url: `/master-data/uoms/list/` }),
+      keepUnusedDataFor: 86400, // 24 hours
+      providesTags: ['Uoms'],
     }),
     getMasterDataItemsList: build.query<
       GetMasterDataItemsListApiResponse,
@@ -123,6 +125,8 @@ export type Item = {
   vat_group?: string | null
   is_import?: boolean
   status?: 'active' | 'inactive' | 'discontinued'
+  /** Ngưỡng tồn kho tối thiểu */
+  minimum_threshold?: string | null
   description?: string | null
   created_at?: string
   updated_at?: string
@@ -138,6 +142,8 @@ export type ItemCreateInput = {
   vat_group?: string | null
   is_import?: boolean
   status?: 'active' | 'inactive' | 'discontinued'
+  /** Ngưỡng tồn kho tối thiểu */
+  minimum_threshold?: string | null
   description?: string | null
 }
 export type ItemUpdateInput = {
@@ -150,6 +156,8 @@ export type ItemUpdateInput = {
   vat_group?: string | null
   is_import?: boolean
   status?: 'active' | 'inactive' | 'discontinued'
+  /** Ngưỡng tồn kho tối thiểu */
+  minimum_threshold?: string | null
   description?: string | null
 }
 export const {

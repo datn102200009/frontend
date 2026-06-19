@@ -91,6 +91,39 @@ def select_searchable(page, label, search_text, option_text=None):
     time.sleep(0.3)
 
 
+def select_first_available_period(page, preferred_month="07", preferred_year="2026"):
+    """Chọn tháng/năm kỳ lương từ dropdown, ưu tiên giá trị preferred nếu có.
+
+    Args:
+        page: Playwright page.
+        preferred_month: Tháng ưu tiên (vd: "07"). Fallback về option đầu tiên.
+        preferred_year: Năm ưu tiên (vd: "2026"). Fallback về option đầu tiên.
+
+    Returns:
+        tuple: (selected_month, selected_year) hoặc (None, None) nếu dropdown rỗng.
+    """
+    try:
+        month_select = page.get_by_label("Chọn tháng kỳ lương")
+        year_select = page.get_by_label("Chọn năm kỳ lương")
+
+        month_values = [opt.get_attribute("value") for opt in month_select.locator("option").all()]
+        year_values = [opt.get_attribute("value") for opt in year_select.locator("option").all()]
+        month_values = [m for m in month_values if m and m.strip()]
+        year_values = [y for y in year_values if y and y.strip()]
+
+        if not month_values or not year_values:
+            return None, None
+
+        sel_month = preferred_month if preferred_month in month_values else month_values[0]
+        sel_year = preferred_year if preferred_year in year_values else year_values[0]
+
+        month_select.select_option(sel_month)
+        year_select.select_option(sel_year)
+        return sel_month, sel_year
+    except Exception:
+        return None, None
+
+
 class TestRunner:
     """Test runner that tracks results and generates reports."""
 

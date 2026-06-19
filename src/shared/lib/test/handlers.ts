@@ -222,7 +222,9 @@ export const handlers = [
   http.get('*/api/v1/finance/fixed-assets/', () => {
     return HttpResponse.json({
       results: [
-        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'active' }
+        { id: 'asset-1', asset_code: 'MOLD-001', asset_name: 'Khuôn mẫu 01', status: 'idle', depreciation_method: 'unit_of_production' },
+        { id: 'asset-2', asset_code: 'MOLD-002', asset_name: 'Khuôn mẫu 02', status: 'idle', depreciation_method: 'straight_line' },
+        { id: 'asset-3', asset_code: 'MOLD-003', asset_name: 'Khuôn mẫu 03', status: 'idle', depreciation_method: 'unit_of_production' }
       ]
     });
   }),
@@ -232,8 +234,8 @@ export const handlers = [
     return HttpResponse.json({
       count: 2,
       results: [
-        { id: 'emp-1', employee_id: 'NV001', full_name: 'Nguyễn Văn An', department: 'Hành chính', position_title: 'Nhân viên', salary_base: '10000000', is_union_member: true, email: 'an.nv@company.com', phone: '0901234567', gender: 'male', date_of_birth: '1995-01-01', join_date: '2026-01-01', employment_status: 'active' },
-        { id: 'emp-2', employee_id: 'NV002', full_name: 'Trần Thị Bình', department: 'Kinh doanh', position_title: 'Trưởng nhóm', salary_base: '15000000', is_union_member: false, email: 'binh.tt@company.com', phone: '0907654321', gender: 'female', date_of_birth: '1992-05-15', join_date: '2025-06-01', employment_status: 'active' }
+        { id: 'emp-1', employee_id: 'NV001', full_name: 'Nguyễn Văn An', salary_base: '10000000', email: 'an.nv@company.com', phone: '0901234567', gender: 'male', date_of_birth: '1995-01-01', join_date: '2026-01-01', employment_status: 'active' },
+        { id: 'emp-2', employee_id: 'NV002', full_name: 'Trần Thị Bình', salary_base: '15000000', email: 'binh.tt@company.com', phone: '0907654321', gender: 'female', date_of_birth: '1992-05-15', join_date: '2025-06-01', employment_status: 'active' }
       ]
     });
   }),
@@ -251,10 +253,7 @@ export const handlers = [
       id: params.id,
       employee_id: 'NV001',
       full_name: 'Nguyễn Văn An',
-      department: 'Hành chính',
-      position_title: 'Nhân viên',
       salary_base: '10000000',
-      is_union_member: true,
       email: 'an.nv@company.com',
       phone: '0901234567',
       gender: 'male',
@@ -284,7 +283,7 @@ export const handlers = [
     return HttpResponse.json({ id: params.id, ...data });
   }),
 
-  http.post('*/api/v1/hrm/employees/:id/update-salary-title/', async ({ params, request }) => {
+  http.post('*/api/v1/hrm/employees/:id/adjust-salary/', async ({ params, request }) => {
     const data = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ id: params.id, ...data });
   }),
@@ -360,21 +359,25 @@ export const handlers = [
     return HttpResponse.json({ id: params.id, status: data.action === 'approve' ? 'approved' : 'rejected' });
   }),
 
+  http.get('*/api/v1/hrm/salary-periods/', () => {
+    return HttpResponse.json(['2026-05']);
+  }),
+
   http.get('*/api/v1/hrm/salary-slips/', () => {
     return HttpResponse.json([
-      { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'draft' }
+      { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'draft' }
     ]);
   }),
 
   http.post('*/api/v1/hrm/salary-slips/initialize/', async ({ request }) => {
     const data = await request.json() as { salary_period: string };
     return HttpResponse.json([
-      { id: 'slip-1', name: `SAL-${data.salary_period}-NV001',`, employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '0', allowance_amount: '0', reward_amount_total: '0', discipline_deduction_total: '0', union_fee_2pct: '200000', gross_pay: '10000000', deductions: '200000', net_pay: '9800000', status: 'draft' }
+      { id: 'slip-1', name: `SAL-${data.salary_period}-NV001',`, employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '0', allowance_amount: '0', reward_amount_total: '0', discipline_deduction_total: '0', gross_pay: '10000000', deductions: '0', net_pay: '10000000', status: 'draft' }
     ], { status: 201 });
   }),
 
   http.post('*/api/v1/hrm/salary-slips/:id/calculate/', () => {
-    return HttpResponse.json({ id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'draft' });
+    return HttpResponse.json({ id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'draft' });
   }),
 
   http.post('*/api/v1/hrm/rewards/', async ({ request }) => {
@@ -383,9 +386,26 @@ export const handlers = [
   }),
 
   http.get('*/api/v1/hrm/rewards/', () => {
-    return HttpResponse.json([
-      { id: 'reward-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', reward_date: '2026-04-30', reward_type: 'performance_bonus', amount: '1000000', description: 'Thành tích xuất sắc quý 1' }
-    ]);
+    return HttpResponse.json({
+      count: 1,
+      results: [
+        { id: 'reward-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', reward_date: '2026-04-30', reward_type: 'performance_bonus', amount: '1000000', description: 'Thành tích xuất sắc quý 1', status: 'pending_approval' }
+      ]
+    });
+  }),
+
+  http.patch('*/api/v1/hrm/rewards/:id/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, ...data });
+  }),
+
+  http.delete('*/api/v1/hrm/rewards/:id/', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post('*/api/v1/hrm/rewards/:id/cancel/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, status: 'cancelled', ...data });
   }),
 
   http.post('*/api/v1/hrm/disciplines/', async ({ request }) => {
@@ -394,16 +414,76 @@ export const handlers = [
   }),
 
   http.get('*/api/v1/hrm/disciplines/', () => {
-    return HttpResponse.json([
-      { id: 'discipline-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', incident_date: '2026-03-10', discipline_date: '2026-03-12', discipline_type: 'warning', penalty_amount: '200000', description: 'Đi muộn nhiều lần' }
-    ]);
+    return HttpResponse.json({
+      count: 1,
+      results: [
+        { id: 'discipline-1', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', incident_date: '2026-03-10', discipline_date: '2026-03-12', discipline_type: 'warning', penalty_amount: '200000', description: 'Đi muộn nhiều lần', status: 'pending_approval' }
+      ]
+    });
   }),
 
-  http.post('*/api/v1/hrm/salary-slips/bulk-confirm-pay/', async ({ request }) => {
-    const data = await request.json() as { salary_period: string };
+  http.patch('*/api/v1/hrm/disciplines/:id/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, ...data });
+  }),
+
+  http.delete('*/api/v1/hrm/disciplines/:id/', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post('*/api/v1/hrm/disciplines/:id/cancel/', async ({ request, params }) => {
+    const data = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ id: params.id, status: 'cancelled', ...data });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/bulk-approve-pay/', async ({ request }) => {
+    const data = await request.json() as { salarySlipBulkApprovePayInput: { salary_period: string } };
+    const period = data.salarySlipBulkApprovePayInput?.salary_period || '2026-05';
     return HttpResponse.json([
-      { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: data.salary_period, base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', union_fee_2pct: '200000', gross_pay: '10500000', deductions: '400000', net_pay: '11100000', status: 'paid' }
+      { id: 'slip-1', name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: period, base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'paid' }
     ], { status: 200 });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/:id/approve/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'approved' });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/:id/reject/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'calculated' });
+  }),
+
+  http.post('*/api/v1/finance/salary-slips/:id/pay/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, name: 'SAL-2026-05-NV001', employee_id: 'emp-1', employee_code: 'NV001', employee_name: 'Nguyễn Văn An', salary_period: '2026-05', base_salary: '10000000', overtime_amount: '500000', allowance_amount: '0', reward_amount_total: '1000000', discipline_deduction_total: '200000', gross_pay: '10500000', deductions: '200000', net_pay: '11300000', status: 'paid' });
+  }),
+
+  // HRM new contract expiration and submit/recall mocks
+  http.post('*/api/v1/hrm/contracts/:id/handle-expiration/', async ({ request }) => {
+    const data = await request.json() as Record<string, any>;
+    return HttpResponse.json({
+      contract: data.action === 'terminate' || data.action === 'defer' ? null : { id: 'new-contract-123', contract_no: 'RENEW-123', status: 'active' },
+      history: data.action === 'renew_with_salary_change' ? { id: 'hist-123', status: 'pending_approval' } : null
+    }, { status: 200 });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/partial/', async ({ request }) => {
+    const data = await request.json() as Record<string, any>;
+    return HttpResponse.json({ id: 'partial-slip-123', employee_id: data.employee_id, status: 'draft' }, { status: 201 });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/bulk-calculate/', async () => {
+    return HttpResponse.json({ count: 1, slip_ids: ['slip-1'] });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/bulk-submit-for-review/', async () => {
+    return HttpResponse.json({ count: 1, slip_ids: ['slip-1'] });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/:id/submit-for-review/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, status: 'pending_finance_review' });
+  }),
+
+  http.post('*/api/v1/hrm/salary-slips/:id/recall/', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, status: 'calculated' });
   }),
 
   // Public Holidays mocks

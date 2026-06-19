@@ -1,38 +1,75 @@
 import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { 
   useGetPurchasingShipmentsQuery, 
   usePostPurchasingShipmentsMutation, 
-  usePostPurchasingShipmentsAllocateMutation,
   usePutPurchasingShipmentsByPkMutation,
-  usePostPurchasingCertificationsMutation
+  usePostPurchasingShipmentsByPkCompleteMutation,
+  useGetPurchasingOrdersQuery
 } from '@entities/purchasing/api/purchasingApi';
-import { 
-  useGetInventoryStockEntryListQuery,
-  usePostInventoryStockEntryByStockEntryIdUpdateMutation,
-  usePostInventoryStockInByStockEntryIdApproveMutation
-} from '@features/inventory/api/inventoryApi';
 import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Input } from '@shared/ui/Input/Input';
+import { TextArea } from '@shared/ui/Input/TextArea';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
-import { Plus, Package, Calendar, Info, CheckCircle2, ShieldCheck, Check, AlertTriangle } from 'lucide-react';
+import { Plus, Package, AlertTriangle, ClipboardCheck } from 'lucide-react';
+import { shortId } from '@shared/lib/shortId';
 import styles from './LandedCostPage.module.css';
+
+// Schema validation for completing shipment
+const completeFormSchema = z.object({
+  total_logistic_fees: z.number({ message: 'Chi phí logistic phải là số' }).min(0, 'Chi phí logistic không được âm'),
+  remarks: z.string().optional(),
+  details: z.array(
+    z.object({
+      po_line_id: z.string(),
+      item_id: z.string(),
+      item_code: z.string(),
+      item_name: z.string(),
+      ordered_quantity: z.number(),
+      received_quantity: z.number(),
+      remaining_quantity: z.number(),
+      quantity: z.number({ message: 'Số lượng phải là số' }).min(0, 'Số lượng không được âm'),
+      target_warehouse_id: z.string().nullable().optional(),
+    }).refine(
+      (data) => {
+        if (data.quantity > 0 && !data.target_warehouse_id) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: 'Bắt buộc chọn kho khi số lượng nhận lớn hơn 0',
+        path: ['target_warehouse_id'],
+      }
+    ).refine(
+      (data) => {
+        return data.quantity <= data.remaining_quantity;
+      },
+      {
+        message: 'Số lượng nhận không được vượt quá số lượng còn lại',
+        path: ['quantity'],
+      }
+    )
+  ),
+});
+
+type CompleteFormValues = z.infer<typeof completeFormSchema>;
 
 export const LandedCostPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryShipmentId = searchParams.get('id');
   const { data: shipments = [], isLoading: isLoadingShipments, refetch: refetchShipments } = useGetPurchasingShipmentsQuery();
-  const { data: stockEntriesRes } = useGetInventoryStockEntryListQuery({ purpose: 'receipt' });
+  const { data: purchaseOrders = [] } = useGetPurchasingOrdersQuery();
   const { data: warehouses = [] } = useGetMasterDataWarehousesListQuery();
   
   const [createShipment] = usePostPurchasingShipmentsMutation();
-  const [allocateLandedCost] = usePostPurchasingShipmentsAllocateMutation();
   const [updateShipment] = usePutPurchasingShipmentsByPkMutation();
-  const [updateStockEntry] = usePostInventoryStockEntryByStockEntryIdUpdateMutation();
-  const [approveStockIn] = usePostInventoryStockInByStockEntryIdApproveMutation();
-  const [postQC] = usePostPurchasingCertificationsMutation();
+  const [completeShipment, { isLoading: isCompleting }] = usePostPurchasingShipmentsByPkCompleteMutation();
 
   const activeShipment = useMemo(() => {
     if (!queryShipmentId || shipments.length === 0) return null;
@@ -42,160 +79,201 @@ export const LandedCostPage: React.FC = () => {
   const activeShipmentId = activeShipment?.id || null;
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [isConfirmZeroModalOpen, setIsConfirmZeroModalOpen] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<CompleteFormValues | null>(null);
 
   // Form states for creating shipment
   const [shipmentNum, setShipmentNum] = useState('');
   const [shipmentName, setShipmentName] = useState('');
   const [remarks, setRemarks] = useState('');
-  const [selectedStockEntryIds, setSelectedStockEntryIds] = useState<string[]>([]);
+  const [selectedPurchaseOrderId, setSelectedPurchaseOrderId] = useState<string | null>(null);
   const [isNameUserEdited, setIsNameUserEdited] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [completeError, setCompleteError] = useState('');
 
-  // Form states for allocating landed cost
-  const [logisticFees, setLogisticFees] = useState('');
+  // Local state for inline logistics fee in inspecting state
+  const [logisticFees, setLogisticFees] = useState('0');
 
-  // QA/QC Form states
-  const [isQcModalOpen, setIsQcModalOpen] = useState(false);
-  const [qcItem, setQcItem] = useState<{ id: string; item_id: string; item_code: string; item_name: string; stock_entry_id: string } | null>(null);
-  const [qcResult, setQcResult] = useState<'PASSED' | 'FAILED'>('PASSED');
-  const [qcRemarks, setQcRemarks] = useState('');
-  const [qcError, setQcError] = useState('');
+  // React Hook Form for shipment completion
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    trigger,
+    formState: { errors },
+    reset,
+  } = useForm<CompleteFormValues>({
+    resolver: zodResolver(completeFormSchema),
+    defaultValues: {
+      total_logistic_fees: 0,
+      remarks: '',
+      details: [],
+    },
+  });
 
-  // Storekeeper local inputs (warehouse assignments, received quantity)
-  const [localDetails, setLocalDetails] = useState<Record<string, { quantity: number; target_warehouse_id: string | null }>>({});
-  const [isReceiving, setIsReceiving] = useState(false);
-  const [receiveError, setReceiveError] = useState('');
+  const { fields } = useFieldArray({
+    control,
+    name: 'details',
+  });
 
-  // Filter stock entries that are receipts, draft or posted, and not linked to any shipment
-  const availableStockEntries = useMemo(() => {
-    if (!stockEntriesRes) return [];
-    const entries = 'results' in stockEntriesRes ? (stockEntriesRes.results || []) : (Array.isArray(stockEntriesRes) ? stockEntriesRes : []);
-    
-    // Find all stock entry IDs currently linked to shipments
-    const linkedIds = new Set(
-      shipments.flatMap((s) => s.stock_entries?.map((se) => se.id) || [])
+  // Available POs: status PENDING/PAID_UNSHIPPED, exclude POs that already have active shipments
+  const activePoIds = useMemo(() => {
+    return new Set(
+      shipments
+        .filter((s) => s.status !== 'completed' && s.purchase_order)
+        .map((s) => s.purchase_order)
     );
-    
-    return entries.filter(
-      (entry) => entry.purpose === 'receipt' && !linkedIds.has(entry.id)
+  }, [shipments]);
+
+  const availablePurchaseOrders = useMemo(() => {
+    return purchaseOrders.filter(
+      (po) =>
+        po.id &&
+        (po.status === 'pending' || po.status === 'paid_unshipped') &&
+        !activePoIds.has(po.id)
     );
-  }, [stockEntriesRes, shipments]);
+  }, [purchaseOrders, activePoIds]);
 
-
-
+  // Synchronize inline logistics fee and initial state when shipment selection changes
   const [prevActiveShipmentId, setPrevActiveShipmentId] = useState<string | null>(null);
   if (activeShipmentId !== prevActiveShipmentId) {
     setPrevActiveShipmentId(activeShipmentId);
     if (activeShipment) {
-      if (activeShipment.stock_entries_details) {
-        const initialDetails: Record<string, { quantity: number; target_warehouse_id: string | null }> = {};
-        activeShipment.stock_entries_details.forEach((det) => {
-          initialDetails[det.id!] = {
-            quantity: det.quantity || 0,
-            target_warehouse_id: det.target_warehouse_id || null,
-          };
-        });
-        setLocalDetails(initialDetails);
-      }
       setLogisticFees(activeShipment.total_logistic_fees ? String(activeShipment.total_logistic_fees) : '0');
+      
+      const rawMaterialWarehouse = warehouses.find(
+        (w) =>
+          w.name === 'Kho Nguyên Vật Liệu' ||
+          w.name?.toLowerCase().includes('nguyên vật liệu') ||
+          w.name?.toLowerCase().includes('nguyen vat lieu') ||
+          w.name?.toLowerCase().includes('nguyên liệu') ||
+          w.name?.toLowerCase().includes('nguyen lieu')
+      );
+      
+      const lines = activeShipment.purchase_order_lines || [];
+      reset({
+        total_logistic_fees: activeShipment.total_logistic_fees ? parseFloat(String(activeShipment.total_logistic_fees)) : 0,
+        remarks: activeShipment.remarks || '',
+        details: lines.map((line) => {
+          const matched = activeShipment.stock_entries_details?.find((r) => r.item_id === line.item_id);
+          const ordered_qty = parseFloat(String(line.quantity)) || 0;
+          const received_qty = parseFloat(String(line.received_quantity)) || 0;
+          const remaining_qty = parseFloat(String(line.remaining_quantity ?? line.quantity)) || 0;
+          return {
+            po_line_id: line.id || '',
+            item_id: line.item_id || '',
+            item_code: line.item_code || '',
+            item_name: line.item_name || '',
+            ordered_quantity: ordered_qty,
+            received_quantity: received_qty,
+            remaining_quantity: remaining_qty,
+            quantity: matched ? parseFloat(String(matched.quantity)) : remaining_qty,
+            target_warehouse_id: matched ? (matched.target_warehouse_id || '') : (rawMaterialWarehouse?.id || ''),
+          };
+        }),
+      });
     } else {
-      setLocalDetails({});
       setLogisticFees('0');
+      reset({
+        total_logistic_fees: 0,
+        remarks: '',
+        details: [],
+      });
     }
   }
 
-  const [prevIsCreateModalOpen, setPrevIsCreateModalOpen] = useState(false);
-  const [prevSelectedStockEntryIds, setPrevSelectedStockEntryIds] = useState<string[]>([]);
-  
-  const isSelectedChanged = selectedStockEntryIds.length !== prevSelectedStockEntryIds.length || 
-    selectedStockEntryIds.some((val, idx) => val !== prevSelectedStockEntryIds[idx]);
-
-  if (isCreateModalOpen !== prevIsCreateModalOpen || isSelectedChanged) {
-    setPrevIsCreateModalOpen(isCreateModalOpen);
-    setPrevSelectedStockEntryIds(selectedStockEntryIds);
-    if (isCreateModalOpen) {
-      if (!isNameUserEdited) {
+  // Handle PO selection and auto shipment name suggestion
+  const [prevSelectedPOId, setPrevSelectedPOId] = useState<string | null>(null);
+  if (selectedPurchaseOrderId !== prevSelectedPOId) {
+    setPrevSelectedPOId(selectedPurchaseOrderId);
+    if (selectedPurchaseOrderId && !isNameUserEdited) {
+      const po = purchaseOrders.find(p => p.id === selectedPurchaseOrderId);
+      if (po) {
         const today = new Date();
         const dd = String(today.getDate()).padStart(2, '0');
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const yyyy = today.getFullYear();
         const dateStr = `${dd}/${mm}/${yyyy}`;
-
-        if (selectedStockEntryIds.length === 0) {
-          setShipmentName(`Lô hàng mới - ${dateStr}`);
-        } else {
-          const selectedEntries = availableStockEntries.filter((e) => selectedStockEntryIds.includes(e.id!));
-          const vendors = Array.from(new Set(selectedEntries.map((e) => e.vendor_name).filter(Boolean)));
-
-          if (vendors.length === 0) {
-            setShipmentName(`Lô hàng mới - ${dateStr}`);
-          } else if (vendors.length === 1) {
-            setShipmentName(`Lô hàng ${vendors[0]} - ${dateStr}`);
-          } else {
-            setShipmentName(`Lô hàng tổng hợp - ${dateStr}`);
-          }
-        }
+        setShipmentName(`Lô hàng ${po.vendor_name || 'NCC'} - ${dateStr}`);
       }
-    } else {
-      setShipmentNum('');
-      setShipmentName('');
-      setIsNameUserEdited(false);
     }
   }
+
+  // Auto-generate name when modal opens
+  const [prevIsCreateModalOpen, setPrevIsCreateModalOpen] = useState(false);
+  if (isCreateModalOpen !== prevIsCreateModalOpen) {
+    setPrevIsCreateModalOpen(isCreateModalOpen);
+    if (!isCreateModalOpen) {
+      setShipmentNum('');
+      setShipmentName('');
+      setSelectedPurchaseOrderId(null);
+      setRemarks('');
+      setIsNameUserEdited(false);
+      setCreateError('');
+    }
+  }
+
+  const selectedPO = useMemo(() => {
+    return purchaseOrders.find((po) => po.id === selectedPurchaseOrderId);
+  }, [purchaseOrders, selectedPurchaseOrderId]);
+
+  // Match PO lines with received details for active shipment
+  const matchedDetails = useMemo(() => {
+    if (!activeShipment) return [];
+    const lines = activeShipment.purchase_order_lines || [];
+    const received = activeShipment.stock_entries_details || [];
+    
+    return lines.map((line) => {
+      const matched = received.find((r) => r.item_id === line.item_id);
+      return {
+        id: line.id,
+        item_id: line.item_id,
+        item_code: line.item_code,
+        item_name: line.item_name,
+        ordered_quantity: parseFloat(String(line.quantity)) || 0,
+        remaining_quantity: parseFloat(String(line.remaining_quantity ?? line.quantity)) || 0,
+        already_received: parseFloat(String(line.received_quantity)) || 0,
+        unit: line.unit,
+        received_quantity: matched ? parseFloat(String(matched.quantity)) : 0,
+        target_warehouse_name: matched ? matched.target_warehouse_name : null,
+      };
+    });
+  }, [activeShipment]);
 
   const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError('');
-    if (!shipmentNum.trim() || !shipmentName.trim()) {
-      setCreateError('Vui lòng điền đầy đủ Mã và Tên lô hàng.');
+    if (!shipmentNum.trim() || !shipmentName.trim() || !selectedPurchaseOrderId) {
+      setCreateError('Vui lòng điền đầy đủ Mã, Tên và Đơn mua hàng.');
       return;
     }
 
     try {
-      await createShipment({
+      const result = await createShipment({
         shipmentInput: {
           shipment_num: shipmentNum.trim(),
           name: shipmentName.trim(),
           remarks: remarks.trim() || null,
-          stock_entry_ids: selectedStockEntryIds,
+          purchase_order_id: selectedPurchaseOrderId,
         }
       }).unwrap();
       
       setRemarks('');
-      setSelectedStockEntryIds([]);
+      setSelectedPurchaseOrderId(null);
       setIsCreateModalOpen(false);
       refetchShipments();
+      
+      if (result.id) {
+        const params = new URLSearchParams(searchParams);
+        params.set('id', result.id);
+        setSearchParams(params);
+      }
     } catch (err: unknown) {
       const error = err as { data?: { detail?: string } };
       setCreateError(error?.data?.detail || 'Có lỗi xảy ra khi tạo lô hàng.');
-    }
-  };
-
-
-
-  const handleQcSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setQcError('');
-    if (!qcItem) return;
-
-    try {
-      await postQC({
-        technicalCertificationCreateInput: {
-          item_id: qcItem.item_id,
-          stock_entry_id: qcItem.stock_entry_id,
-          cert_type: 'Kiểm định chất lượng ngoại quan & thông số kỹ thuật',
-          result: qcResult,
-          remarks: qcRemarks.trim() || null,
-        }
-      }).unwrap();
-
-      setIsQcModalOpen(false);
-      setQcItem(null);
-      setQcRemarks('');
-      refetchShipments();
-    } catch (err: unknown) {
-      const error = err as { data?: { detail?: string } };
-      setQcError(error?.data?.detail || 'Có lỗi xảy ra khi tạo chứng nhận QA/QC.');
     }
   };
 
@@ -204,153 +282,103 @@ export const LandedCostPage: React.FC = () => {
     try {
       await updateShipment({
         pk: activeShipmentId,
-        body: { status: 'arrived' }
+        body: { status: 'inspecting' }
       }).unwrap();
       refetchShipments();
     } catch (err: unknown) {
       const error = err as { data?: { detail?: string } };
-      alert(error?.data?.detail || 'Không thể cập nhật trạng thái lô hàng sang Arrived.');
+      alert(error?.data?.detail || 'Không thể cập nhật trạng thái lô hàng sang Đang tiếp nhận.');
     }
   };
 
-  const handleConfirmQCFinished = async () => {
-    if (!activeShipmentId || !activeShipment) return;
+  const handleOpenCompleteModal = async () => {
+    if (!activeShipment) return;
     
-    // Check if all items have been QC-ed
-    const uninspected = activeShipment.stock_entries_details?.filter((d) => !d.latest_cert);
-    if (uninspected && uninspected.length > 0) {
-      const confirmForce = window.confirm(
-        `Vẫn còn ${uninspected.length} sản phẩm chưa được kiểm định chất lượng. Bạn có chắc muốn hoàn tất QC sớm?`
-      );
-      if (!confirmForce) return;
+    // Validate inline details form fields
+    const isValid = await trigger('details');
+    if (!isValid) return;
+
+    setValue('total_logistic_fees', parseFloat(logisticFees) || 0);
+    setValue('remarks', activeShipment.remarks || '');
+    
+    setCompleteError('');
+    setIsCompleteModalOpen(true);
+  };
+
+  const onCompleteSubmit = async (data: CompleteFormValues) => {
+    if (!activeShipmentId) return;
+    setCompleteError('');
+    
+    const allZero = data.details.every((d) => d.quantity === 0);
+    if (allZero) {
+      setPendingFormData(data);
+      setIsConfirmZeroModalOpen(true);
+      return;
     }
 
+    await doComplete(data);
+  };
+
+  const handleConfirmZero = async () => {
+    if (!pendingFormData) return;
+    setIsConfirmZeroModalOpen(false);
+    await doComplete(pendingFormData);
+    setPendingFormData(null);
+  };
+
+  const doComplete = async (data: CompleteFormValues) => {
+    if (!activeShipmentId) return;
     try {
-      await updateShipment({
+      const payloadDetails = data.details.map((d) => ({
+        po_line_id: d.po_line_id,
+        item_id: d.item_id,
+        quantity: d.quantity,
+        target_warehouse_id: d.quantity > 0 ? (d.target_warehouse_id || null) : null,
+      }));
+
+      await completeShipment({
         pk: activeShipmentId,
-        body: { status: 'inspected' }
+        shipmentCompleteInput: {
+          total_logistic_fees: data.total_logistic_fees,
+          details: payloadDetails,
+        },
       }).unwrap();
+
+      // Update remarks if edited
+      if (activeShipment && data.remarks !== undefined && data.remarks !== activeShipment.remarks) {
+        await updateShipment({
+          pk: activeShipmentId,
+          body: { remarks: data.remarks }
+        }).unwrap();
+      }
+
+      setIsCompleteModalOpen(false);
       refetchShipments();
     } catch (err: unknown) {
-      const error = err as { data?: { detail?: string } };
-      alert(error?.data?.detail || 'Không thể hoàn tất kiểm định QA/QC.');
+      const error = err as { data?: { detail?: string; error?: string } };
+      setCompleteError(error?.data?.error || error?.data?.detail || 'Có lỗi xảy ra khi hoàn tất lô hàng.');
     }
-  };
-
-  const handleConfirmReceiving = async () => {
-    if (!activeShipment || !activeShipment.stock_entries) return;
-    setReceiveError('');
-    setIsReceiving(true);
-
-    try {
-      const entries = activeShipment.stock_entries;
-      
-      // 1. Perform validation first
-      const feeAmount = parseFloat(logisticFees);
-      if (isNaN(feeAmount) || feeAmount <= 0) {
-        throw new Error('Vui lòng nhập chi phí Logistic hợp lệ (lớn hơn 0).');
-      }
-
-      for (const entry of entries) {
-        const entryDetails = activeShipment.stock_entries_details?.filter((d) => d.stock_entry_id === entry.id) || [];
-        for (const det of entryDetails) {
-          const local = localDetails[det.id!];
-          if (det.qc_status === 'PASSED') {
-            if (!local || !local.target_warehouse_id) {
-              throw new Error(`Sản phẩm ${det.item_code} (${det.item_name}) đạt kiểm định nhưng chưa được chỉ định kho đích.`);
-            }
-            if (!local.quantity || local.quantity <= 0) {
-              throw new Error(`Số lượng thực nhận của sản phẩm đạt QC ${det.item_code} phải lớn hơn 0.`);
-            }
-          }
-        }
-      }
-
-      // 2. Perform updates and approve stock entries
-      for (const entry of entries) {
-        const entryDetails = activeShipment.stock_entries_details?.filter((d) => d.stock_entry_id === entry.id) || [];
-        const updates = entryDetails.map((det) => {
-          const local = localDetails[det.id!];
-          return {
-            detail_id: det.id!,
-            target_warehouse_id: det.qc_status === 'PASSED' ? local.target_warehouse_id : null,
-            quantity: det.qc_status === 'PASSED' ? Number(local.quantity) : 0, // FAILED items received as 0
-          };
-        });
-
-        // Update Stock Entry values
-        await updateStockEntry({
-          stockEntryId: entry.id!,
-          stockEntryUpdateInput: { details: updates }
-        }).unwrap();
-
-        // Post/Approve the Stock Entry
-        await approveStockIn({
-          stockEntryId: entry.id!
-        }).unwrap();
-      }
-
-      // 3. Allocate logistic fee to complete the shipment
-      if (activeShipmentId) {
-        await allocateLandedCost({
-          landedCostAllocationInput: {
-            shipment_id: activeShipmentId,
-            total_logistic_fees: feeAmount,
-          }
-        }).unwrap();
-      }
-
-      setLogisticFees('');
-      refetchShipments();
-    } catch (err: unknown) {
-      const error = err as { message?: string; data?: { detail?: string } };
-      setReceiveError(error.message || error?.data?.detail || 'Có lỗi xảy ra khi xác nhận nhận hàng.');
-    } finally {
-      setIsReceiving(false);
-    }
-  };
-
-  const toggleStockEntrySelection = (id: string) => {
-    setSelectedStockEntryIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleLocalWarehouseChange = (detailId: string, whId: string) => {
-    setLocalDetails((prev) => ({
-      ...prev,
-      [detailId]: {
-        ...prev[detailId],
-        target_warehouse_id: whId || null,
-      }
-    }));
-  };
-
-  const handleLocalQuantityChange = (detailId: string, qty: string) => {
-    const num = parseFloat(qty) || 0;
-    setLocalDetails((prev) => ({
-      ...prev,
-      [detailId]: {
-        ...prev[detailId],
-        quantity: num,
-      }
-    }));
   };
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'draft':
-        return <Badge variant="neutral">Nháp (Đang đi đường)</Badge>;
-      case 'arrived':
-        return <Badge variant="warning">Đã cập bến (Chờ QC)</Badge>;
-      case 'inspected':
-        return <Badge variant="info">Đã QC (Chờ nhận hàng)</Badge>;
+        return <Badge variant="neutral">Chờ Hàng Về</Badge>;
+      case 'inspecting':
+        return <Badge variant="info">Đang Tiếp Nhận</Badge>;
       case 'completed':
-        return <Badge variant="success">Hoàn tất</Badge>;
+        return <Badge variant="success">Hoàn Tất</Badge>;
       default:
         return <Badge variant="neutral">Không rõ</Badge>;
     }
   };
+
+  const warehouseOptions = useMemo(() => {
+    return [
+      { label: '-- Chọn Kho Đích --', value: '' },
+      ...warehouses.map((w) => ({ label: w.name || '', value: w.id || '' })),
+    ];
+  }, [warehouses]);
 
   return (
     <div className={styles.container}>
@@ -379,7 +407,7 @@ export const LandedCostPage: React.FC = () => {
           {isLoadingShipments ? (
             <div className={styles.loading}>Đang tải danh sách lô hàng...</div>
           ) : shipments.length === 0 ? (
-            <div className={styles.empty}>Không có lô hàng nào. Hãy tạo mới lô hàng để quản lý nhận hàng và kiểm định.</div>
+            <div className={styles.empty}>Không có lô hàng nào. Hãy tạo mới lô hàng để quản lý nhận hàng.</div>
           ) : (
             <div className={styles.shipmentList}>
               {shipments.map((s) => (
@@ -404,7 +432,7 @@ export const LandedCostPage: React.FC = () => {
                   <div className={styles.cardMeta}>
                     <span>
                       <Package size={12} style={{ marginRight: '4px' }} />
-                      {s.stock_entries?.length || 0} phiếu kho
+                      {s.purchase_order_lines?.length || 0} mặt hàng
                     </span>
                     {s.total_logistic_fees ? (
                       <span className={styles.feeText}>
@@ -435,16 +463,16 @@ export const LandedCostPage: React.FC = () => {
                       variant="primary" 
                       onClick={handleConfirmArrival}
                     >
-                      Xác nhận hàng về (Arrived)
+                      Xác nhận hàng về (Bắt đầu tiếp nhận)
                     </Button>
                   )}
-                  {activeShipment.status === 'arrived' && (
+                  {activeShipment.status === 'inspecting' && (
                     <Button 
                       variant="primary" 
-                      icon={<ShieldCheck size={16} />}
-                      onClick={handleConfirmQCFinished}
+                      icon={<ClipboardCheck size={16} />}
+                      onClick={handleOpenCompleteModal}
                     >
-                      Hoàn tất Kiểm định QC
+                      Xác Nhận Hoàn Tất
                     </Button>
                   )}
                 </div>
@@ -457,15 +485,15 @@ export const LandedCostPage: React.FC = () => {
               )}
 
               <div className={styles.feeSummary}>
-                {activeShipment.status === 'inspected' ? (
+                {activeShipment.status === 'inspecting' ? (
                   <div className={styles.logisticInputGroup}>
-                    <label className={styles.logisticInputLabel}>Chi phí Logistic / Vận chuyển (VND) <span style={{ color: 'var(--clr-error)' }}>*</span></label>
+                    <label className={styles.logisticInputLabel}>Chi phí Logistic / Vận chuyển ước tính (VND) <span style={{ color: 'var(--clr-error)' }}>*</span></label>
                     <input
                       type="number"
                       min="0"
                       step="1000"
                       className={styles.logisticInputField}
-                      placeholder="Nhập chi phí vận chuyển (nhập 0 nếu không có)..."
+                      placeholder="Nhập chi phí vận chuyển ước tính..."
                       value={logisticFees}
                       onChange={(e) => setLogisticFees(e.target.value)}
                     />
@@ -480,145 +508,149 @@ export const LandedCostPage: React.FC = () => {
                     </div>
                   </>
                 )}
-                {activeShipment.status === 'completed' && (
-                  <div className={styles.completedBanner}>
-                    <CheckCircle2 size={16} className={styles.successIcon} />
-                    <span>Chi phí đã được phân bổ thành công vào giá trị nhập kho. Lô hàng đã hoàn tất!</span>
-                  </div>
-                )}
               </div>
 
               <div className={styles.entriesSection}>
-                <h4 className={styles.entriesTitle}>Bảng Tiếp Nhận Hàng Hóa & Kiểm Định QA/QC</h4>
+                <h4 className={styles.entriesTitle}>Bảng Tiếp Nhận Hàng Hóa</h4>
                 
-                {receiveError && <div className={styles.errorAlert}>{receiveError}</div>}
-
-                {activeShipment.stock_entries_details && activeShipment.stock_entries_details.length > 0 ? (
+                {matchedDetails.length > 0 ? (
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
                       <thead>
-                        <tr>
-                          <th>Sản Phẩm</th>
-                          <th>Phiếu Kho gốc</th>
-                          <th style={{ width: '100px' }}>Số Lượng Đặt</th>
-                          <th style={{ width: '120px' }}>Kết Quả QA/QC</th>
-                          <th style={{ width: '130px' }}>Thao Tác QC</th>
-                          <th>Kho Nhập hàng</th>
-                          <th>Số Thực Nhận</th>
-                        </tr>
+                        {activeShipment.status === 'inspecting' ? (
+                          <tr>
+                            <th>Sản Phẩm</th>
+                            <th style={{ width: '120px' }}>SL Đặt Gốc</th>
+                            <th style={{ width: '140px' }}>Đã Nhận Trước</th>
+                            <th style={{ width: '140px' }}>SL Có Thể Nhập</th>
+                            <th style={{ width: '160px' }}>SL Thực Nhận</th>
+                            <th>Kho Nhập hàng</th>
+                            <th style={{ width: '120px' }}>Kết Quả</th>
+                          </tr>
+                        ) : (
+                          <tr>
+                            <th>Sản Phẩm</th>
+                            <th style={{ width: '120px' }}>Số Lượng Đặt</th>
+                            <th style={{ width: '160px' }}>Số Lượng Đạt</th>
+                            <th>Kho Nhập hàng</th>
+                            <th style={{ width: '180px' }}>Kết Quả</th>
+                          </tr>
+                        )}
                       </thead>
                       <tbody>
-                        {activeShipment.stock_entries_details.map((detail) => {
-                          const local = localDetails[detail.id!] || { quantity: detail.quantity || 0, target_warehouse_id: detail.target_warehouse_id || null };
-                          const isDraftShipment = activeShipment.status === 'draft';
-                          const isArrivedShipment = activeShipment.status === 'arrived';
-                          const isInspectedShipment = activeShipment.status === 'inspected';
-
-                          return (
-                            <tr key={detail.id}>
-                              <td>
-                                <div className={styles.itemMeta}>
-                                  <span className={styles.itemCode}>{detail.item_code}</span>
-                                  <span className={styles.itemName}>{detail.item_name}</span>
-                                </div>
-                              </td>
-                              <td className={styles.entryName}>{detail.stock_entry_name}</td>
-                              <td>{detail.quantity}</td>
-                              <td>
-                                {detail.qc_status === 'PASSED' ? (
-                                  <Badge variant="success">PASSED (Đạt)</Badge>
-                                ) : detail.qc_status === 'FAILED' ? (
-                                  <div className={styles.qcBadge}>
-                                    <Badge variant="error">FAILED (Lỗi)</Badge>
-                                  </div>
-                                ) : (
-                                  <Badge variant="neutral">Chờ kiểm tra</Badge>
-                                )}
-                              </td>
-                              <td>
-                                {isArrivedShipment ? (
-                                  <Button 
-                                    size="sm"
-                                    onClick={() => {
-                                      setQcItem({
-                                        id: detail.id!,
-                                        item_id: detail.item_id!,
-                                        item_code: detail.item_code!,
-                                        item_name: detail.item_name!,
-                                        stock_entry_id: detail.stock_entry_id!
-                                      });
-                                      setIsQcModalOpen(true);
-                                    }}
-                                  >
-                                    Đánh giá QC
-                                  </Button>
-                                ) : isDraftShipment ? (
-                                  <span className={styles.itemName}>Chờ hàng đến</span>
-                                ) : (
-                                  <span className={styles.itemName}>Đã khóa QC</span>
-                                )}
-                              </td>
-                              <td>
-                                {isInspectedShipment && detail.qc_status === 'PASSED' ? (
-                                  <select 
-                                    className={styles.selectWarehouse}
-                                    value={local.target_warehouse_id || ''}
-                                    onChange={(e) => handleLocalWarehouseChange(detail.id!, e.target.value)}
-                                  >
-                                    <option value="">-- Chọn Kho Đích --</option>
-                                    {warehouses.map(w => (
-                                      <option key={w.id} value={w.id}>{w.name}</option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <span className={styles.entryName}>
-                                    {detail.target_warehouse_name || (detail.qc_status === 'FAILED' ? 'Bị loại bỏ (QC Hỏng)' : '---')}
-                                  </span>
-                                )}
-                              </td>
-                              <td>
-                                {isInspectedShipment && detail.qc_status === 'PASSED' ? (
-                                  <input 
-                                    type="number"
-                                    className={styles.inputNumber}
-                                    min="0.01"
-                                    step="0.01"
-                                    value={local.quantity}
-                                    onChange={(e) => handleLocalQuantityChange(detail.id!, e.target.value)}
-                                  />
-                                ) : (
-                                  <span>
-                                    {detail.qc_status === 'FAILED' ? 0 : detail.quantity}
-                                  </span>
-                                )}
-                                {detail.qc_status === 'FAILED' && (
-                                  <div className={styles.failedText}>
-                                    <AlertTriangle size={11} />
-                                    <span>Từ chối nhận</span>
-                                  </div>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
+                        {activeShipment.status === 'inspecting'
+                          ? fields.map((field, index) => {
+                              const itemQty = watch(`details.${index}.quantity`);
+                              const poLine = activeShipment.purchase_order_lines?.find(l => l.id === field.po_line_id);
+                              const unit = poLine?.unit || '';
+                              return (
+                                <tr key={field.id}>
+                                  <td>
+                                    <div className={styles.itemMeta}>
+                                      <span className={styles.itemCode}>{field.item_code}</span>
+                                      <span className={styles.itemName}>{field.item_name}</span>
+                                    </div>
+                                  </td>
+                                  <td>{field.ordered_quantity} {unit}</td>
+                                  <td>
+                                    {field.received_quantity > 0 ? (
+                                      <span className={styles.receivedBadge}>
+                                        <AlertTriangle size={11} /> {field.received_quantity} {unit}
+                                      </span>
+                                    ) : (
+                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <strong>{field.remaining_quantity} {unit}</strong>
+                                  </td>
+                                  <td>
+                                    <input
+                                      type="number"
+                                      className={styles.inputNumber}
+                                      min="0"
+                                      max={field.remaining_quantity}
+                                      step="0.01"
+                                      style={{ width: '100%' }}
+                                      {...register(`details.${index}.quantity`, { valueAsNumber: true })}
+                                    />
+                                    {errors.details?.[index]?.quantity && (
+                                      <span className={styles.errorText}>
+                                        {errors.details?.[index]?.quantity?.message}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <select
+                                      className={styles.selectWarehouse}
+                                      disabled={itemQty === 0}
+                                      style={{ margin: 0, width: '100%' }}
+                                      {...register(`details.${index}.target_warehouse_id`)}
+                                    >
+                                      {warehouseOptions.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                          {opt.label}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {errors.details?.[index]?.target_warehouse_id && (
+                                      <span className={styles.errorText}>
+                                        {errors.details?.[index]?.target_warehouse_id?.message}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <Badge variant="info">Đang Tiếp Nhận</Badge>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          : matchedDetails.map((detail) => {
+                              return (
+                                <tr key={detail.id}>
+                                  <td>
+                                    <div className={styles.itemMeta}>
+                                      <span className={styles.itemCode}>{detail.item_code}</span>
+                                      <span className={styles.itemName}>{detail.item_name}</span>
+                                    </div>
+                                  </td>
+                                  <td>{detail.ordered_quantity} {detail.unit}</td>
+                                  <td>
+                                    {activeShipment.status === 'completed' ? (
+                                      detail.received_quantity
+                                    ) : (
+                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {activeShipment.status === 'completed' ? (
+                                      detail.target_warehouse_name || '---'
+                                    ) : (
+                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {activeShipment.status === 'completed' ? (
+                                      detail.received_quantity > 0 ? (
+                                        <Badge variant="success">Đạt: {detail.received_quantity}/{detail.ordered_quantity}</Badge>
+                                      ) : (
+                                        <div className={styles.failedText}>
+                                          <AlertTriangle size={11} />
+                                          <span>Từ chối nhận (0/{detail.ordered_quantity})</span>
+                                        </div>
+                                      )
+                                    ) : (
+                                      <Badge variant="neutral">Chờ Hàng Về</Badge>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                       </tbody>
                     </table>
                   </div>
                 ) : (
                   <div className={styles.noEntries}>Không có dòng sản phẩm nào trong lô hàng này.</div>
-                )}
-
-                {activeShipment.status === 'inspected' && activeShipment.stock_entries?.some(se => se.status === 'draft') && (
-                  <div className={styles.actionRow}>
-                    <Button 
-                      variant="primary" 
-                      onClick={handleConfirmReceiving}
-                      loading={isReceiving}
-                      icon={<Check size={16} />}
-                    >
-                      Xác nhận nhận hàng & Hoàn tất Lô hàng
-                    </Button>
-                  </div>
                 )}
               </div>
             </div>
@@ -626,7 +658,7 @@ export const LandedCostPage: React.FC = () => {
             <div className={styles.noSelection}>
               <Package size={48} className={styles.placeholderIcon} />
               <h3>Chọn một lô hàng để làm việc</h3>
-              <p>Chọn một lô hàng từ danh sách bên trái để thực hiện quy trình kiểm định chất lượng QA/QC và thủ kho nhận hàng.</p>
+              <p>Chọn một lô hàng từ danh sách bên trái để thực hiện quy trình tiếp nhận hàng hóa và phân bổ chi phí landed cost.</p>
             </div>
           )}
         </div>
@@ -660,43 +692,51 @@ export const LandedCostPage: React.FC = () => {
               required
             />
           </div>
-          <Input 
+          <TextArea 
             label="Ghi Chú" 
             placeholder="Ghi chú thêm về lô hàng..."
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
+            rows={3}
           />
 
           <div className={styles.selectEntriesBox}>
-            <h4 className={styles.selectEntriesTitle}>Chọn Phiếu Nhập Kho Nháp (GRN) Liên Kết</h4>
-            <p className={styles.selectEntriesDesc}>Chọn các phiếu nhập kho đang chờ xử lý thuộc lô hàng vận chuyển này.</p>
+            <label className={styles.selectEntriesTitle}>Chọn Đơn Mua Hàng (PO) liên kết <span style={{ color: 'var(--clr-error)' }}>*</span></label>
+            <p className={styles.selectEntriesDesc}>Chọn một đơn mua hàng ở trạng thái chờ xử lý hoặc đã thanh toán để liên kết với lô hàng này.</p>
             
-            {availableStockEntries.length === 0 ? (
-              <div className={styles.noEntriesAvailable}>Không có phiếu nhập kho nháp nào khả dụng.</div>
-            ) : (
-              <div className={styles.entriesSelectionList}>
-                {availableStockEntries.map((entry) => (
-                  <div 
-                    key={entry.id} 
-                    className={`${styles.selectionItem} ${selectedStockEntryIds.includes(entry.id!) ? styles.selectedItem : ''}`}
-                    onClick={() => toggleStockEntrySelection(entry.id!)}
-                  >
-                    <input 
-                      type="checkbox" 
-                      checked={selectedStockEntryIds.includes(entry.id!)}
-                      onChange={() => {}}
-                      className={styles.checkbox}
-                    />
-                    <div className={styles.selectionInfo}>
-                      <span className={styles.selectionName}>{entry.name} (NCC: {entry.vendor_name || 'N/A'})</span>
-                      <span className={styles.selectionDate}>
-                        <Calendar size={12} style={{ marginRight: '4px' }} />
-                        {entry.posting_date ? new Date(entry.posting_date).toLocaleDateString('vi-VN') : ''}
-                      </span>
-                    </div>
-                    <Badge variant="neutral">Bản nháp</Badge>
-                  </div>
+            <div style={{ marginTop: '8px', marginBottom: '16px' }}>
+              <select
+                className={styles.poSelect}
+                value={selectedPurchaseOrderId || ''}
+                onChange={(e) => setSelectedPurchaseOrderId(e.target.value || null)}
+                required
+              >
+                <option value="">-- Chọn đơn mua hàng (PO) --</option>
+                {availablePurchaseOrders.map((po) => (
+                  <option key={po.id} value={po.id}>
+                    {shortId(po.id)}... (NCC: {po.vendor_name}, Trị giá: {po.total_amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(po.total_amount) : '---'})
+                  </option>
                 ))}
+              </select>
+            </div>
+
+            {selectedPO && (
+              <div style={{
+                background: 'var(--clr-bg-surface)',
+                border: '1px solid var(--clr-border)',
+                borderRadius: 'var(--br-md)',
+                padding: '16px',
+                marginTop: '12px'
+              }}>
+                <h5 style={{ fontWeight: 'var(--fw-semibold)', fontSize: 'var(--fs-sm)', marginBottom: '8px' }}>Chi tiết Đơn hàng:</h5>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {selectedPO.lines?.map((line) => (
+                    <div key={line.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--fs-xs)' }}>
+                      <span>{line.item_name} ({line.item_code})</span>
+                      <strong>{line.quantity}</strong>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -708,58 +748,119 @@ export const LandedCostPage: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Modal: Submit QA/QC Result */}
+      {/* Modal: Complete Shipment */}
       <Modal
-        open={isQcModalOpen}
-        onClose={() => setIsQcModalOpen(false)}
-        title={`Đánh Giá Chất Lượng: ${qcItem?.item_name || ''}`}
+        open={isCompleteModalOpen}
+        onClose={() => setIsCompleteModalOpen(false)}
+        title="Tiếp Nhận & Hoàn Tất Lô Hàng"
+        size="lg"
       >
-        <form onSubmit={handleQcSubmit} className={styles.form}>
-          {qcError && <div className={styles.errorAlert}>{qcError}</div>}
+        <form onSubmit={handleSubmit(onCompleteSubmit)} className={styles.form}>
+          {completeError && <div className={styles.errorAlert}>{completeError}</div>}
           
-          <div className={styles.allocationSummary}>
-            <Info size={16} className={styles.infoIcon} />
-            <p>Mặt hàng: <strong>{qcItem?.item_code}</strong>. Liên kết phiếu kho: <strong>{qcItem?.stock_entry_id.substring(0,8)}...</strong></p>
+          <div className={styles.formRow}>
+            <div className={styles.logisticDisplayGroup}>
+              <label className={styles.logisticInputLabel}>Chi phí vận chuyển thực tế (VND)</label>
+              <div className={styles.logisticDisplayValue}>
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                  .format(watch('total_logistic_fees') || 0)}
+              </div>
+              <span className={styles.logisticDisplayHint}>
+                Lấy từ ô "Chi phí Logistic / Vận chuyển ước tính" trên bảng chính. Vui lòng chỉnh sửa ở trang chính trước khi xác nhận.
+              </span>
+              <input type="hidden" {...register('total_logistic_fees', { valueAsNumber: true })} />
+            </div>
+            <Input
+              label="Ghi chú hoàn tất"
+              placeholder="Ghi chú khi hoàn tất nhận hàng..."
+              error={errors.remarks?.message}
+              {...register('remarks')}
+            />
           </div>
 
-          <div className={styles.selectEntriesBox}>
-            <label className={styles.selectEntriesTitle}>Kết Quả Kiểm Định</label>
-            <div style={{ display: 'flex', gap: '24px', marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input 
-                  type="radio" 
-                  name="qc_result" 
-                  value="PASSED"
-                  checked={qcResult === 'PASSED'}
-                  onChange={() => setQcResult('PASSED')}
-                />
-                <Badge variant="success">PASSED (Đạt chất lượng)</Badge>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input 
-                  type="radio" 
-                  name="qc_result" 
-                  value="FAILED"
-                  checked={qcResult === 'FAILED'}
-                  onChange={() => setQcResult('FAILED')}
-                />
-                <Badge variant="error">FAILED (Hỏng / Không đạt)</Badge>
-              </label>
+          <div className={styles.entriesSection} style={{ marginTop: '16px' }}>
+            <h4 className={styles.entriesTitle}>Số Lượng Thực Nhận & Chỉ Định Kho Đích (Review)</h4>
+            
+            <div className={styles.tableWrap} style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Sản Phẩm</th>
+                    <th style={{ width: '100px' }}>SL Đặt Gốc</th>
+                    <th style={{ width: '120px' }}>SL Có Thể Nhập</th>
+                    <th style={{ width: '120px' }}>SL Thực Nhận</th>
+                    <th style={{ width: '200px' }}>Kho Nhập</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fields.map((field, index) => {
+                    const targetWarehouseId = watch(`details.${index}.target_warehouse_id`);
+                    const warehouse = warehouses.find((w) => w.id === targetWarehouseId);
+                    return (
+                      <tr key={field.id}>
+                        <td>
+                          <div className={styles.itemMeta}>
+                            <span className={styles.itemCode}>{field.item_code}</span>
+                            <span className={styles.itemName}>{field.item_name}</span>
+                          </div>
+                        </td>
+                        <td>{field.ordered_quantity}</td>
+                        <td>{field.remaining_quantity}</td>
+                        <td>{watch(`details.${index}.quantity`)}</td>
+                        <td>{warehouse?.name || '---'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <Input 
-            label="Ghi chú đánh giá / Lý do (nếu hỏng)"
-            placeholder="Nhập ghi chú chi tiết..."
-            value={qcRemarks}
-            onChange={(e) => setQcRemarks(e.target.value)}
-          />
-
-          <div className={styles.formFooter}>
-            <Button type="button" variant="secondary" onClick={() => setIsQcModalOpen(false)}>Hủy</Button>
-            <Button type="submit" variant="primary">Lưu kết quả QC</Button>
+          <div className={styles.formFooter} style={{ marginTop: '24px' }}>
+            <Button type="button" variant="secondary" onClick={() => setIsCompleteModalOpen(false)}>Hủy</Button>
+            <Button type="submit" variant="primary" loading={isCompleting}>Xác nhận Hoàn Tất</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal: Confirm Zero-All Acceptance */}
+      <Modal
+        open={isConfirmZeroModalOpen}
+        onClose={() => {
+          setIsConfirmZeroModalOpen(false);
+          setPendingFormData(null);
+        }}
+        title="Xác nhận từ chối nhận toàn bộ"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setIsConfirmZeroModalOpen(false);
+                setPendingFormData(null);
+              }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleConfirmZero}
+            >
+              Xác nhận từ chối
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <AlertTriangle size={24} color="var(--clr-warning, #f59e0b)" style={{ flexShrink: 0 }} />
+          <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5', color: 'var(--clr-text, #0f172a)' }}>
+            Tất cả sản phẩm có số lượng nhận là 0. Hệ thống sẽ ghi nhận lô hàng này là{' '}
+            <strong>từ chối nhận toàn bộ</strong> và KHÔNG tạo phiếu nhập kho. Bạn có chắc chắn muốn tiếp tục?
+          </p>
+        </div>
       </Modal>
     </div>
   );

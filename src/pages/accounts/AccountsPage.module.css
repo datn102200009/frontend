@@ -1,0 +1,60 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  animation: fadeIn var(--duration-base) var(--ease-out);
+}
+
+.content {
+  animation: slideUp 0.3s var(--ease-out);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  margin: 0;
+  color: var(--clr-text);
+}
+
+.subtitle {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+  margin-top: 2px;
+}
+
+.permissionsSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.permBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  background-color: var(--clr-background-hover);
+  color: var(--clr-text-muted);
+  border: 1px solid var(--clr-border);
+}
+
+.directPermBadge {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}

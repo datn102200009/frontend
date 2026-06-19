@@ -5,8 +5,11 @@ import { usePostHrmLeaveRequestsCreateMutation, useGetHrmEmployeesQuery } from '
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { leaveRequestSchema, type LeaveRequestFormValues } from '../model/leave-request.schema';
 import styles from './LeaveRequestFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { shiftDays } from '@shared/lib/dateLimits';
 
 interface LeaveRequestFormModalProps {
   open: boolean;
@@ -35,6 +38,7 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
     reset,
     setValue,
     watch,
+    control,
   } = useForm<LeaveRequestFormValues>({
     resolver: zodResolver(leaveRequestSchema) as unknown as Resolver<LeaveRequestFormValues>,
     defaultValues: {
@@ -48,6 +52,12 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   });
 
   const startDate = watch('start_date');
+
+  const minStartDate = shiftDays(-30);
+  const maxStartDate = shiftDays(365);
+  const minEndDate = startDate || undefined;
+  const maxEndDate = startDate ? shiftDays(365, startDate) : undefined;
+
   const endDate = watch('end_date');
 
   // Auto calculate days when dates change
@@ -173,50 +183,40 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
         </div>
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="start_date">
-              Từ ngày <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="start_date"
-              type="date"
-              className={styles.input}
-              {...register('start_date')}
-              disabled={isLoading}
-            />
-            {errors.start_date && <span className={styles.errorText}>{errors.start_date.message}</span>}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="end_date">
-              Đến ngày <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="end_date"
-              type="date"
-              className={styles.input}
-              {...register('end_date')}
-              disabled={isLoading}
-            />
-            {errors.end_date && <span className={styles.errorText}>{errors.end_date.message}</span>}
-          </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="days">
-            Số ngày nghỉ thực tế <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="days"
-            type="number"
-            step={0.5}
-            min={0.5}
-            className={styles.input}
-            {...register('days')}
+          <DatePickerField
+            name="start_date"
+            label="Từ ngày"
+            control={control}
+            error={errors.start_date?.message}
+            required
+            minDate={minStartDate}
+            maxDate={maxStartDate}
             disabled={isLoading}
           />
-          {errors.days && <span className={styles.errorText}>{errors.days.message}</span>}
+
+          <DatePickerField
+            name="end_date"
+            label="Đến ngày"
+            control={control}
+            error={errors.end_date?.message}
+            required
+            minDate={minEndDate}
+            maxDate={maxEndDate}
+            disabled={isLoading}
+          />
         </div>
+
+        <Input
+          id="days"
+          type="number"
+          label="Số ngày nghỉ thực tế"
+          required={true}
+          min={0.5}
+          decimals={1}
+          {...register('days')}
+          disabled={isLoading}
+          error={errors.days?.message}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="reason">

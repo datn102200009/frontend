@@ -5,14 +5,13 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetProcurementSuppliersQuery } from '@entities/procurement/api/procurementApi';
 import type { Supplier } from '@entities/procurement/model/types';
-import { Eye, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
 
 interface SupplierTableProps {
-  onView?: (id: string) => void;
   onEdit?: (supplier: Supplier) => void;
 }
 
-export const SupplierTable: React.FC<SupplierTableProps> = ({ onView, onEdit }) => {
+export const SupplierTable: React.FC<SupplierTableProps> = ({ onEdit }) => {
   const { data: suppliers = [], isLoading } = useGetProcurementSuppliersQuery();
 
   const columns = useMemo(() => {
@@ -63,14 +62,13 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({ onView, onEdit }) 
           const supplier = info.row.original;
           return (
             <TableActions>
-              <ActionButton icon={<Eye size={15} />} title="Xem chi tiết" onClick={() => onView?.(supplier.id)} />
               <ActionButton icon={<Edit size={15} />} title="Chỉnh sửa" onClick={() => onEdit?.(supplier)} />
             </TableActions>
           );
         },
       }),
     ];
-  }, [onView, onEdit]);
+  }, [onEdit]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

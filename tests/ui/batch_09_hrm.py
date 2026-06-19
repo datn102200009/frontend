@@ -149,14 +149,14 @@ def run():
                 time.sleep(0.5)
                 page.get_by_role("combobox", name="Chọn năm").select_option("2026")
                 page.get_by_role("combobox", name="Chọn tháng").select_option("4")  # May (0-indexed)
-                page.get_by_role("button", name="15 Tháng 5 Năm 2026").click()
+                page.get_by_role("button", name="15 Tháng 5 Năm 2026", exact=True).click()
                 page.get_by_role("button", name="Xác nhận").click()
                 time.sleep(1)
 
                 # Nếu chưa có dữ liệu chấm công (lần đầu chạy sau reset DB), tự động tạo chấm công trước
                 rows = page.locator("tbody tr")
                 if rows.count() < 10:
-                    page.get_by_role("button", name="Chấm Công").click()
+                    page.get_by_role("button", name="Chấm Công").last.click()
                     time.sleep(0.5)
                     page.locator("#attendance_date").fill("2026-05-15")
                     time.sleep(0.3)
@@ -181,7 +181,7 @@ def run():
 
             # ── Tab 2: Batch attendance (test future date and invalid hours) ──
             try:
-                page.get_by_role("button", name="Chấm Công").click()
+                page.get_by_role("button", name="Chấm Công").last.click()
                 time.sleep(0.5)
                 expect(page.get_by_role("dialog")).to_be_visible()
 
@@ -377,7 +377,7 @@ def run():
                 page.get_by_role("combobox", name="Chọn tháng").select_option(str(holiday_date.month - 1))
                 
                 aria_label = f"{holiday_date.day} Tháng {holiday_date.month} Năm {holiday_date.year}"
-                page.get_by_role("button", name=aria_label).click()
+                page.get_by_role("button", name=aria_label, exact=True).click()
                 page.get_by_role("button", name="Xác nhận").click()
                 time.sleep(0.5)
 
@@ -389,6 +389,15 @@ def run():
                 runner.log("WF-11", 16, "PASS", f"Khai báo ngày nghỉ lễ Tết Nguyên Đán bắt đầu từ {holiday_date} thành công", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf11_s16")
+                # Close datepicker if it's still open to avoid blocking next steps (cascading failure defense)
+                try:
+                    page.keyboard.press("Escape")
+                    time.sleep(0.5)
+                    if page.get_by_role("button", name="Hủy").is_visible():
+                        page.get_by_role("button", name="Hủy").click()
+                        time.sleep(0.5)
+                except Exception:
+                    pass
                 runner.log("WF-11", 16, "FAIL", "Khai báo ngày nghỉ lễ Tết Nguyên Đán thành công", str(e), url=page.url)
 
             # ── Tab 2: Chấm Công - Verify public holiday banner appears for holiday date ──
@@ -403,7 +412,7 @@ def run():
                 page.get_by_role("combobox", name="Chọn tháng").select_option(str(holiday_date.month - 1))
                 
                 aria_label = f"{holiday_date.day} Tháng {holiday_date.month} Năm {holiday_date.year}"
-                page.get_by_role("button", name=aria_label).click()
+                page.get_by_role("button", name=aria_label, exact=True).click()
                 page.get_by_role("button", name="Xác nhận").click()
                 time.sleep(1)
 

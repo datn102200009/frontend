@@ -8,11 +8,13 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   footer?: ReactNode;
+  nested?: boolean;
+  zIndex?: number;
 }
 
-export function Modal({ open, onClose, title, children, size = 'md', footer }: ModalProps) {
+export function Modal({ open, onClose, title, children, size = 'md', footer, nested = false, zIndex }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,7 +38,14 @@ export function Modal({ open, onClose, title, children, size = 'md', footer }: M
   if (!open) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={title} className={styles.dialog} onClick={handleBackdropClick}>
+    <div
+      role="dialog"
+      aria-modal={!nested ? 'true' : 'false'}
+      aria-label={title}
+      className={clsx(styles.dialog, nested && 'nested-modal-backdrop')}
+      style={zIndex ? { zIndex } : undefined}
+      onClick={handleBackdropClick}
+    >
       <div ref={contentRef} className={clsx(styles.content, styles[size])}>
         <div className={styles.header}>
           <h3 className={styles.title}>{title}</h3>

@@ -11,7 +11,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "codegen:purchasing": "rtk-query-codegen-openapi .codegen/openapi-config-purchasing.cjs",
-    "codegen:dashboard": "rtk-query-codegen-openapi .codegen/openapi-config-dashboard.cjs"
+    "codegen:dashboard": "rtk-query-codegen-openapi .codegen/openapi-config-dashboard.cjs",
+    "codegen:hrm": "rtk-query-codegen-openapi .codegen/openapi-config-hrm.cjs",
+    "codegen:manufacturing": "rtk-query-codegen-openapi .codegen/openapi-config-manufacturing.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

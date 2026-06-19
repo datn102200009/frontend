@@ -2,11 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmRewardsMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
+import { REWARD_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { rewardSchema, type RewardFormValues } from '../model/reward-discipline.schema';
 import styles from './RewardFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftDays } from '@shared/lib/dateLimits';
 
 interface RewardFormModalProps {
   open: boolean;
@@ -47,6 +51,7 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
+    control,
   } = useForm<RewardFormValues>({
     resolver: zodResolver(rewardSchema) as unknown as Resolver<RewardFormValues>,
     defaultValues: {
@@ -57,6 +62,9 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
       description: '',
     },
   });
+
+  const minRewardDate = shiftDays(-365);
+  const maxRewardDate = todayISO();
 
   useEffect(() => {
     if (open) {
@@ -144,19 +152,16 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
         )}
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="reward_date">
-              Ngày quyết định <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="reward_date"
-              type="date"
-              className={styles.input}
-              {...register('reward_date')}
-              disabled={isLoading}
-            />
-            {errors.reward_date && <span className={styles.errorText}>{errors.reward_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="reward_date"
+            label="Ngày quyết định"
+            control={control}
+            error={errors.reward_date?.message}
+            required
+            minDate={minRewardDate}
+            maxDate={maxRewardDate}
+            disabled={isLoading}
+          />
 
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="reward_type">
@@ -168,29 +173,26 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
               {...register('reward_type')}
               disabled={isLoading}
             >
-              <option value="performance_bonus">Thưởng hiệu quả công việc</option>
-              <option value="initiative">Thưởng sáng kiến/cải tiến</option>
-              <option value="holiday_bonus">Thưởng lễ tết</option>
-              <option value="other">Thưởng khác</option>
+              {REWARD_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="amount">
-            Số tiền thưởng (VND) <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="amount"
-            type="number"
-            min={0}
-            step={50000}
-            className={styles.input}
-            {...register('amount')}
-            disabled={isLoading}
-          />
-          {errors.amount && <span className={styles.errorText}>{errors.amount.message}</span>}
-        </div>
+        <Input
+          id="amount"
+          type="number"
+          label="Số tiền thưởng (VND)"
+          required={true}
+          min={0}
+          decimals={0}
+          {...register('amount')}
+          disabled={isLoading}
+          error={errors.amount?.message}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="description">

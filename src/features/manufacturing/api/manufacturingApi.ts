@@ -89,6 +89,16 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.workOrderDeclareInput,
       }),
     }),
+    postManufacturingWorkOrderByWorkOrderIdDeclarePreview: build.mutation<
+      PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiResponse,
+      PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/manufacturing/work-order/${queryArg.workOrderId}/declare-preview/`,
+        method: 'POST',
+        body: queryArg.workOrderDeclarePreviewRequest,
+      }),
+    }),
     postManufacturingWorkOrderByWorkOrderIdComplete: build.mutation<
       PostManufacturingWorkOrderByWorkOrderIdCompleteApiResponse,
       PostManufacturingWorkOrderByWorkOrderIdCompleteApiArg
@@ -105,6 +115,15 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/manufacturing/work-order/${queryArg.workOrderId}/cancel/`,
         method: 'POST',
+      }),
+    }),
+    deleteManufacturingWorkOrderByWorkOrderIdPendingDelete: build.mutation<
+      DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiResponse,
+      DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/manufacturing/work-order/${queryArg.workOrderId}/pending-delete/`,
+        method: 'DELETE',
       }),
     }),
     getManufacturingWorkOrderList: build.query<
@@ -126,6 +145,16 @@ const injectedRtkApi = api.injectEndpoints({
       GetManufacturingWorkOrderByWorkOrderIdApiArg
     >({
       query: (queryArg) => ({ url: `/manufacturing/work-order/${queryArg.workOrderId}/` }),
+    }),
+    putManufacturingWorkOrderByWorkOrderIdFixedAssets: build.mutation<
+      PutManufacturingWorkOrderByWorkOrderIdFixedAssetsApiResponse,
+      PutManufacturingWorkOrderByWorkOrderIdFixedAssetsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/manufacturing/work-order/${queryArg.workOrderId}/fixed-assets/`,
+        method: 'PUT',
+        body: queryArg.workOrderFixedAssetsUpdateInput,
+      }),
     }),
   }),
   overrideExisting: false,
@@ -175,6 +204,14 @@ export type PostManufacturingWorkOrderByWorkOrderIdDeclareApiArg = {
   workOrderId: string
   workOrderDeclareInput: WorkOrderDeclareInput
 }
+export type PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiResponse =
+  /** status 200 Success */ {
+    results?: MaterialPreviewDeclareItem[]
+  }
+export type PostManufacturingWorkOrderByWorkOrderIdDeclarePreviewApiArg = {
+  workOrderId: string
+  workOrderDeclarePreviewRequest: WorkOrderDeclarePreviewRequest
+}
 export type PostManufacturingWorkOrderByWorkOrderIdCompleteApiResponse =
   /** status 200 Completed */ WorkOrder
 export type PostManufacturingWorkOrderByWorkOrderIdCompleteApiArg = {
@@ -185,17 +222,32 @@ export type PostManufacturingWorkOrderByWorkOrderIdCancelApiResponse =
 export type PostManufacturingWorkOrderByWorkOrderIdCancelApiArg = {
   workOrderId: string
 }
+export type DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiResponse = unknown
+export type DeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteApiArg = {
+  workOrderId: string
+}
 export type GetManufacturingWorkOrderListApiResponse =
   /** status 200 Success */ WorkOrderListResponse
 export type GetManufacturingWorkOrderListApiArg = {
   search?: string
-  status?: 'pending_approval' | 'in_progress' | 'completed' | 'cancelled'
+  status?:
+    | 'pending_approval'
+    | 'in_progress'
+    | 'pending_production_complete'
+    | 'completed'
+    | 'cancelled'
   limit?: number
   offset?: number
 }
 export type GetManufacturingWorkOrderByWorkOrderIdApiResponse = /** status 200 Success */ WorkOrder
 export type GetManufacturingWorkOrderByWorkOrderIdApiArg = {
   workOrderId: string
+}
+export type PutManufacturingWorkOrderByWorkOrderIdFixedAssetsApiResponse =
+  /** status 200 Success */ WorkOrder
+export type PutManufacturingWorkOrderByWorkOrderIdFixedAssetsApiArg = {
+  workOrderId: string
+  workOrderFixedAssetsUpdateInput: WorkOrderFixedAssetsUpdateInput
 }
 export type BomItem = {
   id?: string
@@ -213,9 +265,6 @@ export type Bom = {
   quantity?: number
   description?: string | null
   is_active?: boolean
-  mold?: string | null
-  mold_code?: string | null
-  mold_name?: string | null
   items_count?: number
   items?: BomItem[]
   created_at?: string
@@ -229,7 +278,6 @@ export type BomInput = {
   item_id: string
   quantity?: number
   description?: string | null
-  mold_id?: string | null
   items: {
     item_id: string
     quantity: number
@@ -255,6 +303,7 @@ export type MaterialPreviewItem = {
   item_id?: string
   item_code?: string
   item_name?: string
+  uom?: string | null
   required_qty?: number
   available_qty?: number
   missing_qty?: number
@@ -263,6 +312,14 @@ export type MaterialPreviewInput = {
   bom_id: string
   quantity: number
   source_warehouse_id: string
+}
+export type WorkOrderMaterial = {
+  item_id?: string
+  item_code?: string
+  item_name?: string
+  uom?: string | null
+  required_qty?: number
+  consumed_qty?: number
 }
 export type WorkOrder = {
   id?: string
@@ -274,11 +331,27 @@ export type WorkOrder = {
   source_warehouse?: string
   target_warehouse?: string
   production_warehouse?: string
-  status?: 'pending_approval' | 'in_progress' | 'completed' | 'cancelled'
+  status?:
+    | 'pending_approval'
+    | 'in_progress'
+    | 'pending_production_complete'
+    | 'completed'
+    | 'cancelled'
   planned_start_date?: string
   planned_end_date?: string | null
   actual_end_date?: string | null
   remarks?: string | null
+  fixed_assets?: {
+    id?: string
+    fixed_asset_id?: string
+    asset_code?: string
+    asset_name?: string
+    depreciation_method?: string
+  }[]
+  production_item_code?: string
+  production_item_name?: string
+  production_uom?: string | null
+  materials?: WorkOrderMaterial[]
   created_at?: string
   updated_at?: string
 }
@@ -292,8 +365,22 @@ export type WorkOrderInput = {
   planned_start_date: string
   planned_end_date?: string | null
   remarks?: string | null
+  fixed_asset_ids?: string[]
 }
 export type WorkOrderDeclareInput = {
+  produced_qty: number
+}
+export type MaterialPreviewDeclareItem = {
+  item_id?: string
+  item_code?: string
+  item_name?: string
+  uom?: string | null
+  required_qty?: number
+  available_qty?: number
+  missing_qty?: number
+  is_sufficient?: boolean
+}
+export type WorkOrderDeclarePreviewRequest = {
   produced_qty: number
 }
 export type WorkOrderListResponse = {
@@ -301,6 +388,9 @@ export type WorkOrderListResponse = {
   next?: string | null
   previous?: string | null
   results?: WorkOrder[]
+}
+export type WorkOrderFixedAssetsUpdateInput = {
+  fixed_asset_ids?: string[]
 }
 export const {
   usePostManufacturingBomCreateMutation,
@@ -312,8 +402,11 @@ export const {
   usePostManufacturingWorkOrderCreateMutation,
   usePostManufacturingWorkOrderByWorkOrderIdApproveMutation,
   usePostManufacturingWorkOrderByWorkOrderIdDeclareMutation,
+  usePostManufacturingWorkOrderByWorkOrderIdDeclarePreviewMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCompleteMutation,
   usePostManufacturingWorkOrderByWorkOrderIdCancelMutation,
+  useDeleteManufacturingWorkOrderByWorkOrderIdPendingDeleteMutation,
   useGetManufacturingWorkOrderListQuery,
   useGetManufacturingWorkOrderByWorkOrderIdQuery,
+  usePutManufacturingWorkOrderByWorkOrderIdFixedAssetsMutation,
 } = injectedRtkApi

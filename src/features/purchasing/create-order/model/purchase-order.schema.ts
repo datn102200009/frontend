@@ -3,11 +3,11 @@ import { z } from 'zod';
 export const purchaseOrderSchema = z.object({
   vendor_id: z.string().min(1, 'Nhà cung cấp là bắt buộc'),
   advance_paid_amount: z.coerce.number().min(0, 'Tiền cọc không được âm'),
-  expected_delivery_date: z.string().optional().or(z.literal('')),
+  expected_delivery_date: z.string().min(1, 'Ngày giao dự kiến là bắt buộc'),
   lines: z.array(
     z.object({
       item_id: z.string().min(1, 'Linh kiện là bắt buộc'),
-      quantity: z.coerce.number().min(0.01, 'Số lượng tối thiểu là 0.01'),
+      quantity: z.coerce.number().positive('Số lượng phải lớn hơn 0'),
       unit_price: z.coerce.number().min(0, 'Đơn giá tối thiểu là 0'),
     })
   ).min(1, 'Cần ít nhất một linh kiện'),
@@ -22,10 +22,14 @@ export const purchaseOrderSchema = z.object({
   }
 
   if (data.expected_delivery_date) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const deliveryDate = new Date(data.expected_delivery_date);
-    if (deliveryDate < today) {
+    const getLocalDateString = () => {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    if (data.expected_delivery_date < getLocalDateString()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['expected_delivery_date'],

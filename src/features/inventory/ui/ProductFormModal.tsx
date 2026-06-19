@@ -21,6 +21,12 @@ const productSchema = z.object({
   stock_uom_id: z.string().nullable().optional(),
   status: z.enum(['active', 'inactive', 'discontinued']),
   is_import: z.boolean(),
+  minimum_threshold: z
+    .union([z.string(), z.number()])
+    .refine(
+      (v) => v !== '' && v !== null && v !== undefined && !isNaN(Number(v)) && Number(v) >= 0,
+      'Ngưỡng tối thiểu phải là số không âm'
+    ),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -36,7 +42,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
   const { toast } = useToast();
   const [createItem, { isLoading: isCreating }] = usePostMasterDataItemsCreateMutation();
   const [updateItem, { isLoading: isUpdating }] = usePutMasterDataItemsByItemCodeUpdateMutation();
-  const { data: uomList } = useGetMasterDataUomsListQuery();
+  const { data: uomList } = useGetMasterDataUomsListQuery(undefined, { refetchOnMountOrArgChange: false });
 
   const isEdit = !!product;
   const isLoading = isCreating || isUpdating;
@@ -56,6 +62,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
       stock_uom_id: null,
       status: 'active',
       is_import: false,
+      minimum_threshold: '',
     },
   });
 
@@ -70,6 +77,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
           stock_uom_id: product.stock_uom_id || null,
           status: product.status || 'active',
           is_import: product.is_import || false,
+          minimum_threshold: product.minimum_threshold != null ? String(product.minimum_threshold) : '',
         });
       } else {
         reset({
@@ -78,6 +86,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
           stock_uom_id: null,
           status: 'active',
           is_import: false,
+          minimum_threshold: '',
         });
       }
     }
@@ -85,12 +94,15 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
+      const thresholdVal = String(data.minimum_threshold);
+
       if (isEdit && product?.item_code) {
         const updatePayload: ItemUpdateInput = {
           item_name: data.item_name,
           stock_uom_id: data.stock_uom_id || null,
           status: data.status,
           is_import: data.is_import,
+          minimum_threshold: thresholdVal,
         };
         await updateItem({ itemCode: product.item_code, itemUpdateInput: updatePayload }).unwrap();
         toast('success', 'Cập nhật sản phẩm thành công');
@@ -101,6 +113,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
           stock_uom_id: data.stock_uom_id || null,
           status: data.status,
           is_import: data.is_import,
+          minimum_threshold: thresholdVal,
         };
         await createItem({ itemCreateInput: createPayload }).unwrap();
         toast('success', 'Thêm sản phẩm thành công');
@@ -147,6 +160,16 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
           disabled={isLoading}
           error={errors.item_name?.message}
           {...register('item_name')}
+        />
+        <Input
+          label="Ngưỡng tối thiểu tồn kho"
+          type="number"
+          step="0.001"
+          min="0"
+          required
+          disabled={isLoading}
+          error={errors.minimum_threshold?.message}
+          {...register('minimum_threshold')}
         />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-4)' }}>

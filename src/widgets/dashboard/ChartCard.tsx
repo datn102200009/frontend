@@ -1,10 +1,27 @@
 import { type ReactNode, type MouseEvent, useState } from 'react';
+import { CardHeader } from './CardHeader';
+import { computeChartMax } from '../../shared/lib/chartScale';
+import { formatVND } from '../../shared/lib/formatVND';
+import { formatYAxis } from '../../shared/lib/chartAxis';
+import {
+  CHART_SVG_WIDTH,
+  CHART_SVG_HEIGHT,
+  CHART_PLOT_LEFT,
+  CHART_PLOT_RIGHT,
+  CHART_PLOT_TOP,
+  CHART_PLOT_BOTTOM,
+  TOOLTIP_ESTIMATED_WIDTH,
+  TOOLTIP_OFFSET,
+} from '../../shared/lib/chartLayout';
 import styles from './DashboardWidgets.module.css';
 
 export interface ChartCardProps {
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   title: string;
   code: string;
   icon?: ReactNode;
+  quickLinks?: string[];
   data: {
     weeks?: {
       week_label: string;
@@ -20,29 +37,16 @@ interface WeekData {
   pay: number;
 }
 
-const formatYAxis = (value: number) => {
-  if (value >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)} tỷ`;
-  }
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(0)} tr`;
-  }
-  return String(value);
-};
 
-export function ChartCard({ title, code, icon, data }: ChartCardProps) {
+
+export function ChartCard({ title, code, icon, data, quickLinks, onRefresh, isRefreshing}: ChartCardProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   if (code !== 'finance_cashflow_chart' || !data || !Array.isArray(data.weeks)) {
     return (
       <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <div className={styles.titleArea}>
-            <span className={styles.cardTitle}>{title}</span>
-          </div>
-          {icon && <span className={styles.cardIcon}>{icon}</span>}
-        </div>
+        <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
         <div className={styles.cardBody}>
           <div className={styles.emptyState}>
             <span>Chưa có dữ liệu biểu đồ</span>
@@ -55,12 +59,12 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
   const weeks: WeekData[] = data.weeks;
 
   // Chart coordinate calculation parameters
-  const svgWidth = 500;
-  const svgHeight = 220;
-  const plotLeft = 60;
-  const plotRight = 20;
-  const plotTop = 20;
-  const plotBottom = 30;
+  const svgWidth = CHART_SVG_WIDTH;
+  const svgHeight = CHART_SVG_HEIGHT;
+  const plotLeft = CHART_PLOT_LEFT;
+  const plotRight = CHART_PLOT_RIGHT;
+  const plotTop = CHART_PLOT_TOP;
+  const plotBottom = CHART_PLOT_BOTTOM;
 
   const plotWidth = svgWidth - plotLeft - plotRight; // 420
   const plotHeight = svgHeight - plotTop - plotBottom; // 170
@@ -71,7 +75,7 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
     ...weeks.map((w) => Math.max(w.receive, w.pay)),
     1_000_000 // Fallback minimum scale
   );
-  const chartMax = maxVal * 1.15; // Leave 15% headroom
+  const chartMax = computeChartMax(maxVal, 0.12);
 
   // Calculate grid lines (5 lines: 0%, 25%, 50%, 75%, 100%)
   const gridLines = [0, 0.25, 0.5, 0.75, 1].map((pct) => {
@@ -89,15 +93,20 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
 
   const handleMouseMove = (index: number, e: MouseEvent<SVGRectElement>) => {
     const cardRect = e.currentTarget.closest(`.${styles.card}`)?.getBoundingClientRect();
+    if (!cardRect) return;
 
-    if (cardRect) {
-      // Position relative to the card container
-      setTooltipPos({
-        x: e.clientX - cardRect.left + 15,
-        y: e.clientY - cardRect.top - 70,
-      });
-      setHoveredIndex(index);
-    }
+    const cardWidth = cardRect.width;
+    const pointerXInCard = e.clientX - cardRect.left;
+    const spaceRight = cardWidth - pointerXInCard;
+
+    const x = spaceRight < TOOLTIP_ESTIMATED_WIDTH + TOOLTIP_OFFSET
+      ? pointerXInCard - TOOLTIP_ESTIMATED_WIDTH - TOOLTIP_OFFSET
+      : pointerXInCard + TOOLTIP_OFFSET;
+
+    const y = Math.max(8, e.clientY - cardRect.top - 70);
+
+    setTooltipPos({ x: Math.max(8, x), y });
+    setHoveredIndex(index);
   };
 
   const handleMouseLeave = () => {
@@ -107,24 +116,22 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
 
   const activeWeek = hoveredIndex !== null ? weeks[hoveredIndex] : null;
 
+  const chartLegend = (
+    <div className={styles.cardActions} style={{ display: 'flex', gap: '12px', fontSize: 'var(--fs-xs)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)', display: 'inline-block' }} />
+        <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng thu</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)', display: 'inline-block' }} />
+        <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng chi</span>
+      </div>
+    </div>
+  );
+
   return (
     <div className={styles.card} style={{ position: 'relative' }}>
-      <div className={styles.cardHeader}>
-        <div className={styles.titleArea}>
-          <span className={styles.cardTitle}>{title}</span>
-        </div>
-        <div className={styles.cardActions} style={{ display: 'flex', gap: '12px', fontSize: '11px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)', display: 'inline-block' }} />
-            <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng thu</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)', display: 'inline-block' }} />
-            <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng chi</span>
-          </div>
-          {icon && <span className={styles.cardIcon} style={{ marginLeft: '4px' }}>{icon}</span>}
-        </div>
-      </div>
+      <CardHeader  title={title}  icon={icon}  quickLinks={quickLinks} meta={chartLegend}  onRefresh={onRefresh} isRefreshing={isRefreshing} />
 
       <div className={styles.cardBody}>
         <div className={styles.chartContainer}>
@@ -206,7 +213,7 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
                       x={bar1X}
                       y={bar1Y}
                       width={barWidth}
-                      height={Math.max(bar1Height, 2)}
+                      height={bar1Height}
                       fill="url(#receiveGrad)"
                       rx="4"
                       style={{
@@ -221,7 +228,7 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
                       x={bar2X}
                       y={bar2Y}
                       width={barWidth}
-                      height={Math.max(bar2Height, 2)}
+                      height={bar2Height}
                       fill="url(#payGrad)"
                       rx="4"
                       style={{
@@ -290,14 +297,14 @@ export function ChartCard({ title, code, icon, data }: ChartCardProps) {
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--clr-primary)' }} />
             <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng thu:</span>
             <span style={{ fontWeight: 'bold', color: 'var(--clr-text)', fontFamily: 'var(--font-heading)', fontVariantNumeric: 'tabular-nums' }}>
-              {activeWeek.receive.toLocaleString('vi-VN')} ₫
+              {formatVND(activeWeek.receive)}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--clr-warning)' }} />
             <span style={{ color: 'var(--clr-text-secondary)' }}>Dòng chi:</span>
             <span style={{ fontWeight: 'bold', color: 'var(--clr-text)', fontFamily: 'var(--font-heading)', fontVariantNumeric: 'tabular-nums' }}>
-              {activeWeek.pay.toLocaleString('vi-VN')} ₫
+              {formatVND(activeWeek.pay)}
             </span>
           </div>
         </div>

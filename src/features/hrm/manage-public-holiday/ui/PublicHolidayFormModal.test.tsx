@@ -7,7 +7,7 @@ const formatDateToDMY = (isoDateStr: string): string => {
   if (!isoDateStr) return '';
   const parts = isoDateStr.split('-');
   if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
   return isoDateStr;
 };
@@ -29,7 +29,7 @@ describe('PublicHolidayFormModal', () => {
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toBeInTheDocument();
     expect(screen.getByLabelText('Ngày bắt đầu *')).toBeInTheDocument();
     expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue(formatDateToDMY(new Date().toISOString().split('T')[0]));
-    expect(screen.getByLabelText('Số ngày nghỉ *')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Số ngày nghỉ/i)).toBeInTheDocument();
     expect(screen.getByLabelText('Mô tả')).toBeInTheDocument();
   });
 
@@ -44,8 +44,8 @@ describe('PublicHolidayFormModal', () => {
     renderWithProviders(<PublicHolidayFormModal {...defaultProps} holiday={holiday} />);
     expect(screen.getByRole('heading', { name: 'Cập Nhật Ngày Nghỉ Lễ' })).toBeInTheDocument();
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toHaveValue('Tết Âm Lịch');
-    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17/02/2026');
-    expect(screen.getByLabelText('Số ngày nghỉ *')).toHaveValue(5);
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17-02-2026');
+    expect(screen.getByLabelText(/Số ngày nghỉ/i)).toHaveValue(5);
     expect(screen.getByLabelText('Mô tả')).toHaveValue('Nghỉ Tết Âm Lịch');
   });
 
@@ -58,7 +58,7 @@ describe('PublicHolidayFormModal', () => {
     await user.clear(nameInput);
 
     // Clear days
-    const daysInput = screen.getByLabelText('Số ngày nghỉ *');
+    const daysInput = screen.getByLabelText(/Số ngày nghỉ/i);
     await user.clear(daysInput);
 
     await user.click(screen.getByRole('button', { name: 'Lưu' }));
@@ -73,7 +73,7 @@ describe('PublicHolidayFormModal', () => {
 
     await user.type(screen.getByLabelText('Tên ngày nghỉ lễ *'), 'Ngày lễ test');
 
-    const daysInput = screen.getByLabelText('Số ngày nghỉ *');
+    const daysInput = screen.getByLabelText(/Số ngày nghỉ/i);
     await user.clear(daysInput);
     await user.type(daysInput, '0');
 
@@ -92,20 +92,11 @@ describe('PublicHolidayFormModal', () => {
     await user.click(screen.getByLabelText('Ngày bắt đầu *'));
     expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
 
-    // Select yesterday in calendar grid
+    // Verify yesterday in calendar grid is disabled
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayLabel = `${yesterday.getDate()} Tháng ${yesterday.getMonth() + 1} Năm ${yesterday.getFullYear()}`;
-    await user.click(screen.getByRole('button', { name: yesterdayLabel }));
-
-    // Confirm selection
-    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
-
-    // Click Save
-    await user.click(screen.getByRole('button', { name: 'Lưu' }));
-
-    expect(await screen.findByText('Không được chọn ngày nghỉ lễ trong quá khứ')).toBeInTheDocument();
-    expect(defaultProps.onSuccess).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: yesterdayLabel })).toBeDisabled();
   });
 
   it('allows selecting today or a future date when creating a holiday', async () => {
@@ -151,7 +142,7 @@ describe('PublicHolidayFormModal', () => {
     // Fields should be disabled
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toBeDisabled();
     expect(screen.getByLabelText('Ngày bắt đầu *')).toBeDisabled();
-    expect(screen.getByLabelText('Số ngày nghỉ *')).toBeDisabled();
+    expect(screen.getByLabelText(/Số ngày nghỉ/i)).toBeDisabled();
     expect(screen.getByLabelText('Mô tả')).toBeDisabled();
 
     // Save button should be disabled
@@ -163,7 +154,7 @@ describe('PublicHolidayFormModal', () => {
     expect(screen.getByText('Không được phép chỉnh sửa hoặc xóa ngày nghỉ lễ trong quá khứ hoặc đang diễn ra.')).toBeInTheDocument();
   });
 
-  it('formats ISO datetime with time correctly to DD/MM/YYYY in edit mode', () => {
+  it('formats ISO datetime with time correctly to DD-MM-YYYY in edit mode', () => {
     const holiday = {
       id: 'holiday-1',
       name: 'Tết Âm Lịch',
@@ -172,7 +163,7 @@ describe('PublicHolidayFormModal', () => {
       description: 'Nghỉ Tết Âm Lịch',
     };
     renderWithProviders(<PublicHolidayFormModal {...defaultProps} holiday={holiday} />);
-    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17/02/2026');
+    expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17-02-2026');
   });
 
   it('opens DatePickerModal on Enter or Space key press on the date display input', async () => {

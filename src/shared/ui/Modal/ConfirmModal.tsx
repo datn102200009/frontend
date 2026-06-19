@@ -6,13 +6,15 @@ import { AlertCircle } from 'lucide-react';
 interface ConfirmModalProps {
   open: boolean;
   title?: string;
-  message: string;
+  message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
   confirmVariant?: ButtonVariant;
+  nested?: boolean;
+  zIndex?: number;
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -25,6 +27,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onCancel,
   isLoading = false,
   confirmVariant = 'primary',
+  nested,
+  zIndex,
 }) => {
   return (
     <Modal
@@ -32,6 +36,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       onClose={onCancel}
       title={title}
       size="sm"
+      nested={nested}
+      zIndex={zIndex}
       footer={
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
           <Button variant="ghost" onClick={onCancel} disabled={isLoading}>
@@ -48,9 +54,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <AlertCircle size={24} />
         </div>
         <div>
-          <p style={{ margin: 0, color: 'var(--clr-text-secondary)', fontSize: 'var(--fs-sm)', lineHeight: 1.5 }}>
+          <div style={{ margin: 0, color: 'var(--clr-text-secondary)', fontSize: 'var(--fs-sm)', lineHeight: 1.5 }}>
             {message}
-          </p>
+          </div>
         </div>
       </div>
     </Modal>

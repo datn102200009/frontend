@@ -478,14 +478,14 @@
 }
 
 .itemCode {
-  font-family: monospace;
-  font-weight: var(--fw-semibold);
-  color: var(--clr-text);
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
 }
 
 .itemName {
-  font-size: var(--fs-xs);
-  color: var(--clr-text-muted);
+  font-family: inherit;
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text);
 }
 
 .inputNumber {
@@ -527,6 +527,21 @@
   background-color: var(--clr-bg-surface);
   color: var(--clr-text-muted);
   cursor: not-allowed;
+}
+
+.poSelect {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--br-md);
+  font-size: var(--fs-sm);
+  outline: none;
+  background-color: white;
+  transition: border-color 0.15s ease;
+}
+
+.poSelect:focus {
+  border-color: var(--clr-primary);
 }
 
 .qcBadge {
@@ -598,5 +613,50 @@
   background-color: var(--clr-bg-surface);
   color: var(--clr-text-muted);
   cursor: not-allowed;
+}
+
+.errorText {
+  color: var(--clr-error);
+  font-size: 10px;
+  display: block;
+  margin-top: 2px;
+}
+
+.logisticDisplayGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--clr-bg-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--br-md);
+  margin-bottom: var(--sp-2);
+  flex: 1;
+}
+
+.logisticDisplayValue {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--clr-primary);
+}
+
+.logisticDisplayHint {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.receivedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--br-sm);
+  color: var(--clr-warning, #d97706);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
 }
 

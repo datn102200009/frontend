@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmEmployeesCreateMutation } from '@entities/hrm/api/hrmApi';
-import { useGetAccountsRolesQuery } from '@features/accounts/api/accountsApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
-import { UserCheck } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { employeeSchema, type EmployeeFormValues } from '../model/employee.schema';
 import styles from './EmployeeFormModal.module.css';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftYears, shiftDays } from '@shared/lib/dateLimits';
 
 interface EmployeeFormModalProps {
   open: boolean;
@@ -17,8 +19,6 @@ interface EmployeeFormModalProps {
 
 export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onClose, onSuccess }) => {
   const [createEmployee, { isLoading }] = usePostHrmEmployeesCreateMutation();
-  const { data: roles = [], isLoading: isLoadingRoles } = useGetAccountsRolesQuery();
-  const [showUserFields, setShowUserFields] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const {
@@ -27,43 +27,40 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
     formState: { errors },
     reset,
     watch,
-    setValue,
+    control,
   } = useForm<EmployeeFormValues>({
     resolver: zodResolver(employeeSchema) as unknown as Resolver<EmployeeFormValues>,
     defaultValues: {
       employee_id: '',
       full_name: '',
-      department: '',
-      position_title: '',
-      salary_base: 0,
-      is_union_member: false,
+      contract_salary_base: 0,
       email: '',
       phone: '',
       gender: 'male',
       date_of_birth: '',
       address: '',
       join_date: new Date().toISOString().split('T')[0],
-      create_user: false,
-      role_id: '',
-      username: '',
-      password: '',
+      create_contract: true,
+      contract_no: '',
+      contract_type: 'definite_term',
+      contract_start_date: new Date().toISOString().split('T')[0],
+      contract_end_date: '',
+      contract_note: '',
+      contract_file_url: '',
     },
   });
 
-  // Set default role_id once roles are loaded
-  useEffect(() => {
-    if (roles.length > 0) {
-      const employeeRole = roles.find(r => r.name === 'Employee' || r.name?.toLowerCase().includes('nhân viên'));
-      const defaultRoleId = employeeRole?.id || roles[0].id;
-      setValue('role_id', defaultRoleId);
-    }
-  }, [roles, setValue]);
+  const contractType = watch('contract_type');
+  const dateOfBirth = watch('date_of_birth');
+  const joinDate = watch('join_date');
+  const contractStartDate = watch('contract_start_date');
 
-  const watchCreateUser = watch('create_user');
-
-  useEffect(() => {
-    setShowUserFields(watchCreateUser);
-  }, [watchCreateUser]);
+  const minBirth = shiftYears(-100);
+  const maxBirth = shiftYears(-16);
+  const minJoin = dateOfBirth ? shiftYears(16, dateOfBirth) : undefined;
+  const maxJoin = todayISO();
+  const minContractStart = joinDate || undefined;
+  const minContractEnd = contractStartDate ? shiftDays(1, contractStartDate) : undefined;
 
   useEffect(() => {
     if (open) {
@@ -75,24 +72,25 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
   const onSubmit = async (values: EmployeeFormValues) => {
     setApiError(null);
     try {
-      const payload = {
+      const payload: any = {
         employee_id: values.employee_id,
         full_name: values.full_name,
-        department: values.department || undefined,
-        position_title: values.position_title || undefined,
-        salary_base: typeof values.salary_base === 'number' && !isNaN(values.salary_base) ? values.salary_base : undefined,
-        is_union_member: values.is_union_member,
         email: values.email || undefined,
         phone: values.phone || undefined,
         gender: values.gender || undefined,
         date_of_birth: values.date_of_birth || undefined,
         address: values.address || undefined,
         join_date: values.join_date || undefined,
-        create_user: values.create_user,
-        username: values.create_user ? values.username : undefined,
-        password: values.create_user ? values.password : undefined,
-        role_id: values.create_user ? values.role_id : undefined,
+        create_contract: true,
       };
+
+      payload.contract_no = values.contract_no;
+      payload.contract_type = values.contract_type;
+      payload.contract_start_date = values.contract_start_date;
+      payload.contract_end_date = values.contract_end_date || undefined;
+      payload.contract_salary_base = typeof values.contract_salary_base === 'number' && !isNaN(values.contract_salary_base) ? values.contract_salary_base : undefined;
+      payload.contract_note = values.contract_note || undefined;
+      payload.contract_file_url = values.contract_file_url || undefined;
 
       await createEmployee({ body: payload }).unwrap();
       onSuccess();
@@ -159,48 +157,9 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
           </div>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="department">Phòng ban</label>
-            <input
-              id="department"
-              type="text"
-              placeholder="VD: Phòng Hành chính Nhân sự"
-              className={styles.input}
-              {...register('department')}
-              disabled={isLoading}
-            />
-          </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="position_title">Chức vụ</label>
-            <input
-              id="position_title"
-              type="text"
-              placeholder="VD: Chuyên viên Tuyển dụng"
-              className={styles.input}
-              {...register('position_title')}
-              disabled={isLoading}
-            />
-          </div>
-        </div>
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="salary_base">Lương cơ bản (VND)</label>
-            <input
-              id="salary_base"
-              type="number"
-              min={0}
-              step={100000}
-              placeholder="VD: 10000000"
-              className={styles.input}
-              {...register('salary_base')}
-              disabled={isLoading}
-            />
-            {errors.salary_base && <span className={styles.errorText}>{errors.salary_base.message}</span>}
-          </div>
-
           <div className={styles.formGroup}>
             <label className={styles.label} htmlFor="gender">Giới tính</label>
             <select id="gender" className={styles.select} {...register('gender')} disabled={isLoading}>
@@ -239,27 +198,25 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
         </div>
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="date_of_birth">Ngày sinh</label>
-            <input
-              id="date_of_birth"
-              type="date"
-              className={styles.input}
-              {...register('date_of_birth')}
-              disabled={isLoading}
-            />
-          </div>
+          <DatePickerField
+            name="date_of_birth"
+            label="Ngày sinh"
+            control={control}
+            error={errors.date_of_birth?.message}
+            minDate={minBirth}
+            maxDate={maxBirth}
+            disabled={isLoading}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="join_date">Ngày vào làm</label>
-            <input
-              id="join_date"
-              type="date"
-              className={styles.input}
-              {...register('join_date')}
-              disabled={isLoading}
-            />
-          </div>
+          <DatePickerField
+            name="join_date"
+            label="Ngày vào làm"
+            control={control}
+            error={errors.join_date?.message}
+            minDate={minJoin}
+            maxDate={maxJoin}
+            disabled={isLoading}
+          />
         </div>
 
         <div className={styles.formGroup}>
@@ -274,92 +231,114 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
           />
         </div>
 
-        <div className={styles.checkboxGroup}>
-          <input
-            id="is_union_member"
-            type="checkbox"
-            className={styles.checkbox}
-            {...register('is_union_member')}
-            disabled={isLoading}
-          />
-          <label htmlFor="is_union_member" className={styles.checkboxLabel}>
-            Là Đoàn viên Công đoàn (trích nộp phí công đoàn 2%)
-          </label>
-        </div>
-
         <hr className={styles.sectionDivider} />
 
-        <div className={styles.checkboxGroup}>
-          <input
-            id="create_user"
-            type="checkbox"
-            className={styles.checkbox}
-            {...register('create_user')}
-            disabled={isLoading}
-          />
-          <label htmlFor="create_user" className={styles.checkboxLabel}>
-            Tạo tài khoản đăng nhập hệ thống đi kèm cho nhân sự
-          </label>
-        </div>
-
-        {showUserFields && (
-          <div className={styles.userSection}>
+        <div className={styles.userSection}>
             <h4 className={styles.sectionTitle}>
-              <UserCheck size={16} color="var(--clr-primary)" />
-              Thông Tin Tài Khoản Đăng Nhập
+              <FileText size={16} color="var(--clr-primary)" />
+              Thông Tin Hợp Đồng Lao Động Mới
             </h4>
             <div className={styles.row}>
               <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="username">
-                  Tên đăng nhập <span className={styles.required}>*</span>
+                <label className={styles.label} htmlFor="contract_no">
+                  Số hợp đồng <span className={styles.required}>*</span>
                 </label>
                 <input
-                  id="username"
+                  id="contract_no"
                   type="text"
-                  placeholder="VD: nguyenvanan"
+                  placeholder="VD: HĐLD-2026-001"
                   className={styles.input}
-                  {...register('username')}
+                  {...register('contract_no')}
                   disabled={isLoading}
                 />
-                {errors.username && <span className={styles.errorText}>{errors.username.message}</span>}
+                {errors.contract_no && <span className={styles.errorText}>{errors.contract_no.message}</span>}
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="password">
-                  Mật khẩu <span className={styles.required}>*</span>
+                <label className={styles.label} htmlFor="contract_type">
+                  Loại hợp đồng <span className={styles.required}>*</span>
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="Nhập mật khẩu tài khoản"
-                  className={styles.input}
-                  {...register('password')}
+                <select
+                  id="contract_type"
+                  className={styles.select}
+                  {...register('contract_type')}
                   disabled={isLoading}
-                />
-                {errors.password && <span className={styles.errorText}>{errors.password.message}</span>}
+                >
+                  <option value="probation">Hợp đồng thử việc</option>
+                  <option value="definite_term">Hợp đồng xác định thời hạn</option>
+                  <option value="indefinite_term">Hợp đồng không xác định thời hạn</option>
+                  <option value="other">Hợp đồng khác</option>
+                </select>
+                {errors.contract_type && <span className={styles.errorText}>{errors.contract_type.message}</span>}
               </div>
             </div>
 
+            <div className={styles.row}>
+              <DatePickerField
+                name="contract_start_date"
+                label="Ngày bắt đầu"
+                control={control}
+                error={errors.contract_start_date?.message}
+                required={true}
+                minDate={minContractStart}
+                disabled={isLoading}
+              />
+
+              {contractType !== 'indefinite_term' && (
+                <DatePickerField
+                  name="contract_end_date"
+                  label="Ngày kết thúc"
+                  control={control}
+                  error={errors.contract_end_date?.message}
+                  required={contractType !== 'other'}
+                  minDate={minContractEnd}
+                  disabled={isLoading}
+                />
+              )}
+            </div>
+
+            <div className={styles.row}>
+              <Input
+                id="contract_salary_base"
+                type="number"
+                label="Lương cơ bản theo hợp đồng (VND)"
+                required={true}
+                min={0}
+                decimals={0}
+                placeholder="VD: 10000000"
+                {...register('contract_salary_base')}
+                disabled={isLoading}
+                error={errors.contract_salary_base?.message}
+              />
+            </div>
+
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="role_id">
-                Vai trò truy cập hệ thống <span className={styles.required}>*</span>
+              <label className={styles.label} htmlFor="contract_file_url">
+                Link file scan hợp đồng
               </label>
-              <select
-                id="role_id"
-                className={styles.select}
-                {...register('role_id')}
-                disabled={isLoading || isLoadingRoles}
-              >
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name === 'Admin' ? 'Quản trị viên (Admin)' : role.name === 'Employee' ? 'Nhân viên (Employee)' : role.name}
-                  </option>
-                ))}
-              </select>
-              {errors.role_id && <span className={styles.errorText}>{errors.role_id.message}</span>}
+              <input
+                id="contract_file_url"
+                type="text"
+                placeholder="https://storage.example.com/contracts/hdld.pdf"
+                className={styles.input}
+                {...register('contract_file_url')}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label} htmlFor="contract_note">Ghi chú hợp đồng</label>
+              <input
+                id="contract_note"
+                type="text"
+                placeholder="Ghi chú thêm..."
+                className={styles.input}
+                {...register('contract_note')}
+                disabled={isLoading}
+              />
             </div>
           </div>
-        )}
+
       </form>
     </Modal>
   );

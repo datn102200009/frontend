@@ -1,0 +1,14 @@
+.footerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  width: 100%;
+}
+
+.message {
+  color: var(--clr-text);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  margin: 0;
+}

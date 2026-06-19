@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
-import { useGetHrmEmployeesByIdQuery, usePostHrmEmploymentHistoriesByIdApproveMutation } from '@entities/hrm/api/hrmApi';
+import { useGetHrmEmployeesByIdQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
-import { Badge } from '@shared/ui/Badge/Badge';
-import { usePermission } from '@shared/hooks/usePermission';
-import { useToast } from '@shared/ui/Toast/Toast';
-import { Check } from 'lucide-react';
 import styles from './EmployeeDetailsModal.module.css';
-import { extractApiError } from '@shared/lib/extractApiError';
+import { ContractFormModal } from '../../manage-contract/ui/ContractFormModal';
+import { formatDateVN } from '@shared/lib/formatDate';
 
 interface EmployeeDetailsModalProps {
   open: boolean;
@@ -17,7 +14,7 @@ interface EmployeeDetailsModalProps {
   onTerminateContract: (employee: Employee, contractId: string) => void;
 }
 
-type TabType = 'general' | 'contracts' | 'history' | 'rewards';
+type TabType = 'general' | 'contracts' | 'rewards';
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   open,
@@ -26,38 +23,22 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   onTerminateContract,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('general');
+  const [expiringContract, setExpiringContract] = useState<any | null>(null);
+
+  const isContractExpiringWithin30Days = (endDateStr: string) => {
+    const endDate = new Date(endDateStr);
+    const now = new Date();
+    endDate.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 30;
+  };
 
   const { data: detail, isLoading, refetch } = useGetHrmEmployeesByIdQuery(
     { id: employee.id },
     { skip: !open }
   );
-
-  const hasHrmApprovePermission = usePermission('hrm.change_employee');
-  const { toast } = useToast();
-  const [approveHistory, { isLoading: isApproving }] = usePostHrmEmploymentHistoriesByIdApproveMutation();
-
-  const handleApproveHistory = async (id: string) => {
-    try {
-      await approveHistory({ id }).unwrap();
-      toast('success', 'Phê duyệt đề xuất thay đổi nhân sự thành công');
-      refetch();
-    } catch (err) {
-      toast('error', extractApiError(err, 'Phê duyệt thất bại. Vui lòng kiểm tra lại.'));
-    }
-  };
-
-  const getApprovalStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'pending_approval':
-        return <Badge variant="warning">Chờ duyệt</Badge>;
-      case 'approved':
-        return <Badge variant="success">Đã duyệt</Badge>;
-      case 'rejected':
-        return <Badge variant="error">Từ chối</Badge>;
-      default:
-        return <Badge variant="neutral">{status || 'N/A'}</Badge>;
-    }
-  };
 
   const getInitials = (name: string) => {
     if (!name) return 'NV';
@@ -97,20 +78,6 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
         return <span className={`${styles.badge} ${styles.expired}`}>Hết hạn</span>;
       default:
         return <span className={styles.badge}>{status}</span>;
-    }
-  };
-
-  const getChangeTypeLabel = (type: string | undefined) => {
-    if (!type) return 'Thay đổi khác';
-    switch (type) {
-      case 'salary_change':
-        return 'Thay đổi lương';
-      case 'title_change':
-        return 'Thay đổi chức danh';
-      case 'department_transfer':
-        return 'Điều chuyển bộ phận';
-      default:
-        return 'Thay đổi khác';
     }
   };
 
@@ -164,11 +131,11 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           <div className={styles.profileInfo}>
             <div className={styles.name}>{employee.full_name}</div>
             <div className={styles.meta}>
-              Mã NV: {employee.employee_id} | {employee.position_title || 'Nhân viên'}
-            </div>
-            <div className={styles.meta}>
-              Bộ phận: {employee.department || 'N/A'} | Trạng thái:{' '}
+              Mã NV: {employee.employee_id} | Trạng thái:{' '}
               {employee.employment_status === 'active' ? 'Đang làm việc' : 'Đã nghỉ việc'}
+            </div>
+            <div className={styles.meta} style={{ marginTop: '4px', fontSize: '12px', color: 'var(--clr-text-secondary)' }}>
+              Ngày vào làm: {formatDateVN(detail?.join_date || employee.join_date)} | Lương cơ bản: {detail?.current_salary_base ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(detail.current_salary_base)) : 'Chưa thiết lập'}
             </div>
           </div>
         </div>
@@ -188,13 +155,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           >
             Hợp đồng
           </button>
-          <button
-            type="button"
-            className={`${styles.subTab} ${activeTab === 'history' ? styles.subTabActive : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
-            Lịch sử công tác
-          </button>
+
           <button
             type="button"
             className={`${styles.subTab} ${activeTab === 'rewards' ? styles.subTabActive : ''}`}
@@ -229,7 +190,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </div>
                 <div className={styles.infoGroup}>
                   <span className={styles.label}>Ngày sinh</span>
-                  <span className={styles.value}>{detail.date_of_birth || '-'}</span>
+                  <span className={styles.value}>{formatDateVN(detail.date_of_birth)}</span>
                 </div>
                 <div className={styles.infoGroup}>
                   <span className={styles.label}>Địa chỉ</span>
@@ -241,11 +202,11 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </div>
                 <div className={styles.infoGroup}>
                   <span className={styles.label}>Ngày vào làm</span>
-                  <span className={styles.value}>{detail.join_date || '-'}</span>
+                  <span className={styles.value}>{formatDateVN(detail.join_date)}</span>
                 </div>
                 <div className={styles.infoGroup}>
                   <span className={styles.label}>Lương cơ bản hiện tại</span>
-                  <span className={styles.value}>{formatVND(detail.salary_base)}</span>
+                  <span className={styles.value}>{formatVND(detail.current_salary_base)}</span>
                 </div>
               </div>
             )}
@@ -262,21 +223,41 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                           Loại: {getContractTypeLabel(contract.contract_type)}
                         </div>
                         <div className={styles.itemMeta}>
-                          Thời hạn: {contract.start_date} đến {contract.end_date || 'Không xác định'}
+                          Thời hạn: {formatDateVN(contract.start_date)} đến {contract.end_date ? formatDateVN(contract.end_date) : 'Không xác định'}
                         </div>
+                        <div className={styles.itemMeta}>
+                          Lương cơ bản HĐ: {contract.salary_base ? formatVND(contract.salary_base) : 'Chưa thiết lập'}
+                        </div>
+                        {contract.file_url && (
+                          <div className={styles.itemMeta}>
+                            Bản scan: <a href={contract.file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--clr-primary)', textDecoration: 'underline' }}>Xem bản scan</a>
+                          </div>
+                        )}
                         {contract.note && <div className={styles.itemMeta}>Ghi chú: {contract.note}</div>}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                         {getContractStatusBadge(contract.status)}
                         {contract.status === 'active' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onTerminateContract(employee, contract.id || '')}
-                            style={{ color: 'var(--clr-error)', borderColor: 'var(--clr-error)', padding: '4px 8px', fontSize: '11px' }}
-                          >
-                            Chấm dứt HĐ
-                          </Button>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            {contract.end_date && isContractExpiringWithin30Days(contract.end_date) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setExpiringContract(contract)}
+                                style={{ color: 'var(--clr-warning)', borderColor: 'var(--clr-warning)', padding: '4px 8px', fontSize: '11px' }}
+                              >
+                                Gia hạn hợp đồng
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onTerminateContract(employee, contract.id || '')}
+                              style={{ color: 'var(--clr-error)', borderColor: 'var(--clr-error)', padding: '4px 8px', fontSize: '11px' }}
+                            >
+                              Chấm dứt HĐ
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -287,54 +268,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
               </div>
             )}
 
-            {/* History Tab */}
-            {activeTab === 'history' && (
-              <div className={styles.listSection}>
-                {detail.employment_histories && detail.employment_histories.length > 0 ? (
-                  detail.employment_histories.map((hist) => (
-                    <div key={hist.id} className={styles.itemCard}>
-                      <div className={styles.itemDetails}>
-                        <div className={styles.itemTitle}>{getChangeTypeLabel(hist.change_type)}</div>
-                        <div className={styles.itemMeta}>Ngày hiệu lực: {hist.effective_date}</div>
-                        {hist.change_type === 'salary_change' && (
-                          <div className={styles.itemMeta}>
-                            Lương: {formatVND(hist.old_salary_base)} → {formatVND(hist.new_salary_base)}
-                          </div>
-                        )}
-                        {hist.change_type === 'title_change' && (
-                          <div className={styles.itemMeta}>
-                            Chức danh: {hist.old_title || '-'} → {hist.new_title || '-'}
-                          </div>
-                        )}
-                        {hist.change_type === 'department_transfer' && (
-                          <div className={styles.itemMeta}>
-                            Bộ phận: {hist.old_department || '-'} → {hist.new_department || '-'}
-                          </div>
-                        )}
-                        {hist.reason && <div className={styles.itemMeta}>Lý do: {hist.reason}</div>}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                        {getApprovalStatusBadge(hist.status)}
-                        {hist.status === 'pending_approval' && hasHrmApprovePermission && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Check size={12} />}
-                            onClick={() => handleApproveHistory(hist.id!)}
-                            disabled={isApproving}
-                            style={{ padding: '4px 8px', fontSize: '11px' }}
-                          >
-                            Duyệt
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className={styles.emptyState}>Chưa có lịch sử thay đổi thông tin công tác.</div>
-                )}
-              </div>
-            )}
+
 
             {/* Rewards Tab */}
             {activeTab === 'rewards' && (
@@ -350,7 +284,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                         <div key={reward.id} className={styles.itemCard}>
                           <div className={styles.itemDetails}>
                             <div className={styles.itemTitle}>{getRewardTypeLabel(reward.reward_type)}</div>
-                            <div className={styles.itemMeta}>Ngày quyết định: {reward.reward_date}</div>
+                            <div className={styles.itemMeta}>Ngày quyết định: {formatDateVN(reward.reward_date)}</div>
                             <div className={styles.itemMeta}>Nội dung: {reward.description}</div>
                           </div>
                           <strong>+{formatVND(reward.amount)}</strong>
@@ -375,7 +309,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                             <div className={styles.itemTitle} style={{ color: 'var(--clr-error)' }}>
                               {getDisciplineTypeLabel(disc.discipline_type)}
                             </div>
-                            <div className={styles.itemMeta}>Ngày vi phạm: {disc.incident_date} | Quyết định: {disc.discipline_date}</div>
+                            <div className={styles.itemMeta}>Ngày vi phạm: {formatDateVN(disc.incident_date)} | Quyết định: {formatDateVN(disc.discipline_date)}</div>
                             <div className={styles.itemMeta}>Lý do: {disc.description}</div>
                           </div>
                           {disc.penalty_amount && parseFloat(disc.penalty_amount) > 0 && (
@@ -393,6 +327,18 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </>
         )}
       </div>
+      {expiringContract && (
+        <ContractFormModal
+          open={!!expiringContract}
+          onClose={() => setExpiringContract(null)}
+          onSuccess={() => {
+            setExpiringContract(null);
+            refetch();
+          }}
+          employee={employee}
+          oldContractId={expiringContract.id}
+        />
+      )}
     </Modal>
   );
 };

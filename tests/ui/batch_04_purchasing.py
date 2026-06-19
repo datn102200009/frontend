@@ -36,18 +36,20 @@ def run():
 
             # ── Step 2: Đồng bộ hóa tab qua URL và reload để duy trì trạng thái ──
             try:
-                page.goto(f"{BASE_URL}/purchasing?tab=invoices")
+                page.goto(f"{BASE_URL}/finance?tab=purchase_invoices")
                 wait_for_page_ready(page)
-                expect(page.get_by_role("tab", name="Hóa Đơn Mua")).to_have_attribute("aria-selected", "true")
+                expect(page.get_by_role("tab", name="Phải Trả (AP)")).to_have_attribute("aria-selected", "true")
                 
                 page.reload()
                 wait_for_page_ready(page)
-                expect(page.get_by_role("tab", name="Hóa Đơn Mua")).to_have_attribute("aria-selected", "true")
+                expect(page.get_by_role("tab", name="Phải Trả (AP)")).to_have_attribute("aria-selected", "true")
                 
-                # Quay trở lại tab Đơn Mua Hàng
-                page.get_by_role("tab", name="Đơn Mua Hàng").click()
+                # Quay trở lại trang purchasing
+                page.goto(f"{BASE_URL}/purchasing")
+                wait_for_page_ready(page)
+                expect(page.get_by_role("tab", name="Đơn Mua Hàng")).to_have_attribute("aria-selected", "true")
                 time.sleep(0.5)
-                runner.log("WF-06", 2, "PASS", "Tab đồng bộ chính xác qua URL (?tab=invoices) và duy trì trạng thái sau khi reload", url=page.url)
+                runner.log("WF-06", 2, "PASS", "Tab đồng bộ chính xác qua URL (?tab=purchase_invoices) trên trang tài chính và duy trì trạng thái sau khi reload", url=page.url)
             except Exception as e:
                 runner.screenshot(page, "wf06_s2")
                 runner.log("WF-06", 2, "FAIL", "Tab đồng bộ chính xác qua URL và duy trì trạng thái", str(e), url=page.url)
@@ -60,7 +62,7 @@ def run():
                 
                 # Điền thông tin nhà cung cấp và linh kiện
                 page.get_by_label("Nhà Cung Cấp").select_option(label="Công ty TNHH Linh kiện Điện tử Sunrise (NCC001)")
-                page.get_by_role("combobox").nth(1).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
+                page.get_by_role("combobox").nth(2).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
                 page.get_by_role("spinbutton").nth(0).fill("100")
                 page.get_by_role("spinbutton").nth(1).fill("50000")
                 
@@ -87,6 +89,10 @@ def run():
             except Exception as e:
                 runner.screenshot(page, "wf06_s3")
                 runner.log("WF-06", 3, "FAIL", "Tạo và duyệt đơn mua hàng PO1", str(e), url=page.url)
+            finally:
+                if page.get_by_role("button", name="Đóng").last.is_visible():
+                    page.get_by_role("button", name="Đóng").last.click()
+                    time.sleep(0.5)
 
             # ── Step 4: Tạo đơn mua PO2 với NCC002, item NVL_LED_02 ──
             try:
@@ -94,7 +100,7 @@ def run():
                 time.sleep(0.5)
                 
                 page.get_by_label("Nhà Cung Cấp").select_option(label="CTCP Vật liệu Thủy tinh & Nhựa Á Châu (NCC002)")
-                page.get_by_role("combobox").nth(1).select_option(label="Mạch Chip LED SMD2835 (NVL_LED_02)")
+                page.get_by_role("combobox").nth(2).select_option(label="Mạch Chip LED SMD2835 (NVL_LED_02)")
                 page.get_by_role("spinbutton").nth(0).fill("50")
                 page.get_by_role("spinbutton").nth(1).fill("30000")
                 
@@ -112,6 +118,10 @@ def run():
             except Exception as e:
                 runner.screenshot(page, "wf06_s4")
                 runner.log("WF-06", 4, "FAIL", "Tạo đơn mua hàng PO2 (draft)", str(e), url=page.url)
+            finally:
+                if page.get_by_role("button", name="Đóng").last.is_visible():
+                    page.get_by_role("button", name="Đóng").last.click()
+                    time.sleep(0.5)
 
             # ── Step 5: Tạo đơn mua PO3 và chạy quy trình hủy đơn ──
             try:
@@ -119,7 +129,7 @@ def run():
                 time.sleep(0.5)
                 
                 page.get_by_label("Nhà Cung Cấp").select_option(label="Công ty TNHH Linh kiện Điện tử Sunrise (NCC001)")
-                page.get_by_role("combobox").nth(1).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
+                page.get_by_role("combobox").nth(2).select_option(label="Ống thủy tinh huỳnh quang 1m2 (NVL_HQ_01)")
                 page.get_by_role("spinbutton").nth(0).fill("5")
                 page.get_by_role("spinbutton").nth(1).fill("10000")
                 
@@ -159,23 +169,29 @@ def run():
             except Exception as e:
                 runner.screenshot(page, "wf06_s5")
                 runner.log("WF-06", 5, "FAIL", "Hủy đơn mua hàng PO3", str(e), url=page.url)
+            finally:
+                if page.get_by_role("button", name="Đóng").last.is_visible():
+                    page.get_by_role("button", name="Đóng").last.click()
+                    time.sleep(0.5)
 
             # ── Step 6: Xác thực tải thành công các tab chức năng khác ──
             try:
-                # 1. Hóa Đơn Mua
-                page.get_by_role("tab", name="Hóa Đơn Mua").click()
-                time.sleep(0.5)
-                expect(page.get_by_placeholder("Tìm kiếm hóa đơn...")).to_be_visible()
+                # 1. Hóa Đơn Mua (được chuyển sang trang Dòng Tiền, tab Phải Trả (AP))
+                page.goto(f"{BASE_URL}/finance?tab=purchase_invoices")
+                wait_for_page_ready(page)
+                expect(page.get_by_placeholder("Tìm kiếm hóa đơn mua...")).to_be_visible()
                 
+                # Quay lại trang mua hàng
+                page.goto(f"{BASE_URL}/purchasing")
+                wait_for_page_ready(page)
+
                 # 2. Quản Lý Lô Hàng
                 page.get_by_role("tab", name="Quản Lý Lô Hàng").click()
                 time.sleep(0.5)
                 expect(page.get_by_text("Hồ sơ Lô hàng")).to_be_visible()
                 
-                # 3. Kiểm Định QA/QC
-                page.get_by_role("tab", name="Kiểm Định QA/QC").click()
-                time.sleep(0.5)
-                expect(page.get_by_text("Lịch Sử Kiểm Định QA/QC")).to_be_visible()
+                # 3. Kiểm Định QA/QC (Đã gỡ bỏ khỏi UI)
+                # Skip
                 
                 # 4. Báo Cáo Công Nợ
                 page.get_by_role("tab", name="Báo Cáo Công Nợ").click()

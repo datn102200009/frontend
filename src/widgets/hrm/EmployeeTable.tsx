@@ -5,15 +5,15 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
-import { Eye, Edit, DollarSign, FileText, Gift, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Eye, Edit, DollarSign, FileText, ChevronDown } from 'lucide-react';
+import { formatDateVN } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
 
 interface EmployeeTableProps {
   onView?: (employee: Employee) => void;
   onEdit?: (employee: Employee) => void;
   onUpdateSalary?: (employee: Employee) => void;
   onCreateContract?: (employee: Employee) => void;
-  onReward?: (employee: Employee) => void;
-  onDiscipline?: (employee: Employee) => void;
 }
 
 export const EmployeeTable: React.FC<EmployeeTableProps> = ({
@@ -21,8 +21,6 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onEdit,
   onUpdateSalary,
   onCreateContract,
-  onReward,
-  onDiscipline,
 }) => {
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
 
@@ -35,12 +33,6 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
     return employeeResponse?.results || [];
   }, [employeeResponse]);
 
-  const formatVND = (value?: string | number | null) => {
-    if (value === undefined || value === null) return '0 đ';
-    const amount = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
   const columns = useMemo(() => {
     const helper = createColumnHelper<Employee>();
     return [
@@ -52,17 +44,9 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         header: 'Họ và Tên',
         cell: (info) => <span className="font-medium text-slate-700">{info.getValue() || 'N/A'}</span>,
       }),
-      helper.accessor('department', {
-        header: 'Bộ phận',
-        cell: (info) => info.getValue() || '-',
-      }),
-      helper.accessor('position_title', {
-        header: 'Chức vụ',
-        cell: (info) => info.getValue() || '-',
-      }),
-      helper.accessor('salary_base', {
+      helper.accessor('current_salary_base', {
         header: 'Lương cơ bản',
-        cell: (info) => formatVND(info.getValue()),
+        cell: (info) => formatNumber(info.getValue(), 0),
       }),
       helper.accessor('employment_status', {
         header: 'Trạng thái',
@@ -77,7 +61,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       }),
       helper.accessor('join_date', {
         header: 'Ngày vào làm',
-        cell: (info) => info.getValue() || '-',
+        cell: (info) => formatDateVN(info.getValue()),
       }),
       helper.display({
         id: 'actions',
@@ -102,23 +86,13 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
                   />
                   <ActionButton
                     icon={<DollarSign size={15} />}
-                    title="Điều chỉnh lương/chức danh"
+                    title="Điều chỉnh lương"
                     onClick={() => onUpdateSalary?.(emp)}
                   />
                   <ActionButton
                     icon={<FileText size={15} />}
                     title="Gia hạn hợp đồng"
                     onClick={() => onCreateContract?.(emp)}
-                  />
-                  <ActionButton
-                    icon={<Gift size={15} />}
-                    title="Khen thưởng"
-                    onClick={() => onReward?.(emp)}
-                  />
-                  <ActionButton
-                    icon={<AlertTriangle size={15} />}
-                    title="Kỷ luật"
-                    onClick={() => onDiscipline?.(emp)}
                   />
                 </>
               )}
@@ -127,7 +101,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
         },
       }),
     ];
-  }, [onView, onEdit, onUpdateSalary, onCreateContract, onReward, onDiscipline]);
+  }, [onView, onEdit, onUpdateSalary, onCreateContract]);
 
   return (
     <div>

@@ -61,3 +61,60 @@
   border-radius: var(--radius-lg);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  background: var(--clr-surface-muted);
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--sp-1);
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.filterLabel {
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--clr-text-secondary);
+}
+
+.filterInput {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  height: 36px;
+  transition: border-color var(--duration-fast) ease;
+}
+
+.filterInput:focus {
+  outline: none;
+  border-color: var(--clr-primary-400);
+}
+
+.filterGroup :global(.select-trigger) {
+  padding: 6px 10px;
+  height: 36px;
+  border-radius: var(--radius-md);
+}
+
+.filterGroup :global(.select-value) {
+  font-size: var(--fs-sm);
+}
+
+.filterGroup :global(.select-container) {
+  gap: 0;
+}
+

@@ -2,11 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { usePostHrmDisciplinesMutation, useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
+import { DISCIPLINE_TYPE_OPTIONS } from '@shared/constants/hrmRewardDiscipline';
 import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { disciplineSchema, type DisciplineFormValues } from '../model/reward-discipline.schema';
 import styles from './DisciplineFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftDays } from '@shared/lib/dateLimits';
 
 interface DisciplineFormModalProps {
   open: boolean;
@@ -37,6 +41,7 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
     formState: { errors },
     reset,
     watch,
+    control,
   } = useForm<DisciplineFormValues>({
     resolver: zodResolver(disciplineSchema) as unknown as Resolver<DisciplineFormValues>,
     defaultValues: {
@@ -51,6 +56,12 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
   });
 
   const disciplineType = watch('discipline_type');
+  const incidentDate = watch('incident_date');
+
+  const minIncidentDate = employee?.join_date || shiftDays(-365);
+  const maxIncidentDate = todayISO();
+  const minDisciplineDate = incidentDate || undefined;
+  const maxDisciplineDate = todayISO();
 
   useEffect(() => {
     if (open) {
@@ -143,33 +154,27 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
         )}
 
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="incident_date">
-              Ngày xảy ra sự việc <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="incident_date"
-              type="date"
-              className={styles.input}
-              {...register('incident_date')}
-              disabled={isLoading}
-            />
-            {errors.incident_date && <span className={styles.errorText}>{errors.incident_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="incident_date"
+            label="Ngày xảy ra sự việc"
+            control={control}
+            error={errors.incident_date?.message}
+            required
+            minDate={minIncidentDate}
+            maxDate={maxIncidentDate}
+            disabled={isLoading}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="discipline_date">
-              Ngày quyết định <span className={styles.required}>*</span>
-            </label>
-            <input
-              id="discipline_date"
-              type="date"
-              className={styles.input}
-              {...register('discipline_date')}
-              disabled={isLoading}
-            />
-            {errors.discipline_date && <span className={styles.errorText}>{errors.discipline_date.message}</span>}
-          </div>
+          <DatePickerField
+            name="discipline_date"
+            label="Ngày quyết định"
+            control={control}
+            error={errors.discipline_date?.message}
+            required
+            minDate={minDisciplineDate}
+            maxDate={maxDisciplineDate}
+            disabled={isLoading}
+          />
         </div>
 
         <div className={styles.row}>
@@ -183,30 +188,26 @@ export const DisciplineFormModal: React.FC<DisciplineFormModalProps> = ({
               {...register('discipline_type')}
               disabled={isLoading}
             >
-              <option value="reprimand">Phê bình/Nhắc nhở</option>
-              <option value="warning">Khiển trách bằng văn bản</option>
-              <option value="salary_deduction">Khấu trừ lương/Phạt tiền</option>
-              <option value="termination">Sa thải/Chấm dứt hợp đồng</option>
-              <option value="other">Khác</option>
+              {DISCIPLINE_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
           {disciplineType === 'salary_deduction' && (
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="penalty_amount">
-                Số tiền khấu trừ (VND) <span className={styles.required}>*</span>
-              </label>
-              <input
-                id="penalty_amount"
-                type="number"
-                min={0}
-                step={10000}
-                className={styles.input}
-                {...register('penalty_amount')}
-                disabled={isLoading}
-              />
-              {errors.penalty_amount && <span className={styles.errorText}>{errors.penalty_amount.message}</span>}
-            </div>
+            <Input
+              id="penalty_amount"
+              type="number"
+              label="Số tiền khấu trừ (VND)"
+              required={true}
+              min={0}
+              decimals={0}
+              {...register('penalty_amount')}
+              disabled={isLoading}
+              error={errors.penalty_amount?.message}
+            />
           )}
         </div>
 

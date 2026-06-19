@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { usePostHrmSalarySlipsBulkConfirmPayMutation } from '@entities/hrm/api/hrmApi';
+import { usePostFinanceSalarySlipsBulkApprovePayMutation } from '@entities/finance/api/financeApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './BulkConfirmSalarySlipModal.module.css';
@@ -22,7 +22,7 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
   onSuccess,
   salaryPeriod,
 }) => {
-  const [bulkConfirmPay, { isLoading }] = usePostHrmSalarySlipsBulkConfirmPayMutation();
+  const [bulkConfirmPay, { isLoading }] = usePostFinanceSalarySlipsBulkApprovePayMutation();
   const [apiError, setApiError] = useState<string | null>(null);
   const [confirmText, setConfirmText] = useState('');
   const [cooldown, setCooldown] = useState(true);
@@ -59,7 +59,7 @@ export const BulkConfirmSalarySlipModal: React.FC<BulkConfirmSalarySlipModalProp
     setApiError(null);
     try {
       await bulkConfirmPay({
-        body: {
+        salarySlipBulkApprovePayInput: {
           salary_period: salaryPeriod,
           payment_method: values.payment_method,
         },

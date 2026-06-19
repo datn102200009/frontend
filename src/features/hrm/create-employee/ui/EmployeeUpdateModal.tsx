@@ -5,6 +5,8 @@ import type { Employee } from '@entities/hrm/model/types';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './EmployeeFormModal.module.css';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { shiftYears } from '@shared/lib/dateLimits';
 
 interface EmployeeUpdateModalProps {
   open: boolean;
@@ -18,6 +20,8 @@ interface EmployeeUpdateValues {
   phone: string;
   address: string;
   employment_status: 'active' | 'inactive';
+  email: string;
+  date_of_birth: string;
 }
 
 export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
@@ -34,14 +38,20 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
     handleSubmit,
     formState: { errors },
     reset,
+    control,
   } = useForm<EmployeeUpdateValues>({
     defaultValues: {
       full_name: '',
       phone: '',
       address: '',
       employment_status: 'active',
+      email: '',
+      date_of_birth: '',
     },
   });
+
+  const minBirth = shiftYears(-100);
+  const maxBirth = shiftYears(-16);
 
   const [prevOpen, setPrevOpen] = useState(open);
   const [prevEmployee, setPrevEmployee] = useState(employee);
@@ -61,6 +71,8 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
         phone: employee.phone || '',
         address: employee.address || '',
         employment_status: employee.employment_status || 'active',
+        email: employee.email || '',
+        date_of_birth: employee.date_of_birth || '',
       });
     }
   }, [open, employee, reset]);
@@ -120,6 +132,17 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
         </div>
 
         <div className={styles.formGroup}>
+          <label className={styles.label} htmlFor="update_email">Email</label>
+          <input
+            id="update_email"
+            type="email"
+            className={styles.input}
+            {...register('email')}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="update_phone">Số điện thoại</label>
           <input
             id="update_phone"
@@ -129,6 +152,16 @@ export const EmployeeUpdateModal: React.FC<EmployeeUpdateModalProps> = ({
             disabled={isLoading}
           />
         </div>
+
+        <DatePickerField
+          name="date_of_birth"
+          label="Ngày sinh"
+          control={control}
+          error={errors.date_of_birth?.message}
+          minDate={minBirth}
+          maxDate={maxBirth}
+          disabled={isLoading}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="update_address">Địa chỉ</label>

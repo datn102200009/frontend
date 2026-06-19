@@ -60,9 +60,9 @@ describe('WorkOrderList', () => {
     // Wait for data to load
     expect(await screen.findByText('WO-PENDING')).toBeInTheDocument();
 
-    expect(screen.getAllByText('Chờ duyệt').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Đang thực hiện').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Hoàn thành').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Nháp').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Đang sản xuất').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Hoàn tất').length).toBeGreaterThan(0);
   });
 
   it('handles approve action', async () => {
@@ -96,7 +96,8 @@ describe('WorkOrderList', () => {
 
     // Dialog should open
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText(/nhập số lượng sản phẩm hoàn thành cho lệnh/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Mã lệnh:/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/WO-PROGRESS/i)).toBeInTheDocument();
 
     const input = within(dialog).getByRole('spinbutton');
     await user.type(input, '50');
@@ -130,6 +131,12 @@ describe('WorkOrderList', () => {
   });
 
   it('handles cancel action', async () => {
+    server.use(
+      http.delete('*/api/v1/manufacturing/work-order/:id/pending-delete/', () => {
+        return HttpResponse.json(null, { status: 204 });
+      })
+    );
+
     renderWithProviders(<WorkOrderList />);
     const user = userEvent.setup();
 
@@ -142,7 +149,7 @@ describe('WorkOrderList', () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/hủy lệnh wo-pending thành công/i)).toBeInTheDocument();
+      expect(screen.getByText(/xóa lệnh wo-pending thành công/i)).toBeInTheDocument();
     });
   });
 
@@ -161,7 +168,7 @@ describe('WorkOrderList', () => {
 
   it('automatically opens work order detail modal when id is in search params', async () => {
     renderWithProviders(<WorkOrderList />, {
-      initialEntries: ['/bom?status=pending_approval&tab=wo&id=wo-1']
+      initialEntries: ['/work-orders?status=pending_approval&id=wo-1']
     });
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
@@ -189,5 +196,80 @@ describe('WorkOrderList', () => {
     await waitFor(() => {
       expect(screen.getByText(/không đủ tồn kho nguyên liệu/i)).toBeInTheDocument();
     });
+  });
+
+  it('handles declare production max validation', async () => {
+    renderWithProviders(<WorkOrderList />);
+    const user = userEvent.setup();
+
+    expect(await screen.findByText('WO-PROGRESS')).toBeInTheDocument();
+
+    const progressRow = screen.getByText('WO-PROGRESS').closest('tr');
+    const declareButton = within(progressRow!).getByRole('button', { name: /nhập liệu/i });
+    await user.click(declareButton);
+
+    const dialog = screen.getByRole('dialog');
+    const input = within(dialog).getByRole('spinbutton');
+    
+    // Remaining is 200 - 100 = 100. Let's type 150.
+    await user.type(input, '150');
+
+    expect(await screen.findByText(/Số lượng vượt quá số còn lại cần sản xuất/i)).toBeInTheDocument();
+    
+    const submitBtn = within(dialog).getByRole('button', { name: 'Xác nhận' });
+    expect(submitBtn).toBeDisabled();
+  });
+
+  it('renders material preview table and warning banner in declare modal', async () => {
+    server.use(
+      http.post('*/api/v1/manufacturing/work-order/:id/declare-preview/', () => {
+        return HttpResponse.json({
+          results: [
+            {
+              item_id: 'item-1',
+              item_code: 'RES-01',
+              item_name: 'Resistor',
+              uom: 'Cái',
+              required_qty: 10,
+              available_qty: 5,
+              missing_qty: 5,
+              is_sufficient: false,
+            },
+            {
+              item_id: 'item-2',
+              item_code: 'CAP-01',
+              item_name: 'Capacitor',
+              uom: 'Cái',
+              required_qty: 20,
+              available_qty: 30,
+              missing_qty: 0,
+              is_sufficient: true,
+            }
+          ]
+        });
+      })
+    );
+
+    renderWithProviders(<WorkOrderList />);
+    const user = userEvent.setup();
+
+    expect(await screen.findByText('WO-PROGRESS')).toBeInTheDocument();
+
+    const progressRow = screen.getByText('WO-PROGRESS').closest('tr');
+    const declareButton = within(progressRow!).getByRole('button', { name: /nhập liệu/i });
+    await user.click(declareButton);
+
+    const dialog = screen.getByRole('dialog');
+    const input = within(dialog).getByRole('spinbutton');
+    
+    await user.type(input, '50');
+
+    // Wait for debounced preview calling
+    expect(await screen.findByText(/Nguyên liệu tại Kho Bán Thành Phẩm cần dùng/i)).toBeInTheDocument();
+    expect(screen.getByText(/Có nguyên liệu không đủ tồn kho tại Kho Bán Thành Phẩm/i)).toBeInTheDocument();
+    
+    // Check table content
+    expect(screen.getByText('RES-01')).toBeInTheDocument();
+    expect(screen.getByText('CAP-01')).toBeInTheDocument();
   });
 });

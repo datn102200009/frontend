@@ -72,11 +72,16 @@
     border: 1px solid var(--clr-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
-    z-index: 50;
+    z-index: 1200;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     max-height: 250px;
+
+    &.drop-up {
+      top: auto;
+      bottom: calc(100% + 4px);
+    }
   }
 
   .select-search {

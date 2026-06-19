@@ -11,6 +11,7 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { Trash2 } from 'lucide-react';
+import { Input } from '@shared/ui/Input/Input';
 import styles from './CustomerFormModal.module.css';
 
 interface CustomerFormModalProps {
@@ -256,20 +257,20 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 Thông Tin Tín Dụng {"&"} Công Nợ
               </h4>
               <div className={styles.row}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
-                  <label htmlFor="credit_limit" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
-                    Hạn Mức Tín Dụng (VND)
-                  </label>
-                  <input
-                    id="credit_limit"
-                    type="number"
-                    min={0}
-                    placeholder="VD: 50000000"
-                    className={styles.itemInput}
-                    {...register('credit_limit', { valueAsNumber: true })}
-                    disabled={isWorking}
-                  />
-                </div>
+                <Input
+                  id="credit_limit"
+                  label="Hạn Mức Tín Dụng (VND)"
+                  type="number"
+                  min={0}
+                  decimals={0}
+                  placeholder="VD: 50000000"
+                  error={errors.credit_limit?.message}
+                  {...register('credit_limit', {
+                    valueAsNumber: true,
+                    min: { value: 0, message: 'Hạn mức tín dụng không được nhỏ hơn 0' }
+                  })}
+                  disabled={isWorking}
+                />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
                   <label htmlFor="payment_terms" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>

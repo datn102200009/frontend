@@ -5,21 +5,20 @@ import { Badge } from '@shared/ui/Badge/Badge';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { useGetCrmCustomersQuery } from '@entities/crm/api/crmApi';
 import type { Customer } from '@entities/crm/model/types';
-import { Eye, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
 
 interface CustomerTableProps {
-  onView?: (id: string) => void;
   onEdit?: (customer: Customer) => void;
 }
 
-export const CustomerTable: React.FC<CustomerTableProps> = ({ onView, onEdit }) => {
+export const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit }) => {
   const { data: customers = [], isLoading } = useGetCrmCustomersQuery();
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<Customer>();
     return [
       helper.accessor('name', {
-        header: 'Mã KH',
+        header: 'Mã khách hàng',
         cell: (info) => <span className="font-semibold text-slate-800">{info.getValue()}</span>,
       }),
       helper.accessor('customer_name', {
@@ -63,14 +62,13 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({ onView, onEdit }) 
           const customer = info.row.original;
           return (
             <TableActions>
-              <ActionButton icon={<Eye size={15} />} title="Xem chi tiết" onClick={() => onView?.(customer.id)} />
               <ActionButton icon={<Edit size={15} />} title="Chỉnh sửa" onClick={() => onEdit?.(customer)} />
             </TableActions>
           );
         },
       }),
     ];
-  }, [onView, onEdit]);
+  }, [onEdit]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

@@ -1,16 +1,17 @@
-import { useState } from 'react';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { formatDateTime } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
+import { getDecimalsForUom } from '@shared/lib/uomDecimals';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { Info } from 'lucide-react';
-import { useGetMasterDataWarehousesListQuery } from '@features/inventory/api/masterDataApi';
+import { shortId } from '@shared/lib/shortId';
 import { 
-  usePostInventoryStockEntryByStockEntryIdUpdateMutation,
   usePostInventoryStockInByStockEntryIdApproveMutation,
   usePostInventoryStockIssueByStockEntryIdApproveMutation,
   usePostInventoryStockTransferByStockEntryIdApproveMutation,
+  usePostInventoryStockEntryByStockEntryIdDeleteMutation,
   useGetInventoryStockLedgerBalanceQuery
 } from '@features/inventory/api/inventoryApi';
 import type { StockEntry, StockEntryDetail, StockBalance } from '@features/inventory/api/inventoryApi';
@@ -45,76 +46,36 @@ interface Props {
 }
 
 export function StockEntryDetailModal({ open, entry, onClose }: Props) {
-  const { data: warehousesData } = useGetMasterDataWarehousesListQuery();
   const { data: stockBalances } = useGetInventoryStockLedgerBalanceQuery({ detailed: true });
-  const [updateStockEntry, { isLoading: isUpdating }] = usePostInventoryStockEntryByStockEntryIdUpdateMutation();
   const [approveStockIn, { isLoading: isApprovingIn }] = usePostInventoryStockInByStockEntryIdApproveMutation();
   const [approveStockIssue, { isLoading: isApprovingIssue }] = usePostInventoryStockIssueByStockEntryIdApproveMutation();
   const [approveStockTransfer, { isLoading: isApprovingTransfer }] = usePostInventoryStockTransferByStockEntryIdApproveMutation();
+  const [deleteStockEntry, { isLoading: isDeleting }] = usePostInventoryStockEntryByStockEntryIdDeleteMutation();
   
-  const [localDetails, setLocalDetails] = useState<StockEntryDetail[]>([]);
-  const [prevEntryId, setPrevEntryId] = useState<string | null>(null);
   const { toast } = useToast();
-
-  if (entry && entry.id !== prevEntryId) {
-    setPrevEntryId(entry.id || null);
-    setLocalDetails(entry.details || []);
-  }
 
   if (!entry) return null;
 
   const isDraft = entry.status === 'draft';
   const isApproving = isApprovingIn || isApprovingIssue || isApprovingTransfer;
-  const isWorking = isUpdating || isApproving;
+  const isWorking = isApproving || isDeleting;
 
   const statusInfo = STATUS_LABELS[entry.status || 'draft'] || { label: entry.status, variant: 'neutral' };
   const purposeType = entry.purpose || 'unknown';
-
-  const handleWarehouseChange = (idx: number, field: 'source_warehouse_id' | 'target_warehouse_id', val: string) => {
-    setLocalDetails(prev => {
-      const next = [...prev];
-      next[idx] = {
-        ...next[idx],
-        [field]: val || null
-      };
-      return next;
-    });
-  };
-
-  const handleUpdateWarehouses = async () => {
-    try {
-      const payload = {
-        remarks: entry.remarks,
-        details: localDetails.map(detail => ({
-          detail_id: detail.id!,
-          source_warehouse_id: detail.source_warehouse_id,
-          target_warehouse_id: detail.target_warehouse_id,
-          quantity: detail.quantity
-        }))
-      };
-      await updateStockEntry({
-        stockEntryId: entry.id!,
-        stockEntryUpdateInput: payload
-      }).unwrap();
-      toast('success', 'Cập nhật kho hàng thành công');
-    } catch (error) {
-      const err = error as { data?: { detail?: string } };
-      toast('error', err?.data?.detail || 'Có lỗi xảy ra khi cập nhật kho hàng');
-    }
-  };
+  const details = entry.details || [];
 
   const handleApprove = async () => {
-    for (const detail of localDetails) {
+    for (const detail of details) {
       if (purposeType === 'receipt' && !detail.target_warehouse_id) {
-        toast('error', 'Vui lòng chọn Kho đến cho tất cả các dòng hàng.');
+        toast('error', 'Dòng hàng chưa được chỉ định kho nhận.');
         return;
       }
       if (purposeType === 'issue' && !detail.source_warehouse_id) {
-        toast('error', 'Vui lòng chọn Kho nguồn cho tất cả các dòng hàng.');
+        toast('error', 'Dòng hàng chưa được chỉ định kho xuất.');
         return;
       }
       if (purposeType === 'transfer' && (!detail.source_warehouse_id || !detail.target_warehouse_id)) {
-        toast('error', 'Vui lòng chọn đầy đủ Kho nguồn và Kho đến.');
+        toast('error', 'Dòng hàng chưa được chỉ định đầy đủ kho nguồn và kho nhận.');
         return;
       }
 
@@ -129,28 +90,7 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
       }
     }
 
-    const isDirty = localDetails.some((local, idx) => {
-      const original = entry.details?.[idx];
-      return local.source_warehouse_id !== original?.source_warehouse_id || local.target_warehouse_id !== original?.target_warehouse_id;
-    });
-
     try {
-      if (isDirty) {
-        const payload = {
-          remarks: entry.remarks,
-          details: localDetails.map(detail => ({
-            detail_id: detail.id!,
-            source_warehouse_id: detail.source_warehouse_id,
-            target_warehouse_id: detail.target_warehouse_id,
-            quantity: detail.quantity
-          }))
-        };
-        await updateStockEntry({
-          stockEntryId: entry.id!,
-          stockEntryUpdateInput: payload
-        }).unwrap();
-      }
-
       if (purposeType === 'receipt') {
         await approveStockIn({ stockEntryId: entry.id! }).unwrap();
       } else if (purposeType === 'issue') {
@@ -162,8 +102,20 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
       toast('success', `Phê duyệt ${entry.name} thành công`);
       onClose();
     } catch (error) {
-      const err = error as { data?: { detail?: string } };
-      toast('error', err?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
+      const err = error as { data?: { error?: string; detail?: string } };
+      toast('error', err?.data?.error || err?.data?.detail || 'Có lỗi xảy ra khi phê duyệt');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Bạn có chắc chắn muốn HỦY phiếu "${entry.name}"? Hành động này không thể khôi phục.`)) return;
+    try {
+      await deleteStockEntry({ stockEntryId: entry.id! }).unwrap();
+      toast('success', `Đã hủy phiếu ${entry.name}`);
+      onClose();
+    } catch (error) {
+      const err = error as { data?: { error?: string; detail?: string } };
+      toast('error', err?.data?.error || err?.data?.detail || 'Có lỗi xảy ra khi hủy phiếu');
     }
   };
 
@@ -177,18 +129,20 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
       title={`Chi Tiết Phiếu Kho: ${entry.name}`}
       size="md"
       footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', width: '100%' }}>
-          <Button variant="ghost" onClick={onClose} disabled={isWorking}>Đóng</Button>
-          {isDraft && !isReceipt && (
-            <>
-              <Button variant="secondary" onClick={handleUpdateWarehouses} loading={isUpdating} disabled={isWorking}>
-                Cập nhật Kho
-              </Button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', width: '100%' }}>
+          {isDraft && (
+            <Button variant="danger" onClick={handleDelete} loading={isDeleting} disabled={isWorking}>
+              Hủy Phiếu
+            </Button>
+          )}
+          <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+            <Button variant="ghost" onClick={onClose} disabled={isWorking}>Đóng</Button>
+            {isDraft && !isReceipt && (
               <Button variant="primary" onClick={handleApprove} loading={isApproving} disabled={isWorking}>
                 Duyệt Phiếu
               </Button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       }
     >
@@ -226,13 +180,13 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
             <div>{formatDateTime(entry.created_at)}</div>
           </div>
           <div>
-            <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Ngày ghi sổ</div>
-            <div>{formatDateTime(entry.posting_date)}</div>
+            <div style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>Ngày ghi sổ / duyệt</div>
+            <div>{formatDateTime(entry.posted_at || entry.posting_date)}</div>
           </div>
         </div>
 
         <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--sp-4)' }}>
-          <div style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, marginBottom: 'var(--sp-2)' }}>Chi tiết ({localDetails.length || 0} mục)</div>
+          <div style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, marginBottom: 'var(--sp-2)' }}>Chi tiết ({details.length || 0} mục)</div>
           <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--fs-sm)' }}>
               <thead style={{ background: 'var(--clr-surface-alt)', textAlign: 'left' }}>
@@ -244,66 +198,19 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {localDetails.map((detail: StockEntryDetail, idx) => (
+                {details.map((detail: StockEntryDetail, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--clr-border)' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code || detail.item_id?.substring(0, 8)}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{detail.quantity} {detail.uom_name || ''}</td>
+                    <td style={{ padding: '8px 12px', fontWeight: 500 }}>{detail.item_name || detail.item_code || shortId(detail.item_id)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{formatNumber(detail.quantity, getDecimalsForUom(detail.uom_name))} {detail.uom_name || ''}</td>
                     <td style={{ padding: '8px 12px' }}>
-                      {isDraft && (purposeType === 'issue' || purposeType === 'transfer') ? (
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <select
-                            value={detail.source_warehouse_id || ''}
-                            onChange={(e) => handleWarehouseChange(idx, 'source_warehouse_id', e.target.value)}
-                            style={{ padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)', width: '100%', fontSize: 'var(--fs-sm)' }}
-                            disabled={isWorking}
-                          >
-                            <option value="">-- Chọn kho --</option>
-                            {(warehousesData || []).map(wh => (
-                              <option key={wh.id} value={wh.id}>{wh.name}</option>
-                            ))}
-                          </select>
-                          {(() => {
-                            if (!detail.source_warehouse_id) return null;
-                            const balance = (stockBalances || []).find(
-                              (b: StockBalance) => b.warehouse_id === detail.source_warehouse_id && b.item_id === detail.item_id
-                            )?.total_quantity || 0;
-                            const isSufficient = balance >= (detail.quantity || 0);
-                            return (
-                              <div style={{ 
-                                fontSize: '11px', 
-                                marginTop: '4px', 
-                                color: isSufficient ? 'var(--clr-success)' : 'var(--clr-error)',
-                                fontWeight: 600
-                              }}>
-                                Tồn: {balance} ({isSufficient ? 'Đủ' : `Thiếu ${(detail.quantity || 0) - balance}`})
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      ) : (
-                        detail.source_warehouse_name || detail.source_warehouse_id?.substring(0, 8) || '—'
-                      )}
+                      {detail.source_warehouse_name || shortId(detail.source_warehouse_id) || '—'}
                     </td>
                     <td style={{ padding: '8px 12px' }}>
-                      {isDraft && (purposeType === 'receipt' || purposeType === 'transfer') && !isPurchaseReceipt ? (
-                        <select
-                          value={detail.target_warehouse_id || ''}
-                          onChange={(e) => handleWarehouseChange(idx, 'target_warehouse_id', e.target.value)}
-                          style={{ padding: '4px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)', width: '100%', fontSize: 'var(--fs-sm)' }}
-                          disabled={isWorking}
-                        >
-                          <option value="">-- Chọn kho --</option>
-                          {(warehousesData || []).map(wh => (
-                            <option key={wh.id} value={wh.id}>{wh.name}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        detail.target_warehouse_name || detail.target_warehouse_id?.substring(0, 8) || '—'
-                      )}
+                      {detail.target_warehouse_name || shortId(detail.target_warehouse_id) || '—'}
                     </td>
                   </tr>
                 ))}
-                {localDetails.length === 0 && (
+                {details.length === 0 && (
                   <tr>
                     <td colSpan={4} style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--clr-text-muted)' }}>Không có chi tiết</td>
                   </tr>
@@ -316,7 +223,15 @@ export function StockEntryDetailModal({ open, entry, onClose }: Props) {
         {entry.remarks && (
           <div style={{ borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--sp-4)' }}>
             <div style={{ fontSize: 'var(--fs-sm)', fontWeight: 600, marginBottom: 'var(--sp-1)' }}>Ghi chú</div>
-            <div style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)', background: 'var(--clr-surface-alt)', padding: 'var(--sp-3)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ 
+              fontSize: 'var(--fs-sm)', 
+              color: 'var(--clr-text-secondary)', 
+              background: 'var(--clr-surface-alt)', 
+              padding: 'var(--sp-3)', 
+              borderRadius: 'var(--radius-md)',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}>
               {entry.remarks}
             </div>
           </div>

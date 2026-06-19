@@ -31,37 +31,14 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
-    postHrmEmployeesByIdUpdateSalaryTitle: build.mutation<
-      PostHrmEmployeesByIdUpdateSalaryTitleApiResponse,
-      PostHrmEmployeesByIdUpdateSalaryTitleApiArg
+    postHrmEmployeesByIdAdjustSalary: build.mutation<
+      PostHrmEmployeesByIdAdjustSalaryApiResponse,
+      PostHrmEmployeesByIdAdjustSalaryApiArg
     >({
       query: (queryArg) => ({
-        url: `/hrm/employees/${queryArg.id}/update-salary-title/`,
+        url: `/hrm/employees/${queryArg.id}/adjust-salary/`,
         method: 'POST',
         body: queryArg.body,
-      }),
-    }),
-    getHrmEmploymentHistories: build.query<
-      GetHrmEmploymentHistoriesApiResponse,
-      GetHrmEmploymentHistoriesApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/employment-histories/`,
-        params: {
-          status: queryArg.status,
-          employee_id: queryArg.employeeId,
-          limit: queryArg.limit,
-          offset: queryArg.offset,
-        },
-      }),
-    }),
-    postHrmEmploymentHistoriesByIdApprove: build.mutation<
-      PostHrmEmploymentHistoriesByIdApproveApiResponse,
-      PostHrmEmploymentHistoriesByIdApproveApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/hrm/employment-histories/${queryArg.id}/approve/`,
-        method: 'POST',
       }),
     }),
     postHrmContracts: build.mutation<PostHrmContractsApiResponse, PostHrmContractsApiArg>({
@@ -73,6 +50,16 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/hrm/contracts/${queryArg.id}/terminate/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
+    }),
+    postHrmContractsByIdRenew: build.mutation<
+      PostHrmContractsByIdRenewApiResponse,
+      PostHrmContractsByIdRenewApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/contracts/${queryArg.id}/renew/`,
         method: 'POST',
         body: queryArg.body,
       }),
@@ -135,6 +122,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    getHrmSalaryPeriods: build.query<GetHrmSalaryPeriodsApiResponse, GetHrmSalaryPeriodsApiArg>({
+      query: () => ({ url: `/hrm/salary-periods/` }),
+    }),
     postHrmSalarySlipsInitialize: build.mutation<
       PostHrmSalarySlipsInitializeApiResponse,
       PostHrmSalarySlipsInitializeApiArg
@@ -151,22 +141,83 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/calculate/`, method: 'POST' }),
     }),
-    postHrmSalarySlipsByIdApprove: build.mutation<
-      PostHrmSalarySlipsByIdApproveApiResponse,
-      PostHrmSalarySlipsByIdApproveApiArg
+    postHrmSalarySlipsPartial: build.mutation<
+      PostHrmSalarySlipsPartialApiResponse,
+      PostHrmSalarySlipsPartialApiArg
     >({
-      query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/approve/`, method: 'POST' }),
+      query: (queryArg) => ({
+        url: `/hrm/salary-slips/partial/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
+    }),
+    postHrmSalarySlipsBulkCalculate: build.mutation<
+      PostHrmSalarySlipsBulkCalculateApiResponse,
+      PostHrmSalarySlipsBulkCalculateApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/salary-slips/bulk-calculate/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
+    }),
+    postHrmSalarySlipsBulkSubmitForReview: build.mutation<
+      PostHrmSalarySlipsBulkSubmitForReviewApiResponse,
+      PostHrmSalarySlipsBulkSubmitForReviewApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/salary-slips/bulk-submit-for-review/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
+    }),
+    postHrmSalarySlipsByIdSubmitForReview: build.mutation<
+      PostHrmSalarySlipsByIdSubmitForReviewApiResponse,
+      PostHrmSalarySlipsByIdSubmitForReviewApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/salary-slips/${queryArg.id}/submit-for-review/`,
+        method: 'POST',
+      }),
+    }),
+    postHrmSalarySlipsByIdRecall: build.mutation<
+      PostHrmSalarySlipsByIdRecallApiResponse,
+      PostHrmSalarySlipsByIdRecallApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/salary-slips/${queryArg.id}/recall/`, method: 'POST' }),
     }),
     getHrmRewards: build.query<GetHrmRewardsApiResponse, GetHrmRewardsApiArg>({
       query: (queryArg) => ({
         url: `/hrm/rewards/`,
         params: {
           employee_id: queryArg.employeeId,
+          status: queryArg.status,
+          reward_type: queryArg.rewardType,
+          date_from: queryArg.dateFrom,
+          date_to: queryArg.dateTo,
+          limit: queryArg.limit,
+          offset: queryArg.offset,
         },
       }),
     }),
     postHrmRewards: build.mutation<PostHrmRewardsApiResponse, PostHrmRewardsApiArg>({
       query: (queryArg) => ({ url: `/hrm/rewards/`, method: 'POST', body: queryArg.body }),
+    }),
+    getHrmRewardsById: build.query<GetHrmRewardsByIdApiResponse, GetHrmRewardsByIdApiArg>({
+      query: (queryArg) => ({ url: `/hrm/rewards/${queryArg.id}/` }),
+    }),
+    patchHrmRewardsById: build.mutation<PatchHrmRewardsByIdApiResponse, PatchHrmRewardsByIdApiArg>({
+      query: (queryArg) => ({
+        url: `/hrm/rewards/${queryArg.id}/`,
+        method: 'PATCH',
+        body: queryArg.body,
+      }),
+    }),
+    deleteHrmRewardsById: build.mutation<
+      DeleteHrmRewardsByIdApiResponse,
+      DeleteHrmRewardsByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/rewards/${queryArg.id}/`, method: 'DELETE' }),
     }),
     postHrmRewardsByIdApprove: build.mutation<
       PostHrmRewardsByIdApproveApiResponse,
@@ -174,16 +225,54 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/hrm/rewards/${queryArg.id}/approve/`, method: 'POST' }),
     }),
+    postHrmRewardsByIdCancel: build.mutation<
+      PostHrmRewardsByIdCancelApiResponse,
+      PostHrmRewardsByIdCancelApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/rewards/${queryArg.id}/cancel/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
+    }),
     getHrmDisciplines: build.query<GetHrmDisciplinesApiResponse, GetHrmDisciplinesApiArg>({
       query: (queryArg) => ({
         url: `/hrm/disciplines/`,
         params: {
           employee_id: queryArg.employeeId,
+          status: queryArg.status,
+          discipline_type: queryArg.disciplineType,
+          date_from: queryArg.dateFrom,
+          date_to: queryArg.dateTo,
+          limit: queryArg.limit,
+          offset: queryArg.offset,
         },
       }),
     }),
     postHrmDisciplines: build.mutation<PostHrmDisciplinesApiResponse, PostHrmDisciplinesApiArg>({
       query: (queryArg) => ({ url: `/hrm/disciplines/`, method: 'POST', body: queryArg.body }),
+    }),
+    getHrmDisciplinesById: build.query<
+      GetHrmDisciplinesByIdApiResponse,
+      GetHrmDisciplinesByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/disciplines/${queryArg.id}/` }),
+    }),
+    patchHrmDisciplinesById: build.mutation<
+      PatchHrmDisciplinesByIdApiResponse,
+      PatchHrmDisciplinesByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/hrm/disciplines/${queryArg.id}/`,
+        method: 'PATCH',
+        body: queryArg.body,
+      }),
+    }),
+    deleteHrmDisciplinesById: build.mutation<
+      DeleteHrmDisciplinesByIdApiResponse,
+      DeleteHrmDisciplinesByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/hrm/disciplines/${queryArg.id}/`, method: 'DELETE' }),
     }),
     postHrmDisciplinesByIdApprove: build.mutation<
       PostHrmDisciplinesByIdApproveApiResponse,
@@ -191,12 +280,12 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/hrm/disciplines/${queryArg.id}/approve/`, method: 'POST' }),
     }),
-    postHrmSalarySlipsBulkConfirmPay: build.mutation<
-      PostHrmSalarySlipsBulkConfirmPayApiResponse,
-      PostHrmSalarySlipsBulkConfirmPayApiArg
+    postHrmDisciplinesByIdCancel: build.mutation<
+      PostHrmDisciplinesByIdCancelApiResponse,
+      PostHrmDisciplinesByIdCancelApiArg
     >({
       query: (queryArg) => ({
-        url: `/hrm/salary-slips/bulk-confirm-pay/`,
+        url: `/hrm/disciplines/${queryArg.id}/cancel/`,
         method: 'POST',
         body: queryArg.body,
       }),
@@ -268,12 +357,13 @@ export type GetHrmEmployeesApiArg = {
 export type PostHrmEmployeesCreateApiResponse = /** status 201 Tạo thành công */ Employee
 export type PostHrmEmployeesCreateApiArg = {
   body: {
-    employee_id: string
+    /** Mã nhân viên (nếu để trống, hệ thống tự động sinh theo format NV####) */
+    employee_id?: string
     full_name: string
     department?: string
     position_title?: string
-    salary_base?: number
-    is_union_member?: boolean
+    /** Lương cơ bản của hợp đồng */
+    contract_salary_base?: number
     email?: string
     phone?: string
     gender?: 'male' | 'female' | 'other'
@@ -301,38 +391,17 @@ export type PatchHrmEmployeesByIdUpdateApiArg = {
     employment_status?: 'active' | 'inactive'
   }
 }
-export type PostHrmEmployeesByIdUpdateSalaryTitleApiResponse =
-  /** status 200 Cập nhật thành công */ Employee
-export type PostHrmEmployeesByIdUpdateSalaryTitleApiArg = {
+export type PostHrmEmployeesByIdAdjustSalaryApiResponse =
+  /** status 200 Điều chỉnh lương thành công */ {
+    contract?: EmploymentContract
+    affected_payslips?: SalarySlip[]
+  }
+export type PostHrmEmployeesByIdAdjustSalaryApiArg = {
   id: string
   body: {
-    change_type: 'salary_change' | 'title_change' | 'department_transfer' | 'other'
-    new_salary_base?: number
-    new_title?: string
-    new_department?: string
-    effective_date: string
+    new_salary_base: number
     reason?: string
   }
-}
-export type GetHrmEmploymentHistoriesApiResponse = /** status 200 Thành công */ {
-  count?: number
-  total_pages?: number
-  next?: string | null
-  previous?: string | null
-  results?: EmploymentHistory[]
-}
-export type GetHrmEmploymentHistoriesApiArg = {
-  /** Lọc theo trạng thái phê duyệt. */
-  status?: 'pending_approval' | 'approved' | 'rejected'
-  /** Lọc theo ID nhân viên. */
-  employeeId?: string
-  limit?: number
-  offset?: number
-}
-export type PostHrmEmploymentHistoriesByIdApproveApiResponse =
-  /** status 200 Phê duyệt thành công */ EmploymentHistory
-export type PostHrmEmploymentHistoriesByIdApproveApiArg = {
-  id: string
 }
 export type PostHrmContractsApiResponse = /** status 201 Tạo thành công */ EmploymentContract
 export type PostHrmContractsApiArg = {
@@ -344,6 +413,8 @@ export type PostHrmContractsApiArg = {
     end_date?: string
     note?: string
     file_url?: string
+    /** Lương cơ bản của hợp đồng */
+    salary_base?: number
   }
 }
 export type PostHrmContractsByIdTerminateApiResponse =
@@ -362,6 +433,26 @@ export type PostHrmContractsByIdTerminateApiArg = {
     standard_working_days?: number
     /** Số ngày vi phạm thời hạn báo trước (nếu nghỉ trái luật) */
     unnotified_days?: number
+  }
+}
+export type PostHrmContractsByIdRenewApiResponse = /** status 201 Gia hạn thành công */ {
+  contract?: EmploymentContract
+}
+export type PostHrmContractsByIdRenewApiArg = {
+  id: string
+  body: {
+    /** Số hợp đồng mới (optional, mặc định tự sinh) */
+    new_contract_no?: string
+    /** Loại hợp đồng mới (optional, mặc định lấy loại cũ) */
+    new_contract_type?: 'probation' | 'definite_term' | 'indefinite_term' | 'other'
+    /** Ngày bắt đầu của hợp đồng mới (optional, mặc định là ngày kết thúc cũ + 1 ngày) */
+    start_date?: string
+    /** Lương cơ bản mới nếu có điều chỉnh (optional) */
+    new_salary_base?: number
+    /** Đường dẫn file scan hợp đồng (optional) */
+    file_url?: string
+    /** Ghi chú (optional) */
+    note?: string
   }
 }
 export type GetHrmAttendancesApiResponse = /** status 200 Thành công */ {
@@ -419,6 +510,8 @@ export type GetHrmSalarySlipsApiArg = {
   employeeId?: string
   status?: 'draft' | 'calculated' | 'approved' | 'paid'
 }
+export type GetHrmSalaryPeriodsApiResponse = /** status 200 Thành công */ string[]
+export type GetHrmSalaryPeriodsApiArg = void
 export type PostHrmSalarySlipsInitializeApiResponse =
   /** status 201 Khởi tạo thành công */ SalarySlip[]
 export type PostHrmSalarySlipsInitializeApiArg = {
@@ -432,15 +525,65 @@ export type PostHrmSalarySlipsByIdCalculateApiResponse =
 export type PostHrmSalarySlipsByIdCalculateApiArg = {
   id: string
 }
-export type PostHrmSalarySlipsByIdApproveApiResponse =
-  /** status 200 Phê duyệt thành công */ SalarySlip
-export type PostHrmSalarySlipsByIdApproveApiArg = {
+export type PostHrmSalarySlipsPartialApiResponse = /** status 201 Tạo thành công */ SalarySlip
+export type PostHrmSalarySlipsPartialApiArg = {
+  body: {
+    employee_id: string
+    period_start: string
+    period_end: string
+    name: string
+  }
+}
+export type PostHrmSalarySlipsBulkCalculateApiResponse = /** status 200 Tính toán thành công */ {
+  count?: number
+  slip_ids?: string[]
+}
+export type PostHrmSalarySlipsBulkCalculateApiArg = {
+  body: {
+    /** Kỳ lương cần tính toán (YYYY-MM) */
+    salary_period: string
+  }
+}
+export type PostHrmSalarySlipsBulkSubmitForReviewApiResponse =
+  /** status 200 Gửi duyệt thành công */ {
+    count?: number
+    slip_ids?: string[]
+  }
+export type PostHrmSalarySlipsBulkSubmitForReviewApiArg = {
+  body: {
+    /** Kỳ lương cần gửi duyệt (YYYY-MM) */
+    salary_period: string
+  }
+}
+export type PostHrmSalarySlipsByIdSubmitForReviewApiResponse =
+  /** status 200 Gửi duyệt thành công */ SalarySlip
+export type PostHrmSalarySlipsByIdSubmitForReviewApiArg = {
   id: string
 }
-export type GetHrmRewardsApiResponse = /** status 200 Thành công */ RewardRecord[]
+export type PostHrmSalarySlipsByIdRecallApiResponse =
+  /** status 200 Rút lại thành công */ SalarySlip
+export type PostHrmSalarySlipsByIdRecallApiArg = {
+  id: string
+}
+export type GetHrmRewardsApiResponse = /** status 200 Thành công */ {
+  count?: number
+  results?: RewardRecord[]
+}
 export type GetHrmRewardsApiArg = {
   /** Lọc theo ID nhân viên */
   employeeId?: string
+  /** Lọc theo trạng thái */
+  status?: 'pending_approval' | 'approved' | 'rejected' | 'cancelled'
+  /** Lọc theo loại khen thưởng */
+  rewardType?: 'performance_bonus' | 'initiative' | 'holiday_bonus' | 'other'
+  /** Ngày bắt đầu lọc (YYYY-MM-DD) */
+  dateFrom?: string
+  /** Ngày kết thúc lọc (YYYY-MM-DD) */
+  dateTo?: string
+  /** Số bản ghi tối đa */
+  limit?: number
+  /** Vị trí bắt đầu */
+  offset?: number
 }
 export type PostHrmRewardsApiResponse = /** status 201 Ghi nhận thành công */ RewardRecord
 export type PostHrmRewardsApiArg = {
@@ -453,15 +596,56 @@ export type PostHrmRewardsApiArg = {
     salary_slip_id?: string | null
   }
 }
+export type GetHrmRewardsByIdApiResponse = /** status 200 Thành công */ RewardRecord
+export type GetHrmRewardsByIdApiArg = {
+  id: string
+}
+export type PatchHrmRewardsByIdApiResponse = /** status 200 Cập nhật thành công */ RewardRecord
+export type PatchHrmRewardsByIdApiArg = {
+  id: string
+  body: {
+    reward_date?: string
+    reward_type?: 'performance_bonus' | 'initiative' | 'holiday_bonus' | 'other'
+    amount?: number
+    description?: string
+    salary_slip_id?: string | null
+  }
+}
+export type DeleteHrmRewardsByIdApiResponse = unknown
+export type DeleteHrmRewardsByIdApiArg = {
+  id: string
+}
 export type PostHrmRewardsByIdApproveApiResponse =
   /** status 200 Phê duyệt thành công */ RewardRecord
 export type PostHrmRewardsByIdApproveApiArg = {
   id: string
 }
-export type GetHrmDisciplinesApiResponse = /** status 200 Thành công */ DisciplineRecord[]
+export type PostHrmRewardsByIdCancelApiResponse = /** status 200 Hủy thành công */ RewardRecord
+export type PostHrmRewardsByIdCancelApiArg = {
+  id: string
+  body: {
+    reason?: string
+  }
+}
+export type GetHrmDisciplinesApiResponse = /** status 200 Thành công */ {
+  count?: number
+  results?: DisciplineRecord[]
+}
 export type GetHrmDisciplinesApiArg = {
   /** Lọc theo ID nhân viên */
   employeeId?: string
+  /** Lọc theo trạng thái */
+  status?: 'pending_approval' | 'approved' | 'rejected' | 'cancelled'
+  /** Lọc theo hình thức kỷ luật */
+  disciplineType?: 'reprimand' | 'warning' | 'salary_deduction' | 'termination' | 'other'
+  /** Ngày bắt đầu lọc (YYYY-MM-DD) */
+  dateFrom?: string
+  /** Ngày kết thúc lọc (YYYY-MM-DD) */
+  dateTo?: string
+  /** Số bản ghi tối đa */
+  limit?: number
+  /** Vị trí bắt đầu */
+  offset?: number
 }
 export type PostHrmDisciplinesApiResponse = /** status 201 Ghi nhận thành công */ DisciplineRecord
 export type PostHrmDisciplinesApiArg = {
@@ -476,19 +660,39 @@ export type PostHrmDisciplinesApiArg = {
     file_url?: string
   }
 }
+export type GetHrmDisciplinesByIdApiResponse = /** status 200 Thành công */ DisciplineRecord
+export type GetHrmDisciplinesByIdApiArg = {
+  id: string
+}
+export type PatchHrmDisciplinesByIdApiResponse =
+  /** status 200 Cập nhật thành công */ DisciplineRecord
+export type PatchHrmDisciplinesByIdApiArg = {
+  id: string
+  body: {
+    incident_date?: string
+    discipline_date?: string
+    discipline_type?: 'reprimand' | 'warning' | 'salary_deduction' | 'termination' | 'other'
+    description?: string
+    penalty_amount?: number
+    salary_slip_id?: string | null
+    file_url?: string
+  }
+}
+export type DeleteHrmDisciplinesByIdApiResponse = unknown
+export type DeleteHrmDisciplinesByIdApiArg = {
+  id: string
+}
 export type PostHrmDisciplinesByIdApproveApiResponse =
   /** status 200 Phê duyệt thành công */ DisciplineRecord
 export type PostHrmDisciplinesByIdApproveApiArg = {
   id: string
 }
-export type PostHrmSalarySlipsBulkConfirmPayApiResponse =
-  /** status 200 Xác nhận và thanh toán lương nhanh thành công */ SalarySlip[]
-export type PostHrmSalarySlipsBulkConfirmPayApiArg = {
+export type PostHrmDisciplinesByIdCancelApiResponse =
+  /** status 200 Hủy thành công */ DisciplineRecord
+export type PostHrmDisciplinesByIdCancelApiArg = {
+  id: string
   body: {
-    /** Kỳ lương cần thanh toán (YYYY-MM) */
-    salary_period: string
-    /** Hình thức chi trả lương */
-    payment_method: 'cash' | 'bank_transfer'
+    reason?: string
   }
 }
 export type GetHrmPublicHolidaysApiResponse = /** status 200 Thành công */ PublicHoliday[]
@@ -545,9 +749,8 @@ export type Employee = {
   full_name?: string
   department?: string | null
   position_title?: string | null
-  /** Lương cơ bản dạng Decimal */
-  salary_base?: string | null
-  is_union_member?: boolean
+  /** Lương cơ bản hiện tại của nhân viên (đọc từ hợp đồng active) */
+  current_salary_base?: string | null
   email?: string | null
   phone?: string | null
   gender?: ('male' | 'female' | 'other') | null
@@ -572,27 +775,10 @@ export type EmploymentContract = {
   status?: 'active' | 'expired' | 'terminated'
   note?: string | null
   file_url?: string | null
+  /** Lương cơ bản của hợp đồng */
+  salary_base?: string | null
   created_at?: string
   updated_at?: string
-}
-export type EmploymentHistory = {
-  id?: string
-  employee_id?: string
-  employee_code?: string | null
-  employee_name?: string | null
-  change_type?: 'salary_change' | 'title_change' | 'department_transfer' | 'other'
-  old_salary_base?: string | null
-  new_salary_base?: string | null
-  old_title?: string | null
-  new_title?: string | null
-  old_department?: string | null
-  new_department?: string | null
-  effective_date?: string
-  approved_by_id?: string | null
-  approved_by_username?: string | null
-  reason?: string | null
-  status?: 'pending_approval' | 'approved' | 'rejected'
-  created_at?: string
 }
 export type EmployeeDocument = {
   id?: string
@@ -614,8 +800,12 @@ export type RewardRecord = {
   amount?: string | null
   description?: string
   salary_slip_id?: string | null
-  status?: 'pending_approval' | 'approved' | 'rejected'
+  status?: 'pending_approval' | 'approved' | 'rejected' | 'cancelled'
   approved_by_id?: string | null
+  approved_by_username?: string | null
+  cancelled_by_id?: string | null
+  cancelled_by_username?: string | null
+  cancelled_at?: string | null
   created_at?: string
 }
 export type DisciplineRecord = {
@@ -630,16 +820,61 @@ export type DisciplineRecord = {
   penalty_amount?: string | null
   salary_slip_id?: string | null
   file_url?: string | null
-  status?: 'pending_approval' | 'approved' | 'rejected'
+  status?: 'pending_approval' | 'approved' | 'rejected' | 'cancelled'
   approved_by_id?: string | null
+  approved_by_username?: string | null
+  cancelled_by_id?: string | null
+  cancelled_by_username?: string | null
+  cancelled_at?: string | null
   created_at?: string
 }
 export type EmployeeDetail = Employee & {
   contracts?: EmploymentContract[]
-  employment_histories?: EmploymentHistory[]
   documents?: EmployeeDocument[]
   rewards?: RewardRecord[]
   disciplines?: DisciplineRecord[]
+}
+export type SalarySlip = {
+  id?: string
+  name?: string
+  employee_id?: string
+  employee_code?: string
+  employee_name?: string
+  /** Định dạng YYYY-MM */
+  salary_period?: string
+  base_salary?: string
+  overtime_amount?: string
+  allowance_amount?: string
+  reward_amount_total?: string
+  discipline_deduction_total?: string
+  gross_pay?: string
+  deductions?: string
+  net_pay?: string
+  payment_method?: ('cash' | 'bank_transfer') | null
+  status?: 'draft' | 'calculated' | 'approved' | 'paid'
+  remarks?: string | null
+  /** Chi tiết bảng lương bao gồm lương theo ngày công và phân loại các loại lương tăng ca ngoài giờ (OT ngày thường 1.5x, OT Chủ Nhật 2.0x, OT ngày Lễ 3.0x, OT ngày nghỉ bù theo cấu hình HRM_COMPENSATORY_OVERTIME_RATE). */
+  breakdown?: {
+    /** Số ngày công tiêu chuẩn hằng tháng theo chế độ làm việc của doanh nghiệp (ví dụ 26 ngày). */
+    standard_working_days?: number
+    incomes?: {
+      name?: string
+      amount?: number
+    }[]
+    deductions?: {
+      name?: string
+      amount?: number
+    }[]
+    salary_segments?: {
+      start_date?: string
+      end_date?: string
+      salary_base?: number
+      work_days?: number
+      earned?: number
+    }[]
+  } | null
+  created_at?: string
+  updated_at?: string
 }
 export type Attendance = {
   id?: string
@@ -671,42 +906,6 @@ export type LeaveRequest = {
   created_at?: string
   updated_at?: string
 }
-export type SalarySlip = {
-  id?: string
-  name?: string
-  employee_id?: string
-  employee_code?: string
-  employee_name?: string
-  /** Định dạng YYYY-MM */
-  salary_period?: string
-  base_salary?: string
-  overtime_amount?: string
-  allowance_amount?: string
-  reward_amount_total?: string
-  discipline_deduction_total?: string
-  union_fee_2pct?: string
-  gross_pay?: string
-  deductions?: string
-  net_pay?: string
-  payment_method?: ('cash' | 'bank_transfer') | null
-  status?: 'draft' | 'calculated' | 'approved' | 'paid'
-  remarks?: string | null
-  /** Chi tiết bảng lương bao gồm lương theo ngày công và phân loại các loại lương tăng ca ngoài giờ (OT ngày thường 1.5x, OT Chủ Nhật 2.0x, OT ngày Lễ 3.0x, OT ngày nghỉ bù theo cấu hình HRM_COMPENSATORY_OVERTIME_RATE). */
-  breakdown?: {
-    /** Số ngày công tiêu chuẩn hằng tháng theo chế độ làm việc của doanh nghiệp (ví dụ 26 ngày). */
-    standard_working_days?: number
-    incomes?: {
-      name?: string
-      amount?: number
-    }[]
-    deductions?: {
-      name?: string
-      amount?: number
-    }[]
-  } | null
-  created_at?: string
-  updated_at?: string
-}
 export type PublicHoliday = {
   id?: string
   name?: string
@@ -721,27 +920,38 @@ export const {
   usePostHrmEmployeesCreateMutation,
   useGetHrmEmployeesByIdQuery,
   usePatchHrmEmployeesByIdUpdateMutation,
-  usePostHrmEmployeesByIdUpdateSalaryTitleMutation,
-  useGetHrmEmploymentHistoriesQuery,
-  usePostHrmEmploymentHistoriesByIdApproveMutation,
+  usePostHrmEmployeesByIdAdjustSalaryMutation,
   usePostHrmContractsMutation,
   usePostHrmContractsByIdTerminateMutation,
+  usePostHrmContractsByIdRenewMutation,
   useGetHrmAttendancesQuery,
   usePostHrmAttendancesBatchMutation,
   useGetHrmLeaveRequestsQuery,
   usePostHrmLeaveRequestsCreateMutation,
   usePostHrmLeaveRequestsByIdApproveMutation,
   useGetHrmSalarySlipsQuery,
+  useGetHrmSalaryPeriodsQuery,
   usePostHrmSalarySlipsInitializeMutation,
   usePostHrmSalarySlipsByIdCalculateMutation,
-  usePostHrmSalarySlipsByIdApproveMutation,
+  usePostHrmSalarySlipsPartialMutation,
+  usePostHrmSalarySlipsBulkCalculateMutation,
+  usePostHrmSalarySlipsBulkSubmitForReviewMutation,
+  usePostHrmSalarySlipsByIdSubmitForReviewMutation,
+  usePostHrmSalarySlipsByIdRecallMutation,
   useGetHrmRewardsQuery,
   usePostHrmRewardsMutation,
+  useGetHrmRewardsByIdQuery,
+  usePatchHrmRewardsByIdMutation,
+  useDeleteHrmRewardsByIdMutation,
   usePostHrmRewardsByIdApproveMutation,
+  usePostHrmRewardsByIdCancelMutation,
   useGetHrmDisciplinesQuery,
   usePostHrmDisciplinesMutation,
+  useGetHrmDisciplinesByIdQuery,
+  usePatchHrmDisciplinesByIdMutation,
+  useDeleteHrmDisciplinesByIdMutation,
   usePostHrmDisciplinesByIdApproveMutation,
-  usePostHrmSalarySlipsBulkConfirmPayMutation,
+  usePostHrmDisciplinesByIdCancelMutation,
   useGetHrmPublicHolidaysQuery,
   usePostHrmPublicHolidaysMutation,
   useGetHrmPublicHolidaysByIdQuery,

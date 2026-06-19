@@ -27,7 +27,32 @@
   color: var(--clr-error);
 }
 
+.successBtn:hover {
+  background: var(--clr-success-bg);
+  color: var(--clr-success);
+}
+
+.infoBtn:hover {
+  background: var(--clr-info-bg);
+  color: var(--clr-info);
+}
+
+.warningBtn:hover {
+  background: var(--clr-warning-bg);
+  color: var(--clr-warning);
+}
+
 .actionBtn svg {
   width: 18px;
   height: 18px;
+}
+
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.actionBtn:disabled:hover {
+  background: transparent;
+  color: var(--clr-text-muted);
 }

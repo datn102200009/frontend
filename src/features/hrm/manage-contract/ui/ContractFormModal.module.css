@@ -69,3 +69,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.infoBox {
+  background-color: var(--clr-primary-50, #eff6ff);
+  border: 1px solid var(--clr-primary-200, #bfdbfe);
+  color: var(--clr-primary-700, #1d4ed8);
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  margin-top: var(--sp-3);
+}

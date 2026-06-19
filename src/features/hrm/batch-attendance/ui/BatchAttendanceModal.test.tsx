@@ -1,4 +1,4 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BatchAttendanceModal } from './BatchAttendanceModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
@@ -116,11 +116,7 @@ describe('BatchAttendanceModal', () => {
       })
     );
 
-    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
-
-    // Change date to the public holiday (2026-05-01)
-    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
-    fireEvent.change(dateInput, { target: { value: '2026-05-01' } });
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-01" />);
 
     // Wait for the active employees list to load
     await screen.findByText('Nguyễn Văn An');
@@ -155,11 +151,7 @@ describe('BatchAttendanceModal', () => {
       })
     );
 
-    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
-
-    // Change date to Monday (2026-05-04), which is the compensatory holiday
-    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
-    fireEvent.change(dateInput, { target: { value: '2026-05-04' } });
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-04" />);
 
     // Wait for the active employees list to load
     await screen.findByText('Nguyễn Văn An');
@@ -190,11 +182,7 @@ describe('BatchAttendanceModal', () => {
       })
     );
 
-    renderWithProviders(<BatchAttendanceModal {...defaultProps} />);
-
-    // Change date to Sunday (2026-05-03), which overlaps with rest day
-    const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
-    fireEvent.change(dateInput, { target: { value: '2026-05-03' } });
+    renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-03" />);
 
     // Wait for the active employees list to load
     await screen.findByText('Nguyễn Văn An');
@@ -211,7 +199,7 @@ describe('BatchAttendanceModal', () => {
     renderWithProviders(<BatchAttendanceModal {...defaultProps} initialDate="2026-05-20" />);
 
     const dateInput = screen.getByLabelText(/Ngày chấm công:/i);
-    expect(dateInput).toHaveValue('2026-05-20');
+    expect(dateInput).toHaveValue('20-05-2026');
   });
 
   it('locks fields and disables submit button when date belongs to a paid period', async () => {

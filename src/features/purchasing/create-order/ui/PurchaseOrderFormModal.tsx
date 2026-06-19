@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useForm, useFieldArray, type Resolver } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   usePostPurchasingOrdersMutation, 
@@ -15,12 +15,17 @@ import { useGetProcurementSuppliersQuery } from '@entities/procurement/api/procu
 import { purchaseOrderSchema, type PurchaseOrderFormValues } from '../model/purchase-order.schema';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
-import { Plus, Trash2, CheckCircle, XCircle, Calendar } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { usePermission } from '@shared/hooks/usePermission';
-import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
+import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
+import { Input } from '@shared/ui/Input/Input';
+import { getDecimalsForUom } from '@shared/lib/uomDecimals';
+import { formatNumber } from '@shared/lib/formatNumber';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { extractApiError } from '@shared/lib/extractApiError';
+import { shortId } from '@shared/lib/shortId';
 import styles from './PurchaseOrderFormModal.module.css';
 
 
@@ -70,9 +75,17 @@ const formatDateToDMY = (isoDateStr: string): string => {
   const cleanDateStr = isoDateStr.split('T')[0];
   const parts = cleanDateStr.split('-');
   if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
   }
   return isoDateStr;
+};
+
+const getLocalDateString = (): string => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ open, onClose, onSuccess, orderId }) => {
@@ -88,7 +101,6 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const { toast } = useToast();
 
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
   const canCancel = usePermission('purchasing.cancel_order');
@@ -98,10 +110,17 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const isWorking = isCreating || isUpdating || isDeleting || isApproving || isCancelling || isLoadingOrder;
 
   const itemMap = React.useMemo(() => {
-    const map = new Map<string, { id?: string; item_name?: string; item_code?: string }>();
+    const map = new Map<string, { id?: string; item_name?: string; item_code?: string; stock_uom_name?: string | null }>();
     if (itemsData?.results) {
       itemsData.results.forEach(item => {
-        if (item.id) map.set(item.id, item);
+        if (item.id) {
+          map.set(item.id, {
+            id: item.id,
+            item_name: item.item_name,
+            item_code: item.item_code,
+            stock_uom_name: item.stock_uom_name,
+          });
+        }
       });
     }
     return map;
@@ -117,12 +136,12 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     return map;
   }, [suppliersData]);
 
-  const { register, control, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<PurchaseOrderFormValues>({
+  const { register, control, handleSubmit, formState: { errors }, reset, watch } = useForm<PurchaseOrderFormValues>({
     resolver: zodResolver(purchaseOrderSchema) as unknown as Resolver<PurchaseOrderFormValues>,
     defaultValues: {
       vendor_id: '',
       advance_paid_amount: 0,
-      expected_delivery_date: '',
+      expected_delivery_date: getLocalDateString(),
       lines: [{ item_id: '', quantity: 1, unit_price: 2000000 }],
     }
   });
@@ -146,7 +165,6 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   useEffect(() => {
     if (!open) {
       hasInitialized.current = false;
-      setIsDatePickerOpen(false);
       setIsCancelModalOpen(false);
     }
   }, [open]);
@@ -168,16 +186,22 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
       reset({
         vendor_id: suppliersData?.[0]?.id || '',
         advance_paid_amount: 0,
-        expected_delivery_date: '',
+        expected_delivery_date: getLocalDateString(),
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 2000000 }],
       });
       hasInitialized.current = true;
     }
   }, [orderId, orderData, reset, itemsData, suppliersData]);
 
-  const getSelectableItems = (currentFieldItemId?: string) => {
-    const list = [...(itemsData?.results || [])];
-    if (currentFieldItemId && !list.some(item => item.id === currentFieldItemId)) {
+  const watchLines = watch('lines') || [];
+  const getSelectableItems = (index: number, currentFieldItemId?: string) => {
+    const selectedIds = watchLines
+      .map((line, i) => (i !== index ? line.item_id : null))
+      .filter((id): id is string => !!id);
+    
+    const list = (itemsData?.results || []).filter(item => item.id && !selectedIds.includes(item.id)) as any[];
+    const existsInMaster = (itemsData?.results || []).some(item => item.id === currentFieldItemId);
+    if (currentFieldItemId && !existsInMaster) {
       const originalLine = orderData?.lines?.find(l => l.item === currentFieldItemId);
       list.push({
         id: currentFieldItemId,
@@ -292,9 +316,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
   const modalTitle = !orderId 
     ? "Thêm Đơn Mua Hàng Mới" 
     : isDraft 
-      ? `Chi Tiết Đơn Mua Nháp - ${(orderData?.id || '').slice(0, 8).toUpperCase()}`
-      : `Chi Tiết Đơn Mua Hàng - ${(orderData?.id || '').slice(0, 8).toUpperCase()}`;
-
+      ? `Chi Tiết Đơn Mua Nháp - ${shortId(orderData?.id)}`
+      : `Chi Tiết Đơn Mua Hàng - ${shortId(orderData?.id)}`;
   return (
     <>
       <Modal 
@@ -362,40 +385,27 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
-                <label htmlFor="expected_delivery_date_display" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
-                  Ngày Giao Dự Kiến
-                </label>
                 {isReadOnly ? (
-                  <div className={styles.staticText}>
-                    {orderData?.expected_delivery_date ? formatDateToDMY(orderData.expected_delivery_date) : '—'}
-                  </div>
+                  <>
+                    <label htmlFor="expected_delivery_date_display" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
+                      Ngày Giao Dự Kiến <span style={{ color: 'var(--clr-danger)' }}>*</span>
+                    </label>
+                    <div className={styles.staticText}>
+                      {orderData?.expected_delivery_date ? formatDateToDMY(orderData.expected_delivery_date) : '—'}
+                    </div>
+                  </>
                 ) : (
-                  <div className={styles.inputWithIcon}>
-                    <input
-                      id="expected_delivery_date_display"
-                      type="text"
-                      readOnly
-                      placeholder="DD/MM/YYYY"
-                      value={formatDateToDMY(watch('expected_delivery_date') || '')}
-                      onClick={() => !isWorking && setIsDatePickerOpen(true)}
-                      onKeyDown={(e) => {
-                        if (!isWorking && (e.key === 'Enter' || e.key === ' ')) {
-                          e.preventDefault();
-                          setIsDatePickerOpen(true);
-                        }
-                      }}
-                      className={styles.itemInput}
-                      disabled={isWorking}
-                      style={{ cursor: isWorking ? 'not-allowed' : 'pointer' }}
-                    />
-                    <Calendar className={styles.inputIcon} size={16} />
-                  </div>
+                  <DatePickerField
+                    name="expected_delivery_date"
+                    label="Ngày Giao Dự Kiến"
+                    control={control}
+                    error={errors.expected_delivery_date?.message}
+                    disabled={isWorking}
+                    required={true}
+                    defaultValue={getLocalDateString()}
+                    minDate={getLocalDateString()}
+                  />
                 )}
-                <input
-                  type="hidden"
-                  {...register('expected_delivery_date')}
-                />
-                {errors.expected_delivery_date && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-sm)' }}>{errors.expected_delivery_date.message}</span>}
               </div>
             </div>
  
@@ -405,8 +415,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                 {!isReadOnly && (
                   <Button variant="outline" size="sm" icon={<Plus size={14} />}
                     onClick={() => {
-                      const firstItemId = itemsData?.results?.[0]?.id || '';
-                      append({ item_id: firstItemId, quantity: 1, unit_price: 0 });
+                      append({ item_id: '', quantity: 1, unit_price: 0 });
                     }}
                     disabled={isWorking}>
                     Thêm
@@ -415,7 +424,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
               </div>
  
               <div className={styles.itemsTable}>
-                <div className={styles.itemRow} style={{ padding: '8px 0', borderBottom: '1px solid var(--clr-border)', fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)', gridTemplateColumns: isReadOnly ? '1fr 100px 150px 120px' : '1fr 100px 150px 36px' }}>
+                <div className={styles.itemRow} style={{ padding: '8px 0', borderBottom: '1px solid var(--clr-border)', fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)', gridTemplateColumns: isReadOnly ? '1fr 100px 150px 120px' : '1fr 140px 150px 36px' }}>
                   <span>Linh Kiện</span>
                   <span>Số Lượng</span>
                   <span>Đơn Giá</span>
@@ -424,46 +433,103 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                 </div>
                 {fields.map((field, index) => {
                   const originalLine = orderData?.lines?.[index];
-                  const displayName = itemMap.get(field.item_id)?.item_name || originalLine?.item_name || 'Linh Kiện Khác';
-                  const displayCode = itemMap.get(field.item_id)?.item_code || originalLine?.item_code || 'OTHER';
+                  const selectedItem = itemMap.get(field.item_id);
+                  const displayName = selectedItem?.item_name || originalLine?.item_name || 'Linh Kiện Khác';
+                  const displayCode = selectedItem?.item_code || originalLine?.item_code || 'OTHER';
                   return (
-                    <div key={field.id} className={styles.itemRow} style={{ padding: '8px 0', gridTemplateColumns: isReadOnly ? '1fr 100px 150px 120px' : '1fr 100px 150px 36px' }}>
+                    <div key={field.id} className={styles.itemRow} style={{ padding: '8px 0', gridTemplateColumns: isReadOnly ? '1fr 100px 150px 120px' : '1fr 140px 150px 36px' }}>
                       {isReadOnly ? (
                         <>
                           <div className={styles.staticText}>
                             {displayName} ({displayCode})
                           </div>
                           <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
-                            {field.quantity}
+                            {formatNumber(field.quantity, getDecimalsForUom(selectedItem?.stock_uom_name))} {selectedItem?.stock_uom_name || ''}
                           </div>
                           <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
                             {formatVND(field.unit_price)}
                           </div>
                           <div className={styles.staticText} style={{ justifyContent: 'flex-start', textAlign: 'left' }}>
-                            <span className="text-xs font-semibold px-2 py-1 rounded bg-slate-100 text-slate-700">
-                              {Number(originalLine?.receipt_fulfillment_rate || 0)}%
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start', width: '100%' }}>
+                              <span style={{
+                                fontWeight: 600,
+                                fontSize: 'var(--fs-xs)',
+                                color: Number(originalLine?.receipt_fulfillment_rate || 0) === 100
+                                  ? 'var(--clr-success)'
+                                  : 'var(--clr-warning)'
+                              }}>
+                                {Number(originalLine?.receipt_fulfillment_rate || 0)}%
+                              </span>
+                              <div style={{ width: '100%', height: 4, background: 'var(--clr-border)', borderRadius: 2, overflow: 'hidden' }}>
+                                <div style={{
+                                  width: `${Math.min(Number(originalLine?.receipt_fulfillment_rate || 0), 100)}%`,
+                                  height: '100%',
+                                  background: Number(originalLine?.receipt_fulfillment_rate || 0) === 100
+                                    ? 'var(--clr-success)'
+                                    : 'var(--clr-warning)',
+                                  transition: 'width 0.3s ease',
+                                }} />
+                              </div>
+                            </div>
                           </div>
                         </>
                       ) : (
                         <>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <select className={styles.itemInput} {...register(`lines.${index}.item_id` as const)} disabled={isWorking}>
-                              {getSelectableItems(field.item_id).map(item => (
-                                <option key={item.id} value={item.id}>
-                                  {item.item_name} ({item.item_code})
-                                </option>
-                              ))}
-                            </select>
-                            {errors.lines?.[index]?.item_id && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>{errors.lines[index]?.item_id?.message}</span>}
+                            <Controller
+                              control={control}
+                              name={`lines.${index}.item_id` as const}
+                              rules={{ required: 'Linh kiện là bắt buộc' }}
+                              render={({ field: selectField }) => (
+                                <SearchableSelect
+                                  placeholder="-- Chọn linh kiện --"
+                                  options={getSelectableItems(index, selectField.value).map(item => ({
+                                    label: `${item.item_name} (${item.item_code})`,
+                                    value: item.id || ''
+                                  }))}
+                                  value={selectField.value}
+                                  onChange={selectField.onChange}
+                                  disabled={isWorking}
+                                  error={errors.lines?.[index]?.item_id?.message}
+                                />
+                              )}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <Input
+                              type="number"
+                              min={0}
+                              size="sm"
+                              decimals={getDecimalsForUom(selectedItem?.stock_uom_name)}
+                              disabled={isWorking}
+                              error={errors.lines?.[index]?.quantity?.message}
+                              {...register(`lines.${index}.quantity` as const, {
+                                valueAsNumber: true,
+                                required: 'Bắt buộc',
+                                validate: {
+                                  required: (v) => !isNaN(v) || 'Bắt buộc nhập số lượng',
+                                  positive: (v) => v > 0 || 'Số lượng phải lớn hơn 0',
+                                },
+                              })}
+                            />
+                            <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', minWidth: '36px', whiteSpace: 'nowrap' }}>
+                              {selectedItem?.stock_uom_name || '-'}
+                            </span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <input className={styles.itemInput} type="number" min={0.01} step={0.01} {...register(`lines.${index}.quantity` as const, { valueAsNumber: true })} disabled={isWorking} />
-                            {errors.lines?.[index]?.quantity && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>{errors.lines[index]?.quantity?.message}</span>}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <input className={styles.itemInput} type="number" min={0} step={1000} {...register(`lines.${index}.unit_price` as const, { valueAsNumber: true })} disabled={isWorking} />
-                            {errors.lines?.[index]?.unit_price && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-xs)' }}>{errors.lines[index]?.unit_price?.message}</span>}
+                            <Input
+                              type="number"
+                              min={0}
+                              size="sm"
+                              step={1000}
+                              disabled={isWorking}
+                              error={errors.lines?.[index]?.unit_price?.message}
+                              {...register(`lines.${index}.unit_price` as const, {
+                                valueAsNumber: true,
+                                required: 'Bắt buộc',
+                                min: { value: 0, message: 'Đơn giá tối thiểu là 0' }
+                              })}
+                            />
                           </div>
                           <button type="button" className={styles.removeBtn} onClick={() => remove(index)} aria-label="Xóa linh kiện"
                             disabled={fields.length <= 1 || isWorking} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -512,6 +578,29 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
               </div>
             </div>
             
+            {isReadOnly && orderData && (
+              <div style={{ marginTop: '20px', padding: '16px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', backgroundColor: 'var(--clr-background)' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: 'var(--fs-sm)' }}>
+                    <span style={{ fontWeight: 500 }}>Tiến độ Nhập Kho</span>
+                    <span style={{ fontWeight: 600, color: 'var(--clr-success)' }}>{Number(orderData.receipt_fulfillment_rate || 0)}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'var(--clr-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(Number(orderData.receipt_fulfillment_rate || 0), 100)}%`, height: '100%', background: 'var(--clr-success)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: 'var(--fs-sm)' }}>
+                    <span style={{ fontWeight: 500 }}>Tiến độ Thanh Toán</span>
+                    <span style={{ fontWeight: 600, color: 'var(--clr-primary)' }}>{Number(orderData.payment_fulfillment_rate || 0)}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'var(--clr-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(Number(orderData.payment_fulfillment_rate || 0), 100)}%`, height: '100%', background: 'var(--clr-primary)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {isReadOnly && (orderData?.stock_entries?.length || orderData?.invoices?.length) ? (
               <div style={{ marginTop: '24px', borderTop: '1px dashed var(--clr-border)', paddingTop: '16px' }}>
                 <h4 className={styles.itemsTitle} style={{ marginBottom: '12px' }}>Chứng Từ Liên Kết</h4>
@@ -538,7 +627,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                         {orderData.invoices.map(inv => (
                           <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', border: '1px solid var(--clr-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--clr-background)' }}>
                             <span style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-primary)' }}>
-                              INV-{inv.id?.slice(0, 8).toUpperCase()}
+                              INV-{shortId(inv.id)}
                             </span>
                             <span style={{ fontSize: 'var(--fs-xs)', textTransform: 'uppercase', fontWeight: 600, color: getInvoiceStatusColor(inv.status) }}>
                               {getInvoiceStatusLabel(inv.status)}
@@ -554,15 +643,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
           </form>
         )}
       </Modal>
- 
-      <DatePickerModal
-        open={isDatePickerOpen}
-        onClose={() => setIsDatePickerOpen(false)}
-        value={watch('expected_delivery_date') || ''}
-        onChange={(newDate) => {
-          setValue('expected_delivery_date', newDate, { shouldValidate: true, shouldDirty: true });
-        }}
-      />
+
       <CancelOrderConfirmModal
         key={`cancel-order-${isCancelModalOpen}`}
         open={isCancelModalOpen}

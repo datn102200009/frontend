@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useGetManufacturingBomListQuery, useDeleteManufacturingBomByBomIdDeleteMutation } from '@features/manufacturing/api/manufacturingApi';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Trash2, Eye, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { Button } from '@shared/ui/Button/Button';
@@ -12,6 +12,8 @@ import { useToast } from '@shared/ui/Toast/Toast';
 import { usePermission } from '@shared/hooks/usePermission';
 import { type Bom } from '@features/manufacturing/api/manufacturingApi';
 import { formatDateTime } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
+import { extractApiError } from '@shared/lib/extractApiError';
 import styles from './BomList.module.css';
 
 export function BomList() {
@@ -40,8 +42,8 @@ export function BomList() {
       setDeletingBom(null);
       refetch();
      
-    } catch {
-      toast('error', 'Có lỗi xảy ra khi xóa định mức');
+    } catch (err) {
+      toast('error', extractApiError(err, 'Có lỗi xảy ra khi xóa định mức'));
     }
   };
 
@@ -57,24 +59,11 @@ export function BomList() {
       { accessorKey: 'name', header: 'Tên Định Mức' },
       { accessorKey: 'item_name', header: 'Tên Sản Phẩm' },
       {
-        accessorKey: 'mold_code',
-        header: 'Khuôn Mẫu',
-        cell: ({ row }) => (
-          row.original.mold_code ? (
-            <span title={row.original.mold_name || ''} style={{ fontSize: 'var(--fs-sm)', fontWeight: 500 }}>
-              {row.original.mold_code} - {row.original.mold_name}
-            </span>
-          ) : (
-            <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic', fontSize: 'var(--fs-sm)' }}>Không có</span>
-          )
-        ),
-      },
-      {
         accessorKey: 'items_count',
         header: 'Linh Kiện',
         cell: ({ row }) => (
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <Badge variant="info">{(row.original as any).items_count || 0} mục</Badge>
+          <Badge variant="info">{formatNumber((row.original as any).items_count || 0, 0)} mục</Badge>
         ),
         enableSorting: false,
       },
@@ -88,11 +77,10 @@ export function BomList() {
       {
         id: 'actions',
         header: 'Thao Tác',
-        size: 120,
+        size: 100,
         enableSorting: false,
         cell: ({ row }) => (
           <TableActions>
-            <ActionButton icon={<Eye size={18} />} title="Xem chi tiết" />
             {canUpdate && (
               <ActionButton icon={<Pencil size={18} />} title="Chỉnh sửa"
                 onClick={() => setEditingBom(row.original)} />
@@ -113,7 +101,7 @@ export function BomList() {
       <div className={styles.header}>
         <div>
           <h2 className={styles.title}>Danh Sách Định Mức (BOM)</h2>
-          <p className={styles.subtitle}>{boms.length} định mức</p>
+          <p className={styles.subtitle}>{formatNumber(boms.length, 0)} định mức</p>
         </div>
         {canCreate && (
           <Button icon={<Plus size={16} />} onClick={() => setShowCreate(true)}>

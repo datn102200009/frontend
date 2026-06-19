@@ -30,7 +30,6 @@ export const SuppliersPage = () => {
 
           <div style={{ marginTop: '8px' }}>
             <SupplierTable
-              onView={(id) => setSelectedSupplierId(id)}
               onEdit={(supplier) => setSelectedSupplierId(supplier.id)}
             />
           </div>

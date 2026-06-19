@@ -8,8 +8,12 @@ import {
 } from '@entities/hrm/api/hrmApi';
 import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
+import { Calendar } from 'lucide-react';
+import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
+import { formatDateVN } from '@shared/lib/formatDate';
 import { batchAttendanceSchema } from '../model/batch-attendance.schema';
 import styles from './BatchAttendanceModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
 
 import { calculateHolidayAnalysis, getSelectedHolidayInfo } from '@entities/hrm/lib/holiday';
 
@@ -37,6 +41,7 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
   initialDate,
 }) => {
   const [date, setDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
+  const [dateModalOpen, setDateModalOpen] = useState(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -238,13 +243,31 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
           <label className={styles.label} htmlFor="attendance_date">
             Ngày chấm công:
           </label>
-          <input
-            id="attendance_date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={styles.input}
-            disabled={isSaving}
+          <div className={styles.inputWithIcon}>
+            <input
+              id="attendance_date"
+              type="text"
+              readOnly
+              placeholder="DD-MM-YYYY"
+              value={formatDateVN(date)}
+              onClick={() => !isSaving && setDateModalOpen(true)}
+              onKeyDown={(e) => {
+                if (!isSaving && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  setDateModalOpen(true);
+                }
+              }}
+              className={styles.input}
+              disabled={isSaving}
+              style={{ cursor: isSaving ? 'not-allowed' : 'pointer' }}
+            />
+            <Calendar className={styles.inputIcon} size={16} />
+          </div>
+          <DatePickerModal
+            open={dateModalOpen}
+            onClose={() => setDateModalOpen(false)}
+            value={date || new Date().toISOString().split('T')[0]}
+            onChange={(d) => setDate(d)}
           />
         </div>
 
@@ -307,12 +330,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                       </select>
                     </td>
                     <td className={styles.td}>
-                      <input
+                      <Input
                         aria-label={`Số giờ công của ${record.employee_name}`}
                         type="number"
                         min={0}
                         max={24}
-                        step={0.5}
+                        decimals={1}
                         value={record.work_hours}
                         onChange={(e) => handleFieldChange(idx, 'work_hours', Number(e.target.value))}
                         className={styles.numberInput}
@@ -320,12 +343,12 @@ export const BatchAttendanceModal: React.FC<BatchAttendanceModalProps> = ({
                       />
                     </td>
                     <td className={styles.td}>
-                      <input
+                      <Input
                         aria-label={`Giờ OT của ${record.employee_name}`}
                         type="number"
                         min={0}
                         max={24}
-                        step={0.5}
+                        decimals={1}
                         value={record.overtime_hours}
                         onChange={(e) => handleFieldChange(idx, 'overtime_hours', Number(e.target.value))}
                         className={styles.numberInput}
