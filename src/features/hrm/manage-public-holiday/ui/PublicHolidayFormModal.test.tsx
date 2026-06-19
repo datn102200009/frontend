@@ -92,20 +92,11 @@ describe('PublicHolidayFormModal', () => {
     await user.click(screen.getByLabelText('Ngày bắt đầu *'));
     expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
 
-    // Select yesterday in calendar grid
+    // Verify yesterday in calendar grid is disabled
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayLabel = `${yesterday.getDate()} Tháng ${yesterday.getMonth() + 1} Năm ${yesterday.getFullYear()}`;
-    await user.click(screen.getByRole('button', { name: yesterdayLabel }));
-
-    // Confirm selection
-    await user.click(screen.getByRole('button', { name: 'Xác nhận' }));
-
-    // Click Save
-    await user.click(screen.getByRole('button', { name: 'Lưu' }));
-
-    expect(await screen.findByText('Không được chọn ngày nghỉ lễ trong quá khứ')).toBeInTheDocument();
-    expect(defaultProps.onSuccess).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: yesterdayLabel })).toBeDisabled();
   });
 
   it('allows selecting today or a future date when creating a holiday', async () => {
