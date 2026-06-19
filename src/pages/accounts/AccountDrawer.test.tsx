@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { AccountDrawer } from './AccountDrawer';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 import { server } from '@shared/lib/test/server';
@@ -66,5 +66,59 @@ describe('AccountDrawer', () => {
     expect(cashFlowCheckbox.checked).toBe(true);
     expect(customerCheckbox.checked).toBe(true);
     expect(userCheckbox.checked).toBe(false);
+  });
+
+  it('allows selecting and deselecting individual permissions and updates group status accordingly', async () => {
+    server.use(
+      http.get('*/api/v1/accounts/permissions/', () => {
+        return HttpResponse.json([
+          { code: 'accounts.view_user', name: 'Xem tài khoản' },
+          { code: 'accounts.add_user', name: 'Thêm tài khoản' },
+        ]);
+      }),
+      http.get('*/api/v1/accounts/users/unlinked-employees/', () => {
+        return HttpResponse.json([]);
+      })
+    );
+
+    renderWithProviders(
+      <AccountDrawer
+        open={true}
+        onClose={() => {}}
+        onSuccess={() => {}}
+        userToEdit={null}
+      />
+    );
+
+    // Wait for the permission group to render
+    const groupCheckbox = await screen.findByLabelText('Hệ Thống & Tài Khoản (Accounts)') as HTMLInputElement;
+    const viewUserCheckbox = screen.getByLabelText('Xem tài khoản') as HTMLInputElement;
+    const addUserCheckbox = screen.getByLabelText('Thêm tài khoản') as HTMLInputElement;
+
+    expect(groupCheckbox.checked).toBe(false);
+    expect(groupCheckbox.indeterminate).toBe(false);
+    expect(viewUserCheckbox.checked).toBe(false);
+    expect(addUserCheckbox.checked).toBe(false);
+
+    // 1. Click individual permission "Xem tài khoản" -> should become checked, group should become indeterminate
+    fireEvent.click(viewUserCheckbox);
+    expect(viewUserCheckbox.checked).toBe(true);
+    expect(addUserCheckbox.checked).toBe(false);
+    expect(groupCheckbox.checked).toBe(false);
+    expect(groupCheckbox.indeterminate).toBe(true);
+
+    // 2. Click "Thêm tài khoản" -> should become checked, group should become checked (no longer indeterminate)
+    fireEvent.click(addUserCheckbox);
+    expect(viewUserCheckbox.checked).toBe(true);
+    expect(addUserCheckbox.checked).toBe(true);
+    expect(groupCheckbox.checked).toBe(true);
+    expect(groupCheckbox.indeterminate).toBe(false);
+
+    // 3. Click the group header checkbox -> should uncheck both child permissions
+    fireEvent.click(groupCheckbox);
+    expect(viewUserCheckbox.checked).toBe(false);
+    expect(addUserCheckbox.checked).toBe(false);
+    expect(groupCheckbox.checked).toBe(false);
+    expect(groupCheckbox.indeterminate).toBe(false);
   });
 });

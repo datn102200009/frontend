@@ -26,7 +26,7 @@ describe('PayrollPage Component', () => {
     });
 
     expect(screen.getByText('Bảng Lương & Tính Lương')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Tính Toán Nhanh' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cập Nhật Bảng Lương' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Phê Duyệt Nhanh' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Khởi Tạo Kỳ Lương' })).toBeInTheDocument();
   });
@@ -46,9 +46,10 @@ describe('PayrollPage Component', () => {
           isAuthenticated: true,
         },
       },
+      initialEntries: ['/payroll?period=2026-05'],
     });
 
-    const calculateBtn = screen.getByRole('button', { name: 'Tính Toán Nhanh' });
+    const calculateBtn = screen.getByRole('button', { name: 'Cập Nhật Bảng Lương' });
     const submitBtn = screen.getByRole('button', { name: 'Phê Duyệt Nhanh' });
 
     // Initially disabled (no calculation done yet in session)

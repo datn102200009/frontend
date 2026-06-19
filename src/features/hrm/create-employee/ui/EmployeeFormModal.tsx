@@ -8,6 +8,8 @@ import { FileText } from 'lucide-react';
 import { employeeSchema, type EmployeeFormValues } from '../model/employee.schema';
 import styles from './EmployeeFormModal.module.css';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftYears, shiftDays } from '@shared/lib/dateLimits';
 
 interface EmployeeFormModalProps {
   open: boolean;
@@ -49,6 +51,16 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
   });
 
   const contractType = watch('contract_type');
+  const dateOfBirth = watch('date_of_birth');
+  const joinDate = watch('join_date');
+  const contractStartDate = watch('contract_start_date');
+
+  const minBirth = shiftYears(-100);
+  const maxBirth = shiftYears(-16);
+  const minJoin = dateOfBirth ? shiftYears(16, dateOfBirth) : undefined;
+  const maxJoin = todayISO();
+  const minContractStart = joinDate || undefined;
+  const minContractEnd = contractStartDate ? shiftDays(1, contractStartDate) : undefined;
 
   useEffect(() => {
     if (open) {
@@ -191,6 +203,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
             label="Ngày sinh"
             control={control}
             error={errors.date_of_birth?.message}
+            minDate={minBirth}
+            maxDate={maxBirth}
             disabled={isLoading}
           />
 
@@ -199,6 +213,8 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
             label="Ngày vào làm"
             control={control}
             error={errors.join_date?.message}
+            minDate={minJoin}
+            maxDate={maxJoin}
             disabled={isLoading}
           />
         </div>
@@ -264,6 +280,7 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                 control={control}
                 error={errors.contract_start_date?.message}
                 required={true}
+                minDate={minContractStart}
                 disabled={isLoading}
               />
 
@@ -274,30 +291,25 @@ export const EmployeeFormModal: React.FC<EmployeeFormModalProps> = ({ open, onCl
                   control={control}
                   error={errors.contract_end_date?.message}
                   required={contractType !== 'other'}
+                  minDate={minContractEnd}
                   disabled={isLoading}
                 />
               )}
             </div>
 
             <div className={styles.row}>
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="contract_salary_base">
-                  Lương cơ bản theo hợp đồng (VND) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  id="contract_salary_base"
-                  type="number"
-                  min={0}
-                  step={100000}
-                  placeholder="VD: 10000000"
-                  className={styles.input}
-                  {...register('contract_salary_base')}
-                  disabled={isLoading}
-                />
-                {errors.contract_salary_base && (
-                  <span className={styles.errorText}>{errors.contract_salary_base.message}</span>
-                )}
-              </div>
+              <Input
+                id="contract_salary_base"
+                type="number"
+                label="Lương cơ bản theo hợp đồng (VND)"
+                required={true}
+                min={0}
+                decimals={0}
+                placeholder="VD: 10000000"
+                {...register('contract_salary_base')}
+                disabled={isLoading}
+                error={errors.contract_salary_base?.message}
+              />
             </div>
 
             <div className={styles.formGroup}>

@@ -11,6 +11,8 @@ import { Button } from '@shared/ui/Button/Button';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import styles from './PublicHolidayFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftDays } from '@shared/lib/dateLimits';
 
 interface PublicHolidayFormModalProps {
   open: boolean;
@@ -95,6 +97,9 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
     return false;
   }, [holiday]);
 
+  const minStartDate = todayISO();
+  const maxStartDate = shiftDays(365);
+
   const onSubmit = async (values: FormValues) => {
     setApiError(null);
     try {
@@ -178,6 +183,8 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           control={control}
           error={errors.start_date?.message}
           required={true}
+          minDate={minStartDate}
+          maxDate={maxStartDate}
           disabled={isLoading || isPastOrOngoing}
           validate={(value) => {
             if (holiday && holiday.start_date === value) {
@@ -199,33 +206,29 @@ export const PublicHolidayFormModal: React.FC<PublicHolidayFormModalProps> = ({
           }}
         />
 
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="days">
-            Số ngày nghỉ <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="days"
-            type="number"
-            step={1}
-            min={1}
-            className={styles.input}
-            {...register('days', {
-              required: 'Số ngày nghỉ là bắt buộc',
-              valueAsNumber: true,
-              validate: (value) => {
-                if (value === undefined || value === null || isNaN(value)) {
-                  return 'Số ngày nghỉ là bắt buộc';
-                }
-                if (!Number.isInteger(value) || value <= 0) {
-                  return 'Số ngày nghỉ phải là số nguyên dương lớn hơn 0';
-                }
-                return true;
-              },
-            })}
-            disabled={isLoading || isPastOrOngoing}
-          />
-          {errors.days && <span className={styles.errorText}>{errors.days.message}</span>}
-        </div>
+        <Input
+          id="days"
+          type="number"
+          label="Số ngày nghỉ"
+          required={true}
+          min={1}
+          decimals={0}
+          {...register('days', {
+            required: 'Số ngày nghỉ là bắt buộc',
+            valueAsNumber: true,
+            validate: (value) => {
+              if (value === undefined || value === null || isNaN(value)) {
+                return 'Số ngày nghỉ là bắt buộc';
+              }
+              if (!Number.isInteger(value) || value <= 0) {
+                return 'Số ngày nghỉ phải là số nguyên dương lớn hơn 0';
+              }
+              return true;
+            },
+          })}
+          disabled={isLoading || isPastOrOngoing}
+          error={errors.days?.message}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="description">

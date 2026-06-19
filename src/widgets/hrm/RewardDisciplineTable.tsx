@@ -35,6 +35,7 @@ import {
 } from '@shared/constants/hrmRewardDiscipline';
 import styles from './RewardDisciplineTable.module.css';
 import { formatDateVN } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
 import { DatePickerModal } from '@shared/ui/DatePickerModal/DatePickerModal';
 
 export const RewardDisciplineTable: React.FC = () => {
@@ -195,11 +196,7 @@ export const RewardDisciplineTable: React.FC = () => {
     }
   };
 
-  const formatVND = (value?: string | number | null) => {
-    if (value === undefined || value === null) return '0 đ';
-    const amount = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
+
 
   const getRewardTypeBadge = (type: string) => {
     const label = getRewardTypeLabel(type);
@@ -267,7 +264,7 @@ export const RewardDisciplineTable: React.FC = () => {
       }),
       helper.accessor('amount', {
         header: 'Số tiền thưởng',
-        cell: (info) => <span className="font-semibold text-emerald-600">{formatVND(info.getValue())}</span>,
+        cell: (info) => <span className="font-semibold text-emerald-600">{formatNumber(info.getValue(), 0)}</span>,
       }),
       helper.accessor('description', {
         header: 'Lý do/Mô tả',
@@ -374,7 +371,7 @@ export const RewardDisciplineTable: React.FC = () => {
         cell: (info) => {
           const amount = info.getValue();
           return amount ? (
-            <span className="font-semibold text-rose-600">{formatVND(amount)}</span>
+            <span className="font-semibold text-rose-600">{formatNumber(amount, 0)}</span>
           ) : (
             <span className="text-slate-400">-</span>
           );

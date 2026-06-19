@@ -8,6 +8,8 @@ import { Button } from '@shared/ui/Button/Button';
 import { contractSchema, type ContractFormValues } from '../model/contract.schema';
 import styles from './ContractFormModal.module.css';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftDays } from '@shared/lib/dateLimits';
 
 interface ContractFormModalProps {
   open: boolean;
@@ -54,6 +56,8 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
 
   const contractType = watch('contract_type');
   const adjustSalary = watch('adjust_salary');
+
+  const minEndDate = shiftDays(1, todayISO());
 
   useEffect(() => {
     if (open && employee) {
@@ -190,6 +194,7 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
               control={control}
               error={errors.end_date?.message}
               required={contractType !== 'other'}
+              minDate={minEndDate}
               disabled={isLoading}
             />
           )}
@@ -200,19 +205,18 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
             <label className={styles.label} htmlFor="salary_base">
               Lương cơ bản theo hợp đồng (VND) <span className={styles.required}>*</span>
             </label>
-            <input
+            <Input
               id="salary_base"
               type="number"
               min={0}
-              step={100000}
+              decimals={0}
               placeholder="VD: 10000000"
-              className={styles.input}
               {...register('salary_base', {
                 required: 'Lương cơ bản theo hợp đồng là bắt buộc',
               })}
               disabled={isLoading}
+              error={errors.salary_base?.message}
             />
-            {errors.salary_base && <span className={styles.errorText}>{errors.salary_base.message}</span>}
           </div>
         )}
 
@@ -231,20 +235,18 @@ export const ContractFormModal: React.FC<ContractFormModalProps> = ({
             </div>
 
             {adjustSalary && (
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="new_salary_base">
-                  Mức lương mới (VND) <span className={styles.required}>*</span>
-                </label>
-                <input
-                  id="new_salary_base"
-                  type="number"
-                  placeholder="VD: 12000000"
-                  className={styles.input}
-                  {...register('new_salary_base')}
-                  disabled={isLoading}
-                />
-                {errors.new_salary_base && <span className={styles.errorText}>{errors.new_salary_base.message}</span>}
-              </div>
+              <Input
+                id="new_salary_base"
+                type="number"
+                label="Mức lương mới (VND)"
+                required={true}
+                placeholder="VD: 12000000"
+                min={0}
+                decimals={0}
+                {...register('new_salary_base')}
+                disabled={isLoading}
+                error={errors.new_salary_base?.message}
+              />
             )}
           </>
         )}

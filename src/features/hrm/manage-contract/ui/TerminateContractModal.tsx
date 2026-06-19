@@ -6,6 +6,8 @@ import { Modal } from '@shared/ui/Modal/Modal';
 import { Button } from '@shared/ui/Button/Button';
 import styles from './TerminateContractModal.module.css';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO } from '@shared/lib/dateLimits';
 
 interface TerminateContractModalProps {
   open: boolean;
@@ -131,6 +133,7 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
             control={control}
             error={errors.termination_date?.message}
             required={true}
+            maxDate={todayISO()}
             disabled={isLoading}
           />
 
@@ -181,36 +184,27 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
         </div>
 
         <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="unused_leave_days">
-              Số ngày phép chưa nghỉ
-            </label>
-            <input
-              id="unused_leave_days"
-              type="number"
-              step="0.5"
-              min="0"
-              className={styles.input}
-              {...register('unused_leave_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số ngày phép tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
-              disabled={isLoading}
-            />
-            {errors.unused_leave_days && <span className={styles.errorText}>{errors.unused_leave_days.message}</span>}
-          </div>
+          <Input
+            id="unused_leave_days"
+            type="number"
+            label="Số ngày phép chưa nghỉ"
+            min={0}
+            decimals={1}
+            {...register('unused_leave_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số ngày phép tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
+            disabled={isLoading}
+            error={errors.unused_leave_days?.message}
+          />
 
-          <div className={styles.formGroup}>
-            <label className={styles.label} htmlFor="standard_working_days">
-              Ngày công chuẩn của tháng
-            </label>
-            <input
-              id="standard_working_days"
-              type="number"
-              min="1"
-              className={styles.input}
-              {...register('standard_working_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 1, message: 'Ngày công chuẩn tối thiểu là 1' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
-              disabled={isLoading}
-            />
-            {errors.standard_working_days && <span className={styles.errorText}>{errors.standard_working_days.message}</span>}
-          </div>
+          <Input
+            id="standard_working_days"
+            type="number"
+            label="Ngày công chuẩn của tháng"
+            min={1}
+            decimals={0}
+            {...register('standard_working_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 1, message: 'Ngày công chuẩn tối thiểu là 1' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
+            disabled={isLoading}
+            error={errors.standard_working_days?.message}
+          />
         </div>
 
         <div className={styles.formRow}>
@@ -224,20 +218,16 @@ export const TerminateContractModal: React.FC<TerminateContractModalProps> = ({
           </div>
 
           {!isLawful && (
-            <div className={styles.formGroup} style={{ flex: 1 }}>
-              <label className={styles.label} htmlFor="unnotified_days">
-                Số ngày không báo trước
-              </label>
-              <input
-                id="unnotified_days"
-                type="number"
-                min="0"
-                className={styles.input}
-                {...register('unnotified_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số ngày tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
-                disabled={isLoading}
-              />
-              {errors.unnotified_days && <span className={styles.errorText}>{errors.unnotified_days.message}</span>}
-            </div>
+            <Input
+              id="unnotified_days"
+              type="number"
+              label="Số ngày không báo trước"
+              min={0}
+              decimals={0}
+              {...register('unnotified_days', { required: 'Bắt buộc', valueAsNumber: true, min: { value: 0, message: 'Số ngày tối thiểu là 0' }, validate: val => !isNaN(val) || 'Bắt buộc' })}
+              disabled={isLoading}
+              error={errors.unnotified_days?.message}
+            />
           )}
         </div>
 

@@ -29,7 +29,7 @@ describe('PublicHolidayFormModal', () => {
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toBeInTheDocument();
     expect(screen.getByLabelText('Ngày bắt đầu *')).toBeInTheDocument();
     expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue(formatDateToDMY(new Date().toISOString().split('T')[0]));
-    expect(screen.getByLabelText('Số ngày nghỉ *')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Số ngày nghỉ/i)).toBeInTheDocument();
     expect(screen.getByLabelText('Mô tả')).toBeInTheDocument();
   });
 
@@ -45,7 +45,7 @@ describe('PublicHolidayFormModal', () => {
     expect(screen.getByRole('heading', { name: 'Cập Nhật Ngày Nghỉ Lễ' })).toBeInTheDocument();
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toHaveValue('Tết Âm Lịch');
     expect(screen.getByLabelText('Ngày bắt đầu *')).toHaveValue('17-02-2026');
-    expect(screen.getByLabelText('Số ngày nghỉ *')).toHaveValue(5);
+    expect(screen.getByLabelText(/Số ngày nghỉ/i)).toHaveValue(5);
     expect(screen.getByLabelText('Mô tả')).toHaveValue('Nghỉ Tết Âm Lịch');
   });
 
@@ -58,7 +58,7 @@ describe('PublicHolidayFormModal', () => {
     await user.clear(nameInput);
 
     // Clear days
-    const daysInput = screen.getByLabelText('Số ngày nghỉ *');
+    const daysInput = screen.getByLabelText(/Số ngày nghỉ/i);
     await user.clear(daysInput);
 
     await user.click(screen.getByRole('button', { name: 'Lưu' }));
@@ -73,7 +73,7 @@ describe('PublicHolidayFormModal', () => {
 
     await user.type(screen.getByLabelText('Tên ngày nghỉ lễ *'), 'Ngày lễ test');
 
-    const daysInput = screen.getByLabelText('Số ngày nghỉ *');
+    const daysInput = screen.getByLabelText(/Số ngày nghỉ/i);
     await user.clear(daysInput);
     await user.type(daysInput, '0');
 
@@ -151,7 +151,7 @@ describe('PublicHolidayFormModal', () => {
     // Fields should be disabled
     expect(screen.getByLabelText('Tên ngày nghỉ lễ *')).toBeDisabled();
     expect(screen.getByLabelText('Ngày bắt đầu *')).toBeDisabled();
-    expect(screen.getByLabelText('Số ngày nghỉ *')).toBeDisabled();
+    expect(screen.getByLabelText(/Số ngày nghỉ/i)).toBeDisabled();
     expect(screen.getByLabelText('Mô tả')).toBeDisabled();
 
     // Save button should be disabled

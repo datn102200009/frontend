@@ -8,6 +8,7 @@ import { useGetHrmLeaveRequestsQuery } from '@entities/hrm/api/hrmApi';
 import type { LeaveRequest } from '@entities/hrm/model/types';
 import { getLeaveTypeLabel } from '@entities/hrm/lib/helpers';
 import { Eye, ChevronDown } from 'lucide-react';
+import { formatNumber } from '@shared/lib/formatNumber';
 
 interface LeaveRequestTableProps {
   onViewDetails?: (leaveRequest: LeaveRequest) => void;
@@ -27,21 +28,22 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
   const { data: leaveRequestsData, isLoading } = useGetHrmLeaveRequestsQuery(
     statusFilter === 'all' ? {} : { status: statusFilter }
   );
-  const leaveRequestsList = Array.isArray(leaveRequestsData)
-    ? leaveRequestsData
-    : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (leaveRequestsData as any)?.results || [];
+
+  const leaveRequests = useMemo(() => {
+    return Array.isArray(leaveRequestsData)
+      ? leaveRequestsData
+      : (leaveRequestsData as any)?.results || [];
+  }, [leaveRequestsData]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="warning">Chờ duyệt</Badge>;
       case 'approved':
         return <Badge variant="success">Đã duyệt</Badge>;
       case 'rejected':
         return <Badge variant="error">Từ chối</Badge>;
+      case 'pending':
       default:
-        return <Badge variant="neutral">{status}</Badge>;
+        return <Badge variant="warning">Chờ duyệt</Badge>;
     }
   };
 
@@ -70,7 +72,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
       }),
       helper.accessor('days', {
         header: 'Số ngày nghỉ',
-        cell: (info) => `${info.getValue() || 0} ngày`,
+        cell: (info) => `${formatNumber(info.getValue(), 1)} ngày`,
       }),
       helper.accessor('reason', {
         header: 'Lý do',
@@ -125,7 +127,7 @@ export const LeaveRequestTable: React.FC<LeaveRequestTableProps> = ({ onViewDeta
 
       <DataTable
         columns={columns}
-        data={leaveRequestsList as LeaveRequest[]}
+        data={leaveRequests as LeaveRequest[]}
         loading={isLoading}
         searchPlaceholder="Tìm kiếm đơn phép theo mã hoặc tên..."
         emptyMessage="Không tìm thấy đơn nghỉ phép nào"

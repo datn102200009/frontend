@@ -83,27 +83,20 @@ const Checkbox: React.FC<{
   }, [indeterminate]);
 
   return (
-    <div className={styles.checkboxItem} onClick={() => !disabled && onChange()}>
+    <label htmlFor={id} className={styles.checkboxItem}>
       <input
         ref={ref}
         type="checkbox"
         id={id}
         checked={checked}
-        onChange={(e) => {
-          e.stopPropagation();
-          onChange();
-        }}
+        onChange={onChange}
         disabled={disabled}
         className={styles.checkboxInput}
       />
-      <label
-        htmlFor={id}
-        className={styles.checkboxLabel}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <span className={styles.checkboxLabel}>
         {label}
-      </label>
-    </div>
+      </span>
+    </label>
   );
 };
 

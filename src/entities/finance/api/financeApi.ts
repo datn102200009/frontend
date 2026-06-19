@@ -192,6 +192,26 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.salarySlipBulkApprovePayInput,
       }),
     }),
+    postFinanceSalarySlipsBulkApprove: build.mutation<
+      PostFinanceSalarySlipsBulkApproveApiResponse,
+      PostFinanceSalarySlipsBulkApproveApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/bulk-approve/`,
+        method: 'POST',
+        body: queryArg.salarySlipBulkApproveInput,
+      }),
+    }),
+    postFinanceSalarySlipsBulkPay: build.mutation<
+      PostFinanceSalarySlipsBulkPayApiResponse,
+      PostFinanceSalarySlipsBulkPayApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/finance/salary-slips/bulk-pay/`,
+        method: 'POST',
+        body: queryArg.salarySlipBulkPayInput,
+      }),
+    }),
     postFinanceSalarySlipsByIdApprove: build.mutation<
       PostFinanceSalarySlipsByIdApproveApiResponse,
       PostFinanceSalarySlipsByIdApproveApiArg
@@ -372,6 +392,16 @@ export type PostFinanceSalarySlipsBulkApprovePayApiResponse =
   /** status 200 Phê duyệt và thanh toán thành công. */ SalarySlip[]
 export type PostFinanceSalarySlipsBulkApprovePayApiArg = {
   salarySlipBulkApprovePayInput: SalarySlipBulkApprovePayInput
+}
+export type PostFinanceSalarySlipsBulkApproveApiResponse =
+  /** status 200 Phê duyệt thành công. */ SalarySlip[]
+export type PostFinanceSalarySlipsBulkApproveApiArg = {
+  salarySlipBulkApproveInput: SalarySlipBulkApproveInput
+}
+export type PostFinanceSalarySlipsBulkPayApiResponse =
+  /** status 200 Chi trả thành công. */ SalarySlip[]
+export type PostFinanceSalarySlipsBulkPayApiArg = {
+  salarySlipBulkPayInput: SalarySlipBulkPayInput
 }
 export type PostFinanceSalarySlipsByIdApproveApiResponse =
   /** status 200 Phê duyệt thành công. */ SalarySlip
@@ -573,6 +603,13 @@ export type SalarySlipBulkApprovePayInput = {
   salary_period: string
   payment_method?: 'cash' | 'bank_transfer'
 }
+export type SalarySlipBulkApproveInput = {
+  salary_period: string
+}
+export type SalarySlipBulkPayInput = {
+  salary_period: string
+  payment_method?: 'cash' | 'bank_transfer'
+}
 export type SalarySlipRejectInput = {
   reason: string
 }
@@ -600,6 +637,8 @@ export const {
   useGetFinanceInvoicesSalesByPkQuery,
   usePostFinanceInvoicesSalesByPkCollectMutation,
   usePostFinanceSalarySlipsBulkApprovePayMutation,
+  usePostFinanceSalarySlipsBulkApproveMutation,
+  usePostFinanceSalarySlipsBulkPayMutation,
   usePostFinanceSalarySlipsByIdApproveMutation,
   usePostFinanceSalarySlipsByIdRejectMutation,
   usePostFinanceSalarySlipsByIdPayMutation,

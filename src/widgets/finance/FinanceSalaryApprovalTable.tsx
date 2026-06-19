@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { createColumnHelper } from '@tanstack/react-table';
-import { CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { CheckCircle, XCircle, CreditCard, ChevronDown } from 'lucide-react';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
 import { Button } from '@shared/ui/Button/Button';
@@ -8,10 +9,13 @@ import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
 import { useToast } from '@shared/ui/Toast/Toast';
 import { usePermission } from '@shared/hooks/usePermission';
 import { useGetHrmSalarySlipsQuery } from '@entities/hrm/api/hrmApi';
+import { useSalaryPeriods } from '@entities/hrm/lib/useSalaryPeriods';
 import {
   usePostFinanceSalarySlipsByIdApproveMutation,
   usePostFinanceSalarySlipsByIdRejectMutation,
   usePostFinanceSalarySlipsByIdPayMutation,
+  usePostFinanceSalarySlipsBulkApproveMutation,
+  usePostFinanceSalarySlipsBulkPayMutation,
 } from '@entities/finance/api/financeApi';
 import type { SalarySlip } from '@entities/hrm/api/hrmApi';
 
@@ -20,13 +24,39 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
   const canPay = usePermission('finance.change_salaryslip');
   const { toast } = useToast();
 
-  // Queries for pending finance review and approved slips
+  // URL State for period filter
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedPeriod = useMemo(() => {
+    const periodParam = searchParams.get('period');
+    if (periodParam && /^\d{4}-\d{2}$/.test(periodParam)) return periodParam;
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${d.getFullYear()}-${mm}`;
+  }, [searchParams]);
+
+  const setSelectedPeriod = (newPeriod: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('period', newPeriod);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  // Salary periods hook
+  const { monthOptions, yearOptions, isLoading: isPeriodsLoading } = useSalaryPeriods({ selectedPeriod });
+  const noPeriods = monthOptions.length === 0 || yearOptions.length === 0;
+
+  // Queries for pending finance review and approved slips filtered by period
   const {
     data: pendingSlips = [],
     isLoading: isLoadingPending,
     refetch: refetchPending,
   } = useGetHrmSalarySlipsQuery({
     status: 'pending_finance_review' as any,
+    salaryPeriod: selectedPeriod,
   });
 
   const {
@@ -35,9 +65,10 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
     refetch: refetchApproved,
   } = useGetHrmSalarySlipsQuery({
     status: 'approved' as any,
+    salaryPeriod: selectedPeriod,
   });
 
-  const isLoading = isLoadingPending || isLoadingApproved;
+  const isLoading = isLoadingPending || isLoadingApproved || isPeriodsLoading;
 
   const refetch = () => {
     refetchPending();
@@ -48,12 +79,19 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
   const [approve, { isLoading: isApproving }] = usePostFinanceSalarySlipsByIdApproveMutation();
   const [reject, { isLoading: isRejecting }] = usePostFinanceSalarySlipsByIdRejectMutation();
   const [pay, { isLoading: isPaying }] = usePostFinanceSalarySlipsByIdPayMutation();
+  const [bulkApprove, { isLoading: isBulkApproving }] = usePostFinanceSalarySlipsBulkApproveMutation();
+  const [bulkPay, { isLoading: isBulkPaying }] = usePostFinanceSalarySlipsBulkPayMutation();
 
   // Modal states
   const [rejectingSlip, setRejectingSlip] = useState<{ id: string; name: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [payingSlip, setPayingSlip] = useState<{ id: string; name: string; amount: number } | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
+
+  // Bulk modal states
+  const [isBulkApproveOpen, setIsBulkApproveOpen] = useState(false);
+  const [isBulkPayOpen, setIsBulkPayOpen] = useState(false);
+  const [bulkPayMethod, setBulkPayMethod] = useState<'bank_transfer' | 'cash'>('bank_transfer');
 
   // Handlers
   const handleApprove = async (id: string) => {
@@ -100,6 +138,40 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
       toast('error', err?.data?.detail || 'Thanh toán thất bại');
     }
   };
+
+  const handleConfirmBulkApprove = async () => {
+    try {
+      await bulkApprove({
+        salarySlipBulkApproveInput: { salary_period: selectedPeriod },
+      }).unwrap();
+      toast('success', `Phê duyệt hàng loạt kỳ lương ${selectedPeriod} thành công.`);
+      setIsBulkApproveOpen(false);
+      refetch();
+    } catch (err: any) {
+      toast('error', err?.data?.detail || 'Phê duyệt hàng loạt thất bại.');
+    }
+  };
+
+  const handleConfirmBulkPay = async () => {
+    try {
+      await bulkPay({
+        salarySlipBulkPayInput: {
+          salary_period: selectedPeriod,
+          payment_method: bulkPayMethod,
+        },
+      }).unwrap();
+      toast('success', `Chi trả hàng loạt kỳ lương ${selectedPeriod} thành công.`);
+      setIsBulkPayOpen(false);
+      refetch();
+    } catch (err: any) {
+      toast('error', err?.data?.detail || 'Chi trả hàng loạt thất bại.');
+    }
+  };
+
+  // Calculations for bulk action metrics
+  const totalBulkPayAmount = useMemo(() => {
+    return approvedSlips.reduce((sum, slip) => sum + parseFloat(slip.net_pay || '0'), 0);
+  }, [approvedSlips]);
 
   // Formatting helper
   const formatVND = (value?: string | number | null) => {
@@ -176,7 +248,7 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
                   onClick={() => setRejectingSlip({ id: slip.id!, name: slip.employee_name || '' })}
                   loading={isRejecting}
                 >
-                  Từ Chối
+                  Từ Chiếu
                 </Button>
               )}
               {slip.status === 'approved' && canPay && (
@@ -216,6 +288,88 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
         loading={isLoading}
         searchPlaceholder="Tìm theo mã NV hoặc tên..."
         emptyMessage="Không có phiếu lương nào chờ xử lý."
+        filterSlot={
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-secondary)', fontWeight: 500 }}>Kỳ lương:</span>
+              <div className="filterSelectWrapper">
+                <select
+                  value={selectedPeriod.split('-')[1] || ''}
+                  onChange={(e) => {
+                    const [y] = selectedPeriod.split('-');
+                    setSelectedPeriod(`${y}-${e.target.value}`);
+                  }}
+                  className="filterSelectInput"
+                  style={{ minWidth: '90px', paddingRight: '24px' }}
+                  aria-label="Chọn tháng kỳ lương"
+                  disabled={noPeriods}
+                >
+                  {noPeriods ? (
+                    <option value="">Tháng --</option>
+                  ) : (
+                    monthOptions.map((m) => (
+                      <option key={m} value={m}>
+                        Tháng {parseInt(m, 10)}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown size={14} className="filterSelectIcon" />
+              </div>
+
+              <div className="filterSelectWrapper">
+                <select
+                  value={selectedPeriod.split('-')[0] || ''}
+                  onChange={(e) => {
+                    const [, m] = selectedPeriod.split('-');
+                    setSelectedPeriod(`${e.target.value}-${m}`);
+                  }}
+                  className="filterSelectInput"
+                  style={{ minWidth: '90px', paddingRight: '24px' }}
+                  aria-label="Chọn năm kỳ lương"
+                  disabled={noPeriods}
+                >
+                  {noPeriods ? (
+                    <option value="">Năm --</option>
+                  ) : (
+                    yearOptions.map((y) => (
+                      <option key={y} value={y}>
+                        Năm {y}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown size={14} className="filterSelectIcon" />
+              </div>
+            </div>
+
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              {canApprove && (
+                <Button
+                  variant="primary"
+                  icon={<CheckCircle size={14} />}
+                  onClick={() => setIsBulkApproveOpen(true)}
+                  disabled={pendingSlips.length === 0}
+                  title={pendingSlips.length === 0 ? "Không có phiếu lương nào chờ phê duyệt trong kỳ này" : undefined}
+                >
+                  Phê Duyệt Toàn Bộ
+                </Button>
+              )}
+
+              {canPay && (
+                <Button
+                  variant="secondary"
+                  icon={<CreditCard size={14} />}
+                  onClick={() => setIsBulkPayOpen(true)}
+                  disabled={approvedSlips.length === 0}
+                  title={approvedSlips.length === 0 ? "Không có phiếu lương nào đã duyệt chờ chi trả trong kỳ này" : undefined}
+                >
+                  Chi Trả Toàn Bộ
+                </Button>
+              )}
+            </div>
+          </div>
+        }
       />
 
       {/* Reject Modal */}
@@ -305,6 +459,75 @@ export const FinanceSalaryApprovalTable: React.FC = () => {
         onCancel={() => setPayingSlip(null)}
         isLoading={isPaying}
       />
+
+      {/* Bulk Approve Modal */}
+      <ConfirmModal
+        open={isBulkApproveOpen}
+        title={`Phê duyệt toàn bộ bảng lương kỳ ${selectedPeriod}`}
+        message={
+          <div>
+            <p style={{ margin: 0, fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
+              Bạn có chắc chắn muốn phê duyệt <strong>TOÀN BỘ ({pendingSlips.length})</strong> phiếu lương đang chờ xử lý trong kỳ lương <strong>{selectedPeriod}</strong>?
+            </p>
+            <p style={{ marginTop: '8px', fontSize: 'var(--fs-xs)', color: 'var(--clr-warning)', fontWeight: 500 }}>
+              Hành động này sẽ chuyển trạng thái các phiếu lương từ "Chờ duyệt" sang "Đã duyệt". Bạn không thể hoàn tác hành động này.
+            </p>
+          </div>
+        }
+        confirmText="Phê duyệt toàn bộ"
+        cancelText="Hủy"
+        confirmVariant="primary"
+        onConfirm={handleConfirmBulkApprove}
+        onCancel={() => setIsBulkApproveOpen(false)}
+        isLoading={isBulkApproving}
+      />
+
+      {/* Bulk Pay Modal */}
+      <ConfirmModal
+        open={isBulkPayOpen}
+        title={`Chi trả toàn bộ bảng lương kỳ ${selectedPeriod}`}
+        message={
+          <div>
+            <p style={{ margin: 0, fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
+              Xác nhận chi trả lương hàng loạt cho <strong>TOÀN BỘ ({approvedSlips.length})</strong> phiếu lương đã duyệt trong kỳ lương <strong>{selectedPeriod}</strong>?
+            </p>
+            <p style={{ marginTop: '8px', fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
+              Tổng số tiền chi: <strong style={{ color: 'var(--clr-primary)' }}>{formatVND(totalBulkPayAmount)}</strong>
+            </p>
+            <div style={{ marginTop: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: 'var(--fs-sm)', color: 'var(--clr-text)' }}>
+                Phương thức thanh toán hàng loạt:
+              </label>
+              <select
+                value={bulkPayMethod}
+                onChange={(e) => setBulkPayMethod(e.target.value as any)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1.5px solid var(--clr-border)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 'var(--fs-sm)',
+                  backgroundColor: 'white',
+                  outline: 'none',
+                }}
+              >
+                <option value="bank_transfer">Chuyển khoản ngân hàng (Bank Transfer)</option>
+                <option value="cash">Tiền mặt (Cash)</option>
+              </select>
+            </div>
+            <p style={{ marginTop: '16px', fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)', margin: '16px 0 0 0' }}>
+              Hệ thống sẽ tự động chuyển trạng thái các phiếu lương sang "Đã thanh toán" và sinh các giao dịch dòng tiền chi tương ứng.
+            </p>
+          </div>
+        }
+        confirmText="Xác nhận chi trả toàn bộ"
+        cancelText="Hủy"
+        confirmVariant="primary"
+        onConfirm={handleConfirmBulkPay}
+        onCancel={() => setIsBulkPayOpen(false)}
+        isLoading={isBulkPaying}
+      />
     </div>
   );
 };
+

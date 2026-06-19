@@ -7,6 +7,7 @@ import { useGetHrmEmployeesQuery } from '@entities/hrm/api/hrmApi';
 import type { Employee } from '@entities/hrm/model/types';
 import { Eye, Edit, DollarSign, FileText, ChevronDown } from 'lucide-react';
 import { formatDateVN } from '@shared/lib/formatDate';
+import { formatNumber } from '@shared/lib/formatNumber';
 
 interface EmployeeTableProps {
   onView?: (employee: Employee) => void;
@@ -32,12 +33,6 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
     return employeeResponse?.results || [];
   }, [employeeResponse]);
 
-  const formatVND = (value?: string | number | null) => {
-    if (value === undefined || value === null) return '0 đ';
-    const amount = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
   const columns = useMemo(() => {
     const helper = createColumnHelper<Employee>();
     return [
@@ -51,7 +46,7 @@ export const EmployeeTable: React.FC<EmployeeTableProps> = ({
       }),
       helper.accessor('current_salary_base', {
         header: 'Lương cơ bản',
-        cell: (info) => formatVND(info.getValue()),
+        cell: (info) => formatNumber(info.getValue(), 0),
       }),
       helper.accessor('employment_status', {
         header: 'Trạng thái',

@@ -8,6 +8,8 @@ import { Button } from '@shared/ui/Button/Button';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { leaveRequestSchema, type LeaveRequestFormValues } from '../model/leave-request.schema';
 import styles from './LeaveRequestFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { shiftDays } from '@shared/lib/dateLimits';
 
 interface LeaveRequestFormModalProps {
   open: boolean;
@@ -50,6 +52,12 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
   });
 
   const startDate = watch('start_date');
+
+  const minStartDate = shiftDays(-30);
+  const maxStartDate = shiftDays(365);
+  const minEndDate = startDate || undefined;
+  const maxEndDate = startDate ? shiftDays(365, startDate) : undefined;
+
   const endDate = watch('end_date');
 
   // Auto calculate days when dates change
@@ -181,6 +189,8 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
             control={control}
             error={errors.start_date?.message}
             required
+            minDate={minStartDate}
+            maxDate={maxStartDate}
             disabled={isLoading}
           />
 
@@ -190,25 +200,23 @@ export const LeaveRequestFormModal: React.FC<LeaveRequestFormModalProps> = ({
             control={control}
             error={errors.end_date?.message}
             required
+            minDate={minEndDate}
+            maxDate={maxEndDate}
             disabled={isLoading}
           />
         </div>
 
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="days">
-            Số ngày nghỉ thực tế <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="days"
-            type="number"
-            step={0.5}
-            min={0.5}
-            className={styles.input}
-            {...register('days')}
-            disabled={isLoading}
-          />
-          {errors.days && <span className={styles.errorText}>{errors.days.message}</span>}
-        </div>
+        <Input
+          id="days"
+          type="number"
+          label="Số ngày nghỉ thực tế"
+          required={true}
+          min={0.5}
+          decimals={1}
+          {...register('days')}
+          disabled={isLoading}
+          error={errors.days?.message}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="reason">

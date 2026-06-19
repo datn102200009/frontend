@@ -84,7 +84,7 @@ export function DataTable<TData>({
               aria-label={searchPlaceholder}
             />
           </div>
-          {filterSlot && <div style={{ marginLeft: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>{filterSlot}</div>}
+          {filterSlot && <div style={{ marginLeft: '12px', display: 'flex', gap: '8px', alignItems: 'center', flex: 1 }}>{filterSlot}</div>}
         </div>
       )}
 

@@ -9,6 +9,7 @@ import { Button } from '@shared/ui/Button/Button';
 import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
 import { usePermission } from '@shared/hooks/usePermission';
 import styles from './SalarySlipDetailsModal.module.css';
+import { formatNumber } from '@shared/lib/formatNumber';
 
 interface SalarySlipDetailsModalProps {
   open: boolean;
@@ -88,11 +89,7 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
       });
   };
 
-  const formatVND = (value?: string | number | null) => {
-    if (value === undefined || value === null) return '0 đ';
-    const amount = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
+
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -181,13 +178,13 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
               <div className={styles.row} key={idx}>
                 <span>{item.name}:</span>
                 <strong style={item.name?.includes('Khen thưởng') || item.name?.includes('Thưởng') ? { color: 'var(--clr-success)' } : undefined}>
-                  {formatVND(item.amount)}
+                  {formatNumber(item.amount, 0)}
                 </strong>
               </div>
             ))}
             <div className={styles.row} style={{ borderTop: '1px dashed var(--clr-border)', paddingTop: '8px', marginTop: '8px' }}>
               <span>Tổng thu nhập (Gross):</span>
-              <strong>{formatVND(salarySlip.gross_pay)}</strong>
+              <strong>{formatNumber(salarySlip.gross_pay, 0)}</strong>
             </div>
           </div>
 
@@ -199,19 +196,19 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
                 <div className={styles.row} key={idx}>
                   <span>{item.name}:</span>
                   <strong style={{ color: 'var(--clr-error)' }}>
-                    {formatVND(item.amount)}
+                    {formatNumber(item.amount, 0)}
                   </strong>
                 </div>
               ))}
               <div className={styles.row} style={{ borderTop: '1px dashed var(--clr-border)', paddingTop: '8px', marginTop: '8px' }}>
                 <span>Tổng khấu trừ:</span>
-                <strong style={{ color: 'var(--clr-error)' }}>{formatVND(salarySlip.deductions)}</strong>
+                <strong style={{ color: 'var(--clr-error)' }}>{formatNumber(salarySlip.deductions, 0)}</strong>
               </div>
             </div>
 
             <div className={styles.totalRow}>
               <span>Thực Nhận (Net):</span>
-              <span>{formatVND(salarySlip.net_pay)}</span>
+              <span>{formatNumber(salarySlip.net_pay, 0)}</span>
             </div>
           </div>
         </div>
@@ -231,10 +228,10 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
                   <div key={idx} className={styles.segmentItem}>
                     <div className={styles.segmentHeader}>
                       <span>Chặng {idx + 1}: {seg.start_date} ~ {seg.end_date}</span>
-                      <strong>{formatVND(seg.earned)}</strong>
+                      <strong>{formatNumber(seg.earned, 0)}</strong>
                     </div>
                     <div className={styles.segmentMeta}>
-                      Mức lương chặng: {formatVND(seg.salary_base)} | Số ngày công: {seg.work_days} ngày
+                      Mức lương chặng: {formatNumber(seg.salary_base, 0)} | Số ngày công: {seg.work_days} ngày
                     </div>
                   </div>
                 ))}
@@ -257,16 +254,12 @@ export const SalarySlipDetailsModal: React.FC<SalarySlipDetailsModalProps> = (pr
             {/* Form tính toán */}
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', width: '100%' }}>
               <div className={styles.formGroup} style={{ flex: 1 }}>
-                <label className={styles.label} htmlFor="standard_days">
+                <label className={styles.label}>
                   Số ngày công tiêu chuẩn tháng: {isCalculating && <span style={{ color: 'var(--clr-primary)', fontSize: 'var(--fs-xs)', marginLeft: '8px', fontWeight: 'normal' }}>(Đang tính toán lại...)</span>}
                 </label>
-                <input
-                  id="standard_days"
-                  type="number"
-                  value={salarySlip.breakdown?.standard_working_days ?? 26}
-                  readOnly
-                  className={styles.input}
-                />
+                <span className={styles.input} style={{ display: 'block', backgroundColor: 'var(--clr-bg-disabled)' }}>
+                  {formatNumber(salarySlip.breakdown?.standard_working_days ?? 26, 0)}
+                </span>
               </div>
             </div>
           </div>

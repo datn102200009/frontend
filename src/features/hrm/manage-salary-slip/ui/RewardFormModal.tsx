@@ -9,6 +9,8 @@ import { Button } from '@shared/ui/Button/Button';
 import { DatePickerField } from '@shared/ui/DatePickerField/DatePickerField';
 import { rewardSchema, type RewardFormValues } from '../model/reward-discipline.schema';
 import styles from './RewardFormModal.module.css';
+import { Input } from '@shared/ui/Input/Input';
+import { todayISO, shiftDays } from '@shared/lib/dateLimits';
 
 interface RewardFormModalProps {
   open: boolean;
@@ -60,6 +62,9 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
       description: '',
     },
   });
+
+  const minRewardDate = shiftDays(-365);
+  const maxRewardDate = todayISO();
 
   useEffect(() => {
     if (open) {
@@ -153,6 +158,8 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
             control={control}
             error={errors.reward_date?.message}
             required
+            minDate={minRewardDate}
+            maxDate={maxRewardDate}
             disabled={isLoading}
           />
 
@@ -175,21 +182,17 @@ export const RewardFormModal: React.FC<RewardFormModalProps> = ({
           </div>
         </div>
 
-        <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="amount">
-            Số tiền thưởng (VND) <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="amount"
-            type="number"
-            min={0}
-            step={50000}
-            className={styles.input}
-            {...register('amount')}
-            disabled={isLoading}
-          />
-          {errors.amount && <span className={styles.errorText}>{errors.amount.message}</span>}
-        </div>
+        <Input
+          id="amount"
+          type="number"
+          label="Số tiền thưởng (VND)"
+          required={true}
+          min={0}
+          decimals={0}
+          {...register('amount')}
+          disabled={isLoading}
+          error={errors.amount?.message}
+        />
 
         <div className={styles.formGroup}>
           <label className={styles.label} htmlFor="description">
