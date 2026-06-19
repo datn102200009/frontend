@@ -7,8 +7,8 @@ interface DeadlineBadgeProps {
 }
 
 export function DeadlineBadge({ daysLeft, plannedEndDate }: DeadlineBadgeProps) {
-  let variant: 'success' | 'warning' | 'error' | 'info' | 'neutral' = 'info';
-  let label = '';
+  let variant: 'success' | 'warning' | 'error' | 'info' | 'neutral';
+  let label: string;
 
   if (daysLeft === null || daysLeft === undefined) {
     variant = 'neutral';
