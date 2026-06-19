@@ -44,12 +44,6 @@ const InvoicesPage: React.FC = () => {
 
   const { status, setStatus } = useInvoiceFilters();
 
-  // Reset page to 1 when status filter changes
-  useEffect(() => {
-    setPageAP(1);
-    setPageAR(1);
-  }, [status]);
-
   // Pagination & query state for AP
   const [pageAP, setPageAP] = useState(1);
   const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetFinanceInvoicesPurchaseQuery(
@@ -63,6 +57,12 @@ const InvoicesPage: React.FC = () => {
     { status: status || undefined, page: pageAR, limit: 10 },
     { skip: activeTab !== 'sales_invoices' }
   );
+
+  // Reset page to 1 when status filter changes
+  useEffect(() => {
+    setPageAP(1);
+    setPageAR(1);
+  }, [status]);
 
   // Details modal states
   const [selectedAPDetailsId, setSelectedAPDetailsId] = useState<string | null>(null);

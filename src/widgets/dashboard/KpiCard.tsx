@@ -5,7 +5,7 @@ import { CardHeader } from './CardHeader';
 import { Badge } from '@shared/ui/Badge/Badge';
 import styles from './DashboardWidgets.module.css';
 
-export interface KpiCardBaseData {}
+export type KpiCardBaseData = Record<string, unknown>;
 
 export interface KpiCardPurchasingPO extends KpiCardBaseData {
   active_po_count?: number;

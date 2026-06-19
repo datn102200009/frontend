@@ -3,7 +3,7 @@ import { formatVND } from '@shared/lib/formatVND';
 import { shortId } from '@shared/lib/shortId';
 import styles from './DashboardWidgets.module.css';
 
-function ProgressBar({ value, label, color }: { value: number; label: string; color: string }) {
+function renderProgressBar(value: number, label: string, color: string) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
       <span style={{ fontSize: 10, color: 'var(--clr-text-muted)', minWidth: 70 }}>{label}</span>
@@ -158,8 +158,8 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
     return (
       <div className={styles.rowSubText} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
         <div style={{ marginBottom: 4 }}>{item.items_summary || ''}</div>
-        <ProgressBar value={receiptRate} label="Giao hàng" color="var(--clr-success, #22c55e)" />
-        <ProgressBar value={paymentRate} label="Thanh toán" color="var(--clr-primary, #3b82f6)" />
+        {renderProgressBar(receiptRate, "Giao hàng", "var(--clr-success, #22c55e)")}
+        {renderProgressBar(paymentRate, "Thanh toán", "var(--clr-primary, #3b82f6)")}
       </div>
     );
   }
@@ -176,8 +176,8 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
     return (
       <div className={styles.rowSubText} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
         <div style={{ marginBottom: 4 }}>{deliveryStr}</div>
-        <ProgressBar value={receiptRate} label="Nhập kho" color="var(--clr-emerald-600, #059669)" />
-        <ProgressBar value={paymentRate} label="Thanh toán" color="var(--clr-indigo-600, #4f46e5)" />
+        {renderProgressBar(receiptRate, "Nhập kho", "var(--clr-emerald-600, #059669)")}
+        {renderProgressBar(paymentRate, "Thanh toán", "var(--clr-indigo-600, #4f46e5)")}
       </div>
     );
   }
