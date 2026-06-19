@@ -92,7 +92,7 @@ describe('PublicHolidayFormModal', () => {
     await user.click(screen.getByLabelText('Ngày bắt đầu *'));
     expect(screen.getByRole('heading', { name: 'Chọn Ngày Tháng Năm' })).toBeInTheDocument();
 
-    // Verify yesterday in calendar grid is disabled
+    // Verify yesterday in calendar grid is disabled due to minDate (today) constraint
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayLabel = `${yesterday.getDate()} Tháng ${yesterday.getMonth() + 1} Năm ${yesterday.getFullYear()}`;
