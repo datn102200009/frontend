@@ -1,10 +1,12 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { authReducer } from '@features/auth/model/authSlice';
+import chatbotUiReducer from '@features/chatbot/model/chatbotUiSlice';
 import { baseApi } from '@shared/api/baseApi';
 import './enhancedApi';
 
 const appReducer = combineReducers({
   auth: authReducer,
+  chatbotUi: chatbotUiReducer,
   [baseApi.reducerPath]: baseApi.reducer,
 });
 

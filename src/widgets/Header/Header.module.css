@@ -46,3 +46,31 @@
     padding: 0 var(--sp-4);
   }
 }
+
+.chatbotBtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+.chatbotBtn:hover {
+  background: var(--clr-bg);
+}
+
+.chatbotBtn.active {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.chatbotBtn.active:hover {
+  background: #fecaca;
+}
+

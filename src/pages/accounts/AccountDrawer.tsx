@@ -30,6 +30,7 @@ const GROUP_NAMES: Record<string, string> = {
   manufacturing: 'Quản lý Sản Xuất (Manufacturing)',
   accounts: 'Hệ Thống & Tài Khoản (Accounts)',
   master_data: 'Dữ liệu nền (Master Data)',
+  common: 'Chức năng chung / Trợ lý AI',
 };
 
 const userCreateSchema = z.object({
