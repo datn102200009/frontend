@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, ShieldAlert, KeyRound } from 'lucide-react';
+import { ShieldAlert, KeyRound } from 'lucide-react';
 import { Button } from '@shared/ui/Button/Button';
 import { Input } from '@shared/ui/Input/Input';
 import { SearchableSelect } from '@shared/ui/Select/SearchableSelect';
@@ -16,7 +16,7 @@ import {
   usePostAccountsUsersChangePasswordMutation,
   type UserOutput,
 } from '@features/accounts/api/accountsApi';
-import styles from './AccountDrawer.module.css';
+import styles from './AccountModal.module.css';
 
 // 2-level Group name mappings
 const GROUP_NAMES: Record<string, string> = {
@@ -59,7 +59,7 @@ type UserCreateFields = z.infer<typeof userCreateSchema>;
 type UserUpdateFields = z.infer<typeof userUpdateSchema>;
 type ChangePasswordFields = z.infer<typeof changePasswordSchema>;
 
-interface AccountDrawerProps {
+interface AccountModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (actionType: 'create' | 'update') => void;
@@ -101,7 +101,7 @@ const Checkbox: React.FC<{
   );
 };
 
-export const AccountDrawer: React.FC<AccountDrawerProps> = ({
+export const AccountModal: React.FC<AccountModalProps> = ({
   open,
   onClose,
   onSuccess,
@@ -271,8 +271,6 @@ export const AccountDrawer: React.FC<AccountDrawerProps> = ({
     }
   };
 
-  if (!open) return null;
-
   const employeeOptions = [
     { label: '-- Chọn nhân sự --', value: '' },
     ...unlinkedEmployees.map((e) => ({
@@ -283,155 +281,13 @@ export const AccountDrawer: React.FC<AccountDrawerProps> = ({
 
   return (
     <>
-      <div className={styles.overlay} onClick={onClose}>
-        <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.header}>
-            <h3 className={styles.title}>
-              {isEdit ? 'Cập Nhật Tài Khoản' : 'Tạo Mới Tài Khoản'}
-            </h3>
-            <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Đóng">
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className={styles.body}>
-            {apiError && (
-              <div
-                style={{
-                  backgroundColor: 'var(--clr-error-bg, #fef2f2)',
-                  border: '1px solid var(--clr-error, #fca5a5)',
-                  padding: '12px',
-                  borderRadius: '6px',
-                  color: 'var(--clr-error-text, #991b1b)',
-                  fontSize: 'var(--fs-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <ShieldAlert size={16} />
-                <span>{apiError}</span>
-              </div>
-            )}
-
-            {isEdit && userToEdit ? (
-              // Edit mode static information box
-              <div className={styles.userInfoBox}>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Tên đăng nhập</span>
-                  <span className={styles.infoValue}>{userToEdit.username}</span>
-                </div>
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>Nhân sự liên kết</span>
-                  <span className={styles.infoValue}>
-                    {userToEdit.employee_name} ({userToEdit.employee_id})
-                  </span>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Create account form / Edit role form */}
-            {!isEdit ? (
-              <form id="create-user-form" onSubmit={handleSubmitCreate(onSubmitCreate)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Controller
-                  name="employee_id"
-                  control={controlCreate}
-                  render={({ field }) => (
-                    <SearchableSelect
-                      options={employeeOptions.filter(o => o.value !== '')}
-                      value={field.value}
-                      onChange={field.onChange}
-                      label="Nhân viên chưa có tài khoản"
-                      placeholder="Chọn nhân viên..."
-                      required
-                      error={errorsCreate.employee_id?.message}
-                      disabled={isCreating}
-                    />
-                  )}
-                />
-
-                <Input
-                  label="Tên đăng nhập"
-                  placeholder="VD: nguyenvanan"
-                  required
-                  error={errorsCreate.username?.message}
-                  {...registerCreate('username')}
-                  disabled={isCreating}
-                />
-
-                <Input
-                  label="Mật khẩu"
-                  type="password"
-                  placeholder="Nhập mật khẩu mạnh"
-                  required
-                  error={errorsCreate.password?.message}
-                  {...registerCreate('password')}
-                  disabled={isCreating}
-                />
-              </form>
-            ) : (
-              <form id="update-user-form" onSubmit={handleSubmitUpdate(onSubmitUpdate)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  icon={<KeyRound size={16} />}
-                  className={styles.changePasswordBtn}
-                  onClick={() => setIsPasswordModalOpen(true)}
-                >
-                  Thay đổi mật khẩu
-                </Button>
-              </form>
-            )}
-
-            {/* 2-level nested direct permission checklist */}
-            <div>
-              <h4 className={styles.sectionTitle}>Quyền hạn trực tiếp (Direct Permissions)</h4>
-              <p className={styles.helperText} style={{ marginTop: '-8px', marginBottom: '16px' }}>
-                Cấp quyền trực tiếp cho người dùng ngoài vai trò của họ. Quyền này sẽ được gộp với quyền của Vai trò.
-              </p>
-
-              {isLoadingPermissions ? (
-                <div>Đang tải danh sách quyền...</div>
-              ) : (
-                <div className={styles.permissionsContainer}>
-                  {Object.entries(groupedPermissions).map(([prefix, perms]) => {
-                    const groupTitle = GROUP_NAMES[prefix] || prefix.toUpperCase();
-                    const groupCodes = perms.map((p) => p.code);
-                    const checkedInGroup = groupCodes.filter((code) => selectedPermissions.includes(code));
-                    const isAllChecked = checkedInGroup.length === groupCodes.length;
-                    const isSomeChecked = checkedInGroup.length > 0 && checkedInGroup.length < groupCodes.length;
-
-                    return (
-                      <div key={prefix} className={styles.permissionGroup}>
-                        <div className={styles.groupHeader}>
-                          <Checkbox
-                            id={`group-${prefix}`}
-                            label={groupTitle}
-                            checked={isAllChecked}
-                            indeterminate={isSomeChecked}
-                            onChange={() => handleGroupToggle(groupCodes)}
-                          />
-                        </div>
-                        <div className={styles.groupChildren}>
-                          {perms.map((perm) => (
-                            <Checkbox
-                              key={perm.code}
-                              id={`perm-${perm.code}`}
-                              label={perm.name}
-                              checked={selectedPermissions.includes(perm.code)}
-                              onChange={() => handlePermissionToggle(perm.code)}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.footer}>
+      <Modal
+        open={open}
+        onClose={onClose}
+        title={isEdit ? 'Cập Nhật Tài Khoản' : 'Tạo Mới Tài Khoản'}
+        size="lg"
+        footer={
+          <div style={{ display: 'flex', gap: 'var(--sp-3)', justifyContent: 'flex-end', width: '100%' }}>
             <Button
               variant="outline"
               onClick={onClose}
@@ -448,8 +304,130 @@ export const AccountDrawer: React.FC<AccountDrawerProps> = ({
               {isEdit ? 'Cập nhật' : 'Tạo tài khoản'}
             </Button>
           </div>
+        }
+      >
+        <div className={styles.bodyContent}>
+          {apiError && (
+            <div className={styles.apiErrorBanner}>
+              <ShieldAlert size={16} />
+              <span>{apiError}</span>
+            </div>
+          )}
+
+          {isEdit && userToEdit ? (
+            <div className={styles.userInfoBox}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Tên đăng nhập</span>
+                <span className={styles.infoValue}>{userToEdit.username}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Nhân sự liên kết</span>
+                <span className={styles.infoValue}>
+                  {userToEdit.employee_name} ({userToEdit.employee_id})
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          {!isEdit ? (
+            <form id="create-user-form" onSubmit={handleSubmitCreate(onSubmitCreate)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Controller
+                name="employee_id"
+                control={controlCreate}
+                render={({ field }) => (
+                  <SearchableSelect
+                    options={employeeOptions.filter(o => o.value !== '')}
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Nhân viên chưa có tài khoản"
+                    placeholder="Chọn nhân viên..."
+                    required
+                    error={errorsCreate.employee_id?.message}
+                    disabled={isCreating}
+                  />
+                )}
+              />
+
+              <Input
+                label="Tên đăng nhập"
+                placeholder="VD: nguyenvanan"
+                required
+                error={errorsCreate.username?.message}
+                {...registerCreate('username')}
+                disabled={isCreating}
+              />
+
+              <Input
+                label="Mật khẩu"
+                type="password"
+                placeholder="Nhập mật khẩu mạnh"
+                required
+                error={errorsCreate.password?.message}
+                {...registerCreate('password')}
+                disabled={isCreating}
+              />
+            </form>
+          ) : (
+            <form id="update-user-form" onSubmit={handleSubmitUpdate(onSubmitUpdate)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Button
+                type="button"
+                variant="ghost"
+                icon={<KeyRound size={16} />}
+                className={styles.changePasswordBtn}
+                onClick={() => setIsPasswordModalOpen(true)}
+              >
+                Thay đổi mật khẩu
+              </Button>
+            </form>
+          )}
+
+          <div>
+            <h4 className={styles.sectionTitle}>Quyền hạn trực tiếp (Direct Permissions)</h4>
+            <p className={styles.helperText}>
+              Cấp quyền trực tiếp cho người dùng ngoài vai trò của họ. Quyền này sẽ được gộp với quyền của Vai trò.
+            </p>
+
+            {isLoadingPermissions ? (
+              <div>Đang tải danh sách quyền...</div>
+            ) : (
+              <div className={styles.permissionsContainer}>
+                {Object.entries(groupedPermissions).map(([prefix, perms]) => {
+                  const groupTitle = GROUP_NAMES[prefix] || prefix.toUpperCase();
+                  const groupCodes = perms.map((p) => p.code);
+                  const checkedInGroup = groupCodes.filter((code) => selectedPermissions.includes(code));
+                  const isAllChecked = checkedInGroup.length === groupCodes.length;
+                  const isSomeChecked = checkedInGroup.length > 0 && checkedInGroup.length < groupCodes.length;
+
+                  return (
+                    <div key={prefix} className={styles.permissionGroup}>
+                      <div className={styles.groupHeader}>
+                        <Checkbox
+                          id={`group-${prefix}`}
+                          label={groupTitle}
+                          checked={isAllChecked}
+                          indeterminate={isSomeChecked}
+                          onChange={() => handleGroupToggle(groupCodes)}
+                        />
+                      </div>
+                      <div className={styles.groupChildren}>
+                        {perms.map((perm) => (
+                          <Checkbox
+                            key={perm.code}
+                            id={`perm-${perm.code}`}
+                            label={perm.name}
+                            checked={selectedPermissions.includes(perm.code)}
+                            onChange={() => handlePermissionToggle(perm.code)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </Modal>
 
       {/* Sub-modal: Change Password */}
       {isPasswordModalOpen && (
@@ -461,6 +439,7 @@ export const AccountDrawer: React.FC<AccountDrawerProps> = ({
           }}
           title="Đổi mật khẩu người dùng"
           size="sm"
+          nested
           footer={
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
               <Button
