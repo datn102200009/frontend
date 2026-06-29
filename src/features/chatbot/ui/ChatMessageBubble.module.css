@@ -1,0 +1,171 @@
+.bubbleWrapper {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-width: 85%;
+}
+
+.userWrapper {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.assistantWrapper {
+  margin-right: auto;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  color: #0284c7;
+  flex-shrink: 0;
+}
+
+.userWrapper .avatar {
+  background: #0284c7;
+  color: #fff;
+}
+
+.messageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.text {
+  background: #0284c7;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 18px 18px 2px 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+}
+
+.markdown {
+  background: #f3f4f6;
+  color: #1f2937;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 2px;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #e5e7eb;
+}
+
+.markdown p {
+  margin: 0 0 8px 0;
+}
+
+.markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.markdown th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.toolCallsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.toolCallItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px dashed #e5e7eb;
+}
+
+.toolIcon {
+  display: flex;
+  align-items: center;
+}
+
+.successIcon {
+  color: #10b981;
+}
+
+.spinningIcon {
+  animation: spin 1s linear infinite;
+  color: #0284c7;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.markdown li {
+  margin-bottom: 4px;
+}
+
+.markdown li:last-child {
+  margin-bottom: 0;
+}
+
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.typingDot {
+  width: 6px;
+  height: 6px;
+  background: #9ca3af;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typingDot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typingDot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}

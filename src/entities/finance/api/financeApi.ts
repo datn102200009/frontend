@@ -132,6 +132,7 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/finance/invoices/purchase/`,
         params: {
           status: queryArg.status,
+          search: queryArg.search,
           limit: queryArg.limit,
           page: queryArg.page,
         },
@@ -161,6 +162,7 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/finance/invoices/sales/`,
         params: {
           status: queryArg.status,
+          search: queryArg.search,
           limit: queryArg.limit,
           page: queryArg.page,
         },
@@ -351,6 +353,7 @@ export type GetFinanceInvoicesPurchaseApiResponse =
   }
 export type GetFinanceInvoicesPurchaseApiArg = {
   status?: string
+  search?: string
   limit?: number
   page?: number
 }
@@ -374,6 +377,7 @@ export type GetFinanceInvoicesSalesApiResponse =
   }
 export type GetFinanceInvoicesSalesApiArg = {
   status?: string
+  search?: string
   limit?: number
   page?: number
 }
@@ -558,6 +562,7 @@ export type SalesInvoice = {
   status?: 'unpaid' | 'partial' | 'paid' | 'cancelled'
   total_amount?: number
   paid_amount?: number
+  due_date?: string | null
   created_at?: string
   updated_at?: string
   lines?: SalesInvoiceLine[]

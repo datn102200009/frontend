@@ -31,6 +31,7 @@ function getKpiListConfig(code: string): { heroColor?: string } {
     case 'sales_pending_credit_bypass':
     case 'purchasing_pending_qc':
     case 'purchasing_pending_logistic_fees':
+    case 'purchasing_pending_approval_shipments':
     case 'hrm_expiring_contracts':
     case 'manufacturing_pending_wo_approval':
       return { heroColor: 'var(--clr-warning-600)' };

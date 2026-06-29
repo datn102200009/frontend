@@ -46,7 +46,7 @@ const PayrollPage: React.FC = () => {
   }, [selectedPeriod]);
 
   // Queries & Mutations
-  const { refetch } = useGetHrmSalarySlipsQuery({
+  const { data: salarySlips = [], refetch } = useGetHrmSalarySlipsQuery({
     salaryPeriod: selectedPeriod || undefined,
   });
 
@@ -89,6 +89,7 @@ const PayrollPage: React.FC = () => {
   // Determine if we can bulk submit
   const isCurrentPeriod = isCurrentPayrollPeriod(selectedPeriod);
   const canSubmitBulk = justCalculatedAt !== null && !isCurrentPeriod;
+  const isFullyPaid = salarySlips.length > 0 && salarySlips.every((slip) => slip.status === 'paid');
 
   return (
     <div className={styles.page}>
@@ -105,6 +106,8 @@ const PayrollPage: React.FC = () => {
                   icon={<RefreshCw size={16} />}
                   onClick={handleBulkCalculate}
                   loading={isBulkCalculating}
+                  disabled={isFullyPaid}
+                  title={isFullyPaid ? "Kỳ lương đã được thanh toán đầy đủ, không thể cập nhật" : undefined}
                 >
                   Cập Nhật Bảng Lương
                 </Button>

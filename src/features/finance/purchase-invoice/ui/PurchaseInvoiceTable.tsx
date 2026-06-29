@@ -13,6 +13,7 @@ interface PurchaseInvoiceTableProps {
   onView?: (id: string) => void;
   onPay?: (invoice: { id: string; amount: number }) => void;
   filterSlot?: React.ReactNode;
+  onSearch?: (value: string) => void;
 }
 
 export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({ 
@@ -20,7 +21,8 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
   loading, 
   onView, 
   onPay,
-  filterSlot
+  filterSlot,
+  onSearch
 }) => {
   const columns = useMemo(() => {
     const helper = createColumnHelper<PurchaseInvoice>();
@@ -39,10 +41,6 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
       }),
       helper.accessor('total_amount', {
         header: 'Tổng Tiền',
-        cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue() || 0),
-      }),
-      helper.accessor('paid_amount', {
-        header: 'Đã Thanh Toán',
         cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue() || 0),
       }),
       helper.display({
@@ -118,6 +116,7 @@ export const PurchaseInvoiceTable: React.FC<PurchaseInvoiceTableProps> = ({
         searchPlaceholder="Tìm kiếm hóa đơn mua..."
         emptyMessage="Không tìm thấy hóa đơn mua hàng nào"
         filterSlot={filterSlot}
+        onSearch={onSearch}
       />
     </div>
   );

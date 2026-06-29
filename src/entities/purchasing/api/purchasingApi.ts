@@ -46,7 +46,11 @@ const injectedRtkApi = api.injectEndpoints({
       PostPurchasingOrdersByPkApproveApiResponse,
       PostPurchasingOrdersByPkApproveApiArg
     >({
-      query: (queryArg) => ({ url: `/purchasing/orders/${queryArg.pk}/approve/`, method: 'POST' }),
+      query: (queryArg) => ({
+        url: `/purchasing/orders/${queryArg.pk}/approve/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
     }),
     postPurchasingOrdersByPkCancel: build.mutation<
       PostPurchasingOrdersByPkCancelApiResponse,
@@ -156,6 +160,10 @@ export type PostPurchasingOrdersByPkApproveApiResponse =
   /** status 200 Đơn mua hàng đã được duyệt thành công. */ PurchaseOrder
 export type PostPurchasingOrdersByPkApproveApiArg = {
   pk: string
+  body: {
+    /** Hạn thanh toán của hóa đơn */
+    due_date: string
+  }
 }
 export type PostPurchasingOrdersByPkCancelApiResponse =
   /** status 200 Đơn mua hàng đã được hủy thành công. */ PurchaseOrder
@@ -215,6 +223,7 @@ export type PurchaseOrder = {
   total_amount?: number
   advance_paid_amount?: number
   expected_delivery_date?: string | null
+  due_date?: string
   receipt_fulfillment_rate?: number
   payment_fulfillment_rate?: number
   created_at?: string
@@ -242,6 +251,7 @@ export type PurchaseOrderInput = {
   vendor_id: string
   advance_paid_amount?: number
   expected_delivery_date?: string | null
+  due_date: string
   lines: PurchaseOrderLineInput[]
 }
 export type PurchaseOrderCancelInput = {
@@ -268,7 +278,7 @@ export type Shipment = {
     unit?: string
   }[]
   total_logistic_fees?: number
-  status?: 'draft' | 'inspecting' | 'completed'
+  status?: 'draft' | 'inspecting' | 'pending_approval' | 'completed'
   remarks?: string | null
   stock_entries?: {
     id?: string
@@ -290,6 +300,13 @@ export type Shipment = {
     stock_entry_id?: string
     stock_entry_name?: string
     stock_entry_status?: string
+  }[]
+  cash_flows?: {
+    id?: string
+    name?: string
+    status?: string
+    amount?: number
+    remarks?: string | null
   }[]
   created_at?: string
   updated_at?: string

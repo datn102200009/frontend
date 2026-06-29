@@ -6,7 +6,7 @@ import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { TableActions, ActionButton } from '@shared/ui/TableActions/TableActions';
 import { ConfirmDialog } from '@shared/ui/ConfirmDialog/ConfirmDialog';
 import { useToast } from '@shared/ui/Toast/Toast';
-import { AccountDrawer } from './AccountDrawer';
+import { AccountModal } from './AccountModal';
 import {
   useGetAccountsUsersQuery,
   useDeleteAccountsUsersMutation,
@@ -26,7 +26,7 @@ export const AccountsPage: React.FC = () => {
   const [deleteUser, { isLoading: isDeleting }] = useDeleteAccountsUsersMutation();
 
   // Selected User state for Create / Edit drawer
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserOutput | null>(null);
 
   // Selected User state for Delete confirmation dialog
@@ -38,12 +38,12 @@ export const AccountsPage: React.FC = () => {
 
   const handleCreateOpen = () => {
     setSelectedUser(null);
-    setIsDrawerOpen(true);
+    setIsModalOpen(true);
   };
 
   const handleEditOpen = (user: UserOutput) => {
     setSelectedUser(user);
-    setIsDrawerOpen(true);
+    setIsModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -60,7 +60,7 @@ export const AccountsPage: React.FC = () => {
   };
 
   const handleSuccess = (actionType: 'create' | 'update') => {
-    setIsDrawerOpen(false);
+    setIsModalOpen(false);
     setSelectedUser(null);
     refetch();
     toast('success', actionType === 'create' ? 'Tạo mới tài khoản thành công!' : 'Cập nhật tài khoản và phân quyền thành công!');
@@ -144,11 +144,11 @@ export const AccountsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Slide-in Account Management Drawer */}
-      <AccountDrawer
-        open={isDrawerOpen}
+      {/* Slide-in Account Management Modal */}
+      <AccountModal
+        open={isModalOpen}
         onClose={() => {
-          setIsDrawerOpen(false);
+          setIsModalOpen(false);
           setSelectedUser(null);
         }}
         onSuccess={handleSuccess}

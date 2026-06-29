@@ -78,6 +78,17 @@ export const LandedCostPage: React.FC = () => {
 
   const activeShipmentId = activeShipment?.id || null;
 
+  const isGoodsReceived = useMemo(() => {
+    return activeShipment?.stock_entries?.some((se) => se.status === 'posted') || false;
+  }, [activeShipment]);
+
+  const rejectedCashFlow = useMemo(() => {
+    if (!activeShipment || !activeShipment.cash_flows) return null;
+    return [...activeShipment.cash_flows]
+      .filter((cf) => cf.status === 'rejected')
+      .sort((a, b) => (b.name || '').localeCompare(a.name || ''))[0] || null;
+  }, [activeShipment]);
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [isConfirmZeroModalOpen, setIsConfirmZeroModalOpen] = useState(false);
@@ -243,6 +254,31 @@ export const LandedCostPage: React.FC = () => {
     });
   }, [activeShipment]);
 
+  const shipmentPO = useMemo(() => {
+    if (!activeShipment || !activeShipment.purchase_order) return null;
+    return purchaseOrders.find((po) => po.id === activeShipment.purchase_order) || null;
+  }, [purchaseOrders, activeShipment]);
+
+  const groupedFields = useMemo(() => {
+    if (!shipmentPO) return [];
+    return [
+      {
+        po: shipmentPO,
+        fields: fields.map((field, index) => ({ field, index })),
+      }
+    ];
+  }, [shipmentPO, fields]);
+
+  const groupedMatchedDetails = useMemo(() => {
+    if (!shipmentPO) return [];
+    return [
+      {
+        po: shipmentPO,
+        details: matchedDetails,
+      }
+    ];
+  }, [shipmentPO, matchedDetails]);
+
   const handleCreateShipment = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError('');
@@ -360,12 +396,16 @@ export const LandedCostPage: React.FC = () => {
     }
   };
 
+
+
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'draft':
         return <Badge variant="neutral">Chờ Hàng Về</Badge>;
       case 'inspecting':
         return <Badge variant="info">Đang Tiếp Nhận</Badge>;
+      case 'pending_approval':
+        return <Badge variant="warning">Chờ Duyệt Chi Phí</Badge>;
       case 'completed':
         return <Badge variant="success">Hoàn Tất</Badge>;
       default:
@@ -436,7 +476,7 @@ export const LandedCostPage: React.FC = () => {
                     </span>
                     {s.total_logistic_fees ? (
                       <span className={styles.feeText}>
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(s.total_logistic_fees)}
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(String(s.total_logistic_fees)))}
                       </span>
                     ) : (
                       <span className={styles.pendingFee}>Chưa có Landed Cost</span>
@@ -467,13 +507,26 @@ export const LandedCostPage: React.FC = () => {
                     </Button>
                   )}
                   {activeShipment.status === 'inspecting' && (
-                    <Button 
-                      variant="primary" 
-                      icon={<ClipboardCheck size={16} />}
-                      onClick={handleOpenCompleteModal}
-                    >
-                      Xác Nhận Hoàn Tất
-                    </Button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      {isGoodsReceived && (
+                        <span className={styles.rollbackAlert}>
+                          <AlertTriangle size={14} style={{ marginRight: '4px' }} />
+                          Hàng đã nhập kho. Chỉ được sửa chi phí vận chuyển.
+                        </span>
+                      )}
+                      <Button 
+                        variant="primary" 
+                        icon={<ClipboardCheck size={16} />}
+                        onClick={handleOpenCompleteModal}
+                      >
+                        {isGoodsReceived ? 'Gửi duyệt lại chi phí' : 'Xác Nhận Hoàn Tất'}
+                      </Button>
+                    </div>
+                  )}
+                  {activeShipment.status === 'pending_approval' && (
+                    <span style={{ color: 'var(--clr-text-muted)', fontSize: 'var(--fs-sm)', fontStyle: 'italic' }}>
+                      Chờ Kế toán duyệt chi phí...
+                    </span>
                   )}
                 </div>
               </div>
@@ -481,6 +534,27 @@ export const LandedCostPage: React.FC = () => {
               {activeShipment.remarks && (
                 <div className={styles.remarksBox}>
                   <strong>Ghi chú:</strong> {activeShipment.remarks}
+                </div>
+              )}
+
+              {activeShipment.status === 'pending_approval' && (
+                <div className={styles.approvalPendingBox}>
+                  <AlertTriangle size={18} style={{ color: 'var(--clr-warning)', marginRight: '8px', flexShrink: 0 }} />
+                  <div>
+                    <strong>Chi phí giao dịch đang chờ duyệt.</strong>
+                  </div>
+                </div>
+              )}
+
+              {activeShipment.status === 'inspecting' && rejectedCashFlow && (
+                <div className={styles.rejectionBox}>
+                  <AlertTriangle size={18} style={{ color: 'var(--clr-error)', marginRight: '8px', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <strong>Yêu cầu duyệt chi phí vận chuyển trước đó bị từ chối:</strong>
+                    <div className={styles.rejectionReason}>
+                      {rejectedCashFlow.remarks || 'Không có lý do từ chối cụ thể.'}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -500,10 +574,12 @@ export const LandedCostPage: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    <div className={styles.feeLabel}>Chi phí dồn tích Lô hàng (Landed Cost):</div>
+                    <div className={styles.feeLabel}>
+                      {activeShipment.status === 'pending_approval' ? 'Chi phí vận chuyển đề xuất (Chờ duyệt):' : 'Chi phí dồn tích Lô hàng (Landed Cost):'}
+                    </div>
                     <div className={styles.feeValue}>
                       {activeShipment.total_logistic_fees
-                        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(activeShipment.total_logistic_fees)
+                        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(String(activeShipment.total_logistic_fees)))
                         : 'Chưa ghi nhận'}
                     </div>
                   </>
@@ -513,100 +589,151 @@ export const LandedCostPage: React.FC = () => {
               <div className={styles.entriesSection}>
                 <h4 className={styles.entriesTitle}>Bảng Tiếp Nhận Hàng Hóa</h4>
                 
-                {matchedDetails.length > 0 ? (
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        {activeShipment.status === 'inspecting' ? (
-                          <tr>
-                            <th>Sản Phẩm</th>
-                            <th style={{ width: '120px' }}>SL Đặt Gốc</th>
-                            <th style={{ width: '140px' }}>Đã Nhận Trước</th>
-                            <th style={{ width: '140px' }}>SL Có Thể Nhập</th>
-                            <th style={{ width: '160px' }}>SL Thực Nhận</th>
-                            <th>Kho Nhập hàng</th>
-                            <th style={{ width: '120px' }}>Kết Quả</th>
-                          </tr>
-                        ) : (
-                          <tr>
-                            <th>Sản Phẩm</th>
-                            <th style={{ width: '120px' }}>Số Lượng Đặt</th>
-                            <th style={{ width: '160px' }}>Số Lượng Đạt</th>
-                            <th>Kho Nhập hàng</th>
-                            <th style={{ width: '180px' }}>Kết Quả</th>
-                          </tr>
-                        )}
-                      </thead>
-                      <tbody>
-                        {activeShipment.status === 'inspecting'
-                          ? fields.map((field, index) => {
-                              const itemQty = watch(`details.${index}.quantity`);
-                              const poLine = activeShipment.purchase_order_lines?.find(l => l.id === field.po_line_id);
-                              const unit = poLine?.unit || '';
-                              return (
-                                <tr key={field.id}>
-                                  <td>
-                                    <div className={styles.itemMeta}>
-                                      <span className={styles.itemCode}>{field.item_code}</span>
-                                      <span className={styles.itemName}>{field.item_name}</span>
-                                    </div>
-                                  </td>
-                                  <td>{field.ordered_quantity} {unit}</td>
-                                  <td>
-                                    {field.received_quantity > 0 ? (
-                                      <span className={styles.receivedBadge}>
-                                        <AlertTriangle size={11} /> {field.received_quantity} {unit}
-                                      </span>
-                                    ) : (
-                                      <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <strong>{field.remaining_quantity} {unit}</strong>
-                                  </td>
-                                  <td>
-                                    <input
-                                      type="number"
-                                      className={styles.inputNumber}
-                                      min="0"
-                                      max={field.remaining_quantity}
-                                      step="0.01"
-                                      style={{ width: '100%' }}
-                                      {...register(`details.${index}.quantity`, { valueAsNumber: true })}
-                                    />
-                                    {errors.details?.[index]?.quantity && (
-                                      <span className={styles.errorText}>
-                                        {errors.details?.[index]?.quantity?.message}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <select
-                                      className={styles.selectWarehouse}
-                                      disabled={itemQty === 0}
-                                      style={{ margin: 0, width: '100%' }}
-                                      {...register(`details.${index}.target_warehouse_id`)}
-                                    >
-                                      {warehouseOptions.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                          {opt.label}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    {errors.details?.[index]?.target_warehouse_id && (
-                                      <span className={styles.errorText}>
-                                        {errors.details?.[index]?.target_warehouse_id?.message}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <Badge variant="info">Đang Tiếp Nhận</Badge>
-                                  </td>
-                                </tr>
-                              );
-                            })
-                          : matchedDetails.map((detail) => {
-                              return (
+                {activeShipment.status === 'inspecting' ? (
+                  groupedFields.length > 0 ? (
+                    groupedFields.map((group) => (
+                      <div key={group.po.id} className={styles.poGroupSection} style={{ marginBottom: '24px' }}>
+                        <div className={styles.poGroupHeader} style={{ 
+                          background: 'var(--clr-bg-accent, #f8fafc)',
+                          border: '1px solid var(--clr-border)',
+                          borderBottom: 'none',
+                          padding: '12px 16px',
+                          borderTopLeftRadius: 'var(--br-md)',
+                          borderTopRightRadius: 'var(--br-md)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <span style={{ fontWeight: 'var(--fw-bold)', fontSize: 'var(--fs-sm)' }}>
+                            Đơn mua hàng: {shortId(group.po.id)}
+                          </span>
+                          <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
+                            Nhà cung cấp: <strong>{group.po.vendor_name}</strong>
+                          </span>
+                        </div>
+                        <div className={styles.tableWrap} style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                <th>Sản Phẩm</th>
+                                <th style={{ width: '120px' }}>SL Đặt Gốc</th>
+                                <th style={{ width: '140px' }}>Đã Nhận Trước</th>
+                                <th style={{ width: '140px' }}>SL Có Thể Nhập</th>
+                                <th style={{ width: '160px' }}>SL Thực Nhận</th>
+                                <th>Kho Nhập hàng</th>
+                                <th style={{ width: '120px' }}>Kết Quả</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.fields.map(({ field, index }) => {
+                                const itemQty = watch(`details.${index}.quantity`);
+                                const poLine = activeShipment.purchase_order_lines?.find(l => l.id === field.po_line_id);
+                                const unit = poLine?.unit || '';
+                                return (
+                                  <tr key={field.id}>
+                                    <td>
+                                      <div className={styles.itemMeta}>
+                                        <span className={styles.itemCode}>{field.item_code}</span>
+                                        <span className={styles.itemName}>{field.item_name}</span>
+                                      </div>
+                                    </td>
+                                    <td>{field.ordered_quantity} {unit}</td>
+                                    <td>
+                                      {field.received_quantity > 0 ? (
+                                        <span className={styles.receivedBadge}>
+                                          <AlertTriangle size={11} /> {field.received_quantity} {unit}
+                                        </span>
+                                      ) : (
+                                        <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <strong>{field.remaining_quantity} {unit}</strong>
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        className={styles.inputNumber}
+                                        min="0"
+                                        max={field.remaining_quantity}
+                                        step="0.01"
+                                        style={{ width: '100%' }}
+                                        {...register(`details.${index}.quantity`, { valueAsNumber: true, disabled: isGoodsReceived })}
+                                      />
+                                      {errors.details?.[index]?.quantity && (
+                                        <span className={styles.errorText}>
+                                          {errors.details?.[index]?.quantity?.message}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <select
+                                        className={styles.selectWarehouse}
+                                        disabled={isGoodsReceived || itemQty === 0}
+                                        style={{ margin: 0, width: '100%' }}
+                                        {...register(`details.${index}.target_warehouse_id`)}
+                                      >
+                                        {warehouseOptions.map((opt) => (
+                                          <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      {errors.details?.[index]?.target_warehouse_id && (
+                                        <span className={styles.errorText}>
+                                          {errors.details?.[index]?.target_warehouse_id?.message}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <Badge variant="info">Đang Tiếp Nhận</Badge>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noEntries}>Không có dòng sản phẩm nào trong lô hàng này.</div>
+                  )
+                ) : (
+                  groupedMatchedDetails.length > 0 ? (
+                    groupedMatchedDetails.map((group) => (
+                      <div key={group.po.id} className={styles.poGroupSection} style={{ marginBottom: '24px' }}>
+                        <div className={styles.poGroupHeader} style={{ 
+                          background: 'var(--clr-bg-accent, #f8fafc)',
+                          border: '1px solid var(--clr-border)',
+                          borderBottom: 'none',
+                          padding: '12px 16px',
+                          borderTopLeftRadius: 'var(--br-md)',
+                          borderTopRightRadius: 'var(--br-md)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}>
+                          <span style={{ fontWeight: 'var(--fw-bold)', fontSize: 'var(--fs-sm)' }}>
+                            Đơn mua hàng: {shortId(group.po.id)}
+                          </span>
+                          <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
+                            Nhà cung cấp: <strong>{group.po.vendor_name}</strong>
+                          </span>
+                        </div>
+                        <div className={styles.tableWrap} style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                <th>Sản Phẩm</th>
+                                <th style={{ width: '120px' }}>Số Lượng Đặt</th>
+                                <th style={{ width: '160px' }}>Số Lượng Đạt</th>
+                                <th>Kho Nhập hàng</th>
+                                <th style={{ width: '180px' }}>Kết Quả</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.details.map((detail) => (
                                 <tr key={detail.id}>
                                   <td>
                                     <div className={styles.itemMeta}>
@@ -616,21 +743,21 @@ export const LandedCostPage: React.FC = () => {
                                   </td>
                                   <td>{detail.ordered_quantity} {detail.unit}</td>
                                   <td>
-                                    {activeShipment.status === 'completed' ? (
+                                    {(activeShipment.status === 'completed' || activeShipment.status === 'pending_approval') ? (
                                       detail.received_quantity
                                     ) : (
                                       <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
                                     )}
                                   </td>
                                   <td>
-                                    {activeShipment.status === 'completed' ? (
+                                    {(activeShipment.status === 'completed' || activeShipment.status === 'pending_approval') ? (
                                       detail.target_warehouse_name || '---'
                                     ) : (
                                       <span style={{ color: 'var(--clr-text-muted)', fontStyle: 'italic' }}>---</span>
                                     )}
                                   </td>
                                   <td>
-                                    {activeShipment.status === 'completed' ? (
+                                    {(activeShipment.status === 'completed' || activeShipment.status === 'pending_approval') ? (
                                       detail.received_quantity > 0 ? (
                                         <Badge variant="success">Đạt: {detail.received_quantity}/{detail.ordered_quantity}</Badge>
                                       ) : (
@@ -644,13 +771,15 @@ export const LandedCostPage: React.FC = () => {
                                     )}
                                   </td>
                                 </tr>
-                              );
-                            })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className={styles.noEntries}>Không có dòng sản phẩm nào trong lô hàng này.</div>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noEntries}>Không có dòng sản phẩm nào trong lô hàng này.</div>
+                  )
                 )}
               </div>
             </div>
@@ -714,7 +843,7 @@ export const LandedCostPage: React.FC = () => {
                 <option value="">-- Chọn đơn mua hàng (PO) --</option>
                 {availablePurchaseOrders.map((po) => (
                   <option key={po.id} value={po.id}>
-                    {shortId(po.id)}... (NCC: {po.vendor_name}, Trị giá: {po.total_amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(po.total_amount) : '---'})
+                    {shortId(po.id)}... (NCC: {po.vendor_name}, Trị giá: {po.total_amount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(String(po.total_amount))) : '---'})
                   </option>
                 ))}
               </select>
@@ -762,8 +891,8 @@ export const LandedCostPage: React.FC = () => {
             <div className={styles.logisticDisplayGroup}>
               <label className={styles.logisticInputLabel}>Chi phí vận chuyển thực tế (VND)</label>
               <div className={styles.logisticDisplayValue}>
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
-                  .format(watch('total_logistic_fees') || 0)}
+                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' })
+                  .format(parseFloat(String(watch('total_logistic_fees') || 0)))}
               </div>
               <span className={styles.logisticDisplayHint}>
                 Lấy từ ô "Chi phí Logistic / Vận chuyển ước tính" trên bảng chính. Vui lòng chỉnh sửa ở trang chính trước khi xác nhận.
@@ -781,39 +910,65 @@ export const LandedCostPage: React.FC = () => {
           <div className={styles.entriesSection} style={{ marginTop: '16px' }}>
             <h4 className={styles.entriesTitle}>Số Lượng Thực Nhận & Chỉ Định Kho Đích (Review)</h4>
             
-            <div className={styles.tableWrap} style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Sản Phẩm</th>
-                    <th style={{ width: '100px' }}>SL Đặt Gốc</th>
-                    <th style={{ width: '120px' }}>SL Có Thể Nhập</th>
-                    <th style={{ width: '120px' }}>SL Thực Nhận</th>
-                    <th style={{ width: '200px' }}>Kho Nhập</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fields.map((field, index) => {
-                    const targetWarehouseId = watch(`details.${index}.target_warehouse_id`);
-                    const warehouse = warehouses.find((w) => w.id === targetWarehouseId);
-                    return (
-                      <tr key={field.id}>
-                        <td>
-                          <div className={styles.itemMeta}>
-                            <span className={styles.itemCode}>{field.item_code}</span>
-                            <span className={styles.itemName}>{field.item_name}</span>
-                          </div>
-                        </td>
-                        <td>{field.ordered_quantity}</td>
-                        <td>{field.remaining_quantity}</td>
-                        <td>{watch(`details.${index}.quantity`)}</td>
-                        <td>{warehouse?.name || '---'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {groupedFields.length > 0 ? (
+              groupedFields.map((group) => (
+                <div key={group.po.id} className={styles.poGroupSection} style={{ marginBottom: '16px' }}>
+                  <div className={styles.poGroupHeader} style={{ 
+                    background: 'var(--clr-bg-accent, #f8fafc)',
+                    border: '1px solid var(--clr-border)',
+                    borderBottom: 'none',
+                    padding: '8px 12px',
+                    borderTopLeftRadius: 'var(--br-md)',
+                    borderTopRightRadius: 'var(--br-md)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{ fontWeight: 'var(--fw-bold)', fontSize: 'var(--fs-xs)' }}>
+                      Đơn mua hàng: {shortId(group.po.id)}
+                    </span>
+                    <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
+                      Nhà cung cấp: <strong>{group.po.vendor_name}</strong>
+                    </span>
+                  </div>
+                  <div className={styles.tableWrap} style={{ borderTopLeftRadius: 0, borderTopRightRadius: 0, maxHeight: '300px', overflowY: 'auto' }}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th>Sản Phẩm</th>
+                          <th style={{ width: '100px' }}>SL Đặt Gốc</th>
+                          <th style={{ width: '120px' }}>SL Có Thể Nhập</th>
+                          <th style={{ width: '120px' }}>SL Thực Nhận</th>
+                          <th style={{ width: '200px' }}>Kho Nhập</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.fields.map(({ field, index }) => {
+                          const targetWarehouseId = watch(`details.${index}.target_warehouse_id`);
+                          const warehouse = warehouses.find((w) => w.id === targetWarehouseId);
+                          return (
+                            <tr key={field.id}>
+                              <td>
+                                <div className={styles.itemMeta}>
+                                  <span className={styles.itemCode}>{field.item_code}</span>
+                                  <span className={styles.itemName}>{field.item_name}</span>
+                                </div>
+                              </td>
+                              <td>{field.ordered_quantity}</td>
+                              <td>{field.remaining_quantity}</td>
+                              <td>{watch(`details.${index}.quantity`)}</td>
+                              <td>{warehouse?.name || '---'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.noEntries}>Không có dòng sản phẩm nào trong lô hàng này.</div>
+            )}
           </div>
 
           <div className={styles.formFooter} style={{ marginTop: '24px' }}>
