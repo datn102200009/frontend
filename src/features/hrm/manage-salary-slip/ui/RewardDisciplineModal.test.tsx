@@ -1,8 +1,5 @@
 import { screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { http, HttpResponse } from 'msw';
-import { server } from '@shared/lib/test/server';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
 
 import { RewardFormModal } from './RewardFormModal';

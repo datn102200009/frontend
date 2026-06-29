@@ -55,7 +55,7 @@ describe('Employee Modals', () => {
     it('submits employee data successfully and calls onSuccess', async () => {
       server.use(
         http.post('*/api/v1/hrm/employees/create/', () => {
-          return HttpResponse.json({ id: 'emp-new', ...mockEmployee });
+          return HttpResponse.json({ ...mockEmployee, id: 'emp-new' });
         })
       );
 
