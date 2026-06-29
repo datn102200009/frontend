@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
+import { createMockAuthState } from '@shared/lib/test/auth-factories';
 import { ChatbotPanel } from '../ChatbotPanel';
 
 beforeAll(() => {
@@ -12,13 +13,7 @@ describe('ChatbotPanel component', () => {
     const { container } = renderWithProviders(
       <ChatbotPanel open={true} />,
       {
-        preloadedState: {
-          auth: {
-            user: { username: 'test_user', permissions: [] } as any,
-            token: null,
-            isAuthenticated: false,
-          },
-        },
+        preloadedState: createMockAuthState({ permissions: [] }, false),
       }
     );
     expect(container.querySelector('aside')).toBeNull();
@@ -28,13 +23,7 @@ describe('ChatbotPanel component', () => {
     renderWithProviders(
       <ChatbotPanel open={true} />,
       {
-        preloadedState: {
-          auth: {
-            user: { username: 'test_user', permissions: ['common.use_chatbot'] } as any,
-            token: 'mock-token',
-            isAuthenticated: true,
-          },
-        },
+        preloadedState: createMockAuthState({ permissions: ['common.use_chatbot'] }),
       }
     );
     expect(screen.getByText('Trợ lý AI')).toBeInTheDocument();

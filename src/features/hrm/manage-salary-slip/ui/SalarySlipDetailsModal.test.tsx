@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 import { SalarySlipDetailsModal } from './SalarySlipDetailsModal';
 import { renderWithProviders } from '@shared/lib/test/test-utils';
+import { createHrmAuthState } from '@shared/lib/test/auth-factories';
 import type { SalarySlip } from '@entities/hrm/model/types';
 
 describe('SalarySlipDetailsModal', () => {
@@ -88,19 +89,7 @@ describe('SalarySlipDetailsModal', () => {
     renderWithProviders(
       <SalarySlipDetailsModal {...defaultProps} salarySlip={calculatedSlip} />,
       {
-        preloadedState: {
-          auth: {
-            user: {
-              id: 'user-123',
-              username: 'admin',
-              full_name: 'Admin User',
-              role: 'admin',
-              permissions: ['hrm.payroll_submit'],
-            },
-            token: 'mock-token',
-            isAuthenticated: true,
-          },
-        },
+        preloadedState: createHrmAuthState(['hrm.payroll_submit']),
       }
     );
     expect(screen.getByRole('button', { name: 'Gửi Finance Duyệt' })).toBeInTheDocument();
@@ -177,19 +166,7 @@ describe('SalarySlipDetailsModal', () => {
     renderWithProviders(
       <SalarySlipDetailsModal {...defaultProps} salarySlip={calculatedSlip} />,
       {
-        preloadedState: {
-          auth: {
-            user: {
-              id: 'user-123',
-              username: 'admin',
-              full_name: 'Admin User',
-              role: 'admin',
-              permissions: ['hrm.payroll_submit'],
-            },
-            token: 'mock-token',
-            isAuthenticated: true,
-          },
-        },
+        preloadedState: createHrmAuthState(['hrm.payroll_submit']),
       }
     );
 
