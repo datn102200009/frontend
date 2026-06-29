@@ -37,7 +37,11 @@ const injectedRtkApi = api.injectEndpoints({
       PostSalesOrdersByPkApproveApiResponse,
       PostSalesOrdersByPkApproveApiArg
     >({
-      query: (queryArg) => ({ url: `/sales/orders/${queryArg.pk}/approve/`, method: 'POST' }),
+      query: (queryArg) => ({
+        url: `/sales/orders/${queryArg.pk}/approve/`,
+        method: 'POST',
+        body: queryArg.body,
+      }),
     }),
     postSalesOrdersByPkApproveCreditBypass: build.mutation<
       PostSalesOrdersByPkApproveCreditBypassApiResponse,
@@ -87,6 +91,10 @@ export type PostSalesOrdersByPkApproveApiResponse =
   /** status 200 Đơn bán hàng đã được duyệt thành công. */ SalesOrder
 export type PostSalesOrdersByPkApproveApiArg = {
   pk: string
+  body: {
+    /** Hạn thanh toán của hóa đơn */
+    due_date: string
+  }
 }
 export type PostSalesOrdersByPkApproveCreditBypassApiResponse =
   /** status 200 Đơn bán hàng đã được duyệt đặc cách tín dụng thành công. */ SalesOrder
@@ -122,6 +130,7 @@ export type SalesOrder = {
     | 'cancelled'
   total_amount?: number
   advance_paid_amount?: number
+  due_date?: string
   receipt_fulfillment_rate?: number
   payment_fulfillment_rate?: number
   created_at?: string
@@ -148,6 +157,7 @@ export type SalesOrderLineInput = {
 export type SalesOrderInput = {
   customer_id: string
   advance_paid_amount?: number
+  due_date: string
   lines: SalesOrderLineInput[]
 }
 export const {

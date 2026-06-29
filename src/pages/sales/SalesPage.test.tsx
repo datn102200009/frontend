@@ -96,6 +96,7 @@ describe('SalesPage', () => {
       expect(postPayload).toEqual({
         customer_id: 'CUS01',
         advance_paid_amount: 0,
+        due_date: expect.any(String),
         lines: [
           {
             item_id: 'SP001',

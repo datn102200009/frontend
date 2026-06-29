@@ -28,16 +28,16 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({ onEdit }) => {
       helper.accessor('supplier_group', {
         header: 'Nhóm Nhà Cung Cấp',
         cell: (info) => {
-          const group = info.getValue() || 'Local';
+          const group = info.getValue() || 'Manufacturer';
           const labelMap: Record<string, string> = {
-            Local: 'Trong Nước',
-            Import: 'Nhập Khẩu',
+            Manufacturer: 'Nhà Sản Xuất',
             Distributor: 'Nhà Phân Phối',
+            Service: 'Đơn Vị Dịch Vụ',
           };
           const colorMap: Record<string, 'info' | 'success' | 'warning'> = {
-            Local: 'success',
-            Import: 'warning',
+            Manufacturer: 'success',
             Distributor: 'info',
+            Service: 'warning',
           };
           return <Badge variant={colorMap[group] || 'info'}>{labelMap[group] || group}</Badge>;
         },

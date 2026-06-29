@@ -1,4 +1,4 @@
-import { Menu, Bot, X } from 'lucide-react';
+import { Menu, Bot } from 'lucide-react';
 import { usePermission } from '@shared/hooks/usePermission';
 import styles from './Header.module.css';
 
@@ -30,7 +30,7 @@ export function Header({ onMenuToggle, onChatbotToggle, title, chatbotOpen }: He
           onClick={onChatbotToggle}
           aria-label={chatbotOpen ? "Đóng Trợ lý AI" : "Mở Trợ lý AI"}
         >
-          {chatbotOpen ? <X size={20} /> : <Bot size={20} />}
+          <Bot size={20} />
         </button>
       )}
     </header>

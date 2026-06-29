@@ -12,6 +12,7 @@
   flex-direction: column;
   min-height: 100dvh;
   transition: margin-right 200ms ease;
+  min-width: 0;
 }
 
 .mainWithChatbot {
@@ -22,6 +23,7 @@
   flex: 1;
   padding: var(--sp-6);
   animation: fadeIn var(--duration-base) var(--ease-out);
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

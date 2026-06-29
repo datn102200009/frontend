@@ -183,7 +183,6 @@ export type FinanceUnpaidApLine = {
   supplier_name?: string
   total_amount?: string
   remaining_amount?: string
-  due_date?: string | null
   created_at?: string
 }
 export type FinanceUnpaidArLine = {

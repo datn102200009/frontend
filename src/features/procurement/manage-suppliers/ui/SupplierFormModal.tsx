@@ -48,7 +48,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
     defaultValues: {
       name: '',
       supplier_name: '',
-      supplier_group: 'Local',
+      supplier_group: 'Manufacturer',
       contact_email: '',
       contact_phone: '',
       address: '',
@@ -60,7 +60,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
       reset({
         name: supplierData.name,
         supplier_name: supplierData.supplier_name,
-        supplier_group: supplierData.supplier_group || 'Local',
+        supplier_group: supplierData.supplier_group || 'Manufacturer',
         contact_email: supplierData.contact_email || '',
         contact_phone: supplierData.contact_phone || '',
         address: supplierData.address || '',
@@ -69,7 +69,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
       reset({
         name: '',
         supplier_name: '',
-        supplier_group: 'Local',
+        supplier_group: 'Manufacturer',
         contact_email: '',
         contact_phone: '',
         address: '',
@@ -172,9 +172,9 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
                   {...register('supplier_group')}
                   disabled={isWorking}
                 >
-                  <option value="Local">Trong Nước (Local)</option>
-                  <option value="Import">Nhập Khẩu (Import)</option>
+                  <option value="Manufacturer">Nhà Sản Xuất (Manufacturer)</option>
                   <option value="Distributor">Nhà Phân Phối (Distributor)</option>
+                  <option value="Service">Đơn Vị Dịch Vụ (Service)</option>
                 </select>
               </div>
             </div>

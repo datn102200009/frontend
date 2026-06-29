@@ -32,7 +32,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
         />
         <main className={styles.content}>{children}</main>
       </div>
-      <ChatbotPanel open={chatbotOpen} />
+      <ChatbotPanel open={chatbotOpen} onClose={() => setChatbotOpen(false)} />
     </div>
   );
 }

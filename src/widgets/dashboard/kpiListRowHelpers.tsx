@@ -48,7 +48,7 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     const q = status ? `&status=${status}` : '';
     return { to: `/purchasing?tab=orders${q}&id=${id}`, display: sid };
   }
-  if (code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees' || code === 'purchasing_pending_approval_shipments') {
     return { to: `/purchasing?tab=shipment&id=${id}`, display: item.shipment_num || 'QC' };
   }
   if (code === 'purchasing_blocked_invoices') {
@@ -111,7 +111,7 @@ export function buildItemTitle(item: any, code: string): ReactNode {
   if (code.startsWith('sales_') || code === 'finance_unpaid_sales_invoices') {
     return <span className={styles.rowMainText}>{item.customer_name || 'Khách hàng'}</span>;
   }
-  if (code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees' || code === 'purchasing_pending_approval_shipments') {
     return <span className={styles.rowMainText}>{item.name || 'Lô hàng'}</span>;
   }
   if (code.startsWith('purchasing_') || code === 'finance_unpaid_purchase_invoices') {
@@ -181,16 +181,18 @@ export function buildItemSubtext(item: any, code: string): ReactNode | null {
       </div>
     );
   }
-  if (code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees' || code === 'purchasing_pending_approval_shipments') {
     const statusMap: Record<string, string> = {
       draft: 'Chờ Hàng Về',
       inspecting: 'Đang Tiếp Nhận',
+      pending_approval: 'Chờ Duyệt Chi Phí',
       completed: 'Hoàn Tất',
     };
     const statusText = statusMap[item.status] || item.status;
     const colorMap: Record<string, string> = {
       draft: '',
       inspecting: styles.colOrangeText,
+      pending_approval: styles.colOrangeText,
       completed: styles.colGreenText,
     };
     const statusColorClass = colorMap[item.status] || '';
@@ -278,7 +280,7 @@ export function buildItemMeta(item: any, code: string): ReactNode | null {
     );
   }
 
-  if (code === 'purchasing_pending_logistic_fees') {
+  if (code === 'purchasing_pending_logistic_fees' || code === 'purchasing_pending_approval_shipments') {
     const d = daysAgo(item.created_at);
     return (
       <div className={`${styles.colRightAlign} ${d > 3 ? styles.textRed : ''}`}>{d} ngày trước</div>

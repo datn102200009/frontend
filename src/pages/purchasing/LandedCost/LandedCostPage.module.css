@@ -660,3 +660,56 @@
   font-weight: var(--fw-medium);
 }
 
+.approvalPendingBox {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  border-radius: var(--br-md);
+  padding: var(--sp-4);
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+}
+
+.cfInfo {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+  margin-top: var(--sp-1);
+}
+
+.rejectionBox {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px dashed rgba(239, 68, 68, 0.4);
+  border-radius: var(--br-md);
+  padding: var(--sp-4);
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+}
+
+.rejectionReason {
+  font-size: var(--fs-xs);
+  color: var(--clr-error);
+  margin-top: var(--sp-1);
+  background: #ffffff;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: var(--sp-2);
+  border-radius: var(--br-sm);
+  white-space: pre-line;
+}
+
+.rollbackAlert {
+  color: var(--clr-warning, #d97706);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  display: inline-flex;
+  align-items: center;
+  background: rgba(245, 158, 11, 0.05);
+  padding: 4px 8px;
+  border-radius: var(--br-sm);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+

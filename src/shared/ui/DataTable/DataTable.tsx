@@ -25,6 +25,10 @@ interface DataTableProps<TData> {
   initialSearch?: string;
   filterSlot?: React.ReactNode;
   showSearch?: boolean;
+  pageCount?: number;        // Thêm cho server-side pagination
+  pageIndex?: number;        // Thêm cho server-side pagination (0-based)
+  onPageChange?: (pageIndex: number) => void; // Thêm cho server-side pagination
+  totalCount?: number;       // Thêm cho server-side pagination
 }
 
 export function DataTable<TData>({
@@ -39,6 +43,10 @@ export function DataTable<TData>({
   initialSearch = '',
   filterSlot,
   showSearch = true,
+  pageCount: pageCountProp,
+  pageIndex: pageIndexProp,
+  onPageChange,
+  totalCount,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState(initialSearch);
@@ -49,6 +57,8 @@ export function DataTable<TData>({
     }
   }, [initialSearch]);
 
+  const isServerSide = onPageChange !== undefined;
+
   const table = useReactTable({
     data,
     columns,
@@ -58,12 +68,14 @@ export function DataTable<TData>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: isServerSide ? undefined : getPaginationRowModel(),
     initialState: { pagination: { pageSize } },
+    pageCount: isServerSide ? pageCountProp : undefined,
+    manualPagination: isServerSide,
   });
 
-  const pageIndex = table.getState().pagination.pageIndex;
-  const pageCount = table.getPageCount();
+  const pageIndex = isServerSide ? (pageIndexProp ?? 0) : table.getState().pagination.pageIndex;
+  const pageCount = isServerSide ? (pageCountProp ?? 1) : table.getPageCount();
 
   return (
     <div className={styles.wrapper}>
@@ -167,14 +179,14 @@ export function DataTable<TData>({
       {pageCount > 1 && (
         <div className={styles.pagination}>
           <span className={styles.pageInfo}>
-            Trang {pageIndex + 1} / {pageCount}
+            Trang {pageIndex + 1} / {pageCount} {totalCount !== undefined && `(Tổng: ${totalCount})`}
           </span>
           <div className={styles.pageButtons}>
             <button
               type="button"
               className={styles.pageBtn}
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => isServerSide ? onPageChange!(0) : table.setPageIndex(0)}
+              disabled={isServerSide ? pageIndex === 0 : !table.getCanPreviousPage()}
               aria-label="Trang đầu"
             >
               <ChevronsLeft size={16} />
@@ -182,8 +194,8 @@ export function DataTable<TData>({
             <button
               type="button"
               className={styles.pageBtn}
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => isServerSide ? onPageChange!(pageIndex - 1) : table.previousPage()}
+              disabled={isServerSide ? pageIndex === 0 : !table.getCanPreviousPage()}
               aria-label="Trang trước"
             >
               <ChevronLeft size={16} />
@@ -191,8 +203,8 @@ export function DataTable<TData>({
             <button
               type="button"
               className={styles.pageBtn}
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() => isServerSide ? onPageChange!(pageIndex + 1) : table.nextPage()}
+              disabled={isServerSide ? pageIndex >= pageCount - 1 : !table.getCanNextPage()}
               aria-label="Trang sau"
             >
               <ChevronRight size={16} />
@@ -200,8 +212,8 @@ export function DataTable<TData>({
             <button
               type="button"
               className={styles.pageBtn}
-              onClick={() => table.setPageIndex(pageCount - 1)}
-              disabled={!table.getCanNextPage()}
+              onClick={() => isServerSide ? onPageChange!(pageCount - 1) : table.setPageIndex(pageCount - 1)}
+              disabled={isServerSide ? pageIndex >= pageCount - 1 : !table.getCanNextPage()}
               aria-label="Trang cuối"
             >
               <ChevronsRight size={16} />

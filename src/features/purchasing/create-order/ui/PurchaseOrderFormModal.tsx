@@ -102,6 +102,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
 
   const [confirmState, setConfirmState] = useState<{ action: 'delete' | 'cancel'; title: string; message: string; orderId: string } | null>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState(false);
+  const [approvalDueDate, setApprovalDueDate] = useState(getLocalDateString());
 
   const canCancel = usePermission('purchasing.cancel_order');
   const canApprove = usePermission('purchasing.update_order');
@@ -142,6 +144,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
       vendor_id: '',
       advance_paid_amount: 0,
       expected_delivery_date: getLocalDateString(),
+      due_date: getLocalDateString(),
       lines: [{ item_id: '', quantity: 1, unit_price: 2000000 }],
     }
   });
@@ -175,6 +178,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
         vendor_id: orderData.vendor,
         advance_paid_amount: Number(orderData.advance_paid_amount) || 0,
         expected_delivery_date: orderData.expected_delivery_date || '',
+        due_date: orderData.due_date || '',
         lines: (orderData.lines || []).map(l => ({
           item_id: l.item,
           quantity: Number(l.quantity) || 0,
@@ -187,6 +191,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
         vendor_id: suppliersData?.[0]?.id || '',
         advance_paid_amount: 0,
         expected_delivery_date: getLocalDateString(),
+        due_date: getLocalDateString(),
         lines: [{ item_id: itemsData?.results?.[0]?.id || '', quantity: 1, unit_price: 2000000 }],
       });
       hasInitialized.current = true;
@@ -285,16 +290,10 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
     }
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!orderId || !orderData) return;
-    try {
-      await approveOrder({ pk: orderId }).unwrap();
-      toast('success', 'Duyệt đơn mua hàng thành công');
-      onSuccess();
-    } catch (err) {
-      console.error('Failed to confirm', err);
-      toast('error', extractApiError(err, 'Không thể duyệt đơn mua hàng'));
-    }
+    setApprovalDueDate(getLocalDateString());
+    setIsApproveConfirmOpen(true);
   };
 
   const handleCancel = () => {
@@ -383,7 +382,9 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                 )}
                 {errors.vendor_id && <span style={{ color: 'var(--clr-error)', fontSize: 'var(--fs-sm)' }}>{errors.vendor_id.message}</span>}
               </div>
+            </div>
 
+            <div className={styles.row}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
                 {isReadOnly ? (
                   <>
@@ -400,6 +401,30 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
                     label="Ngày Giao Dự Kiến"
                     control={control}
                     error={errors.expected_delivery_date?.message}
+                    disabled={isWorking}
+                    required={true}
+                    defaultValue={getLocalDateString()}
+                    minDate={getLocalDateString()}
+                  />
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)' }}>
+                {isReadOnly ? (
+                  <>
+                    <label htmlFor="due_date_display" style={{ fontSize: 'var(--fs-sm)', fontWeight: 500, color: 'var(--clr-text-secondary)' }}>
+                      Hạn Thanh Toán <span style={{ color: 'var(--clr-danger)' }}>*</span>
+                    </label>
+                    <div className={styles.staticText}>
+                      {orderData?.due_date ? formatDateToDMY(orderData.due_date) : '—'}
+                    </div>
+                  </>
+                ) : (
+                  <DatePickerField
+                    name="due_date"
+                    label="Hạn Thanh Toán"
+                    control={control}
+                    error={errors.due_date?.message}
                     disabled={isWorking}
                     required={true}
                     defaultValue={getLocalDateString()}
@@ -643,6 +668,59 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({ 
           </form>
         )}
       </Modal>
+
+      {isApproveConfirmOpen && (
+        <ConfirmModal
+          open={isApproveConfirmOpen}
+          title="Xác nhận duyệt đơn mua hàng"
+          isLoading={isApproving}
+          message={
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              <p>Bạn có chắc chắn muốn duyệt đơn mua hàng này? Hệ thống sẽ tự động tạo Hóa đơn mua hàng tương ứng.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label htmlFor="approve_due_date" style={{ fontWeight: 500, fontSize: 'var(--fs-xs)', color: 'var(--clr-text-secondary)' }}>
+                  Hạn Thanh Toán Hóa Đơn <span style={{ color: 'var(--clr-danger)' }}>*</span>
+                </label>
+                <input
+                  id="approve_due_date"
+                  type="date"
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--clr-border-active, #cbd5e1)',
+                    width: '100%',
+                    fontSize: '14px'
+                  }}
+                  value={approvalDueDate}
+                  min={getLocalDateString()}
+                  onChange={(e) => setApprovalDueDate(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          }
+          onConfirm={async () => {
+            if (!approvalDueDate) {
+              toast('error', 'Hạn thanh toán là bắt buộc');
+              return;
+            }
+            if (approvalDueDate < getLocalDateString()) {
+              toast('error', 'Hạn thanh toán không thể ở quá khứ');
+              return;
+            }
+            try {
+              await approveOrder({ pk: orderId!, body: { due_date: approvalDueDate } }).unwrap();
+              toast('success', 'Duyệt đơn mua hàng thành công');
+              setIsApproveConfirmOpen(false);
+              onSuccess();
+            } catch (err) {
+              console.error('Failed to confirm', err);
+              toast('error', extractApiError(err, 'Không thể duyệt đơn mua hàng'));
+            }
+          }}
+          onCancel={() => setIsApproveConfirmOpen(false)}
+        />
+      )}
 
       <CancelOrderConfirmModal
         key={`cancel-order-${isCancelModalOpen}`}

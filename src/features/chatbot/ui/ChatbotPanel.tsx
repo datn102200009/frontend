@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { Trash2 } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 import { usePermission } from '@shared/hooks/usePermission';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInputForm } from './ChatInputForm';
@@ -9,9 +9,10 @@ import styles from './ChatbotPanel.module.css';
 
 interface ChatbotPanelProps {
   open: boolean;
+  onClose?: () => void;
 }
 
-export function ChatbotPanel({ open }: ChatbotPanelProps) {
+export function ChatbotPanel({ open, onClose }: ChatbotPanelProps) {
   const canUse = usePermission('common.use_chatbot');
   const dispatch = useDispatch();
   const messages = useSelector((s: any) => s.chatbotUi.messages) as ChatMessage[];
@@ -43,11 +44,22 @@ export function ChatbotPanel({ open }: ChatbotPanelProps) {
       <header className={styles.header}>
         <h3>Trợ lý AI</h3>
         <div className={styles.headerActions}>
+          {onClose && (
+            <button
+              onClick={onClose}
+              title="Đóng trợ lý AI"
+              className={styles.closeBtn}
+              type="button"
+            >
+              <X size={16} />
+            </button>
+          )}
           <button
             onClick={() => dispatch(clear())}
             disabled={messages.length === 0 || isStreaming}
             title="Xoá hội thoại"
             className={styles.actionBtn}
+            type="button"
           >
             <Trash2 size={16} />
           </button>

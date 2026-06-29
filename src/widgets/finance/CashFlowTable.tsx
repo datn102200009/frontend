@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { Badge } from '@shared/ui/Badge/Badge';
@@ -9,8 +9,18 @@ import { shortId } from '@shared/lib/shortId';
 
 
 export const CashFlowTable: React.FC = () => {
-  const { data: flowsData, isLoading } = useGetFinanceCashFlowsQuery({});
-  const flows = Array.isArray(flowsData) ? flowsData : (flowsData as { results?: CashFlowTransaction[] })?.results || [];
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
+
+  const { data: flowsData, isLoading, isFetching } = useGetFinanceCashFlowsQuery({
+    page,
+    limit: PAGE_SIZE,
+    status: 'posted',
+  });
+
+  const totalCount = flowsData?.count || 0;
+  const totalPages = flowsData?.total_pages || 1;
+  const flows = flowsData?.results || [];
 
   const columns = useMemo(() => {
     const helper = createColumnHelper<CashFlowTransaction>();
@@ -75,7 +85,11 @@ export const CashFlowTable: React.FC = () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         columns={columns as any} 
         data={flows} 
-        loading={isLoading}
+        loading={isLoading || isFetching}
+        pageCount={totalPages}
+        pageIndex={page - 1}
+        onPageChange={(pageIndex) => setPage(pageIndex + 1)}
+        totalCount={totalCount}
         searchPlaceholder="Tìm kiếm giao dịch..."
         emptyMessage="Không tìm thấy giao dịch dòng tiền nào"
       />
