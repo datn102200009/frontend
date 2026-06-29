@@ -24,17 +24,21 @@ describe('FinancePage', () => {
   it('renders FinancePage and loads cash flow transactions list', async () => {
     server.use(
       http.get('*/api/v1/finance/cash-flows/', () => {
-        return HttpResponse.json([
-          {
-            id: 'TX-001',
-            name: 'Phiếu thu Alpha',
-            payment_type: 'receive',
-            category: 'bank_transfer',
-            amount: 5000000,
-            payment_date: '2026-05-20',
-            remarks: 'Thu tiền hóa đơn'
-          }
-        ]);
+        return HttpResponse.json({
+          count: 1,
+          total_pages: 1,
+          results: [
+            {
+              id: 'TX-001',
+              name: 'Phiếu thu Alpha',
+              payment_type: 'receive',
+              category: 'bank_transfer',
+              amount: 5000000,
+              payment_date: '2026-05-20',
+              remarks: 'Thu tiền hóa đơn'
+            }
+          ]
+        });
       })
     );
 

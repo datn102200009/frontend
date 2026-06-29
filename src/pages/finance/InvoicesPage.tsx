@@ -44,25 +44,35 @@ const InvoicesPage: React.FC = () => {
 
   const { status, setStatus } = useInvoiceFilters();
 
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   // Pagination & query state for AP
   const [pageAP, setPageAP] = useState(1);
   const { data: apData, isLoading: isLoadingAP, refetch: refetchAP } = useGetFinanceInvoicesPurchaseQuery(
-    { status: status || undefined, page: pageAP, limit: 10 },
+    { status: status || undefined, search: debouncedSearch || undefined, page: pageAP, limit: 10 },
     { skip: activeTab !== 'purchase_invoices' }
   );
 
   // Pagination & query state for AR
   const [pageAR, setPageAR] = useState(1);
   const { data: arData, isLoading: isLoadingAR, refetch: refetchAR } = useGetFinanceInvoicesSalesQuery(
-    { status: status || undefined, page: pageAR, limit: 10 },
+    { status: status || undefined, search: debouncedSearch || undefined, page: pageAR, limit: 10 },
     { skip: activeTab !== 'sales_invoices' }
   );
 
-  // Reset page to 1 when status filter changes
+  // Reset page to 1 when status filter or search changes
   useEffect(() => {
     setPageAP(1);
     setPageAR(1);
-  }, [status]);
+  }, [status, debouncedSearch]);
 
   // Details modal states
   const [selectedAPDetailsId, setSelectedAPDetailsId] = useState<string | null>(null);
@@ -146,6 +156,7 @@ const InvoicesPage: React.FC = () => {
               onView={(id) => setSelectedAPDetailsId(id)}
               onPay={(inv) => setSelectedAPInvoice(inv)}
               filterSlot={<InvoiceStatusFilter value={status} onChange={setStatus} />}
+              onSearch={setSearch}
             />
 
             {/* Pagination for AP */}
@@ -187,6 +198,7 @@ const InvoicesPage: React.FC = () => {
               onView={(id) => setSelectedARDetailsId(id)}
               onCollect={(inv) => setSelectedARInvoice(inv)}
               filterSlot={<InvoiceStatusFilter value={status} onChange={setStatus} />}
+              onSearch={setSearch}
             />
 
             {/* Pagination for AR */}

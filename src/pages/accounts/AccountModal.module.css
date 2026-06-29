@@ -1,0 +1,128 @@
+.bodyContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.apiErrorBanner {
+  background-color: var(--clr-error-bg, #fef2f2);
+  border: 1px solid var(--clr-error, #fca5a5);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-md);
+  color: var(--clr-error-text, #991b1b);
+  font-size: var(--fs-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.userInfoBox {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sp-4);
+  background-color: var(--clr-bg, #f8fafc);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--clr-border);
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--clr-text-muted);
+}
+
+.infoValue {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--clr-text);
+}
+
+.sectionTitle {
+  font-family: var(--font-heading);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--clr-text);
+  margin: 0 0 var(--sp-3) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.helperText {
+  font-size: var(--fs-xs);
+  color: var(--clr-text-muted);
+  margin-top: calc(-1 * var(--sp-2));
+  margin-bottom: var(--sp-4);
+  line-height: 1.4;
+}
+
+.permissionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.permissionGroup {
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--clr-surface);
+  margin-bottom: var(--sp-2);
+}
+
+.groupHeader {
+  background-color: var(--clr-bg, #f8fafc);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--clr-border);
+}
+
+.groupHeader .checkboxItem {
+  font-weight: var(--fw-semibold);
+  width: 100%;
+}
+
+.groupChildren {
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  background-color: var(--clr-surface);
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxInput {
+  margin-top: 3px;
+  cursor: pointer;
+  accent-color: var(--clr-primary);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.checkboxLabel {
+  font-size: var(--fs-sm);
+  color: var(--clr-text);
+  cursor: pointer;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.changePasswordBtn {
+  margin-top: var(--sp-3);
+  align-self: flex-start;
+}

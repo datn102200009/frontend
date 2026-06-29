@@ -68,6 +68,7 @@ function getWidgetIcon(code: string): ReactNode {
     case 'purchasing_pending_qc':
       return <ShieldAlert size={16} />;
     case 'purchasing_pending_logistic_fees':
+    case 'purchasing_pending_approval_shipments':
       return <DollarSign size={16} />;
     case 'purchasing_blocked_invoices':
       return <AlertTriangle size={16} />;

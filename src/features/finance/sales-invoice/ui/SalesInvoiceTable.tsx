@@ -13,6 +13,7 @@ interface SalesInvoiceTableProps {
   onView?: (id: string) => void;
   onCollect?: (invoice: { id: string; amount: number; name?: string }) => void;
   filterSlot?: React.ReactNode;
+  onSearch?: (value: string) => void;
 }
 
 export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({ 
@@ -20,7 +21,8 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
   loading, 
   onView, 
   onCollect,
-  filterSlot
+  filterSlot,
+  onSearch
 }) => {
   const columns = useMemo(() => {
     const helper = createColumnHelper<SalesInvoice>();
@@ -40,10 +42,6 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
       helper.accessor('total_amount', {
         header: 'Tổng Tiền',
         cell: (info) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue() || 0),
-      }),
-      helper.accessor('paid_amount', {
-        header: 'Đã Thu',
-        cell: (info) => <span className="text-emerald-700 font-medium">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(info.getValue() || 0)}</span>,
       }),
       helper.display({
         id: 'remaining',
@@ -116,6 +114,7 @@ export const SalesInvoiceTable: React.FC<SalesInvoiceTableProps> = ({
         searchPlaceholder="Tìm kiếm hóa đơn bán..."
         emptyMessage="Không tìm thấy hóa đơn nào"
         filterSlot={filterSlot}
+        onSearch={onSearch}
       />
     </div>
   );

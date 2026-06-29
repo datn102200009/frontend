@@ -4,6 +4,7 @@ export const purchaseOrderSchema = z.object({
   vendor_id: z.string().min(1, 'Nhà cung cấp là bắt buộc'),
   advance_paid_amount: z.coerce.number().min(0, 'Tiền cọc không được âm'),
   expected_delivery_date: z.string().min(1, 'Ngày giao dự kiến là bắt buộc'),
+  due_date: z.string().min(1, 'Hạn thanh toán là bắt buộc'),
   lines: z.array(
     z.object({
       item_id: z.string().min(1, 'Linh kiện là bắt buộc'),
@@ -21,21 +22,28 @@ export const purchaseOrderSchema = z.object({
     });
   }
 
-  if (data.expected_delivery_date) {
-    const getLocalDateString = () => {
-      const d = new Date();
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-    if (data.expected_delivery_date < getLocalDateString()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['expected_delivery_date'],
-        message: 'Ngày giao dự kiến phải lớn hơn hoặc bằng ngày hôm nay',
-      });
-    }
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  if (data.expected_delivery_date && data.expected_delivery_date < getLocalDateString()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['expected_delivery_date'],
+      message: 'Ngày giao dự kiến phải lớn hơn hoặc bằng ngày hôm nay',
+    });
+  }
+
+  if (data.due_date && data.due_date < getLocalDateString()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['due_date'],
+      message: 'Hạn thanh toán không thể ở quá khứ',
+    });
   }
 });
 

@@ -19,7 +19,7 @@ describe('SuppliersPage', () => {
             id: 'SUP01',
             name: 'SUP-001',
             supplier_name: 'Nhà cung cấp Tech Component',
-            supplier_group: 'Local',
+            supplier_group: 'Manufacturer',
             contact_email: 'tech@test.com',
             contact_phone: '0123456789',
             address: 'Hà Nội'
@@ -36,7 +36,7 @@ describe('SuppliersPage', () => {
     // Check supplier loaded and displayed in the table
     expect(await screen.findByText('SUP-001')).toBeInTheDocument();
     expect(screen.getByText('Nhà cung cấp Tech Component')).toBeInTheDocument();
-    expect(screen.getByText('Trong Nước')).toBeInTheDocument();
+    expect(screen.getByText('Nhà Sản Xuất')).toBeInTheDocument();
   });
 
   it('opens create modal, validates required fields, and submits successfully', async () => {
@@ -70,7 +70,7 @@ describe('SuppliersPage', () => {
     // Fill form fields
     await user.type(screen.getByLabelText(/Mã Nhà Cung Cấp/i), 'SUP-002');
     await user.type(screen.getByLabelText(/Tên Nhà Cung Cấp/i), 'Nhà cung cấp Tech Component 2');
-    await user.selectOptions(screen.getByLabelText(/Nhóm Nhà Cung Cấp/i), 'Import');
+    await user.selectOptions(screen.getByLabelText(/Nhóm Nhà Cung Cấp/i), 'Service');
     await user.type(screen.getByLabelText(/Email Liên Hệ/i), 'tech2@test.com');
     await user.type(screen.getByLabelText(/Số Điện Thoại/i), '0987654321');
     await user.type(screen.getByLabelText(/Địa Chỉ/i), 'Bình Dương');
@@ -82,7 +82,7 @@ describe('SuppliersPage', () => {
       expect(postPayload).toEqual({
         name: 'SUP-002',
         supplier_name: 'Nhà cung cấp Tech Component 2',
-        supplier_group: 'Import',
+        supplier_group: 'Service',
         contact_email: 'tech2@test.com',
         contact_phone: '0987654321',
         address: 'Bình Dương'
@@ -102,7 +102,7 @@ describe('SuppliersPage', () => {
             id: 'SUP01',
             name: 'SUP-001',
             supplier_name: 'Nhà cung cấp Tech Component',
-            supplier_group: 'Local',
+            supplier_group: 'Manufacturer',
             contact_email: 'tech@test.com',
             contact_phone: '0123456789',
             address: 'Hà Nội'
@@ -114,7 +114,7 @@ describe('SuppliersPage', () => {
           id: 'SUP01',
           name: 'SUP-001',
           supplier_name: 'Nhà cung cấp Tech Component',
-          supplier_group: 'Local',
+          supplier_group: 'Manufacturer',
           contact_email: 'tech@test.com',
           contact_phone: '0123456789',
           address: 'Hà Nội'
@@ -155,7 +155,7 @@ describe('SuppliersPage', () => {
       expect(putPayload).toEqual({
         name: 'SUP-001',
         supplier_name: 'Nhà cung cấp Tech Component Updated',
-        supplier_group: 'Local',
+        supplier_group: 'Manufacturer',
         contact_email: 'tech@test.com',
         contact_phone: '0123456789',
         address: 'Hà Nội'
@@ -173,7 +173,7 @@ describe('SuppliersPage', () => {
             id: 'SUP01',
             name: 'SUP-001',
             supplier_name: 'Nhà cung cấp Tech Component',
-            supplier_group: 'Local',
+            supplier_group: 'Manufacturer',
             contact_email: 'tech@test.com',
             contact_phone: '0123456789',
             address: 'Hà Nội'
@@ -185,7 +185,7 @@ describe('SuppliersPage', () => {
           id: 'SUP01',
           name: 'SUP-001',
           supplier_name: 'Nhà cung cấp Tech Component',
-          supplier_group: 'Local',
+          supplier_group: 'Manufacturer',
           contact_email: 'tech@test.com',
           contact_phone: '0123456789',
           address: 'Hà Nội'
