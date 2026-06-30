@@ -7,7 +7,6 @@ const mockAdminUser = {
   id: 'user-admin',
   username: 'admin',
   full_name: 'Quản Trị Viên',
-  role: 'admin' as const,
   permissions: [
     'manufacturing.bom_view',
     'manufacturing.work_order_view',
@@ -34,7 +33,6 @@ const mockStaffUser = {
   id: 'user-staff',
   username: 'staff',
   full_name: 'Nhân Viên Kho',
-  role: 'staff' as const,
   permissions: [
     'inventory.view',
   ],
@@ -44,7 +42,6 @@ const mockNoPermissionUser = {
   id: 'user-guest',
   username: 'guest',
   full_name: 'Khách',
-  role: 'staff' as const,
   permissions: [],
 };
 

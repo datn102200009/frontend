@@ -1,6 +1,9 @@
 import { baseApi as api } from '../../../shared/api/baseApi'
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
+    getPendingCreditApprovals: build.query<any, void>({
+      query: () => ({ url: `/finance/pending-credit-approvals/` }),
+    }),
     getFinanceCashFlows: build.query<GetFinanceCashFlowsApiResponse, GetFinanceCashFlowsApiArg>({
       query: (queryArg) => ({
         url: `/finance/cash-flows/`,
@@ -622,6 +625,7 @@ export type SalarySlipPaymentInput = {
   payment_method?: 'cash' | 'bank_transfer'
 }
 export const {
+  useGetPendingCreditApprovalsQuery,
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsMutation,
   useGetFinanceCashFlowsByPkQuery,

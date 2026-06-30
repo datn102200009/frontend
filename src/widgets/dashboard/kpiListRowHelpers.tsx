@@ -36,9 +36,11 @@ export function buildItemLink(item: any, code: string): { to: string; display: s
     return { to: `/sales?tab=orders&status=pending&id=${id}`, display: sid };
   }
   if (code.startsWith('sales_')) {
+    if (code === 'sales_pending_credit_bypass') {
+      return { to: `/finance?tab=approvals`, display: sid };
+    }
     let status = '';
     if (code === 'sales_draft_orders') status = 'draft';
-    else if (code === 'sales_pending_credit_bypass') status = 'pending_credit_approval';
     const q = status ? `&status=${status}` : '';
     return { to: `/sales?tab=orders${q}&id=${id}`, display: sid };
   }

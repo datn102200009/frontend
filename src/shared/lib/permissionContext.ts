@@ -4,7 +4,6 @@ export interface SharedUser {
   id: string;
   username: string;
   full_name: string;
-  role: 'admin' | 'manager' | 'staff';
   permissions: string[];
 }
 

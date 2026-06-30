@@ -6,7 +6,6 @@ import {
   usePutSalesOrdersByPkMutation,
   useDeleteSalesOrdersByPkMutation,
   usePostSalesOrdersByPkApproveMutation,
-  usePostSalesOrdersByPkApproveCreditBypassMutation,
   usePostSalesOrdersByPkCancelMutation
 } from '@entities/sales/api/salesApi';
 import { useGetMasterDataItemsListQuery } from '@features/inventory/api/masterDataApi';
@@ -91,10 +90,8 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const [updateOrder, { isLoading: isUpdating }] = usePutSalesOrdersByPkMutation();
   const [deleteOrder, { isLoading: isDeleting }] = useDeleteSalesOrdersByPkMutation();
   const [approveOrder, { isLoading: isApproving }] = usePostSalesOrdersByPkApproveMutation();
-  const [approveCreditBypass, { isLoading: isBypassing }] = usePostSalesOrdersByPkApproveCreditBypassMutation();
   const [cancelOrder, { isLoading: isCancelling }] = usePostSalesOrdersByPkCancelMutation();
 
-  const canBypass = usePermission('sales.approve_credit_bypass');
   const canCancel = usePermission('sales.cancel_order');
   const canApprove = usePermission('sales.update_order');
   const { toast } = useToast();
@@ -106,7 +103,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
   const isDraft = orderData ? orderData.status === 'draft' : true;
   const isCreditApproval = orderData?.status === 'pending_credit_approval';
   const isReadOnly = !isDraft;
-  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isBypassing || isCancelling || isLoadingOrder;
+  const isWorking = isCreating || isUpdating || isDeleting || isApproving || isCancelling || isLoadingOrder;
 
   const itemMap = React.useMemo(() => {
     const map = new Map<string, { id?: string; item_name?: string; item_code?: string; stock_uom_name?: string | null }>();
@@ -269,17 +266,7 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
     setIsApproveConfirmOpen(true);
   };
 
-  const handleBypass = async () => {
-    if (!orderId || !orderData) return;
-    try {
-      await approveCreditBypass({ pk: orderId }).unwrap();
-      onSuccess();
-    } catch (err) {
-      console.error('Failed to bypass credit approval', err);
-      const errData = err as { data?: { detail?: string } };
-      toast('error', errData?.data?.detail || 'Duyệt tín dụng đặc cách thất bại');
-    }
-  };
+
 
   const handleCancel = () => {
     if (!orderId) return;
@@ -341,11 +328,6 @@ export const SalesOrderFormModal: React.FC<SalesOrderFormModalProps> = ({ open, 
               {orderId && isDraft && canApprove && (
                 <Button variant="primary" onClick={handleConfirm} loading={isUpdating} disabled={isWorking} icon={<CheckCircle size={16} />}>
                   Duyệt Đơn
-                </Button>
-              )}
-              {orderId && isCreditApproval && canBypass && (
-                <Button variant="primary" onClick={handleBypass} loading={isBypassing} disabled={isWorking} icon={<CheckCircle size={16} />}>
-                  Duyệt tín dụng đặc cách
                 </Button>
               )}
             </div>

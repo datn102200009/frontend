@@ -30,7 +30,6 @@ export default function LoginPage() {
         id: res.user_id || '',
         username: res.username || '',
         full_name: res.full_name || res.username || '',
-        role: (res.username === 'admin' ? 'admin' : 'staff') as 'admin' | 'manager' | 'staff',
         permissions: res.permissions || []
       };
       dispatch(loginSuccess({ user, token: res.access || '', refresh: res.refresh }));

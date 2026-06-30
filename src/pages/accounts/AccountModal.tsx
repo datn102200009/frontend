@@ -192,19 +192,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     return groups;
   }, [permissions]);
 
-  // Handle direct permission toggle
-  const handlePermissionToggle = (code: string) => {
-    setSelectedPermissions((prev) =>
-      prev.includes(code) ? prev.filter((p) => p !== code) : [...prev, code]
-    );
-  };
-
-  // Handle group select all / deselect all
+  // Handle group toggle (select all or deselect all)
   const handleGroupToggle = (groupCodes: string[]) => {
     const checkedInGroup = groupCodes.filter((code) => selectedPermissions.includes(code));
-    const allChecked = checkedInGroup.length === groupCodes.length;
+    const isGroupActive = checkedInGroup.length > 0;
 
-    if (allChecked) {
+    if (isGroupActive) {
       // Deselect all in group
       setSelectedPermissions((prev) => prev.filter((code) => !groupCodes.includes(code)));
     } else {
@@ -382,9 +375,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({
           )}
 
           <div>
-            <h4 className={styles.sectionTitle}>Quyền hạn trực tiếp (Direct Permissions)</h4>
+            <h4 className={styles.sectionTitle}>Phân quyền theo Module</h4>
             <p className={styles.helperText}>
-              Cấp quyền trực tiếp cho người dùng ngoài vai trò của họ. Quyền này sẽ được gộp với quyền của Vai trò.
+              Chọn các module chức năng để cấp toàn bộ quyền tương ứng cho người dùng này.
             </p>
 
             {isLoadingPermissions ? (
@@ -395,8 +388,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   const groupTitle = GROUP_NAMES[prefix] || prefix.toUpperCase();
                   const groupCodes = perms.map((p) => p.code);
                   const checkedInGroup = groupCodes.filter((code) => selectedPermissions.includes(code));
-                  const isAllChecked = checkedInGroup.length === groupCodes.length;
-                  const isSomeChecked = checkedInGroup.length > 0 && checkedInGroup.length < groupCodes.length;
+                  const isGroupActive = checkedInGroup.length > 0;
 
                   return (
                     <div key={prefix} className={styles.permissionGroup}>
@@ -404,21 +396,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                         <Checkbox
                           id={`group-${prefix}`}
                           label={groupTitle}
-                          checked={isAllChecked}
-                          indeterminate={isSomeChecked}
+                          checked={isGroupActive}
                           onChange={() => handleGroupToggle(groupCodes)}
                         />
-                      </div>
-                      <div className={styles.groupChildren}>
-                        {perms.map((perm) => (
-                          <Checkbox
-                            key={perm.code}
-                            id={`perm-${perm.code}`}
-                            label={perm.name}
-                            checked={selectedPermissions.includes(perm.code)}
-                            onChange={() => handlePermissionToggle(perm.code)}
-                          />
-                        ))}
                       </div>
                     </div>
                   );
