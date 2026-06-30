@@ -218,7 +218,6 @@ describe('SalesOrderFormModal', () => {
           id: '1',
           username: 'admin',
           full_name: 'Admin User',
-          role: 'admin' as const,
           permissions: ['sales.cancel_order'],
         },
         token: 'test_token',
