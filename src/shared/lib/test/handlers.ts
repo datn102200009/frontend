@@ -12,8 +12,7 @@ export const handlers = [
         user_id: '1',
         username: 'admin',
         full_name: 'Administrator',
-        role: 'admin',
-        permissions: ['sales.approve_credit_bypass']
+        permissions: ['finance.approve_credit_bypass']
       });
     }
     return new HttpResponse(
@@ -26,17 +25,8 @@ export const handlers = [
     return HttpResponse.json({
       id: '1',
       username: 'admin',
-      role: 'admin',
-      permissions: ['sales.approve_credit_bypass', 'finance.create_fixed_asset', 'finance.update_fixed_asset', 'finance.delete_fixed_asset', 'finance.run_depreciation']
+      permissions: ['finance.approve_credit_bypass', 'finance.create_fixed_asset', 'finance.update_fixed_asset', 'finance.delete_fixed_asset', 'finance.run_depreciation']
     });
-  }),
-
-  // Roles mock
-  http.get('*/api/v1/accounts/roles/', () => {
-    return HttpResponse.json([
-      { id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', name: 'Quản trị viên (Admin)', description: 'Quản trị viên hệ thống với toàn quyền truy cập.' },
-      { id: 'c73a6473-8b74-4b53-a5c9-95ad3e1bcf4d', name: 'Nhân viên (Employee)', description: 'Standard employee role' },
-    ]);
   }),
 
 

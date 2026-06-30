@@ -150,4 +150,62 @@ describe('FinancePage', () => {
       expect(screen.queryByRole('dialog', { name: /Từ chối phê duyệt giao dịch/i })).not.toBeInTheDocument();
     });
   });
+
+  it('allows approving credit bypass from approvals tab', async () => {
+    let bypassCalled = false;
+    let bypassPk: string | null = null;
+
+    server.use(
+      http.get('*/api/v1/finance/pending-credit-approvals/', () => {
+        return HttpResponse.json([
+          {
+            id: '12345678',
+            customer_name: 'Khách hàng đặc biệt',
+            total_amount: 15000000,
+            advance_paid_amount: 5000000,
+            created_at: '2026-06-25T10:00:00Z',
+            status: 'pending_credit_approval'
+          }
+        ]);
+      }),
+      http.post('*/api/v1/sales/orders/:pk/approve-credit-bypass/', ({ params }) => {
+        bypassPk = params.pk as string;
+        bypassCalled = true;
+        return HttpResponse.json({ id: params.pk, status: 'pending' });
+      })
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<FinancePage />, {
+      initialEntries: ['/finance?tab=approvals'],
+      preloadedState: {
+        auth: {
+          user: {
+            id: 'user-001',
+            username: 'admin',
+            email: 'admin@test.com',
+            role: 'admin',
+            permissions: ['finance.approve_credit_bypass'],
+          } as any,
+          token: 'mock-token',
+          isAuthenticated: true,
+        },
+      },
+    });
+
+    // Check credit bypass table is rendered and displays correct data
+    expect(await screen.findByText('Duyệt Hạn Mức Tín Dụng Đơn Hàng')).toBeInTheDocument();
+    expect(await screen.findByText('Khách hàng đặc biệt')).toBeInTheDocument();
+    expect(await screen.findByText('SO-12345678')).toBeInTheDocument();
+
+    // Click on "Duyệt Nợ" button
+    const approveBtn = screen.getByRole('button', { name: /Duyệt Nợ/i });
+    await user.click(approveBtn);
+
+    // Verify API called successfully
+    await waitFor(() => {
+      expect(bypassCalled).toBe(true);
+      expect(bypassPk).toBe('12345678');
+    });
+  });
 });

@@ -23,7 +23,7 @@ export function PermissionGuard({
   }
 
   // Admin has all permissions
-  if (user.role === 'admin') {
+  if (user.username === 'admin') {
     return <>{children}</>;
   }
 

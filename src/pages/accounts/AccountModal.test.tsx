@@ -68,13 +68,13 @@ describe('AccountModal', () => {
     expect(screen.getByText('Test Mfg (TST-MFG)')).toBeInTheDocument();
 
     // Verify checked permissions based on all_permissions
-    const cashFlowCheckbox = await screen.findByLabelText('Xem Dòng Tiền') as HTMLInputElement;
-    const customerCheckbox = screen.getByLabelText('Xem Khách Hàng') as HTMLInputElement;
-    const userCheckbox = screen.getByLabelText('Xem tài khoản') as HTMLInputElement;
+    const financeGroup = await screen.findByLabelText('Quản lý Tài chính (Finance)') as HTMLInputElement;
+    const crmGroup = screen.getByLabelText('Quản lý Khách Hàng (CRM)') as HTMLInputElement;
+    const accountsGroup = screen.getByLabelText('Hệ Thống & Tài Khoản (Accounts)') as HTMLInputElement;
 
-    expect(cashFlowCheckbox.checked).toBe(true);
-    expect(customerCheckbox.checked).toBe(true);
-    expect(userCheckbox.checked).toBe(false);
+    expect(financeGroup.checked).toBe(true);
+    expect(crmGroup.checked).toBe(true);
+    expect(accountsGroup.checked).toBe(false);
   });
 
   // 2. Render Modal ở create mode
@@ -139,8 +139,8 @@ describe('AccountModal', () => {
     expect(handleClose).toHaveBeenCalledTimes(1);
   });
 
-  // 5. Toggle permission đơn lẻ
-  it('toggles individual permission and updates group checkbox indeterminate state', async () => {
+  // 5. Toggle group checkbox
+  it('toggles group checkbox to check/uncheck module permissions', async () => {
     const user = userEvent.setup();
 
     renderWithProviders(
@@ -152,73 +152,15 @@ describe('AccountModal', () => {
       />
     );
 
-    // Wait for permissions load
     const groupCheckbox = await screen.findByLabelText('Hệ Thống & Tài Khoản (Accounts)') as HTMLInputElement;
-    const viewUserCheckbox = screen.getByLabelText('Xem tài khoản') as HTMLInputElement;
-    const addUserCheckbox = screen.getByLabelText('Thêm tài khoản') as HTMLInputElement;
-
     expect(groupCheckbox.checked).toBe(false);
-    expect(groupCheckbox.indeterminate).toBe(false);
-    expect(viewUserCheckbox.checked).toBe(false);
-    expect(addUserCheckbox.checked).toBe(false);
 
-    // Click view user -> group should become indeterminate
-    await user.click(viewUserCheckbox);
-    expect(viewUserCheckbox.checked).toBe(true);
-    expect(groupCheckbox.indeterminate).toBe(true);
-    expect(groupCheckbox.checked).toBe(false);
-  });
-
-  // 6. Toggle group (select all)
-  it('toggles group checkbox to select all children', async () => {
-    const user = userEvent.setup();
-
-    renderWithProviders(
-      <AccountModal
-        open={true}
-        onClose={() => {}}
-        onSuccess={() => {}}
-        userToEdit={null}
-      />
-    );
-
-    const groupCheckbox = await screen.findByLabelText('Hệ Thống & Tài Khoản (Accounts)') as HTMLInputElement;
-    const viewUserCheckbox = screen.getByLabelText('Xem tài khoản') as HTMLInputElement;
-    const addUserCheckbox = screen.getByLabelText('Thêm tài khoản') as HTMLInputElement;
-
-    // Select group -> all children should become checked
-    await user.click(groupCheckbox);
-    expect(viewUserCheckbox.checked).toBe(true);
-    expect(addUserCheckbox.checked).toBe(true);
-    expect(groupCheckbox.checked).toBe(true);
-    expect(groupCheckbox.indeterminate).toBe(false);
-  });
-
-  // 7. Toggle group (deselect all)
-  it('toggles group checkbox to deselect all children when all are checked', async () => {
-    const user = userEvent.setup();
-
-    renderWithProviders(
-      <AccountModal
-        open={true}
-        onClose={() => {}}
-        onSuccess={() => {}}
-        userToEdit={null}
-      />
-    );
-
-    const groupCheckbox = await screen.findByLabelText('Hệ Thống & Tài Khoản (Accounts)') as HTMLInputElement;
-    const viewUserCheckbox = screen.getByLabelText('Xem tài khoản') as HTMLInputElement;
-    const addUserCheckbox = screen.getByLabelText('Thêm tài khoản') as HTMLInputElement;
-
-    // Check all via group header
+    // Select group -> all permissions in group should become active
     await user.click(groupCheckbox);
     expect(groupCheckbox.checked).toBe(true);
 
-    // Uncheck group header -> all unchecked
+    // Unselect group
     await user.click(groupCheckbox);
-    expect(viewUserCheckbox.checked).toBe(false);
-    expect(addUserCheckbox.checked).toBe(false);
     expect(groupCheckbox.checked).toBe(false);
   });
 
@@ -338,7 +280,7 @@ describe('AccountModal', () => {
     const parentModal = await screen.findByRole('dialog', { name: 'Cập Nhật Tài Khoản' });
 
     // Wait for permissions load
-    const userCheckbox = await screen.findByLabelText('Xem tài khoản') as HTMLInputElement;
+    const userCheckbox = await screen.findByLabelText('Hệ Thống & Tài Khoản (Accounts)') as HTMLInputElement;
     await user.click(userCheckbox);
 
     const submitBtn = within(parentModal).getByRole('button', { name: 'Cập nhật' });

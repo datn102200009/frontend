@@ -36,7 +36,7 @@ describe('LoginPage', () => {
       expect(store.getState().auth.token).toBe('mock-access-token');
       expect(store.getState().auth.user?.username).toBe('admin');
       expect(store.getState().auth.user?.full_name).toBe('Administrator');
-      expect(store.getState().auth.user?.permissions).toContain('sales.approve_credit_bypass');
+      expect(store.getState().auth.user?.permissions).toContain('finance.approve_credit_bypass');
     });
     // Check if toast was called
     expect(screen.getByText(/đăng nhập thành công/i)).toBeInTheDocument();
