@@ -85,7 +85,7 @@ export const AccountsPage: React.FC = () => {
         ),
       }),
       helper.accessor('last_login', {
-        header: 'Thời gian last_login',
+        header: 'Đăng nhập cuối cùng',
         cell: (info) => {
           const val = info.getValue();
           if (!val) return <span style={{ color: 'var(--clr-text-muted)', fontSize: '12px' }}>Chưa đăng nhập</span>;

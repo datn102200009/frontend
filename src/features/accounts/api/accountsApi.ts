@@ -7,8 +7,21 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/accounts/auth/login/`, method: 'POST', body: queryArg.body }),
     }),
-    getAccountsRoles: build.query<GetAccountsRolesApiResponse, GetAccountsRolesApiArg>({
-      query: () => ({ url: `/accounts/roles/` }),
+    getAccountsSystemLogs: build.query<
+      GetAccountsSystemLogsApiResponse,
+      GetAccountsSystemLogsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/accounts/system-logs/`,
+        params: {
+          start_date: queryArg?.start_date,
+          end_date: queryArg?.end_date,
+          action: queryArg?.action,
+          search: queryArg?.search,
+          limit: queryArg?.limit,
+          offset: queryArg?.offset,
+        },
+      }),
     }),
     getAccountsAuthMe: build.query<GetAccountsAuthMeApiResponse, GetAccountsAuthMeApiArg>({
       query: () => ({ url: `/accounts/auth/me/` }),
@@ -89,8 +102,6 @@ export type PostAccountsAuthLoginApiArg = {
     password: string
   }
 }
-export type GetAccountsRolesApiResponse = /** status 200 Thành công */ UserRole[]
-export type GetAccountsRolesApiArg = void
 export type GetAccountsAuthMeApiResponse = /** status 200 Thành công */ {
   id?: string
   username?: string
@@ -108,11 +119,6 @@ export type LoginResponse = {
 }
 export type ErrorResponse = {
   detail?: string
-}
-export type UserRole = {
-  id?: string
-  name?: string
-  description?: string
 }
 
 export type UserOutput = {
@@ -202,9 +208,47 @@ export type SystemPermission = {
 export type GetAccountsPermissionsApiResponse = SystemPermission[]
 export type GetAccountsPermissionsApiArg = void
 
+export type SystemLogDetailUser = {
+  id: string
+  username: string
+  full_name: string
+}
+
+export type SystemLogOutput = {
+  id: string
+  user: SystemLogDetailUser | null
+  user_repr?: string | null
+  action: string
+  action_display?: string
+  table_name: string
+  table_display?: string
+  record_id: string
+  record_code?: string | null
+  old_value: any
+  new_value: any
+  message: string
+  timestamp: string
+}
+
+export type GetAccountsSystemLogsApiResponse = {
+  count: number
+  next: string | null
+  previous: string | null
+  results: SystemLogOutput[]
+}
+
+export type GetAccountsSystemLogsApiArg = {
+  start_date?: string
+  end_date?: string
+  action?: string
+  search?: string
+  limit?: number
+  offset?: number
+} | void
+
 export const {
   usePostAccountsAuthLoginMutation,
-  useGetAccountsRolesQuery,
+  useGetAccountsSystemLogsQuery,
   useGetAccountsAuthMeQuery,
   useGetAccountsUsersQuery,
   usePostAccountsUsersMutation,

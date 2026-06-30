@@ -179,3 +179,12 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+.tr.clickableRow {
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.tr.clickableRow:hover {
+  background-color: var(--clr-bg, #f1f5f9) !important;
+}

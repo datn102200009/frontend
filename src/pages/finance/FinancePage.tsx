@@ -10,7 +10,9 @@ import {
   useGetFinanceCashFlowsQuery,
   usePostFinanceCashFlowsByPkApproveMutation,
   usePostFinanceCashFlowsByPkRejectMutation,
+  useGetPendingCreditApprovalsQuery,
 } from '@entities/finance/api/financeApi';
+import { usePostSalesOrdersByPkApproveCreditBypassMutation } from '@entities/sales/api/salesApi';
 import { usePermission } from '@shared/hooks/usePermission';
 import { DataTable } from '@shared/ui/DataTable/DataTable';
 import { ConfirmModal } from '@shared/ui/Modal/ConfirmModal';
@@ -53,6 +55,7 @@ const FinancePage: React.FC = () => {
   // Permissions
   const hasApprovePermission = usePermission('finance.approve_cash_flow');
   const hasPayrollApprovalPermission = usePermission('finance.payroll_approve');
+  const hasCreditBypassPermission = usePermission('finance.approve_credit_bypass');
 
   // Pagination & query state for Approvals
   const [pageApprovals, setPageApprovals] = useState(1);
@@ -60,9 +63,15 @@ const FinancePage: React.FC = () => {
     { status: 'pending_approval', page: pageApprovals, limit: 10 },
     { skip: activeTab !== 'approvals' || !hasApprovePermission }
   );
+
+  const { data: creditPendingData, isLoading: isLoadingCreditPending, refetch: refetchCreditPending } = useGetPendingCreditApprovalsQuery(
+    undefined,
+    { skip: activeTab !== 'approvals' || !hasCreditBypassPermission }
+  );
   
   const [approveCashFlow, { isLoading: isApproving }] = usePostFinanceCashFlowsByPkApproveMutation();
   const [rejectCashFlow, { isLoading: isRejecting }] = usePostFinanceCashFlowsByPkRejectMutation();
+  const [approveCreditBypass, { isLoading: isBypassing }] = usePostSalesOrdersByPkApproveCreditBypassMutation();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [remarks, setRemarks] = useState('');
   const { toast } = useToast();
@@ -79,6 +88,17 @@ const FinancePage: React.FC = () => {
     } catch (err: unknown) {
       const error = err as { data?: { detail?: string } };
       toast('error', error?.data?.detail || 'Phê duyệt thất bại. Vui lòng kiểm tra lại.');
+    }
+  };
+
+  const handleApproveCreditBypass = async (id: string) => {
+    try {
+      await approveCreditBypass({ pk: id }).unwrap();
+      toast('success', 'Duyệt đặc cách hạn mức nợ thành công');
+      refetchCreditPending();
+    } catch (err: unknown) {
+      const error = err as { data?: { detail?: string } };
+      toast('error', error?.data?.detail || 'Duyệt thất bại. Vui lòng kiểm tra lại.');
     }
   };
 
@@ -168,6 +188,46 @@ const FinancePage: React.FC = () => {
     }),
   ], [isApproving, isRejecting]);
 
+  const creditColumnHelper = createColumnHelper<any>();
+  const creditColumns = useMemo(() => [
+    creditColumnHelper.accessor('id', {
+      header: 'Mã Đơn Hàng',
+      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>SO-{shortId(info.getValue())}</span>,
+    }),
+    creditColumnHelper.accessor('customer_name', {
+      header: 'Khách Hàng',
+      cell: (info) => <span style={{ fontWeight: 500 }}>{info.getValue() || '-'}</span>,
+    }),
+    creditColumnHelper.accessor('total_amount', {
+      header: 'Tổng Số Tiền',
+      cell: (info) => <span style={{ fontWeight: 600, color: 'var(--clr-text-primary)' }}>{formatCurrency(Number(info.getValue() || 0))}</span>,
+    }),
+    creditColumnHelper.accessor('advance_paid_amount', {
+      header: 'Số Tiền Cọc',
+      cell: (info) => <span style={{ color: 'var(--clr-text-secondary)' }}>{formatCurrency(Number(info.getValue() || 0))}</span>,
+    }),
+    creditColumnHelper.accessor('created_at', {
+      header: 'Ngày Tạo',
+      cell: (info) => info.getValue() ? new Date(info.getValue()).toLocaleDateString('vi-VN') : '-',
+    }),
+    creditColumnHelper.display({
+      id: 'actions',
+      header: 'Thao Tác',
+      cell: (info) => (
+        <div>
+          <Button 
+            size="sm"
+            icon={<Check size={14} />}
+            onClick={() => handleApproveCreditBypass(info.row.original.id!)}
+            disabled={isBypassing}
+          >
+            Duyệt Nợ
+          </Button>
+        </div>
+      ),
+    }),
+  ], [isBypassing]);
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -187,7 +247,7 @@ const FinancePage: React.FC = () => {
         >
           Dòng Tiền
         </button>
-        {hasApprovePermission && (
+        {(hasApprovePermission || hasCreditBypassPermission) && (
           <button 
             type="button"
             role="tab"
@@ -195,7 +255,7 @@ const FinancePage: React.FC = () => {
             className={`${styles.tab} ${activeTab === 'approvals' ? styles.active : ''}`}
             onClick={() => setActiveTab('approvals')}
           >
-            Duyệt Giao Dịch
+            Phê Duyệt
           </button>
         )}
         {hasPayrollApprovalPermission && (
@@ -218,43 +278,66 @@ const FinancePage: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'approvals' && hasApprovePermission && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
-            <DataTable 
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              columns={approvalColumns as any} 
-              data={approvalsData?.results || []} 
-              loading={isLoadingApprovals}
-              searchPlaceholder="Tìm kiếm giao dịch chờ duyệt..."
-              emptyMessage="Không có giao dịch nào chờ phê duyệt."
-            />
-
-            {/* Pagination for approvals */}
-            {approvalsData && approvalsData.total_pages && approvalsData.total_pages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', padding: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)' }}>
-                <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
-                  Trang {pageApprovals} / {approvalsData.total_pages} (Tổng {approvalsData.count} giao dịch)
-                </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    icon={<ChevronLeft size={16} />} 
-                    disabled={pageApprovals <= 1}
-                    onClick={() => setPageApprovals(p => p - 1)}
-                  >
-                    {""}
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    icon={<ChevronRight size={16} />} 
-                    disabled={pageApprovals >= (approvalsData.total_pages || 1)}
-                    onClick={() => setPageApprovals(p => p + 1)}
-                  >
-                    {""}
-                  </Button>
+        {activeTab === 'approvals' && (hasApprovePermission || hasCreditBypassPermission) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {hasApprovePermission && (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--clr-border)', backgroundColor: 'var(--clr-background)' }}>
+                  <h3 style={{ fontSize: 'var(--fs-md)', fontWeight: 600, color: 'var(--clr-text-primary)' }}>Phê Duyệt Giao Dịch Dòng Tiền</h3>
                 </div>
+                <DataTable 
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  columns={approvalColumns as any} 
+                  data={approvalsData?.results || []} 
+                  loading={isLoadingApprovals}
+                  searchPlaceholder="Tìm kiếm giao dịch chờ duyệt..."
+                  emptyMessage="Không có giao dịch nào chờ phê duyệt."
+                />
+
+                {/* Pagination for approvals */}
+                {approvalsData && approvalsData.total_pages && approvalsData.total_pages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', padding: 'var(--sp-4)', borderTop: '1px solid var(--clr-border)' }}>
+                    <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
+                      Trang {pageApprovals} / {approvalsData.total_pages} (Tổng {approvalsData.count} giao dịch)
+                    </span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        icon={<ChevronLeft size={16} />} 
+                        disabled={pageApprovals <= 1}
+                        onClick={() => setPageApprovals(p => p - 1)}
+                      >
+                        {""}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        icon={<ChevronRight size={16} />} 
+                        disabled={pageApprovals >= (approvalsData.total_pages || 1)}
+                        onClick={() => setPageApprovals(p => p + 1)}
+                      >
+                        {""}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hasCreditBypassPermission && (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--clr-border)', backgroundColor: 'var(--clr-background)' }}>
+                  <h3 style={{ fontSize: 'var(--fs-md)', fontWeight: 600, color: 'var(--clr-text-primary)' }}>Duyệt Hạn Mức Tín Dụng Đơn Hàng</h3>
+                </div>
+                <DataTable 
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  columns={creditColumns as any} 
+                  data={creditPendingData || []} 
+                  loading={isLoadingCreditPending}
+                  searchPlaceholder="Tìm kiếm đơn hàng chờ duyệt nợ..."
+                  emptyMessage="Không có đơn hàng nào chờ duyệt đặc cách nợ."
+                />
               </div>
             )}
           </div>

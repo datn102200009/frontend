@@ -11,6 +11,7 @@ import {
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown, Search, PackageOpen } from 'lucide-react';
 import styles from './DataTable.module.css';
+import clsx from 'clsx';
 
 interface DataTableProps<TData> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +30,7 @@ interface DataTableProps<TData> {
   pageIndex?: number;        // Thêm cho server-side pagination (0-based)
   onPageChange?: (pageIndex: number) => void; // Thêm cho server-side pagination
   totalCount?: number;       // Thêm cho server-side pagination
+  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData>({
@@ -47,6 +49,7 @@ export function DataTable<TData>({
   pageIndex: pageIndexProp,
   onPageChange,
   totalCount,
+  onRowClick,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState(initialSearch);
@@ -162,7 +165,11 @@ export function DataTable<TData>({
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className={styles.tr}>
+                <tr
+                  key={row.id}
+                  className={clsx(styles.tr, onRowClick && styles.clickableRow)}
+                  onClick={() => onRowClick?.(row.original)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className={styles.td}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

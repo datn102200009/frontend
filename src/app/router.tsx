@@ -40,6 +40,7 @@ const RewardsDisciplinesPage = lazy(() => import('../pages/hrm/rewards-disciplin
 const HolidaysPage = lazy(() => import('../pages/hrm/holidays/HolidaysPage'));
 const PayrollPage = lazy(() => import('../pages/hrm/payroll/PayrollPage'));
 const AccountsPage = lazy(() => import('../pages/accounts/AccountsPage'));
+const SystemLogsPage = lazy(() => import('../pages/accounts/SystemLogsPage').then(m => ({ default: m.SystemLogsPage })));
 
 function PageLoader() {
   return (
@@ -254,6 +255,14 @@ export const router = createBrowserRouter([
             <PermissionGuard requiredPermission="accounts.view_user" fallback={<ForbiddenPage />}>
               <AccountsPage />
             </PermissionGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: 'system-log',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SystemLogsPage />
           </Suspense>
         ),
       },

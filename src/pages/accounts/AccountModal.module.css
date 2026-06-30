@@ -81,7 +81,6 @@
 .groupHeader {
   background-color: var(--clr-bg, #f8fafc);
   padding: var(--sp-3) var(--sp-4);
-  border-bottom: 1px solid var(--clr-border);
 }
 
 .groupHeader .checkboxItem {

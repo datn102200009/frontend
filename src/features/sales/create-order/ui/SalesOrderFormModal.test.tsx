@@ -67,54 +67,6 @@ describe('SalesOrderFormModal', () => {
     }, { timeout: 2000 }); // Wait for the mock delay
   });
 
-  it('renders credit approval state and approves credit bypass successfully', async () => {
-    let bypassCalled = false;
-    server.use(
-      http.get('*/api/v1/sales/orders/SO-BLOCKED/', () => {
-        return HttpResponse.json({
-          id: 'SO-BLOCKED',
-          customer: '44444444-4444-4444-4444-444444444444',
-          customer_name: 'Công ty Cổ phần Alpha',
-          total_amount: 5000000,
-          status: 'pending_credit_approval',
-          lines: [
-            { id: '1', item: 'VT001', item_name: 'Vật tư 1', item_code: 'VT001', quantity: 10, unit_price: 500000, line_total: 5000000 }
-          ]
-        });
-      }),
-      http.post('*/api/v1/sales/orders/SO-BLOCKED/approve-credit-bypass/', () => {
-        bypassCalled = true;
-        return HttpResponse.json({ id: 'SO-BLOCKED', status: 'pending' });
-      })
-    );
-
-    // Render with orderId to trigger loading the blocked order
-    renderWithProviders(<SalesOrderFormModal {...defaultProps} orderId="SO-BLOCKED" />, {
-      preloadedState: {
-        auth: {
-          user: { id: '1', username: 'admin', full_name: 'Administrator', role: 'admin', permissions: ['sales.approve_credit_bypass'] },
-          token: 'mock-token',
-          isAuthenticated: true
-        }
-      }
-    });
-    
-    // Wait for the modal content to load and display warning
-    expect(await screen.findByText(/Đơn hàng bị Khóa Tín Dụng/i)).toBeInTheDocument();
-    
-    // The credit bypass approval button should be present
-    const bypassBtn = screen.getByRole('button', { name: /Duyệt tín dụng đặc cách/i });
-    expect(bypassBtn).toBeInTheDocument();
-    
-    const user = userEvent.setup();
-    await user.click(bypassBtn);
-    
-    await waitFor(() => {
-      expect(bypassCalled).toBe(true);
-      expect(defaultProps.onSuccess).toHaveBeenCalled();
-    });
-  });
-
   it('renders deposit input enabled in Draft state', async () => {
     server.use(
       http.get('*/api/v1/sales/orders/SO-DRAFT/', () => {
@@ -266,7 +218,6 @@ describe('SalesOrderFormModal', () => {
           id: '1',
           username: 'admin',
           full_name: 'Admin User',
-          role: 'admin' as const,
           permissions: ['sales.cancel_order'],
         },
         token: 'test_token',

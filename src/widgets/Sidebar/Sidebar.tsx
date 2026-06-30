@@ -48,6 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: 'Tổng Quan',
     items: [
       { to: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+      { to: '/system-log', icon: <FileText size={20} />, label: 'Nhật Kí Hoạt Động' },
     ],
   },
   {
@@ -121,11 +122,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         .toUpperCase()
     : '??';
 
-  const roleLabel = user?.role?.toLowerCase() === 'admin' ? 'Quản trị viên' : user?.role?.toLowerCase() === 'manager' ? 'Quản lý' : 'Nhân viên';
+  const roleLabel = (currentUser?.permissions?.includes('accounts.view_user') || user?.username === 'admin') ? 'Quản trị viên' : 'Nhân viên';
 
   // Filter navigation sections based on user permissions
   const filteredSections = NAV_SECTIONS.map((section) => {
     const allowedItems = section.items.filter((item) => {
+      if (user?.username === 'admin') return true;
       if (!item.permission) return true;
       if (Array.isArray(item.permission)) {
         return item.permission.some((p) => currentUser?.permissions?.includes(p));
